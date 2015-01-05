@@ -14,7 +14,7 @@
 
 using namespace std;
 
-class FileException : std::exception {
+class FileException : public std::exception {
 public:
     string message;
 

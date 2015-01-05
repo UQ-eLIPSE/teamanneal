@@ -1,6 +1,8 @@
-PROGRAMS = filedata_test csv_test
+PROGRAMS = filedata_test csv_test json_test
 FILEDATA_TEST_OBJECTS = filedata.o filedata_test.o exceptions.o
 CSV_TEST_OBJECTS = csv.o csv_test.o filedata.o exceptions.o
+JSON_TEST_OBJECTS = filedata.o jsonExceptions.o json.o json_test.o exceptions.o stringCursor.o
+OBJS = $(FILEDATA_TEST_OBJECTS) $(CSV_TEST_OBJECTS) $(JSON_TEST_OBJECTS)
 
 # Default C compiler
 CC=gcc
@@ -9,10 +11,10 @@ CC=gcc
 CXX=g++
 
 # Default C compilation options
-CFLAGS=-Wall
+CFLAGS=-Wall -MMD
 
 #Default C++ compilation options
-CXXFLAGS=-Wall -std=c++11
+CXXFLAGS=-Wall -std=c++11 -MMD
 
 all: $(PROGRAMS)
 
@@ -22,5 +24,11 @@ filedata_test: $(FILEDATA_TEST_OBJECTS)
 csv_test: $(CSV_TEST_OBJECTS)
 	$(CXX) -o $@ $^
 
+json_test: $(JSON_TEST_OBJECTS)
+	$(CXX) -o $@ $^
+
 clean:
-	rm $(PROGRAMS) *.o
+	rm $(PROGRAMS) *.o *.d
+
+# Include dependencies for each source
+-include $(OBJS:%.o=%.d)
