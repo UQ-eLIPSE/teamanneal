@@ -11,7 +11,7 @@ void Person::add_attribute_value_pair(const string& attrName, const string& strV
     Attribute* attr = allAttributes.find(attrName);
     assert(attr);
 
-    // Add the value to the list of values associated with this attribute (it
+    // Add the value to the list of values associated with this attribute (if
     // it is already there then it won't be added again)
     attr->add_value(strValue);
 
@@ -25,7 +25,7 @@ void Person::add_attribute_value_pair(const string& attrName, const string& strV
     Attribute* attr = allAttributes.find(attrName);
     assert(attr);
 
-    // Add the value to the list of values associated with this attribute (it
+    // Add the value to the list of values associated with this attribute (if
     // it is already there then it won't be added again)
     attr->add_value(strValue);
 
