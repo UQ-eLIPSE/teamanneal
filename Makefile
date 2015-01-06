@@ -1,8 +1,11 @@
-PROGRAMS = filedata_test csv_test json_test
+PROGRAMS = filedata_test csv_test json_test csv_extract_test
 FILEDATA_TEST_OBJECTS = filedata.o filedata_test.o exceptions.o
 CSV_TEST_OBJECTS = csv.o csv_test.o filedata.o exceptions.o
 JSON_TEST_OBJECTS = filedata.o jsonExceptions.o json.o json_test.o exceptions.o stringCursor.o
-OBJS = $(FILEDATA_TEST_OBJECTS) $(CSV_TEST_OBJECTS) $(JSON_TEST_OBJECTS)
+CSV_EXTRACT_TEST_OBJECTS = csv.o csv_extract.o csv_extract_test.o person.o attribute.o exceptions.o \
+	filedata.o 
+OBJS = $(FILEDATA_TEST_OBJECTS) $(CSV_TEST_OBJECTS) $(JSON_TEST_OBJECTS) \
+	$(CSV_EXTRACT_TEST_OBJECTS)
 
 # Default C compiler
 CC=gcc
@@ -27,8 +30,11 @@ csv_test: $(CSV_TEST_OBJECTS)
 json_test: $(JSON_TEST_OBJECTS)
 	$(CXX) -o $@ $^
 
+csv_extract_test: $(CSV_EXTRACT_TEST_OBJECTS)
+	$(CXX) -o $@ $^
+
 clean:
-	rm $(PROGRAMS) *.o *.d
+	rm -f $(PROGRAMS) *.o *.d
 
 # Include dependencies for each source
 -include $(OBJS:%.o=%.d)
