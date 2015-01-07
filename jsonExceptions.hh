@@ -35,4 +35,9 @@ public:
     UnicodeJSONException(StringCursor& cursor);
 };
 
+class MissingAttributeException : public JSONException {
+public:
+    MissingAttributeException(string& mesg);
+};
+
 #endif

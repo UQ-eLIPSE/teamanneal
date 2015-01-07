@@ -59,3 +59,9 @@ UnicodeJSONException::UnicodeJSONException(StringCursor& cursor)
     message = s.str();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// MissingAttributeException
+MissingAttributeException::MissingAttributeException(string& mesg)
+{
+    message = mesg;
+}
