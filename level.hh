@@ -28,7 +28,8 @@ public:
     Level(const string& fieldName, Level::NameType type);
 
     // Other member functions
-    void setSizes(int min, int ideal, int max);
+    void set_sizes(int min, int ideal, int max);
+    NameType get_type();
 
     // Pure virtual - this gets overwritten in the child classes
     virtual string getName(int teamNum) const = 0;
@@ -37,22 +38,23 @@ public:
 class NumericalLevel : public Level {
 public:
     int startAt;	// usually 0 or 1
-    int numDigits;	// 0 if no leadings zeros to be used, if non-zero indicates field width
-    			// with leading zeros
+    bool leadingZeros;	// true if leading zeros are to be used when outputing this team number
+    int numDigits;	// if leadingZeros is true, this is the field width to be used
 
     // Constructor
-    NumericalLevel(const string& fieldName);
+    NumericalLevel(const string& fieldName, int startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
+    void useLeadingZeros();
 };
 
 class CharacterLevel : public Level {
 public:
-    char startAt;
+    char startAt;	// usually 'a' or 'A'
 
     // Constructor
-    CharacterLevel(const string& fieldName);
+    CharacterLevel(const string& fieldName, char startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
@@ -66,6 +68,7 @@ public:
     StringLevel(const string& fieldName);
 
     // Other member functions
+    void add_name(const string& name);
     virtual string getName(int teamNum) const;
 };
 

@@ -19,19 +19,25 @@ Level::Level(const string& fieldName, Level::NameType type) :
 }
 
 // Other member functions
-void Level::setSizes(int min, int ideal, int max)
+void Level::set_sizes(int min, int ideal, int max)
 {
     minSize = min;
     idealSize = ideal;
     maxSize = max;
 }
 
+Level::NameType Level::get_type()
+{
+    return type;
+}
+
 ////////////// NumericalLevel /////////////////////////////////////////////////
 
 // Constructor
-NumericalLevel::NumericalLevel(const string& fieldName) :
+NumericalLevel::NumericalLevel(const string& fieldName, int startAt) :
 	Level(fieldName, Level::NUMERICAL),
-	startAt(1),
+	startAt(startAt),
+	leadingZeros(false),
 	numDigits(0)
 {
 }
@@ -49,12 +55,17 @@ string NumericalLevel::getName(int teamNum) const
     return s.str();
 }
 
+void NumericalLevel::useLeadingZeros()
+{
+    leadingZeros = true;
+}
+
 ////////////// CharacterLevel /////////////////////////////////////////////////
 
 // Constructor
-CharacterLevel::CharacterLevel(const string& fieldName) :
+CharacterLevel::CharacterLevel(const string& fieldName, char startAt) :
 	Level(fieldName, Level::CHARACTER),
-	startAt('A')
+	startAt(startAt)
 {
 }
 
@@ -80,6 +91,11 @@ StringLevel::StringLevel(const string& fieldName) :
 }
 
 // Other member functions
+void StringLevel::add_name(const string& name)
+{
+    names.push_back(name);
+}
+
 string StringLevel::getName(int teamNum) const
 {
     std::stringstream s;
