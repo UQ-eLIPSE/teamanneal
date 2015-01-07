@@ -172,6 +172,20 @@ static JSONString* extractJSONString(StringCursor& cursor)
 ///////////////////////////////////////////////////////////////////////////////
 // Member functions
 
+const char* JSONValue::type_to_string(JSONType t)
+{
+    switch(t) {
+	case JSON_STRING : return "string";
+	case JSON_NUMBER : return "number";
+	case JSON_OBJECT : return "object";
+	case JSON_ARRAY : return "array";
+	case JSON_BOOL : return "bool";
+	case JSON_NULL : return "null";
+	default:
+	    assert("Invalid JSONType");
+    }
+}
+
 JSONValue::JSONValue(JSONType t)
 	: type(t)
 {
@@ -309,13 +323,21 @@ void JSONObject::append(const string& name, JSONValue* const value)
     nameValuePairs.insert(make_pair(name, value));
 }
 
+bool JSONObject::has_attribute(const string& name)
+{
+    map<string,JSONValue*>::iterator it = nameValuePairs.find(name);
+    return(it != nameValuePairs.end());
+}
+
 JSONValue* JSONObject::find(const string& name)
 {
     map<string,JSONValue*>::iterator it = nameValuePairs.find(name);
     if(it != nameValuePairs.end()) {
 	return it->second;
     } else {
-	return nullptr;
+	string mesg = "Expected to find attribute ";
+	mesg += name;
+	throw MissingAttributeException(mesg);
     }
 }
 
@@ -325,7 +347,11 @@ JSONValue* JSONObject::find(const string& name, JSONType type)
     if(it != nameValuePairs.end() && it->second->has_type(type)) {
 	return it->second;
     } else {
-	return nullptr;
+	string mesg = "Expected to find attribute ";
+	mesg += name;
+	mesg += " of type ";
+	mesg += type_to_string(type);
+	throw MissingAttributeException(mesg);
     }
 }
 
@@ -403,6 +429,16 @@ JSONBool::JSONBool(bool val) :
 	JSONValue(JSON_BOOL),
 	value(val)
 {
+}
+
+void JSONBool::set_value(bool val)
+{
+    value = val;
+}
+
+bool JSONBool::get_value() 
+{
+    return value;
 }
 
 void JSONBool::print(ostream& str) const

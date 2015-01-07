@@ -19,6 +19,7 @@ typedef enum { JSON_STRING, JSON_NUMBER, JSON_OBJECT, JSON_ARRAY, JSON_BOOL, JSO
 class JSONValue {
 public:
     JSONType type;
+    static const char* type_to_string(JSONType type);
 
     // Constructor
     JSONValue(JSONType t);
@@ -86,8 +87,9 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 class JSONObject: public JSONValue { 
-    typedef map<string,JSONValue*>::iterator Iterator;
 public:
+    typedef map<string,JSONValue*>::iterator Iterator;
+
     map<string,JSONValue*> nameValuePairs;
 
     // Constructor
@@ -97,9 +99,14 @@ public:
     // Append
     void append(const string& name, JSONValue* const value);
 
-    // Find an attribute with the given name
+    // Returns whether the object has an attribute with the given name
+    bool has_attribute(const string& name);
+
+    // Find an attribute with the given name and return its value 
+    // - throws MissingAttributeException if not found
     JSONValue* find(const string& name);
-    // Find an attribute with the given name and type, null otherwise
+    // Find an attribute with the given name and type - throws MissingAttributeException 
+    // if not found
     JSONValue* find(const string& name, JSONType type);
 
     // Return an iterator over the map
@@ -114,8 +121,9 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 class JSONArray: public JSONValue {
-    typedef vector<JSONValue*>::iterator Iterator;
 public:
+    typedef vector<JSONValue*>::iterator Iterator;
+
     vector<JSONValue*> members;
 
     // Constructor
@@ -138,11 +146,16 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////
 class JSONBool: public JSONValue {
-public:
+protected:
     bool value;
 
+public:
     // Constructor
     JSONBool(bool val);
+
+    // Other member functions
+    void set_value(bool val);
+    bool get_value();
 
 protected:
     // Output function
