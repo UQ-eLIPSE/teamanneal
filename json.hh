@@ -6,6 +6,7 @@
 #define JSON_HH
 
 #include <vector>
+#include <map>
 #include <iostream>
 #include <utility>	// for pair<>
 
@@ -13,9 +14,7 @@ using namespace std;
 
 typedef enum { JSON_STRING, JSON_NUMBER, JSON_OBJECT, JSON_ARRAY, JSON_BOOL, JSON_NULL } JSONType;
 
-class JSONValue;
-typedef pair<string,JSONValue*> JSONPair;
-
+///////////////////////////////////////////////////////////////////////////////
 // Virtual base class
 class JSONValue {
 public:
@@ -30,65 +29,114 @@ public:
     // Output operator
     friend ostream& operator<<(ostream& stream, const JSONValue& v);
 
+    // Other member functions
+    JSONType get_type();
+    bool has_type(JSONType type);
+    bool is_array();
+    bool is_object();
+    bool is_string();
+    bool is_number();
+    bool is_bool();
+
+    // Returns true if the JSON value is a string which matches the given string str
+    bool match(const string& str);
+    bool match(double d);
 protected:
     // Print method that will be defined by all child classes
     virtual void print(ostream& str) const = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONString: public JSONValue {
-public:
+private:
     string value;
+public:
 
     // Constructor
     JSONString(string val);
 
+    // Other member functions
+    bool match(const string& str);
+    const string& get_value();
+    void set_value(const string& str);
+
+protected:
     // Output function
     void print(ostream& str) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONNumber: public JSONValue {
-public:
+private:
     double value;
+public:
 
     // Constructor
     JSONNumber(double d);
 
+    // Other member functions
+    // Returns true if the value matches that in d, false otherwise
+    bool match(double d);
+    double get_value();
+    void set_value(double d);
 protected:
     // Output function
     void print(ostream& str) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONObject: public JSONValue { 
+    typedef map<string,JSONValue*>::iterator Iterator;
 public:
-    vector<JSONPair> nameValuePairs;
+    map<string,JSONValue*> nameValuePairs;
 
     // Constructor
     JSONObject(void);
 
+    // Other member functions
     // Append
     void append(const string& name, JSONValue* const value);
+
+    // Find an attribute with the given name
+    JSONValue* find(const string& name);
+    // Find an attribute with the given name and type, null otherwise
+    JSONValue* find(const string& name, JSONType type);
+
+    // Return an iterator over the map
+    Iterator iterator();
+    // Return an iterator to the end
+    Iterator end();
 
 protected:
     // Output function
     void print(ostream& str) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONArray: public JSONValue {
+    typedef vector<JSONValue*>::iterator Iterator;
 public:
     vector<JSONValue*> members;
 
     // Constructor
     JSONArray(void);
 
+    // Other member functions
     // Append operator
     JSONArray& operator+=(JSONValue* const rhs);
     void append(JSONValue* const rhs);
+
+    // Return an iterator to the beginning of the array
+    Iterator iterator();
+    // Return an iterator to the end of the array
+    Iterator end();
 
 protected:
     // Output function
     void print(ostream& str) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONBool: public JSONValue {
 public:
     bool value;
@@ -101,6 +149,7 @@ protected:
     void print(ostream& str) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class JSONNull: public JSONValue {
 public:
     // Constructor

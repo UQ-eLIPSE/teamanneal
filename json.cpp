@@ -111,7 +111,7 @@ static JSONObject* extractJSONObject(StringCursor& cursor)
 	    // Didn't find a JSON Value
 	    throw MissingJSONValueException (cursor);
 	}
-	obj->append(name->value, value);
+	obj->append(name->get_value(), value);
 
 	// next character should be , or }
 	if(!cursor.match_and_skip(",") && (*cursor != '}')) {
@@ -203,12 +203,64 @@ ostream& operator<<(ostream& stream, const JSONValue& v)
     return stream;
 }
 
+// Type getter
+JSONType JSONValue::get_type()
+{
+    return type;
+}
+
+bool JSONValue::has_type(JSONType t)
+{
+    return (t == type);
+}
+
+bool JSONValue::is_array() 	{ return (type == JSON_ARRAY); }
+bool JSONValue::is_object() 	{ return (type == JSON_OBJECT); }
+bool JSONValue::is_string() 	{ return (type == JSON_STRING); }
+bool JSONValue::is_number() 	{ return (type == JSON_NUMBER); }
+bool JSONValue::is_bool() 	{ return (type == JSON_BOOL); }
+
+bool JSONValue::match(const string& str)
+{
+    if(type == JSON_STRING) {
+	JSONString* stringValue = (JSONString*)this;
+	return stringValue->match(str);
+    } else {
+	return false;
+    }
+}
+
+bool JSONValue::match(double d)
+{
+    if(type == JSON_NUMBER) {
+	JSONNumber* numValue = (JSONNumber*)this;
+	return numValue->match(d);
+    } else {
+	return false;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // JSONString
 JSONString::JSONString(string val) :
 	JSONValue(JSON_STRING),
 	value(val)
 {
+}
+
+bool JSONString::match(const string& str)
+{
+    return (str == value);
+}
+
+const string& JSONString::get_value()
+{
+    return value;
+}
+
+void JSONString::set_value(const string& str)
+{
+    value = str;
 }
 
 void JSONString::print(ostream& str) const
@@ -225,6 +277,21 @@ JSONNumber::JSONNumber(double d) :
 {
 }
 
+bool JSONNumber::match(double d)
+{
+    return (value == d);
+}
+
+double JSONNumber::get_value() 
+{
+    return value;
+}
+
+void JSONNumber::set_value(double d)
+{
+    value = d;
+}
+
 void JSONNumber::print(ostream& str) const
 {
     str << value << ' ';
@@ -239,14 +306,44 @@ JSONObject::JSONObject(void) :
 
 void JSONObject::append(const string& name, JSONValue* const value)
 {
-    nameValuePairs.push_back(make_pair(name, value));
+    nameValuePairs.insert(make_pair(name, value));
+}
+
+JSONValue* JSONObject::find(const string& name)
+{
+    map<string,JSONValue*>::iterator it = nameValuePairs.find(name);
+    if(it != nameValuePairs.end()) {
+	return it->second;
+    } else {
+	return nullptr;
+    }
+}
+
+JSONValue* JSONObject::find(const string& name, JSONType type)
+{
+    map<string,JSONValue*>::iterator it = nameValuePairs.find(name);
+    if(it != nameValuePairs.end() && it->second->has_type(type)) {
+	return it->second;
+    } else {
+	return nullptr;
+    }
+}
+
+JSONObject::Iterator JSONObject::iterator()
+{
+    return nameValuePairs.begin();
+}
+
+JSONObject::Iterator JSONObject::end()
+{
+    return nameValuePairs.end();
 }
 
 void JSONObject::print(ostream& str) const
 {
     str << "{ ";
     bool first = true;
-    for(vector<const JSONPair>::iterator it = nameValuePairs.begin(); 
+    for(map<string,JSONValue*>::const_iterator it = nameValuePairs.begin(); 
 	    it != nameValuePairs.end(); it++) {
 	if(!first) {
 	    str << ", ";
@@ -273,6 +370,16 @@ JSONArray& JSONArray::operator+=(JSONValue* const rhs)
 void JSONArray::append(JSONValue* const rhs)
 {
     members.push_back(rhs);
+}
+
+JSONArray::Iterator JSONArray::iterator()
+{
+    return members.begin();
+}
+
+JSONArray::Iterator JSONArray::end()
+{
+    return members.end();
 }
 
 void JSONArray::print(ostream& str) const
