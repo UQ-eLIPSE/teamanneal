@@ -155,10 +155,118 @@ static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
 
 static void json_parse_name_format_v1(AnnealInfo* annealInfo, JSONObject* nameFormatObject)
 {
+    JSONString* fieldNameString = (JSONString*)nameFormatObject->find("field", JSON_STRING);
+    JSONString* formatString = (JSONString*)nameFormatObject->find("format", JSON_STRING);
+    annealInfo->set_team_name_format(formatString->get_value());
+    annealInfo->set_team_name_field(fieldNameString->get_value());
 }
 
 static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constraintArray)
 {
+    Constraint::Type constraintType;
+    Constraint::Operation operation;
+
+    for(JSONArray::Iterator it = constraintArray->iterator();
+	    it != constraintArray->end(); ++it) {
+	// Each element in the array should be a JSON object
+	if(!(*it)->is_object()) {
+	    throw ConstraintException("Constraint array should only contain JSON objects");
+	}
+	JSONObject* obj = (JSONOBbject*)(*it);
+	// There must be attributes "level", "weight", "operator", "field"
+	// There MAY be attributes "of-size", "count", "field-operator", "field-value"
+
+	double level = obj->find_number("level");
+	if(level != 1.0 && level != 2.0 and level !=3.0) {
+	    throw ConstraintException("Constraint level must be 1, 2 or 3");
+	}
+
+	const string& operatorString = obj->find_string("operator");
+	if(operatorString == "exactly") {
+	    constraintType = COUNT_EXACT;
+	} else if(operatorString == "at least") {
+	    constraintType = COUNT_AT_LEAST;
+	} else if(operatorString == "at most") {
+	    constraintType = COUNT_AT_MOST;
+	} else if(operatorString == "as many as possible") {
+	    constraintType = COUNT_MAXIMISE;
+	} else if(operatorString == "as few as possible") {
+	    constraintType = COUNT_MINIMISE;
+	} else if(operatorString == "as similar as possible") {
+	    constraintType = HOMOGENEOUS;
+	} else if(operatorString == "as different as possible") {
+	    constraintType = HETEROGENEOUS;
+	} else {
+	    throw ConstraintException("Constraint operator must be one of 'exactly','at least','at most',"
+		    "'as similar as possible','as different as possible','as many as possible',"
+		    "'as few as possible' not ", operatorString);
+	}
+
+	string weightString = obj->find_string("weight");
+	if(weightString == "must have") {
+	    weight = 1000.0;
+	} else if(weightString == "should have") {
+	    weight = 50.0;
+	} else if(weightString == "ideally has") {
+	    weight = 10.0;
+	} else if(weightString == "could have") {
+	    weight = 2.0;
+	} else {
+	    throw ConstraintException("Constraint weight must be one of 'must have','should have',"
+		    "'ideally has','could have' not ", weightString);
+	}
+	const string& field = obj->find_string("field");
+
+	if(constraintType == HOMOGENEOUS || constraintType == HETEROGENEOUS) {
+	    Constraint* constraint = new SimilarityConstraint(constraintType, field, (int)level, weight);
+	    annealInfo->add_constraint(constraint);
+	} else {
+	    // Count constraint
+	    CountConstraint* countConstraint;
+	    // There must be "field-operator" and "field-value" attributes
+	    // The field-value attribute could be numerical or string
+	    // There will be a "count" attribute if the type is COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST
+	    const string& fieldOperatorString = obj->find_string("field-operator");
+	    if(fieldOperatorString == "equal to") {
+		operation = EQUAL;
+	    } else if(fieldOperatorString == "not equal to") {
+		operation = NOT_EQUAL;
+	    } else if(fieldOperatorString == "less than or equal to") {
+		operation = LESS_THAN_OR_EQUAL;
+	    } else if(fieldOperatorString == "less than") {
+		operation = LESS_THAN;
+	    } else if(fieldOperatorString == "greater than or equal to") {
+		operation = GREATER_THAN_OR_EQUAL;
+	    } else if(fieldOperatorString == "greater than") {
+		operation = GREATER_THAN;
+	    } else {
+		throw ConstraintException("Constraint field-operator should be one of 'equal to',"
+			"'not equal to','less than or equal to','less than',"
+			"'greater than or equal to','greater than' not ", fieldOperatorString);
+	    }
+	    JSONValue* fieldValue = obj->find("field-value");
+	    if(fieldValue->is_string()) {
+		// Check operation has correct type
+		if(operation != EQUAL && operation != NOT_EQUAL) {
+		    throw ConstraintException("String constraints can only use 'equal to' or 'not equal to' "
+			    " not ", fieldOperatorString);
+		}
+		countConstraint = new CountStringConstraint(constraintType, fieldString, operation,
+			((JSONString*)fieldValue)->get_value(), (int)level, weight);
+	    } else if(fieldValue->is_number()) {
+		countConstraint = new CountNumberConstraint(constraintType, fieldString, operation,
+			((JSONNumber*)fieldValue)->get_value(), (int)level, weight);
+	    } else {
+		throw ConstraintException("Constraint field-value should be number or string");
+	    }
+	    if(constraintType == COUNT_EXACT || constraintType == COUNT_AT_LEAST ||
+		    constraintType == COUNT_AT_MOST) {
+		double count = obj->find_number("count");
+		countConstraint->set_target((int)count);
+	    }
+	    annealInfo->add_constraint(countConstraint);
+	}
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
