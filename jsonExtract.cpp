@@ -163,6 +163,7 @@ static void json_parse_name_format_v1(AnnealInfo* annealInfo, JSONObject* nameFo
 
 static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constraintArray)
 {
+    Constraint* constraint;
     Constraint::Type constraintType;
     Constraint::Operation operation;
 
@@ -223,8 +224,7 @@ static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constra
 
 	if(constraintType == Constraint::HOMOGENEOUS || 
 		constraintType == Constraint::HETEROGENEOUS) {
-	    Constraint* constraint = new SimilarityConstraint(constraintType, field, (int)level, weight);
-	    annealInfo->add_constraint(constraint);
+	    constraint = new SimilarityConstraint(constraintType, field, (int)level, weight);
 	} else {
 	    // Count constraint
 	    CountConstraint* countConstraint;
@@ -272,8 +272,12 @@ static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constra
 		double count = obj->find_number("count");
 		countConstraint->set_target((int)count);
 	    }
-	    annealInfo->add_constraint(countConstraint);
+	    constraint = countConstraint;
 	}
+	if(obj->has_attribute("of-size")) {
+	    constraint->set_applicable_team_size((int)(obj->find_number("of-size")));
+	}
+	annealInfo->add_constraint(constraint);
     }
 }
 
