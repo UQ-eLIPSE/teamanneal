@@ -6,9 +6,9 @@
 #include <assert.h>
 
 // Constructor
-AnnealInfo::AnnealInfo() :
+AnnealInfo::AnnealInfo() /* :
     partitionField(nullptr),
-    idField(nullptr)
+    idField(nullptr) */
 {
 }
 
@@ -34,9 +34,14 @@ void AnnealInfo::set_id_field(const string& fieldName)
     idFieldName = fieldName;
 }
 
-void AnnealInfo::set_name_format(const string& format)
+void AnnealInfo::set_team_name_format(const string& format)
 {
-    nameFormat = format;
+    teamNameFormat = format;
+}
+
+void AnnealInfo::set_team_name_field(const string& fieldName)
+{
+    teamNameField = fieldName;
 }
 
 int AnnealInfo::num_constraints()
@@ -61,6 +66,7 @@ Level* AnnealInfo::get_level(int n)
     return allLevels[n-1];
 }
 
+/*
 Attribute* AnnealInfo::get_partition_field()
 {
     return partitionField;
@@ -70,8 +76,14 @@ Attribute* AnnealInfo::get_id_field()
 {
     return idField;
 }
+*/
 
-const string& AnnealInfo::get_name_format()
+const string& AnnealInfo::get_team_name_format()
 {
-    return nameFormat;
+    return teamNameFormat;
+}
+
+const string& AnnealInfo::get_team_name_field()
+{
+    return teamNameField;
 }

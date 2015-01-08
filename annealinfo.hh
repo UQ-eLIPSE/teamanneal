@@ -18,9 +18,10 @@ private:
     vector<Level*> allLevels;
     string partitionFieldName;
     string idFieldName;
-    Attribute* partitionField;
-    Attribute* idField;
-    string nameFormat;
+    //Attribute* partitionField;
+    //Attribute* idField;
+    string teamNameField;
+    string teamNameFormat;
 
 public:
     // Constructor
@@ -31,16 +32,18 @@ public:
     void add_level(Level* level);
     void set_partition_field(const string& fieldName);
     void set_id_field(const string& fieldName);
-    void set_name_format(const string& format);
+    void set_team_name_format(const string& format);
+    void set_team_name_field(const string& fieldName);
 
     int num_constraints();
     int num_levels();
     Constraint* get_constraint(int n);
     // Get the n'th level - where n is 1 based
     Level* get_level(int n);
-    Attribute* get_partition_field();
-    Attribute* get_id_field();
-    const string& get_name_format();
+    //Attribute* get_partition_field();
+    //Attribute* get_id_field();
+    const string& get_team_name_format();
+    const string& get_team_name_field();
 };
 
 #endif
