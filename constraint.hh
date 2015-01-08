@@ -11,8 +11,8 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 class Constraint {
 public:
-    enum Type { COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST, COUNT_MAXIMISE, COUNT_MINIMISE,
-	    HOMOGENEOUS, HETEROGENEOUS };
+    enum Type { COUNT_EXACT, COUNT_NOT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST, 
+	    COUNT_MAXIMISE, COUNT_MINIMISE, HOMOGENEOUS, HETEROGENEOUS };
     enum Operation { LESS_THAN, 
             LESS_THAN_OR_EQUAL,
             EQUAL,
@@ -51,7 +51,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class CountConstraint : public Constraint {
 public:
-    int targetCount;		// Only for COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST
+    int targetCount;		// Only for COUNT_EXACT, ...NOT_EXACT, ...AT_LEAST, ...AT_MOST
     Operation operation;	
 
     // Constructor
@@ -69,7 +69,7 @@ public:
 
     // Constructor
     CountStringConstraint(Constraint::Type type, const string& field, Operation operation,
-	    string& comparisonValue, int level, double weight);
+	    const string& comparisonValue, int level, double weight);
 
 };
 

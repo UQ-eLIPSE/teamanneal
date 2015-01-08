@@ -42,7 +42,8 @@ CountConstraint::CountConstraint(Constraint::Type type,
 
 void CountConstraint::set_target(int target)
 {
-    assert(type == COUNT_EXACT || type == COUNT_AT_LEAST || type == COUNT_AT_MOST);
+    assert(type == COUNT_EXACT || type == COUNT_NOT_EXACT || 
+	    type == COUNT_AT_LEAST || type == COUNT_AT_MOST);
     targetCount = target;
 }
 
@@ -51,7 +52,7 @@ void CountConstraint::set_target(int target)
 CountStringConstraint::CountStringConstraint(Constraint::Type type,
 	    const string& field, 
 	    Operation operation, 
-	    string& comparisonValue,
+	    const string& comparisonValue,
 	    int level, 
 	    double weight) :
 	CountConstraint(type, field, operation, level, weight),
