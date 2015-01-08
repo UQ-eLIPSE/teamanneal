@@ -355,6 +355,18 @@ JSONValue* JSONObject::find(const string& name, JSONType type)
     }
 }
 
+double JSONObject::find_number(const string& name)
+{
+    JSONValue* value = find(name, JSON_NUMBER);
+    return ((JSONNumber*)value)->get_value();
+}
+
+const string& JSONObject::find_string(const string& name)
+{
+    JSONValue* value = find(name, JSON_STRING);
+    return ((JSONString*)value)->get_value();
+}
+
 JSONObject::Iterator JSONObject::iterator()
 {
     return nameValuePairs.begin();

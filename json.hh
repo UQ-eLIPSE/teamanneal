@@ -41,6 +41,7 @@ public:
 
     // Returns true if the JSON value is a string which matches the given string str
     bool match(const string& str);
+    // Returns true if the JSON value is a number which matches the given value
     bool match(double d);
 protected:
     // Print method that will be defined by all child classes
@@ -108,6 +109,12 @@ public:
     // Find an attribute with the given name and type - throws MissingAttributeException 
     // if not found
     JSONValue* find(const string& name, JSONType type);
+    // Find a number attribute with the given name and return the value. Throw
+    // MissingAttributeException if not found
+    double find_number(const string& name);
+    // Find a string attribute with the given name and return a reference to the string.
+    // Throw MissingAttributeException if not found
+    const string& find_string(const string& name);
 
     // Return an iterator over the map
     Iterator iterator();
