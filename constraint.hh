@@ -5,8 +5,10 @@
 #ifndef CONSTRAINT_HH
 #define CONSTRAINT_HH
 
-#include "attribute.hh"
+#include <string>
+using namespace std;
 
+///////////////////////////////////////////////////////////////////////////////
 class Constraint {
 public:
     enum Type { COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST, COUNT_MAXIMISE, COUNT_MINIMISE,
@@ -21,8 +23,8 @@ public:
     // Type of this constraint
     Constraint::Type type;
 
-    // Attribute associated with this constraint
-    const Attribute& attribute;
+    // Field name (attribute) associated with this constraint
+    const string fieldName;
 
     // Level that this constraint applies to (1 means top level, etc.)
     // Groups at the lowermost level (highest number) contain people, 
@@ -38,7 +40,7 @@ public:
     ////////////
 
     // Constructor
-    Constraint(const Attribute& attr, Constraint::Type type, int level, double weight);
+    Constraint(Constraint::Type type, const string& field, int level, double weight);
 
     // Other member functions
     Constraint::Type get_type(void);
@@ -46,41 +48,47 @@ public:
     bool applies_to_team_size(int teamSize);
 };
 
-class CountStringConstraint : public Constraint {
+///////////////////////////////////////////////////////////////////////////////
+class CountConstraint : public Constraint {
 public:
     int targetCount;		// Only for COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST
-    Operation operation;	// Only EQUAL or NOT_EQUAL is supported
+    Operation operation;	
+
+    // Constructor
+    CountConstraint(Constraint::Type type, const string& field, Operation operation,
+	    int level, double weight);
+
+    // Other member functions
+    void set_target(int target);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+class CountStringConstraint : public CountConstraint {
+public:
     string comparisonValue;	
 
-    // Constructors
-    // type must be one of COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST in the following
-    CountStringConstraint(Constraint::Type type, const Attribute& attr, int target,
-	    Operation operation, string& value, int level, double weight);
-    // type must be one of COUNT_MINIMISE, COUNT_MAXIMISE in the following
-    CountStringConstraint(Constraint::Type type, const Attribute& attr, Operation operation,
-	    string& value, int level, double weight);
+    // Constructor
+    CountStringConstraint(Constraint::Type type, const string& field, Operation operation,
+	    string& comparisonValue, int level, double weight);
+
 };
 
-class CountNumberConstraint : public Constraint {
+///////////////////////////////////////////////////////////////////////////////
+class CountNumberConstraint : public CountConstraint {
 public:
-    int targetCount;		// Only for COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST
-    Operation operation;	// Any operator is OK
     double comparisonValue;
 
-    // Constructors
-    // type must be one of COUNT_EXACT, COUNT_AT_LEAST, COUNT_AT_MOST in the following
-    CountNumberConstraint(Constraint::Type type, const Attribute& attr, int target,
-	    Operation operation, double value, int level, double weight);
-    // type must be one of COUNT_MINIMISE, COUNT_MAXIMISE in the following
-    CountNumberConstraint(Constraint::Type type, const Attribute& attr, Operation operation,
-	    double value, int level, double weight);
+    // Constructor
+    CountNumberConstraint(Constraint::Type type, const string& field, Operation operation,
+	    double comparisonValue, int level, double weight);
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class SimilarityConstraint : public Constraint {
 public:
     // Constructor
     // type must be one of HOMOGENEOUS or HETEROGENEOUS
-    SimilarityConstraint(Constraint::Type type, const Attribute& attr, 
+    SimilarityConstraint(Constraint::Type type, const string& field, 
 	    int level, double weight);
 };
 
