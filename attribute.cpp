@@ -5,9 +5,6 @@
 #include <cmath>
 using namespace std;
 
-// Global variable - all the known attributes
-AllAttributes allAttributes;
-
 Attribute::Attribute(const string& name, Attribute::Type type) : 
         name(name), type(type) {}
 
@@ -49,26 +46,14 @@ void Attribute::add_value(const string& value) {
     values.insert(value);
 }
 
-/******************* AllAttributes *******************************************/
-
-ostream& operator<<(ostream& os, const AllAttributes& a) {
-    for(map<string,Attribute>::const_iterator i = a.all.begin(); i != a.all.end(); i++) {
-        os << i->second << endl;
-    }
-    return os;
+const string& Attribute::get_name() {
+    return name;
 }
 
-void AllAttributes::add(const string& name, Attribute::Type type) {
-    Attribute a(name, type);
-    all.insert(pair<string,Attribute>(name, a));
+bool Attribute::is_string() {
+    return type == Attribute::STRING;
 }
 
-Attribute* AllAttributes::find(const string& name) {
-    map<string,Attribute>::iterator it;
-    it = all.find(name);
-    if(it != all.end()) {
-        return &(it->second);
-    } else {
-        return NULL;
-    }
+bool Attribute::is_numeric() {
+    return type == Attribute::NUMERICAL;
 }

@@ -18,7 +18,7 @@ public:
 
     const string name;
     Attribute::Type type;
-    set<const string> values;
+    set<const string> values;	// Set of all possible values for this attribute (as strings)
 
     // Constructor
     Attribute(const string& name, Attribute::Type type);
@@ -29,20 +29,10 @@ public:
 
     // Other Member Functions
     void add_value(const string& value);
+    const string& get_name();
+    bool is_string();
+    bool is_numeric();
 };
-
-class AllAttributes {
-public:
-    map<string, Attribute> all;
-
-    // Operators
-    friend ostream& operator<<(ostream& os, const AllAttributes& a);
-
-    void add(const string& attrName, Attribute::Type type);
-    Attribute* find(const string& name);
-};
-
-extern AllAttributes allAttributes;
 
 #endif 
 
