@@ -5,12 +5,12 @@
 #include "jsonExtract.hh"
 
 // The following are strings we'll look for in the JSON
-static const string versionString = "tool-version";
-static const string identifierString = "identifier";
-static const string partitionString = "partition";
-static const string levelsString = "levels";
-static const string nameFormatString = "name-format";
-static const string constraintsString = "constraints";
+static const string VERSION_STRING = "tool-version";
+static const string IDENTIFIER_STRING = "identifier";
+static const string PARTITION_STRING = "partition";
+static const string LEVELS_STRING = "levels";
+static const string NAME_FORMAT_STRING = "name-format";
+static const string CONSTRAINTS_STRING = "constraints";
 
 static const double MUST_HAVE_WEIGHT = 1000.0;
 static const double SHOULD_HAVE_WEIGHT = 50.0;
@@ -28,7 +28,7 @@ const string& get_identifier_from_json_object(JSONValue* val)
     if(!val->is_object()) {
 	throw ConstraintException("Expected top level JSON object");
     }
-    return ((JSONObject*)val)->find_string(identifierString);
+    return ((JSONObject*)val)->find_string(IDENTIFIER_STRING);
 }
 
 void extract_constraints_from_json_data(AnnealInfo& annealInfo, JSONValue* value)
@@ -37,9 +37,9 @@ void extract_constraints_from_json_data(AnnealInfo& annealInfo, JSONValue* value
 	throw ConstraintException("Expected top level JSON object");
     }
     JSONObject* obj = (JSONObject*)value;
-    JSONValue* version = obj->find(versionString);
+    JSONValue* version = obj->find(VERSION_STRING);
     if(!version) {
-	throw ConstraintException("Expected tool version number in field ", versionString);
+	throw ConstraintException("Expected tool version number in field ", VERSION_STRING);
     }
     if(version->match("1") || version->match(1)) {
 	// Data format v1 - string or number accepted
@@ -54,7 +54,7 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 {
     // Iterate over all the fields of the object
     for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
-	if(it->first == partitionString) {
+	if(it->first == PARTITION_STRING) {
 	    if(it->second->is_string()) {
 		JSONString* str = (JSONString*)(it->second);
 		annealInfo.set_partition_field(str->get_value());
@@ -62,27 +62,29 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 		    throw ConstraintException("Partition field not found: ", str->get_value());
 		}
 	    } else {
-		throw ConstraintException("Expected string value for attribute ", partitionString);
+		throw ConstraintException("Expected string value for attribute ", PARTITION_STRING);
 	    }
-	} else if(it->first == levelsString) {
+	} else if(it->first == LEVELS_STRING) {
 	    if(it->second->is_array()) {
 		json_parse_levels_v1(annealInfo, (JSONArray*)(it->second));
 	    } else {
-		throw ConstraintException("Expected array value for attribute ", levelsString);
+		throw ConstraintException("Expected array value for attribute ", LEVELS_STRING);
 	    }
-	} else if(it->first == nameFormatString) {
+	} else if(it->first == NAME_FORMAT_STRING) {
 	    if(it->second->is_object()) {
 		json_parse_name_format_v1(annealInfo, (JSONObject*)(it->second));
 	    } else {
-		throw ConstraintException("Expected object value for attribute ", nameFormatString);
+		throw ConstraintException("Expected object value for attribute ", 
+			NAME_FORMAT_STRING);
 	    }
-	} else if(it->first == constraintsString) {
+	} else if(it->first == CONSTRAINTS_STRING) {
 	    if(it->second->is_array()) {
 		json_parse_constraints_v1(annealInfo, (JSONArray*)(it->second));
 	    } else {
-		throw ConstraintException("Expected array value for attribute ", constraintsString);
+		throw ConstraintException("Expected array value for attribute ", 
+			CONSTRAINTS_STRING);
 	    }
-	} else if(it->first == versionString || it->first == identifierString) {
+	} else if(it->first == VERSION_STRING || it->first == IDENTIFIER_STRING) {
 	    // Do nothing - we've already extracted these
 	} else {
 	    // Anything else is an invalid field
