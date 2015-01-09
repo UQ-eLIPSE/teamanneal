@@ -52,8 +52,6 @@ void extract_constraints_from_json_data(AnnealInfo& annealInfo, JSONValue* value
 // Parse information from version 1 JSON object
 void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 {
-    bool foundIdentifier = false;
-
     // Iterate over all the fields of the object
     for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
 	if(it->first == partitionString) {
