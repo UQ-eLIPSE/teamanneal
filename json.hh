@@ -110,10 +110,10 @@ public:
     // if not found
     JSONValue* find(const string& name, JSONType type);
     // Find a number attribute with the given name and return the value. Throw
-    // MissingAttributeException if not found
+    // MissingAttributeException if not found or not a number
     double find_number(const string& name);
     // Find a string attribute with the given name and return a reference to the string.
-    // Throw MissingAttributeException if not found
+    // Throw MissingAttributeException if not found or not a string
     const string& find_string(const string& name);
 
     // Return an iterator over the map
