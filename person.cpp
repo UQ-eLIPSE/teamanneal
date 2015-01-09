@@ -3,32 +3,17 @@
 
 using namespace std;
 
-Person::Person(string& s) :
-    id(s) {}
+Person::Person(const char* id) :
+	id(id) 
+{
+}
 
-void Person::add_attribute_value_pair(const string& attrName, const string& strValue) {
-    // Find attribute in set of all attributes - it must be present
-    Attribute* attr = allAttributes.find(attrName);
-    assert(attr);
-
-    // Add the value to the list of values associated with this attribute (if
-    // it is already there then it won't be added again)
-    attr->add_value(strValue);
-
+void Person::add_attribute_value_pair(Attribute* attr, const string& strValue) {
     // Add the value to the set of string attributes for this person
     stringAttributes.insert( pair<Attribute,string>(*attr, strValue) );
 }
 
-void Person::add_attribute_value_pair(const string& attrName, const string& strValue, 
-        const double numValue) {
-    // Find attribute in set of all attributes - it must be present
-    Attribute* attr = allAttributes.find(attrName);
-    assert(attr);
-
-    // Add the value to the list of values associated with this attribute (if
-    // it is already there then it won't be added again)
-    attr->add_value(strValue);
-
+void Person::add_attribute_value_pair(Attribute* attr, double numValue) {
     // Add the value to the set of string attributes for this person
     numberAttributes.insert( pair<Attribute,double>(*attr, numValue) );
 }

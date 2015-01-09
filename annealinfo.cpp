@@ -6,34 +6,87 @@
 #include <assert.h>
 
 // Constructor
-AnnealInfo::AnnealInfo() /* :
-    partitionField(nullptr),
-    idField(nullptr) */
+AnnealInfo::AnnealInfo() :
+    idField(nullptr),
+    partitionField(nullptr)
 {
 }
 
 // Other member functions
 
-void AnnealInfo::add_constraint(Constraint* constraint) 
+///////////////////////////////////////////////////////////////////////////////
+// Attribute related member functions
+void AnnealInfo::add_attribute(Attribute* attr)
 {
-    allConstraints.push_back(constraint);
+    allAttributes.push_back(attr);
+    attributeMap.insert(pair<string,Attribute*>(attr->get_name(), attr));
 }
 
+Attribute* AnnealInfo::get_attribute(unsigned int i)
+{
+    assert(i < allAttributes.size());
+    return allAttributes[i];
+}
+
+Attribute* AnnealInfo::find_attribute(const string& name)
+{
+    map<string,Attribute*>::iterator it = attributeMap.find(name);
+    if(it != attributeMap.end()) {
+	// Found the attribute name - return the value
+	return it->second;
+    } else {
+	return nullptr;
+    }
+}
+
+void AnnealInfo::set_id_attribute(Attribute* idAttr)
+{
+    // idField can't have already been set
+    assert(!idField);
+
+    idField = idAttr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Person related member functions
+void AnnealInfo::add_person(Person* person)
+{
+    allPeople.push_back(person);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Partition related member functions
+void AnnealInfo::set_partition_field(const string& fieldName)
+{
+    partitionField = find_attribute(fieldName);
+}
+
+Attribute* AnnealInfo::get_partition_field()
+{
+    return partitionField;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Level related member functions
 void AnnealInfo::add_level(Level* level)
 {
     allLevels.push_back(level);
 }
 
-void AnnealInfo::set_partition_field(const string& fieldName)
+int AnnealInfo::num_levels()
 {
-    partitionFieldName = fieldName;
+    return allLevels.size();
 }
 
-void AnnealInfo::set_id_field(const string& fieldName)
+///////////////////////////////////////////////////////////////////////////////
+// Constraint related member functions
+void AnnealInfo::add_constraint(Constraint* constraint) 
 {
-    idFieldName = fieldName;
+    allConstraints.push_back(constraint);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Team name related member functions
 void AnnealInfo::set_team_name_format(const string& format)
 {
     teamNameFormat = format;
@@ -47,11 +100,6 @@ void AnnealInfo::set_team_name_field(const string& fieldName)
 int AnnealInfo::num_constraints()
 {
     return allConstraints.size();
-}
-
-int AnnealInfo::num_levels()
-{
-    return allLevels.size();
 }
 
 Constraint* AnnealInfo::get_constraint(int n) 

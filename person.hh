@@ -20,14 +20,15 @@ public:
     map<Attribute,double> numberAttributes;
 
     // Constructor
-    Person(string& s);
+    Person(const char* id);
 
     // Operators
     friend ostream& operator<<(ostream& os, const Person& p);
 
-    void add_attribute_value_pair(const string& attrName, const string& strValue);
-    void add_attribute_value_pair(const string& attrName, const string& strValue, 
-            const double numValue);
+    // Add attribute value pair to this person. The first function is for string attributes,
+    // the second is for numerical attributes
+    void add_attribute_value_pair(Attribute* attr, const string& strValue);
+    void add_attribute_value_pair(Attribute* attr, double numValue);
 };
 
 #endif

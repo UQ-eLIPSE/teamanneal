@@ -1,0 +1,253 @@
+Program usage:
+
+    Usage: teamanneal subcommand args ...
+
+    Subcommands are:
+
+    help
+	- output this message to standard output
+
+    create input-team-csv-file constraint-json-file output-team-csv-file
+
+	- performs simulated annealing to create new teams. Outputs JSON stats to stdout
+	  when complete. Outputs progress messages to stderr whilst in progress.
+
+    evaluate team-csv-file constraint-json-file
+    	- takes a populated team file (which should be the result of annealing/editing) and
+	  outputs JSON stats to stdout about constraint performance
+
+    move team-csv-file constraint-json-file member-id
+
+	- determines the costs for moving the given person to all other teams. Outputs JSON
+	  result to stdout.
+
+    swap team-csv-file constraint-json-file member-id
+
+	- determines the costs for swapping the given person with everyone in all other teams.
+	  Outputs JSON result to stdout.
+
+    acquire team-csv-file constraint-json-file team-name [partition-name]
+
+	- determines the costs for bringing all people not in this team into the given team.
+	  If partitions are used then the team's partition must be given as an argument.
+	  Outputs JSON result to stdout.
+
+
+Details
+
+create - creating teams subject to constraints
+----------------------------------------------
+When complete the output file will be the same as that supplied to the program but will
+have additional columns - one for each of the levels of teams created plus one for the overall 
+team name (as per the supplied format). The names of these new columns will be as specified
+in the supplied JSON constraint file ("field" names). If there are existing columns with those
+names then the original columns will be renamed by appending a space and an integer so that the 
+column name is unique. For example, if output is to be in column "Team" and columns "Team" and 
+"Team 1" exist in the original file, then the original "Team" column will be renamed "Team 2".
+The "Team 1" column will remain unchanged.
+It is possible that row order and column order may not be preserved in the output CSV file.
+
+If an error occurs (e.g file parse error), a non-zero exit status will be reported and an error 
+message printed to standard error.
+
+Whilst running, the tool will regularly (e.g. every 2 to 60 seconds), output a single line progress 
+mesage to standard error. e.g.
+
+    Parsing files
+    Progress: 0%
+    Progress: 43%
+    Progress: 99%
+
+A message will also be output in response to a SIGHUP signal.
+
+When finished successfully or interrupted (by SIGINT or SIGTERM), the tool will output a 0 
+exit status and will output a JSON object to standard output containing statistics on the job. 
+
+The format of the data will be
+{
+    "input-csv-file-name" : "name of input csv file",
+    "constraint-file-name" : "name of constraint file",
+    "output-csv-file-name" : "name of output csv file",
+    "start-time" : "2014-02-01 13:00:03",
+    "end-time" : "2014-02-01 13:35:27",
+    "stats" :
+	[	// one element in the array per partition (one element if "no" partitions)
+	    {
+		"partition" : "partion-1-name",	// This field missing if no partitions
+						// partition names taken from unique values in the 
+						// partition column
+		"constraint-performance" : 
+		    [				// One entry per constraint (ordered as 
+		    				// per originally supplied constraints)
+						// Numbers (percentages) indicate the 
+						// percentage of applicable teams/groups 
+						// who met the constraint. See note
+						// below on constraint-performance
+			constraint-1-%met,
+			constraint-2-%met,
+			...
+		    ],
+		"teams" : 
+		    [
+			{ 				// One entry in this array per lowest-level team
+			    "name" : 
+				[ 
+				    "overall-name", 	// e.g. "Table 2 Group A"
+				    "level-1-name",	// e.g. "2" (optional after this depending on number
+				    "level-2-name"	// of levels)
+				]
+			    "size" : team-size-integer
+			    "constraint-performance" :
+				[			// One entry per constraint (ordered as per
+						    // originally supplied constraints)
+						    // Numbers (percentages) indicate how well 
+						    // the constraint has been met for that team
+						    // (See note below)
+				    constraint-1-%met,
+				    constraint-2-%met,
+				    ...
+				]
+			},
+			...
+		    ]
+
+	    },
+	    ...
+	]
+}
+
+NOTE: constraint-performance
+Overall per-partition constraint performance is the average of the per-team constraint performance
+numbers for that partition.
+
+For constraints which don't apply to a team, the constraint will be 
+considered 100% met. (For example, if a constraint only applies to teams of 3 and 
+the team is not a team of 3.)
+
+For "as similar as possible" constraints:
+- if it applies to a string column, the constraint will be considered met for a team if
+  all members have the same value 
+- if it applies to a number column, the constraint will considered met if the standard 
+  deviation of the values in the team is much smaller than the range of values for
+  this column. 	(Ratio TBD)
+
+For "as different as possible" constraints:
+- if it applies to a string column, the constraint will be considered met for a team if
+  the number of values in the team is equal to the team size OR the 
+  maximum number of possible values, whichever is smaller.
+- if it applies to a number column, the constraint will be considered met if
+  the standard deviation of the values in the team is large compared with the range of 
+  values for this column. (Ratio TBD)
+
+For "as many as possible" constraints:
+- the constraint performance for a team will be the percentage of team members
+  who meet the constraint
+
+For "as few as possible" constraints:
+- the constraint performance will be 100 minus the percentage of team members
+  who meet the constraint
+
+evaluate - determine the cost performance for previously created teams
+----------------------------------------------------------------------
+The csv file should be populated with team information as generated by simulated annealing
+or later output. This command generates the statistics in the same format as output at
+the end of annealing. Note that people not allocated to teams in the csv file are ignored.
+
+move - determine costs for moving person to all other teams
+-----------------------------------------------------------
+The supplied member-id is the value of the identifier field for the person to be moved.
+Results are given for all teams in all partitions, including the member's existing team
+(cost change will be zero for this). A cost is also given for removing the person from 
+all teams completely. The output is presented as a JSON object as follows:
+
+{
+    "id" : "id-of-person-to-be-moved",		// Value of the identifier field for this person
+    "min-cost-change" : double,		// Smallest cost change (will be <= 0) present below
+    "max-cost-change" : double,		// Largest cost change (will be >= 0) present below
+    "remove-cost" : double		// The cost of removing this person from all teams (0 if
+    					// already not in other teams)
+    "move-costs" :
+	[
+	    {
+		"partition" : "partition-1-name",	// this field present but null if no partitions
+		"teams" :				
+		    [					// one entry in this array per lowest level team
+			{
+			    "name" :
+				[
+				    "overall-name", 	// as per name format, e.g. "Table 2 Grp A"
+				    "level-1-name",	// e.g. "2"
+				    ...			// more names if other levels
+				]
+			    "cost" : double,			// see note below
+			    "cost-ignoring-teamsize" : double	// see note below
+			},
+			...
+		    ]
+	    },
+	    ...
+	]
+}
+
+The cost is positive if making the move makes things worse, negative if making the move makes 
+things better, and zero if there is no impact from making the move. The "cost" attribute 
+will include checking of the team size (not usually considered as a constraint). The min
+and max team sizes will be considered as "must have" constraints and the ideal size will
+be considered as an "ideally has" constraint. The "cost-ignoring-teamsize" will ignore
+violations of the team size constraints. The magnitude of the cost values could range
+from 1000's (changes in "must have" constraints) to 10's to 100's ("should have" to "ideally has"
+constraints) to 1's ("could have" constraints).
+
+swap - determine costs for swapping this person with all other people in this partition
+---------------------------------------------------------------------------------------
+The supplied member-id is the value of the identifier field for the person to be moved.
+Results are given for all people in this partition (including those not in a team)
+except the person who is to be swapped.  The output is presented as a JSON object as follows:
+
+{
+    "id" : "id-of-person-to-be-moved",		// Value of the identifier field for this person
+    "min-cost-change" : double,		// Smallest cost change present below (could be positive)
+    "max-cost-change" : double,		// Largest cost change present below
+    "swap-costs" :
+	{
+					// One entry for each person in the same partition
+					// other than the person themselves
+	    "person-id1" : cost-double,
+	    "person-id2" : cost-double,
+	    ...
+	}
+}
+
+The cost is positive if making the swap makes things worse, negative if making the swap makes 
+things better, and zero if there is no impact from making the swap. Team size checks are
+not relevant as team sizes will stay the same.  The magnitude of the cost values could range
+from 1000's (changes in "must have" constraints) to 10's to 100's ("should have" to "ideally has"
+constraints) to 1's ("could have" constraints).
+
+acquire - determine costs for stealing someone from another team
+----------------------------------------------------------------
+The target team is given by the partition name and the given team name (name is that
+given by the overall name format).
+The output is presented as a JSON object as follows:
+
+{
+    "partition" : "name-of-partition"		// or null if no partitions used
+    "target-team" : "name-of-target-team",
+    "min-cost-change" : double,		// Smallest cost change present below (could be positive)
+    "max-cost-change" : double,		// Largest cost change present below
+    "acquire-costs" :
+	{
+					// One entry for each person in the same partition
+					// other than existing members of the team
+	    "person-id1" : cost-double,
+	    "person-id2" : cost-double,
+	    ...
+	}
+}
+
+The cost is positive if making the swap makes things worse, negative if making the swap makes 
+things better, and zero if there is no impact from making the swap. Team size checks are
+not relevant as team sizes will stay the same.  The magnitude of the cost values could range
+from 1000's (changes in "must have" constraints) to 10's to 100's ("should have" to "ideally has"
+constraints) to 1's ("could have" constraints).
+
