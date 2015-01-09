@@ -2,34 +2,29 @@
  * csv_extract.cpp
  */
 
-#include "person.hh"
-#include "attribute.hh"
-#include <vector>
-#include <string>
+#include "csv_extract.hh"
 #include <assert.h>
-extern "C" {
-#include "csv.h"
-}
 
 using namespace std;
 
-vector<Person>* csv_to_person_list(CSV_File* data, const string& idField) {
-    vector<Person> *list = new vector<Person>;
-
+void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_File* data, const string& idField) {
     /* Deal with the attributes first */
     int idFieldNum = -1;
     for(int col = 0; col<data->numColumns; col++) {
+	// Work out type of column
         Attribute::Type t = Attribute::STRING;
         if(data->columns[col].type == NUMBER) {
             t = Attribute::NUMERICAL;
         }
+	Attribute* attr = new Attribute(data->columns[col].name, t);
+	annealInfo.add_attribute(attr);
+
         if(idField == data->columns[col].name) {
-            // Can't have already found the ID field
-            assert(idFieldNum == -1);
-            // This is our ID field - keep track of the column number
+	    // This column name matches our ID field - specify this attribute as the id field
+	    // and keep track of the column number
+	    annealInfo.set_id_attribute(attr);
             idFieldNum = col;
         }
-        allAttributes.add(data->columns[col].name, t);
     }
     // Must have a field with the name given as the ID field
     assert(idFieldNum >= 0);
@@ -37,26 +32,26 @@ vector<Person>* csv_to_person_list(CSV_File* data, const string& idField) {
     /* Now deal with each person */
     for(int row=0; row<data->numRows; row++) {
 	// Find the ID of this person and create the empty person object
-        string id = data->rows[row].cells[idFieldNum].str;
-        Person person(id);
+        const char* id = data->rows[row].cells[idFieldNum].str;
+        Person* person = new Person(id);
 
 	// For each column in the CSV file, add this data as an attribute 
 	// to our person - either a string attribute or a numerical attribute
         for(int col=0; col<data->numColumns; col++) {
-            string colName = data->columns[col].name;
+	    Attribute* attr = annealInfo.get_attribute(col);
+	    // Add the value of this attribute for this person as one of the possible values for the 
+	    // attribute
+	    attr->add_value(string(data->rows[row].cells[col].str));
+	    // Record the attribute value pair for this person. The functions for
+	    // strings and numbers are different
             if(data->columns[col].type == STRING) {
-                person.add_attribute_value_pair(colName,
-                        string(data->rows[row].cells[col].str));
+                person->add_attribute_value_pair(attr, string(data->rows[row].cells[col].str));
             } else {
-                person.add_attribute_value_pair(colName,
-                        string(data->rows[row].cells[col].str),
-                        data->rows[row].cells[col].d);
+                person->add_attribute_value_pair(attr, data->rows[row].cells[col].d);
             }
         }
 
 	// Add this person to our list of people
-        list->push_back(person);
+	annealInfo.add_person(person);
     }
-
-    return list;
 }
