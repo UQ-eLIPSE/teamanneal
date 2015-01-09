@@ -12,13 +12,26 @@ static const string levelsString = "levels";
 static const string nameFormatString = "name-format";
 static const string constraintsString = "constraints";
 
-// Prototype for version specific parsing functions
-static AnnealInfo* json_parse_teamanneal_v1(JSONObject*);
-static void json_parse_levels_v1(AnnealInfo*, JSONArray*);
-static void json_parse_name_format_v1(AnnealInfo*, JSONObject*);
-static void json_parse_constraints_v1(AnnealInfo*, JSONArray*);
+static const double MUST_HAVE_WEIGHT = 1000.0;
+static const double SHOULD_HAVE_WEIGHT = 50.0;
+static const double IDEALLY_HAS_WEIGHT = 10.0;
+static const double COULD_HAVE_WEIGHT = 2.0;
 
-AnnealInfo* json_to_anneal_info(JSONValue* value)
+// Prototype for version specific parsing functions
+static void json_parse_teamanneal_v1(AnnealInfo&, JSONObject*);
+static void json_parse_levels_v1(AnnealInfo&, JSONArray*);
+static void json_parse_name_format_v1(AnnealInfo&, JSONObject*);
+static void json_parse_constraints_v1(AnnealInfo&, JSONArray*);
+
+const string& get_identifier_from_json_object(JSONValue* val)
+{
+    if(!val->is_object()) {
+	throw ConstraintException("Expected top level JSON object");
+    }
+    return ((JSONObject*)val)->find_string(identifierString);
+}
+
+void extract_constraints_from_json_data(AnnealInfo& annealInfo, JSONValue* value)
 {
     if(value->get_type() != JSON_OBJECT) {
 	throw ConstraintException("Expected top level JSON object");
@@ -30,32 +43,26 @@ AnnealInfo* json_to_anneal_info(JSONValue* value)
     }
     if(version->match("1") || version->match(1)) {
 	// Data format v1 - string or number accepted
-	return json_parse_teamanneal_v1(obj);
+	json_parse_teamanneal_v1(annealInfo, obj);
     } else {
 	throw ConstraintException("Invalid constraint file version number");
     }
 }
 
 // Parse information from version 1 JSON object
-AnnealInfo* json_parse_teamanneal_v1(JSONObject* obj)
+void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 {
-    AnnealInfo* annealInfo = new AnnealInfo();
     bool foundIdentifier = false;
 
     // Iterate over all the fields of the object
     for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
-	if(it->first == identifierString) {
+	if(it->first == partitionString) {
 	    if(it->second->is_string()) {
 		JSONString* str = (JSONString*)(it->second);
-		annealInfo->set_id_field(str->get_value());
-		foundIdentifier = true;
-	    } else {
-		throw ConstraintException("Expected string value for attribute ", identifierString);
-	    }
-	} else if(it->first == partitionString) {
-	    if(it->second->is_string()) {
-		JSONString* str = (JSONString*)(it->second);
-		annealInfo->set_partition_field(str->get_value());
+		annealInfo.set_partition_field(str->get_value());
+		if(!annealInfo.get_partition_field()) {
+		    throw ConstraintException("Partition field not found: ", str->get_value());
+		}
 	    } else {
 		throw ConstraintException("Expected string value for attribute ", partitionString);
 	    }
@@ -77,17 +84,16 @@ AnnealInfo* json_parse_teamanneal_v1(JSONObject* obj)
 	    } else {
 		throw ConstraintException("Expected array value for attribute ", constraintsString);
 	    }
-	} else if(it->first == versionString) {
-	    // Do nothing - we've already parsed this
+	} else if(it->first == versionString || it->first == identifierString) {
+	    // Do nothing - we've already extracted these
 	} else {
 	    // Anything else is an invalid field
 	    throw ConstraintException("Unexpected attribute ", it->first);
 	}
     }
-    return annealInfo;
 }
 
-static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
+static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 {
     Level* level;
 
@@ -101,6 +107,8 @@ static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
 	// There must be attributes "field", "size" and "format" in this object - find them.
 	// (Exception thrown if one is not found)
 	JSONString* levelString = (JSONString*)obj->find("field", JSON_STRING);
+	// Get the name of this level (e.g. "Team") - we don't turn this into an attribute since
+	// it may not be an existing column
 	const string& levelName = levelString->get_value();
 	JSONObject* sizeObject = (JSONObject*)obj->find("size", JSON_OBJECT);
 	JSONObject* formatObject = (JSONObject*)obj->find("format", JSON_OBJECT);
@@ -122,7 +130,7 @@ static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
 		    it != valueArray->end(); ++it) {
 		// Each element in array should be a string
 		if(!(*it)->is_string()) {
-		    throw ConstraintException("Level names must be strings");
+		    throw ConstraintException("Team names must be strings at level ", levelName);
 		}
 		JSONString* teamNameString = (JSONString*)(*it);
 		stringLevel->add_name(teamNameString->get_value());
@@ -136,7 +144,7 @@ static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
 	    if(formatObject->has_attribute("leading-0")) {
 		JSONBool* leading0 = (JSONBool*)formatObject->find("leading-0", JSON_BOOL);
 		if(leading0->get_value() /* is true */) {
-		    ((NumericalLevel*)level)->useLeadingZeros();
+		    ((NumericalLevel*)level)->use_leading_zeros();
 		}
 	    }
 	}
@@ -149,19 +157,19 @@ static void json_parse_levels_v1(AnnealInfo* annealInfo, JSONArray* levelArray)
 	level->set_sizes((int)minNumber->get_value(), 
 			 (int)idealNumber->get_value(), 
 			 (int)maxNumber->get_value());
-	annealInfo->add_level(level);
+	annealInfo.add_level(level);
     }
 }
 
-static void json_parse_name_format_v1(AnnealInfo* annealInfo, JSONObject* nameFormatObject)
+static void json_parse_name_format_v1(AnnealInfo& annealInfo, JSONObject* nameFormatObject)
 {
     JSONString* fieldNameString = (JSONString*)nameFormatObject->find("field", JSON_STRING);
     JSONString* formatString = (JSONString*)nameFormatObject->find("format", JSON_STRING);
-    annealInfo->set_team_name_format(formatString->get_value());
-    annealInfo->set_team_name_field(fieldNameString->get_value());
+    annealInfo.set_team_name_format(formatString->get_value());
+    annealInfo.set_team_name_field(fieldNameString->get_value());
 }
 
-static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constraintArray)
+static void json_parse_constraints_v1(AnnealInfo& annealInfo, JSONArray* constraintArray)
 {
     Constraint* constraint;
     Constraint::Type constraintType;
@@ -180,6 +188,9 @@ static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constra
 	double level = obj->find_number("level");
 	if(level != 1.0 && level != 2.0 and level !=3.0) {
 	    throw ConstraintException("Constraint level must be 1, 2 or 3");
+	}
+	if(level > annealInfo.num_levels()) {
+	    throw ConstraintException("Invalid constraint level - not that many levels");
 	}
 
 	const string& operatorString = obj->find_string("operator");
@@ -209,18 +220,22 @@ static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constra
 	string weightString = obj->find_string("weight");
 	double weight;
 	if(weightString == "must have") {
-	    weight = 1000.0;
+	    weight = MUST_HAVE_WEIGHT;
 	} else if(weightString == "should have") {
-	    weight = 50.0;
+	    weight = SHOULD_HAVE_WEIGHT;
 	} else if(weightString == "ideally has") {
-	    weight = 10.0;
+	    weight = IDEALLY_HAS_WEIGHT;
 	} else if(weightString == "could have") {
-	    weight = 2.0;
+	    weight = COULD_HAVE_WEIGHT;
 	} else {
 	    throw ConstraintException("Constraint weight must be one of 'must have','should have',"
 		    "'ideally has','could have' not ", weightString);
 	}
 	const string& field = obj->find_string("field");
+	Attribute* attr = annealInfo.find_attribute(field);
+	if(!attr) {
+	    throw ConstraintException("Unknown field name: ", field);
+	}
 
 	if(constraintType == Constraint::HOMOGENEOUS || 
 		constraintType == Constraint::HETEROGENEOUS) {
@@ -277,7 +292,7 @@ static void json_parse_constraints_v1(AnnealInfo* annealInfo, JSONArray* constra
 	if(obj->has_attribute("of-size")) {
 	    constraint->set_applicable_team_size((int)(obj->find_number("of-size")));
 	}
-	annealInfo->add_constraint(constraint);
+	annealInfo.add_constraint(constraint);
     }
 }
 

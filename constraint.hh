@@ -88,7 +88,18 @@ class SimilarityConstraint : public Constraint {
 public:
     // Constructor
     // type must be one of HOMOGENEOUS or HETEROGENEOUS
+    // field must be of string type
     SimilarityConstraint(Constraint::Type type, const string& field, 
+	    int level, double weight);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+class RangeConstraint : public Constraint {
+public:
+    // Constructor
+    // type must be one of HOMOGENEOUS or HETEROGENEOUS
+    // field must be numerical
+    RangeConstraint(Constraint::Type type, const string& field, 
 	    int level, double weight);
 };
 

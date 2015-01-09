@@ -83,3 +83,12 @@ SimilarityConstraint::SimilarityConstraint(Constraint::Type type,
     assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
 }
 
+////////////////////// RangeConstraint ////////////////////////////////////
+
+RangeConstraint::RangeConstraint(Constraint::Type type,
+	    const string& field, int level, double weight) :
+	Constraint(type, field, level, weight) 
+{
+    assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
+}
+

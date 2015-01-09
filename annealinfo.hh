@@ -6,6 +6,7 @@
 #define ANNEALINFO_HH
 
 #include "constraint.hh"
+#include "person.hh"
 #include "level.hh"
 #include <vector>
 #include <string>
@@ -14,12 +15,13 @@ using namespace std;
 
 class AnnealInfo {
 private:
+    vector<Person*> allPeople;
     vector<Constraint*> allConstraints;
+    vector<Attribute*> allAttributes;
+    map<string, Attribute*> attributeMap;
+    Attribute* idField;
+    Attribute* partitionField;
     vector<Level*> allLevels;
-    string partitionFieldName;
-    string idFieldName;
-    //Attribute* partitionField;
-    //Attribute* idField;
     string teamNameField;
     string teamNameFormat;
 
@@ -28,15 +30,31 @@ public:
     AnnealInfo();
 
     // Other member functions
-    void add_constraint(Constraint* constraint);
-    void add_level(Level* level);
+    // Attribute functions
+    void add_attribute(Attribute* attr);
+    Attribute* get_attribute(unsigned int i);		// return i'th attribute (0 based count)
+    Attribute* find_attribute(const string& name);	// return nullptr if not found
+    void set_id_attribute(Attribute* idAttr);
+
+    // Person functions
+    void add_person(Person* person);
+
+    // Partition functions
     void set_partition_field(const string& fieldName);
-    void set_id_field(const string& fieldName);
+    Attribute* get_partition_field();
+
+    // Level functions
+    void add_level(Level* level);
+    int num_levels();
+
+    // Constraint functions
+    void add_constraint(Constraint* constraint);
+
+    // Team name functions
     void set_team_name_format(const string& format);
     void set_team_name_field(const string& fieldName);
 
     int num_constraints();
-    int num_levels();
     Constraint* get_constraint(int n);
     // Get the n'th level - where n is 1 based
     Level* get_level(int n);

@@ -17,7 +17,7 @@ class Level {
 public:
     enum NameType { NUMERICAL, CHARACTER, STRING };
 
-    const string fieldName;
+    const string fieldName;	// May not be an existing attribute, so we just store the name
     Level::NameType type;
 
     int minSize;
@@ -46,7 +46,7 @@ public:
 
     // Other member functions
     virtual string getName(int teamNum) const;
-    void useLeadingZeros();
+    void use_leading_zeros();
 };
 
 class CharacterLevel : public Level {

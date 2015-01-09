@@ -55,7 +55,7 @@ string NumericalLevel::getName(int teamNum) const
     return s.str();
 }
 
-void NumericalLevel::useLeadingZeros()
+void NumericalLevel::use_leading_zeros()
 {
     leadingZeros = true;
 }
