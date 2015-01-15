@@ -49,9 +49,30 @@ void AnnealInfo::set_id_attribute(Attribute* idAttr)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Person related member functions
+vector<Person*>& AnnealInfo::all_people()
+{
+    return allPeople;
+}
+
 void AnnealInfo::add_person(Person* person)
 {
     allPeople.push_back(person);
+}
+
+int AnnealInfo::num_people()
+{
+    return allPeople.size();
+}
+
+int AnnealInfo::count_people_with_attribute_value(Attribute* attr, const string& value)
+{
+    int count = 0;
+    for(vector<Person*>::iterator it = allPeople.begin(); it != allPeople.end(); ++it) {
+	if((*it)->has_attribute_value_pair(attr, value)) {
+	    count++;
+	}
+    }
+    return count;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -68,6 +89,11 @@ Attribute* AnnealInfo::get_partition_field()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Level related member functions
+vector<Level*>& AnnealInfo::all_levels()
+{
+    return allLevels;
+}
+
 void AnnealInfo::add_level(Level* level)
 {
     allLevels.push_back(level);
