@@ -61,6 +61,9 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 		if(!annealInfo.get_partition_field()) {
 		    throw ConstraintException("Partition field not found: ", str->get_value());
 		}
+	    } else if(it->second->is_null()) {
+		// No partition specified - ignore
+		;
 	    } else {
 		throw ConstraintException("Expected string value for attribute ", PARTITION_STRING);
 	    }
