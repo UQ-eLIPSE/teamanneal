@@ -15,6 +15,7 @@ using namespace std;
 class Attribute {
 public:
     enum Type { NUMERICAL, STRING };
+    typedef set<const string>::iterator ValueIterator;
 
     const string name;
     Attribute::Type type;
@@ -32,6 +33,12 @@ public:
     const string& get_name();
     bool is_string();
     bool is_numeric();
+    size_t num_values();
+
+    // Return an iterator to the beginning of the set of values
+    ValueIterator iterator();
+    // Return an iterator to the end of the set of values
+    ValueIterator end();
 };
 
 #endif 

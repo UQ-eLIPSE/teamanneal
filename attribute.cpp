@@ -57,3 +57,15 @@ bool Attribute::is_string() {
 bool Attribute::is_numeric() {
     return type == Attribute::NUMERICAL;
 }
+
+size_t Attribute::num_values() {
+    return values.size();
+}
+
+Attribute::ValueIterator Attribute::iterator() {
+    return values.begin();
+}
+
+Attribute::ValueIterator Attribute::end() {
+    return values.end();
+}
