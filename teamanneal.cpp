@@ -10,6 +10,7 @@
 #include "jsonExtract.hh"
 #include "csv_extract.hh"
 #include "filedata.hh"
+#include "teamData.hh"
 
 
 #include <iostream>
@@ -52,7 +53,9 @@ acquire team-csv-file constraint-json-file team-name [partition-name]\n\
 }
 
 // Extract data from the files referred to on the command line - argv[2] and argv[3]
-void set_up_data(AnnealInfo& annealInfo, const char* argv[])
+// Create the initial team allocation - either from existing data in the CSV file or 
+// randomly.
+AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 {
     // Read team file and parse the CSV 
     FileData* teamFileData = new FileData(argv[2]);
@@ -69,12 +72,16 @@ void set_up_data(AnnealInfo& annealInfo, const char* argv[])
 
     // Parse the JSON to get our constraints
     extract_constraints_from_json_data(annealInfo, constraintJSON);
+
+    // Create the initial teams and return them
+    return new AllTeamData(annealInfo);
 }
 
 
 int main(int argc, const char* argv[]) 
 {
     AnnealInfo annealInfo;
+    AllTeamData* teamData;
 
     if(argc < 2) {
 	print_usage_message_and_exit(argv[0]);
@@ -83,9 +90,12 @@ int main(int argc, const char* argv[])
 	try {
 	    if(cmd == "help") {
 		print_help_message(argv[0]);
-	    } else if((cmd == "create" || cmd == "move" || cmd == "swap" || cmd == "acquire")
-		    && argc == 5) {
-		set_up_data(annealInfo, argv);
+	    } else if(cmd == "evaluate" && argc == 4) {
+		teamData = set_up_data(annealInfo, argv);
+	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
+		teamData = set_up_data(annealInfo, argv);
+	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
+		teamData = set_up_data(annealInfo, argv);
 	    } else {
 		// Invalid subcommand or incorrect number of arguments
 		print_usage_message_and_exit(argv[0]);
