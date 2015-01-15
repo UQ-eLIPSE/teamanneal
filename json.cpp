@@ -233,6 +233,7 @@ bool JSONValue::is_object() 	{ return (type == JSON_OBJECT); }
 bool JSONValue::is_string() 	{ return (type == JSON_STRING); }
 bool JSONValue::is_number() 	{ return (type == JSON_NUMBER); }
 bool JSONValue::is_bool() 	{ return (type == JSON_BOOL); }
+bool JSONValue::is_null()	{ return (type == JSON_NULL); }
 
 bool JSONValue::match(const string& str)
 {
