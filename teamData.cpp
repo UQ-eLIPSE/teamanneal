@@ -36,6 +36,11 @@ TeamLevel::TeamLevel(int level) :
 {
 }
 
+void TeamLevel::add_member(Entity* member) 
+{
+    members.push_back(member);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Partition
 
@@ -60,15 +65,48 @@ void Partition::populate_random_teams()
 {
     vector<Level*>& allLevels = allTeamData.allLevels;
 
-    vector<Entity*> allEntities = allMembers;
     assert(highestLevelTeams.size() == 0);
     assert(lowestLevelTeams.size() == 0);
-    // Work backwards over our levels - start at the lowest level (individual people)
-    for(vector<Level*>::reverse_iterator rit = allLevels.rbegin(); rit != allLevels.rend(); ++rit) {
-	// Work out the number of teams we'll have
-	//int numEntitiesInTeams = allEntities.size();
-	//int numTeams = AllTeamData::number_of_teams(numEntitiesInTeams, (*rit)->minSize,
-		//(*rit)->idealSize, (*rit)->maxSize);
+
+    // Work out our lowest level - use a reverse iterator.
+    vector<Level*>::reverse_iterator levelItr = allLevels.rbegin(); 
+    // Work out how many teams we need at the lowest level
+    int numTeams = AllTeamData::number_of_teams(allMembers.size(), (*levelItr)->get_min_size(),
+	    (*levelItr)->get_ideal_size(), (*levelItr)->get_max_size());
+    // Reserve space for these teams
+    lowestLevelTeams.reserve(numTeams);
+    // Create all the necessary empty teams
+    for(int i = 0; i < numTeams; i++) {
+	lowestLevelTeams.push_back(new TeamLevel((*levelItr)->get_level_num()));
+    }
+    // Iterate over all the members and put them in teams one by one
+    for(int i = 0; i < allMembers.size(); ++i) 
+    {
+	lowestLevelTeams[i % numTeams]->add_member(allMembers[i]);
+    }
+
+    // Copy our list of teams at this level - this becomes our members for teams at the
+    // next level up (if there is one). This is the highest level list for now.
+    highestLevelTeams = lowestLevelTeams;
+    // Continue working up our levels
+    ++levelItr;
+    while(levelItr != allLevels.rend()) {
+	numTeams = AllTeamData::number_of_teams(highestLevelTeams.size(), (*levelItr)->get_min_size(),
+		(*levelItr)->get_ideal_size(), (*levelItr)->get_max_size());
+	vector<TeamLevel*> currentLevelTeams;
+	// Reserve space for these teams
+	currentLevelTeams.reserve(numTeams);
+	// Create all the necessary empty teams
+	for(int i = 0; i < numTeams; i++) {
+	    currentLevelTeams.push_back(new TeamLevel((*levelItr)->get_level_num()));
+	}
+	// Iterate over all the members and put them in teams one by one
+	for(int i = 0; i < highestLevelTeams.size(); ++i) 
+	{
+	    currentLevelTeams[i % numTeams]->add_member(highestLevelTeams[i]);
+	}
+	// Copy this list of teams as our members for the next level up (if there is one)
+	highestLevelTeams = currentLevelTeams;
     }
 }
 

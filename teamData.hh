@@ -40,9 +40,14 @@ public:
     // Contains either another level of teams or individual members
     vector<Entity*> members;
     int level;
+    string* name;		// for teams created with names
 
     // Constructor
     TeamLevel(int level);
+    TeamLevel(int level, const char* name);
+
+    // Other member functions
+    void add_member(Entity* member);
 };
 
 class Partition : public Entity {
@@ -52,10 +57,10 @@ public:
     vector<TeamLevel*> 	lowestLevelTeams;
     vector<TeamLevel*> 	highestLevelTeams;
     vector<TeamLevel*> 	bestCostTeams;
-    vector<Entity*> 	allMembers;
+    vector<Member*> 	allMembers;
     vector<Member*> 	unallocatedMembers;
-    double cost;
-    double bestCost;
+    double 		cost;
+    double 		bestCost;
 
     // Constructor
     Partition(const AllTeamData& allTeamData, const string& name, int numPeople);
