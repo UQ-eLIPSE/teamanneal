@@ -29,11 +29,20 @@ Member::Member(Person& person) :
 ///////////////////////////////////////////////////////////////////////////////
 // TeamLevel
 
-// Constructor
-TeamLevel::TeamLevel(int level) :
+// Constructors
+TeamLevel::TeamLevel(const Level& level) :
 	Entity(Entity::TEAM),
-	level(level)
+	level(level),
+	name(nullptr)
 {
+}
+
+TeamLevel::TeamLevel(const Level& level, const string& teamName) :
+	Entity(Entity::TEAM),
+	level(level) 
+{
+    ////// CHECK - is this the way we want to do this? does hte teamName persist?
+    name = &teamName;
 }
 
 void TeamLevel::add_member(Entity* member) 
@@ -77,7 +86,7 @@ void Partition::populate_random_teams()
     lowestLevelTeams.reserve(numTeams);
     // Create all the necessary empty teams
     for(int i = 0; i < numTeams; i++) {
-	lowestLevelTeams.push_back(new TeamLevel((*levelItr)->get_level_num()));
+	lowestLevelTeams.push_back(new TeamLevel(**levelItr));
     }
     // Iterate over all the members and put them in teams one by one
     for(int i = 0; i < allMembers.size(); ++i) 
@@ -98,7 +107,7 @@ void Partition::populate_random_teams()
 	currentLevelTeams.reserve(numTeams);
 	// Create all the necessary empty teams
 	for(int i = 0; i < numTeams; i++) {
-	    currentLevelTeams.push_back(new TeamLevel((*levelItr)->get_level_num()));
+	    currentLevelTeams.push_back(new TeamLevel(**levelItr));
 	}
 	// Iterate over all the members and put them in teams one by one
 	for(int i = 0; i < highestLevelTeams.size(); ++i) 
@@ -112,6 +121,8 @@ void Partition::populate_random_teams()
 
 void Partition::populate_existing_teams()
 {
+    // Work from the top level down
+    // Iterate over all the members
 }
 
 ///////////////////////////////////////////////////////////////////////////////

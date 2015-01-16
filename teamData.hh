@@ -39,12 +39,13 @@ class TeamLevel : public Entity {
 public:
     // Contains either another level of teams or individual members
     vector<Entity*> members;
-    int level;
-    string* name;		// for teams created with names
+    const Level& level;
+    ////////// CHECK this name - should it be a reference
+    const string* name;		// for teams created with names
 
     // Constructor
-    TeamLevel(int level);
-    TeamLevel(int level, const char* name);
+    TeamLevel(const Level& level);
+    TeamLevel(const Level& level, const string& name);
 
     // Other member functions
     void add_member(Entity* member);
