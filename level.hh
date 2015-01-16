@@ -17,6 +17,8 @@ class Level {
 public:
     enum NameType { NUMERICAL, CHARACTER, STRING };
 
+protected:
+    int levelNum;
     const string fieldName;	// May not be an existing attribute, so we just store the name
     Level::NameType type;
 
@@ -24,12 +26,17 @@ public:
     int idealSize;
     int maxSize;
 
+public:
     // Constructors
-    Level(const string& fieldName, Level::NameType type);
+    Level(int levelNum, const string& fieldName, Level::NameType type);
 
     // Other member functions
+    int get_level_num();
     void set_sizes(int min, int ideal, int max);
     NameType get_type();
+    int get_min_size();
+    int get_ideal_size();
+    int get_max_size();
 
     // Pure virtual - this gets overwritten in the child classes
     virtual string getName(int teamNum) const = 0;
@@ -42,7 +49,7 @@ public:
     int numDigits;	// if leadingZeros is true, this is the field width to be used
 
     // Constructor
-    NumericalLevel(const string& fieldName, int startAt);
+    NumericalLevel(int levelNum, const string& fieldName, int startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
@@ -54,7 +61,7 @@ public:
     char startAt;	// usually 'a' or 'A'
 
     // Constructor
-    CharacterLevel(const string& fieldName, char startAt);
+    CharacterLevel(int levelNum, const string& fieldName, char startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
@@ -65,7 +72,7 @@ public:
     vector<string> names;
 
     // Constructor
-    StringLevel(const string& fieldName);
+    StringLevel(int levelNum, const string& fieldName);
 
     // Other member functions
     void add_name(const string& name);

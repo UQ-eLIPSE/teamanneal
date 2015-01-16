@@ -9,7 +9,8 @@
 ////////////// Level /////////////////////////////////////////////////////////
 
 // Constructor
-Level::Level(const string& fieldName, Level::NameType type) :
+Level::Level(int levelNum, const string& fieldName, Level::NameType type) :
+	levelNum(levelNum),
 	fieldName(fieldName),
 	type(type),
 	minSize(0),
@@ -19,6 +20,11 @@ Level::Level(const string& fieldName, Level::NameType type) :
 }
 
 // Other member functions
+int Level::get_level_num()
+{
+    return levelNum;
+}
+
 void Level::set_sizes(int min, int ideal, int max)
 {
     minSize = min;
@@ -31,11 +37,26 @@ Level::NameType Level::get_type()
     return type;
 }
 
+int Level::get_min_size()
+{
+    return minSize;
+}
+
+int Level::get_ideal_size()
+{
+    return idealSize;
+}
+
+int Level::get_max_size()
+{
+    return maxSize;
+}
+
 ////////////// NumericalLevel /////////////////////////////////////////////////
 
 // Constructor
-NumericalLevel::NumericalLevel(const string& fieldName, int startAt) :
-	Level(fieldName, Level::NUMERICAL),
+NumericalLevel::NumericalLevel(int levelNum, const string& fieldName, int startAt) :
+	Level(levelNum, fieldName, Level::NUMERICAL),
 	startAt(startAt),
 	leadingZeros(false),
 	numDigits(0)
@@ -63,8 +84,8 @@ void NumericalLevel::use_leading_zeros()
 ////////////// CharacterLevel /////////////////////////////////////////////////
 
 // Constructor
-CharacterLevel::CharacterLevel(const string& fieldName, char startAt) :
-	Level(fieldName, Level::CHARACTER),
+CharacterLevel::CharacterLevel(int levelNum, const string& fieldName, char startAt) :
+	Level(levelNum, fieldName, Level::CHARACTER),
 	startAt(startAt)
 {
 }
@@ -85,8 +106,8 @@ string CharacterLevel::getName(int teamNum) const
 ////////////// StringLevel ////////////////////////////////////////////////////
 
 // Constructor
-StringLevel::StringLevel(const string& fieldName) :
-	Level(fieldName, Level::STRING)
+StringLevel::StringLevel(int levelNum, const string& fieldName) :
+	Level(levelNum, fieldName, Level::STRING)
 {
 }
 

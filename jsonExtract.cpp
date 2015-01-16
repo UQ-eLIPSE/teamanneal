@@ -99,6 +99,7 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 {
     Level* level;
+    int levelNum = 1;
 
     for(JSONArray::Iterator levelIterator = levelArray->iterator(); 
 	    levelIterator != levelArray->end(); ++levelIterator) {
@@ -118,15 +119,15 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 	// The "format" object should have a "type" field
 	JSONString* formatTypeString = (JSONString*)formatObject->find("type", JSON_STRING);
 	if(formatTypeString->match("numerical-0")) {
-	    level = new NumericalLevel(levelName, 0);
+	    level = new NumericalLevel(levelNum, levelName, 0);
 	} else if(formatTypeString->match("numerical-1")) {
-	    level = new NumericalLevel(levelName, 1);
+	    level = new NumericalLevel(levelNum, levelName, 1);
 	} else if(formatTypeString->match("character-upper")) {
-	    level = new CharacterLevel(levelName, 'A');
+	    level = new CharacterLevel(levelNum, levelName, 'A');
 	} else if(formatTypeString->match("character-lower")) {
-	    level = new CharacterLevel(levelName, 'a');
+	    level = new CharacterLevel(levelNum, levelName, 'a');
 	} else if(formatTypeString->match("list")) {
-	    StringLevel* stringLevel = new StringLevel(levelName);
+	    StringLevel* stringLevel = new StringLevel(levelNum, levelName);
 	    // A list format type should have a values field which is an array of strings
 	    JSONArray* valueArray = (JSONArray*)formatObject->find("values", JSON_ARRAY);
 	    for(JSONArray::Iterator it = valueArray->iterator();
@@ -161,6 +162,7 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 			 (int)idealNumber->get_value(), 
 			 (int)maxNumber->get_value());
 	annealInfo.add_level(level);
+	++levelNum;
     }
 }
 
