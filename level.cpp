@@ -5,14 +5,19 @@
 #include "level.hh"
 #include <sstream>
 #include <iomanip>
+#include <assert.h>
 
 ////////////// Level /////////////////////////////////////////////////////////
 
 // Constructor
-Level::Level(int levelNum, const string& fieldName, Level::NameType type) :
+Level::Level(Level* parentLevel, int levelNum, const string& fieldName, Attribute* attr,
+		Level::NameType type) :
 	levelNum(levelNum),
 	fieldName(fieldName),
+	attribute(attr),
 	type(type),
+	parentLevel(parentLevel),
+	childLevel(nullptr),
 	minSize(0),
 	idealSize(0),
 	maxSize(0)
@@ -23,6 +28,16 @@ Level::Level(int levelNum, const string& fieldName, Level::NameType type) :
 int Level::get_level_num()
 {
     return levelNum;
+}
+
+const string& Level::get_field_name() const
+{
+    return fieldName;
+}
+
+Attribute* Level::get_field_attribute() const
+{
+    return attribute;
 }
 
 void Level::set_sizes(int min, int ideal, int max)
@@ -52,11 +67,39 @@ int Level::get_max_size()
     return maxSize;
 }
 
+void Level::add_child_level(Level* child)
+{
+    assert(!childLevel);	// Can't already have a child
+    childLevel = child;
+}
+
+Level* Level::get_parent_level() const
+{
+    return parentLevel;
+}
+
+Level* Level::get_child_level() const
+{
+    assert(childLevel);	// must not be null
+    return childLevel;
+}
+
+bool Level::is_lowest() const
+{
+    return (childLevel == nullptr);
+}
+
+bool Level::is_highest() const
+{
+    return (levelNum == 1);
+}
+
 ////////////// NumericalLevel /////////////////////////////////////////////////
 
 // Constructor
-NumericalLevel::NumericalLevel(int levelNum, const string& fieldName, int startAt) :
-	Level(levelNum, fieldName, Level::NUMERICAL),
+NumericalLevel::NumericalLevel(Level* parentLevel, int levelNum, 
+		const string& fieldName, Attribute* attr, int startAt) :
+	Level(parentLevel, levelNum, fieldName, attr, Level::NUMERICAL),
 	startAt(startAt),
 	leadingZeros(false),
 	numDigits(0)
@@ -84,8 +127,9 @@ void NumericalLevel::use_leading_zeros()
 ////////////// CharacterLevel /////////////////////////////////////////////////
 
 // Constructor
-CharacterLevel::CharacterLevel(int levelNum, const string& fieldName, char startAt) :
-	Level(levelNum, fieldName, Level::CHARACTER),
+CharacterLevel::CharacterLevel(Level* parentLevel, int levelNum, 
+		const string& fieldName, Attribute* attr, char startAt) :
+	Level(parentLevel, levelNum, fieldName, attr, Level::CHARACTER),
 	startAt(startAt)
 {
 }
@@ -106,8 +150,9 @@ string CharacterLevel::getName(int teamNum) const
 ////////////// StringLevel ////////////////////////////////////////////////////
 
 // Constructor
-StringLevel::StringLevel(int levelNum, const string& fieldName) :
-	Level(levelNum, fieldName, Level::STRING)
+StringLevel::StringLevel(Level* parentLevel, int levelNum, const string& fieldName,
+		Attribute* attr) :
+	Level(parentLevel, levelNum, fieldName, attr, Level::STRING)
 {
 }
 
@@ -126,6 +171,20 @@ string StringLevel::getName(int teamNum) const
 	s << names[teamNum % names.size()] << "-" << (teamNum / names.size());
     }
     return s.str();
+}
+
+////////////// PartitionLevel /////////////////////////////////////////////////
+
+// Constructor
+PartitionLevel::PartitionLevel(const string& fieldName, Attribute* attr) :
+	Level(nullptr, 0, fieldName, attr, Level::PARTITION)
+{
+}
+
+string PartitionLevel::getName(int teamNum) const
+{
+    // FIX - WHAT SHOULD THIS BE
+    return "";
 }
 
 ////////////// LevelNameIterator //////////////////////////////////////////////

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "attribute.hh"
 
 using namespace std;
 
@@ -15,12 +16,16 @@ class LevelNameIterator;
 // Abstract base class
 class Level {
 public:
-    enum NameType { NUMERICAL, CHARACTER, STRING };
+    enum NameType { NUMERICAL, CHARACTER, STRING, PARTITION };
 
 protected:
     int levelNum;
-    const string fieldName;	// May not be an existing attribute, so we just store the name
+    const string fieldName;	// May not be an existing attribute, so we store the name
+    Attribute* attribute;	// If it is an existing attribute, store the pointer here
+    				// nullptr if no corresponding attribute in the data
     Level::NameType type;
+    Level* parentLevel;		// Pointer to the level above (null if this is the top level)
+    Level* childLevel;
 
     int minSize;
     int idealSize;
@@ -28,15 +33,23 @@ protected:
 
 public:
     // Constructors
-    Level(int levelNum, const string& fieldName, Level::NameType type);
+    Level(Level* parentLevel, int levelNum, const string& fieldName, Attribute* attr,
+	    Level::NameType type);
 
     // Other member functions
     int get_level_num();
+    const string& get_field_name() const;
+    Attribute* get_field_attribute() const;
     void set_sizes(int min, int ideal, int max);
     NameType get_type();
     int get_min_size();
     int get_ideal_size();
     int get_max_size();
+    void add_child_level(Level* child);
+    Level* get_parent_level() const;
+    Level* get_child_level() const;
+    bool is_lowest() const;
+    bool is_highest() const;		// true if highest level (not partition)
 
     // Pure virtual - this gets overwritten in the child classes
     virtual string getName(int teamNum) const = 0;
@@ -49,7 +62,8 @@ public:
     int numDigits;	// if leadingZeros is true, this is the field width to be used
 
     // Constructor
-    NumericalLevel(int levelNum, const string& fieldName, int startAt);
+    NumericalLevel(Level* parentLevel, int levelNum, const string& fieldName, 
+	    Attribute* attr, int startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
@@ -61,7 +75,8 @@ public:
     char startAt;	// usually 'a' or 'A'
 
     // Constructor
-    CharacterLevel(int levelNum, const string& fieldName, char startAt);
+    CharacterLevel(Level* parentLevel, int levelNum, const string& fieldName, 
+	    Attribute* attr, char startAt);
 
     // Other member functions
     virtual string getName(int teamNum) const;
@@ -72,10 +87,20 @@ public:
     vector<string> names;
 
     // Constructor
-    StringLevel(int levelNum, const string& fieldName);
+    StringLevel(Level* parentLevel, int levelNum, const string& fieldName,
+	    Attribute* attr);
 
     // Other member functions
     void add_name(const string& name);
+    virtual string getName(int teamNum) const;
+};
+
+class PartitionLevel : public Level {
+public:
+    // Constructor
+    PartitionLevel(const string& fieldName, Attribute* attr);
+
+    // Other member functions
     virtual string getName(int teamNum) const;
 };
 
