@@ -19,7 +19,7 @@ static const double COULD_HAVE_WEIGHT = 2.0;
 
 // Prototype for version specific parsing functions
 static void json_parse_teamanneal_v1(AnnealInfo&, JSONObject*);
-static void json_parse_levels_v1(AnnealInfo&, JSONArray*);
+static void json_parse_levels_v1(AnnealInfo&, Attribute* partition, JSONArray*);
 static void json_parse_name_format_v1(AnnealInfo&, JSONObject*);
 static void json_parse_constraints_v1(AnnealInfo&, JSONArray*);
 
@@ -52,13 +52,26 @@ void extract_constraints_from_json_data(AnnealInfo& annealInfo, JSONValue* value
 // Parse information from version 1 JSON object
 void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 {
+    // Default partition (i.e. none)
+    Attribute* partitionFieldAttribute = nullptr;
+    bool levelsDefined = false;
+
     // Iterate over all the fields of the object
     for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
 	if(it->first == PARTITION_STRING) {
-	    if(it->second->is_string()) {
+	    if(annealInfo.get_partition_field()) {
+		// Partition has already been set - this is an error
+		throw ConstraintException("Partition already set");
+	    } else if(levelsDefined) {
+		// Must not define levels before partition
+		throw ConstraintException("Partition must not be defined after levels");
+	    } else if(it->second->is_string()) {
+		// String value provided - this is to set our partition field
 		JSONString* str = (JSONString*)(it->second);
 		annealInfo.set_partition_field(str->get_value());
-		if(!annealInfo.get_partition_field()) {
+		// Check that this field name corresponded to an attribute in our data
+		partitionFieldAttribute = annealInfo.get_partition_field();
+		if(!partitionFieldAttribute) {
 		    throw ConstraintException("Partition field not found: ", str->get_value());
 		}
 	    } else if(it->second->is_null()) {
@@ -69,7 +82,8 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 	    }
 	} else if(it->first == LEVELS_STRING) {
 	    if(it->second->is_array()) {
-		json_parse_levels_v1(annealInfo, (JSONArray*)(it->second));
+		json_parse_levels_v1(annealInfo, partitionFieldAttribute, (JSONArray*)(it->second));
+		levelsDefined = true;
 	    } else {
 		throw ConstraintException("Expected array value for attribute ", LEVELS_STRING);
 	    }
@@ -96,11 +110,21 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
     }
 }
 
-static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
+static void json_parse_levels_v1(AnnealInfo& annealInfo, Attribute* partitionAttr,
+	JSONArray* levelArray)
 {
     Level* level;
-    int levelNum = 1;
 
+    // Use the partition information (if set) to create the very top level (0)
+    if(partitionAttr) {
+	level = new PartitionLevel(partitionAttr->get_name(), partitionAttr);
+    } else {
+	level = new PartitionLevel("", nullptr);
+    }
+    annealInfo.add_level(level);
+
+    Level* parentLevel = level;
+    int levelNum = 1;
     for(JSONArray::Iterator levelIterator = levelArray->iterator(); 
 	    levelIterator != levelArray->end(); ++levelIterator) {
 	// Each element in the level array should be a JSON object
@@ -111,23 +135,24 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 	// There must be attributes "field", "size" and "format" in this object - find them.
 	// (Exception thrown if one is not found)
 	JSONString* levelString = (JSONString*)obj->find("field", JSON_STRING);
-	// Get the name of this level (e.g. "Team") - we don't turn this into an attribute since
-	// it may not be an existing column
+	// Get the name of this level (e.g. "Team"). We also see if this corresponds to an attribute
+	// in our data (it may not, attr will be a null pointer in this case
 	const string& levelName = levelString->get_value();
+	Attribute* attr = annealInfo.find_attribute(levelName);	// could be nullptr
 	JSONObject* sizeObject = (JSONObject*)obj->find("size", JSON_OBJECT);
 	JSONObject* formatObject = (JSONObject*)obj->find("format", JSON_OBJECT);
 	// The "format" object should have a "type" field
 	JSONString* formatTypeString = (JSONString*)formatObject->find("type", JSON_STRING);
 	if(formatTypeString->match("numerical-0")) {
-	    level = new NumericalLevel(levelNum, levelName, 0);
+	    level = new NumericalLevel(parentLevel, levelNum, levelName, attr, 0);
 	} else if(formatTypeString->match("numerical-1")) {
-	    level = new NumericalLevel(levelNum, levelName, 1);
+	    level = new NumericalLevel(parentLevel, levelNum, levelName, attr, 1);
 	} else if(formatTypeString->match("character-upper")) {
-	    level = new CharacterLevel(levelNum, levelName, 'A');
+	    level = new CharacterLevel(parentLevel, levelNum, levelName, attr, 'A');
 	} else if(formatTypeString->match("character-lower")) {
-	    level = new CharacterLevel(levelNum, levelName, 'a');
+	    level = new CharacterLevel(parentLevel, levelNum, levelName, attr, 'a');
 	} else if(formatTypeString->match("list")) {
-	    StringLevel* stringLevel = new StringLevel(levelNum, levelName);
+	    StringLevel* stringLevel = new StringLevel(parentLevel, levelNum, levelName, attr);
 	    // A list format type should have a values field which is an array of strings
 	    JSONArray* valueArray = (JSONArray*)formatObject->find("values", JSON_ARRAY);
 	    for(JSONArray::Iterator it = valueArray->iterator();
@@ -163,6 +188,8 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, JSONArray* levelArray)
 			 (int)maxNumber->get_value());
 	annealInfo.add_level(level);
 	++levelNum;
+	// This level will be the parent for the next level (if any)
+	parentLevel = level;
     }
 }
 
