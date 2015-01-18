@@ -7,13 +7,137 @@
 #include <exception>
 #include "assert.h"
 
+static string emptyString("");
+
 ///////////////////////////////////////////////////////////////////////////////
 // Entity
 
-// Constructor
-Entity::Entity(Entity::Type type) :
-	type(type)
+// Constructors
+Entity::Entity(Entity::Type type, const string& name) :
+	type(type),
+	name(name)
 {
+}
+
+Entity::Entity(Entity::Type type) :
+	type(type),
+	name(emptyString)
+{
+}
+
+bool Entity::has_name(const string& value) const
+{
+    return (name == value);
+}
+
+Entity::Type Entity::get_type() const
+{
+    return type;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// EntityList
+
+void EntityList::append(Entity* member)
+{
+    members.push_back(member);
+}
+
+// Not very efficient
+void EntityList::append_unique(Entity* member)
+{
+    EntityListIterator itr(*this);
+    while(!itr.done()) {
+	if((Entity*)itr == member) {
+	    return;
+	}
+	++itr;
+    }
+
+    // Did not find member - add it
+    members.push_back(member);
+}
+
+Entity*& EntityList::operator[](size_t i)
+{
+    return members[i];
+}
+
+Entity* EntityList::find_entity_with_name(const string& name)
+{
+    // search the vector to find the entity
+    for(EntityListIterator it = list_iterator(); !it.done(); ++it) {
+	if(it->has_name(name)) {
+	    return it;
+	}
+    }
+    // Not found
+    return nullptr;
+}
+
+size_t EntityList::size() const
+{
+    return members.size();
+}
+
+void EntityList::reserve(size_t size)
+{
+    members.reserve(size);
+}
+
+TeamLevel* EntityList::get_subteam(size_t i)
+{
+    Entity* element = members[i];
+    assert(element->get_type() == Entity::TEAM);
+    return (TeamLevel*)element;
+}
+
+EntityListIterator EntityList::list_iterator() const
+{
+    return EntityListIterator(*this);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// EntityListIterator
+
+// Constructor
+EntityListIterator::EntityListIterator(const EntityList& list) :
+	list(list),
+	entityNum(0)
+{
+}
+
+Entity& EntityListIterator::operator*()
+{
+    return *(list.members[entityNum]);
+}
+
+Entity* EntityListIterator::operator->()
+{
+    return list.members[entityNum];
+}
+
+EntityListIterator::operator Entity*() const
+{
+    return list.members[entityNum];
+}
+
+EntityListIterator& EntityListIterator::operator++()
+{
+    entityNum++;
+    return (*this);
+}
+
+EntityListIterator EntityListIterator::operator++(int)	// postfix
+{
+    EntityListIterator tmp(*this);		// Copy iterator to preserve state before increment
+    entityNum++;
+    return tmp;
+}
+
+bool EntityListIterator::done() 
+{
+    return entityNum > list.size();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -21,9 +145,14 @@ Entity::Entity(Entity::Type type) :
 
 // Constructor
 Member::Member(Person& person) :
-	Entity(Entity::MEMBER),
+	Entity(Entity::MEMBER, person.get_id()),
 	person(person)
 {
+}
+
+const string& Member::get_attribute_value(const Attribute* attr) 
+{
+    return person.get_string_attribute_value(attr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,22 +161,39 @@ Member::Member(Person& person) :
 // Constructors
 TeamLevel::TeamLevel(const Level& level) :
 	Entity(Entity::TEAM),
-	level(level),
-	name(nullptr)
+	level(level)
 {
 }
 
 TeamLevel::TeamLevel(const Level& level, const string& teamName) :
-	Entity(Entity::TEAM),
+	Entity(Entity::TEAM, teamName),
 	level(level) 
 {
-    ////// CHECK - is this the way we want to do this? does hte teamName persist?
-    name = &teamName;
 }
 
 void TeamLevel::add_member(Entity* member) 
 {
-    members.push_back(member);
+    members.append(member);
+}
+
+TeamLevel* TeamLevel::create_or_get_named_subteam(const string& subTeamName) 
+{
+    // Make sure this isn't the lowest level (i.e. there must be subteams)
+    assert(!level.is_lowest());
+
+    // Look for existing sub-team with the given name
+    TeamLevel* team = (TeamLevel*)members.find_entity_with_name(subTeamName);
+    if(!team) {
+	// Not found - create a new subteam with the given name
+	team = new TeamLevel(*(level.get_child_level()), subTeamName);
+	members.append(team);
+    }
+    return team;
+}
+
+const Level& TeamLevel::get_level() const
+{
+    return level;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,9 +201,8 @@ void TeamLevel::add_member(Entity* member)
 
 // Constructor
 Partition::Partition(const AllTeamData& allTeamData, const string& name, int numPeople) :
-	Entity(Entity::PARTITION),
+	Entity(Entity::PARTITION, name),
 	allTeamData(allTeamData),
-	name(name),
 	cost(0.0),
 	bestCost(0.0)
 {
@@ -67,7 +212,7 @@ Partition::Partition(const AllTeamData& allTeamData, const string& name, int num
 // Other member functions
 void Partition::add_member(Member* member)
 {
-    allMembers.push_back(member);
+    allMembers.append(member);
 }
 
 void Partition::populate_random_teams()
@@ -86,33 +231,32 @@ void Partition::populate_random_teams()
     lowestLevelTeams.reserve(numTeams);
     // Create all the necessary empty teams
     for(int i = 0; i < numTeams; i++) {
-	lowestLevelTeams.push_back(new TeamLevel(**levelItr));
+	lowestLevelTeams.append(new TeamLevel(**levelItr));
     }
     // Iterate over all the members and put them in teams one by one
     for(int i = 0; i < allMembers.size(); ++i) 
     {
-	lowestLevelTeams[i % numTeams]->add_member(allMembers[i]);
+	lowestLevelTeams.get_subteam(i % numTeams)->add_member(allMembers[i]);
     }
 
     // Copy our list of teams at this level - this becomes our members for teams at the
     // next level up (if there is one). This is the highest level list for now.
     highestLevelTeams = lowestLevelTeams;
     // Continue working up our levels
-    ++levelItr;
-    while(levelItr != allLevels.rend()) {
+    while(!(*levelItr)->is_highest()) {
+	++levelItr;
 	numTeams = AllTeamData::number_of_teams(highestLevelTeams.size(), (*levelItr)->get_min_size(),
 		(*levelItr)->get_ideal_size(), (*levelItr)->get_max_size());
-	vector<TeamLevel*> currentLevelTeams;
+	EntityList currentLevelTeams;
 	// Reserve space for these teams
 	currentLevelTeams.reserve(numTeams);
 	// Create all the necessary empty teams
 	for(int i = 0; i < numTeams; i++) {
-	    currentLevelTeams.push_back(new TeamLevel(**levelItr));
+	    currentLevelTeams.append(new TeamLevel(**levelItr));
 	}
 	// Iterate over all the members and put them in teams one by one
-	for(int i = 0; i < highestLevelTeams.size(); ++i) 
-	{
-	    currentLevelTeams[i % numTeams]->add_member(highestLevelTeams[i]);
+	for(int i = 0; i < highestLevelTeams.size(); ++i) {
+	    currentLevelTeams.get_subteam(i % numTeams)->add_member(highestLevelTeams[i]);
 	}
 	// Copy this list of teams as our members for the next level up (if there is one)
 	highestLevelTeams = currentLevelTeams;
@@ -122,7 +266,61 @@ void Partition::populate_random_teams()
 void Partition::populate_existing_teams()
 {
     // Work from the top level down
-    // Iterate over all the members
+    // Iterate over all the members in the partition
+    for(int i = 0; i < allMembers.size(); ++i) {
+	// Iterate over all the attributes of the member which are the names of the levels
+	// We iterate from the top level down
+	TeamLevel* teamAtLevel = nullptr;
+	bool unallocated = false;
+	for(int levelNum = 1; levelNum <= allTeamData.num_levels(); levelNum++) {
+	    // Get the attribute for this level (there should be one in our team file - it
+	    // is an error if not)
+	    Attribute* levelAttribute = allTeamData.get_level(levelNum).get_field_attribute();
+	    // FIX - check earlier that attributes are present if we're using pre-existing teams?
+	    assert(levelAttribute);
+
+	    // Get the value of this attribute for this person - it's possible the value is blank
+	    const string& teamLevelName = ((Member*)allMembers[i])->get_attribute_value(levelAttribute);
+	    // If the value is blank (at any level), this person is unallocated - abort - do not
+	    // create any more teams at any level for this person
+	    if(teamLevelName == "") {
+		unallocated = true;
+		break;
+	    }
+
+	    if(levelNum == 1) {
+		// This is the top level, search the partition for a team with this name or 
+		// create one
+		teamAtLevel = create_or_get_named_team(teamLevelName);
+	    } else {
+		// Sub-level - search for team with this name
+		teamAtLevel = teamAtLevel->create_or_get_named_subteam(teamLevelName);
+	    }
+	    if(levelNum == allTeamData.num_levels()) {
+		// At lowest level - add the team to our list of lowest level teams
+		// if we haven't already
+		lowestLevelTeams.append_unique(teamAtLevel);
+	    }
+	}
+	if(unallocated) {
+	    // Person wasn't allocated to a team (one of the team names at some level was blank).
+	    unallocatedMembers.append(allMembers[i]);
+	} else {
+	    // We've made our way to the bottom level - add the person as a member
+	    teamAtLevel->add_member(allMembers[i]);
+	}
+    }
+}
+
+TeamLevel* Partition::create_or_get_named_team(const string& teamName) 
+{
+    TeamLevel* team = (TeamLevel*)highestLevelTeams.find_entity_with_name(teamName);
+    if(!team) {
+	// Team doesn't exist - create one with that name
+	team = new TeamLevel(allTeamData.get_level(1), teamName);
+	highestLevelTeams.append(team);
+    }
+    return team;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -161,7 +359,7 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
     for(vector<Person*>::iterator it = annealInfo.all_people().begin();
 	    it != annealInfo.all_people().end(); ++it) {
 	Member* member = new Member(**it);
-	allMembers.push_back(member);
+	allMembers.append(member);
 	// Work out which partition they go in
 	if(partitionAttribute) {
 	    partition = find_partition((*it)->get_string_attribute_value(partitionAttribute));
@@ -196,6 +394,18 @@ Partition* AllTeamData::find_partition(const string& name)
     } else {
 	return it->second;
     }
+}
+
+int AllTeamData::num_levels() const
+{
+    // We subtract one from the size of the level array since the level array also 
+    // contains the partition
+    return allLevels.size() - 1;
+}
+
+const Level& AllTeamData::get_level(int levelNum) const
+{
+    return *(allLevels[levelNum]);
 }
 
 // static member

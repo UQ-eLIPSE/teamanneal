@@ -9,20 +9,67 @@
 #include "annealinfo.hh"
 #include <vector>
 #include <map>
+#include <string>
 
 using namespace std;
 
 class AllTeamData;
+class EntityListIterator;
+class TeamLevel;
 
+///////////////////////////////////////////////////////////////////////////////
 class Entity {
 public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
+    const string& name;
 
     // Constructor
     Entity(Entity::Type type);
+    Entity(Entity::Type type, const string& name);
+
+    // Other member functions
+    bool has_name(const string& value) const;
+    Entity::Type get_type() const;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+class EntityList {
+// types
+    typedef EntityListIterator Iterator;
+    friend class EntityListIterator;
+protected:
+    vector<Entity*> members;
+public:
+
+    // Member functions
+    void append(Entity* member);
+    void append_unique(Entity* member);	// Does not append if already present
+    Entity*& operator[](size_t i);
+    Entity* find_entity_with_name(const string& name);
+    size_t size() const;
+    void reserve(size_t size);
+    TeamLevel* get_subteam(size_t i);	// members must be teams
+    EntityListIterator list_iterator() const;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+class EntityListIterator {
+private:
+    const EntityList& list;
+    int entityNum;
+public:
+    EntityListIterator(const EntityList& list);
+    Entity& operator*();
+    Entity* operator->();
+    operator Entity*() const;
+    EntityListIterator& operator++();	// prefix
+    EntityListIterator operator++(int);	// postfix
+    bool done();	// returns true when the iterator has gone past the end of the list
+};
+
+///////////////////////////////////////////////////////////////////////////////
 class Member : public Entity {
 public:
     Person& person;	// links to attributes of this person
@@ -33,15 +80,17 @@ public:
 				// (Indexed by constraint number 0 to num constraints minus 1
     // Constructor
     Member(Person& person);
+
+    // Other member functions
+    const string& get_attribute_value(const Attribute* attr);
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class TeamLevel : public Entity {
 public:
     // Contains either another level of teams or individual members
-    vector<Entity*> members;
+    EntityList members;
     const Level& level;
-    ////////// CHECK this name - should it be a reference
-    const string* name;		// for teams created with names
 
     // Constructor
     TeamLevel(const Level& level);
@@ -49,17 +98,19 @@ public:
 
     // Other member functions
     void add_member(Entity* member);
+    TeamLevel* create_or_get_named_subteam(const string& subTeamName);
+    const Level& get_level() const;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class Partition : public Entity {
 public:
     const AllTeamData& 	allTeamData;
-    const string& 	name;		// empty if no partitions - values of the partition field
-    vector<TeamLevel*> 	lowestLevelTeams;
-    vector<TeamLevel*> 	highestLevelTeams;
-    vector<TeamLevel*> 	bestCostTeams;
-    vector<Member*> 	allMembers;
-    vector<Member*> 	unallocatedMembers;
+    EntityList	 	lowestLevelTeams;
+    EntityList	 	highestLevelTeams;	
+    EntityList	 	bestCostTeams;
+    EntityList	 	allMembers;
+    EntityList	 	unallocatedMembers;	// subset of allMembers
     double 		cost;
     double 		bestCost;
 
@@ -72,13 +123,16 @@ public:
 
     void populate_random_teams();
     void populate_existing_teams();
+
+    TeamLevel* create_or_get_named_team(const string& teamName);
 };
 
+///////////////////////////////////////////////////////////////////////////////
 class AllTeamData {
 public:
-    vector<Level*>& allLevels;
-    map<string,Partition*> partitionMap;
-    vector<Member*> allMembers;
+    vector<Level*>& 		allLevels;	// topmost (level 0) is the partition
+    map<string,Partition*> 	partitionMap;
+    EntityList	 		allMembers;
 
 public:
     // Constructor - initialises our list of partitions and list of all members.
@@ -91,6 +145,9 @@ public:
     Partition* find_partition(const string& name);
 
     // Other functions
+    int num_levels() const;
+    const Level& get_level(int levelNum) const;
+
     // Returns the number of teams needed given the size constraints. Throws an exception 
     // if not possible to meet the constraints
 
