@@ -27,6 +27,11 @@ const string& Person::get_string_attribute_value(const Attribute* attr)
     return it->second;
 }
 
+const string& Person::get_id()
+{
+    return id;
+}
+
 bool Person::has_attribute_value_pair(Attribute* attr, const string& strValue) 
 {
     assert(attr);
