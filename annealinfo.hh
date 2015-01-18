@@ -46,10 +46,12 @@ public:
     void set_partition_field(const string& fieldName);
     Attribute* get_partition_field();
 
-    // Level functions
+    // Level functions - the topmost level is the partition
     vector<Level*>& all_levels();
     void add_level(Level* level);
     int num_levels();
+    // Get the n'th level (0 = partition, 1 = top level)
+    Level* get_level(int n);
 
     // Constraint functions
     void add_constraint(Constraint* constraint);
@@ -60,8 +62,6 @@ public:
 
     int num_constraints();
     Constraint* get_constraint(int n);
-    // Get the n'th level - where n is 1 based
-    Level* get_level(int n);
     //Attribute* get_partition_field();
     //Attribute* get_id_field();
     const string& get_team_name_format();

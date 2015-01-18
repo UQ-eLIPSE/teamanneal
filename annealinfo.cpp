@@ -104,6 +104,12 @@ int AnnealInfo::num_levels()
     return allLevels.size();
 }
 
+Level* AnnealInfo::get_level(int n)
+{
+    assert(n >= 0 && n < allLevels.size());
+    return allLevels[n];
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Constraint related member functions
 void AnnealInfo::add_constraint(Constraint* constraint) 
@@ -132,12 +138,6 @@ Constraint* AnnealInfo::get_constraint(int n)
 {
     assert(n >= 0 && n < allConstraints.size());
     return allConstraints[n];
-}
-
-Level* AnnealInfo::get_level(int n)
-{
-    assert(n >= 1 && n <= allLevels.size());
-    return allLevels[n-1];
 }
 
 /*
