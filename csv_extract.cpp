@@ -10,7 +10,7 @@ using namespace std;
 void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_File* data, const string& idField) {
     /* Deal with the attributes first */
     int idFieldNum = -1;
-    for(int col = 0; col<data->numColumns; col++) {
+    for(int col = 0; col<data->num_cols(); col++) {
 	// Work out type of column
         Attribute::Type t = Attribute::STRING;
         if(data->columns[col]->type == CSV_Column::NUMBER) {
