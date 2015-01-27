@@ -105,7 +105,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class Partition : public Entity {
 public:
-    const AllTeamData& 	allTeamData;
+    AllTeamData* 	allTeamData;
     EntityList	 	lowestLevelTeams;
     EntityList	 	highestLevelTeams;	
     EntityList	 	bestCostTeams;
@@ -115,7 +115,7 @@ public:
     double 		bestCost;
 
     // Constructor
-    Partition(const AllTeamData& allTeamData, const string& name, int numPeople);
+    Partition(AllTeamData* allTeamData, const string& name, int numPeople);
 
     // Other member functions
     // Add a member to our partition. All members are added before teams are formed.
@@ -147,6 +147,8 @@ public:
     // Other functions
     int num_levels() const;
     const Level& get_level(int levelNum) const;
+    // Output team data to csv file
+    void output(const char* filename);
 
     // Returns the number of teams needed given the size constraints. Throws an exception 
     // if not possible to meet the constraints

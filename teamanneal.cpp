@@ -59,7 +59,7 @@ AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 {
     // Read team file and parse the CSV 
     FileData* teamFileData = new FileData(argv[2]);
-    CSV_File* csvContents = process_csv_file(teamFileData->getContents(), ',', '"', 1);
+    CSV_File* csvContents = new CSV_File(teamFileData->getContents(), ',', '"', 1);
 
     // Read constraint file
     JSONValue* constraintJSON = JSONValue::readJSON(argv[3]);
@@ -80,7 +80,7 @@ AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 
 int main(int argc, const char* argv[]) 
 {
-    AnnealInfo annealInfo;
+    AnnealInfo* annealInfo = new AnnealInfo();
     AllTeamData* teamData;
 
     if(argc < 2) {
@@ -91,11 +91,14 @@ int main(int argc, const char* argv[])
 	    if(cmd == "help") {
 		print_help_message(argv[0]);
 	    } else if(cmd == "evaluate" && argc == 4) {
-		teamData = set_up_data(annealInfo, argv);
+		teamData = set_up_data(*annealInfo, argv);
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
-		teamData = set_up_data(annealInfo, argv);
+		teamData = set_up_data(*annealInfo, argv);
+		if(cmd == "create") {
+		    //teamData->output(argv[4]);
+		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
-		teamData = set_up_data(annealInfo, argv);
+		teamData = set_up_data(*annealInfo, argv);
 	    } else {
 		// Invalid subcommand or incorrect number of arguments
 		print_usage_message_and_exit(argv[0]);

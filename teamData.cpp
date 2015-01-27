@@ -200,7 +200,7 @@ const Level& TeamLevel::get_level() const
 // Partition
 
 // Constructor
-Partition::Partition(const AllTeamData& allTeamData, const string& name, int numPeople) :
+Partition::Partition(AllTeamData* allTeamData, const string& name, int numPeople) :
 	Entity(Entity::PARTITION, name),
 	allTeamData(allTeamData),
 	cost(0.0),
@@ -217,7 +217,7 @@ void Partition::add_member(Member* member)
 
 void Partition::populate_random_teams()
 {
-    vector<Level*>& allLevels = allTeamData.allLevels;
+    vector<Level*>& allLevels = allTeamData->allLevels;
 
     assert(highestLevelTeams.size() == 0);
     assert(lowestLevelTeams.size() == 0);
@@ -272,10 +272,10 @@ void Partition::populate_existing_teams()
 	// We iterate from the top level down
 	TeamLevel* teamAtLevel = nullptr;
 	bool unallocated = false;
-	for(int levelNum = 1; levelNum <= allTeamData.num_levels(); levelNum++) {
+	for(int levelNum = 1; levelNum <= allTeamData->num_levels(); levelNum++) {
 	    // Get the attribute for this level (there should be one in our team file - it
 	    // is an error if not)
-	    Attribute* levelAttribute = allTeamData.get_level(levelNum).get_field_attribute();
+	    Attribute* levelAttribute = allTeamData->get_level(levelNum).get_field_attribute();
 	    // FIX - check earlier that attributes are present if we're using pre-existing teams?
 	    assert(levelAttribute);
 
@@ -296,7 +296,7 @@ void Partition::populate_existing_teams()
 		// Sub-level - search for team with this name
 		teamAtLevel = teamAtLevel->create_or_get_named_subteam(teamLevelName);
 	    }
-	    if(levelNum == allTeamData.num_levels()) {
+	    if(levelNum == allTeamData->num_levels()) {
 		// At lowest level - add the team to our list of lowest level teams
 		// if we haven't already
 		lowestLevelTeams.append_unique(teamAtLevel);
@@ -317,7 +317,7 @@ TeamLevel* Partition::create_or_get_named_team(const string& teamName)
     TeamLevel* team = (TeamLevel*)highestLevelTeams.find_entity_with_name(teamName);
     if(!team) {
 	// Team doesn't exist - create one with that name
-	team = new TeamLevel(allTeamData.get_level(1), teamName);
+	team = new TeamLevel(allTeamData->get_level(1), teamName);
 	highestLevelTeams.append(team);
     }
     return team;
@@ -342,13 +342,12 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
 		itr != partitionAttribute->end(); ++itr) {
 	    // itr will be a const string*
 	    // Create a new partition with the given name
-	    partitionMap.insert(pair<const string,Partition*>(*itr, new Partition(annealInfo,
-		    *itr, 
+	    partitionMap.insert(pair<const string,Partition*>(*itr, new Partition(this, *itr, 
 		    annealInfo.count_people_with_attribute_value(partitionAttribute, *itr))));
 	}
     } else {
 	// No partitions - just create one with an empty name
-	partition = new Partition(annealInfo, "", annealInfo.num_people());
+	partition = new Partition(this, "", annealInfo.num_people());
 	partitionMap.insert(pair<const string, Partition*>("", partition));
     }
 
@@ -406,6 +405,10 @@ int AllTeamData::num_levels() const
 const Level& AllTeamData::get_level(int levelNum) const
 {
     return *(allLevels[levelNum]);
+}
+
+void AllTeamData::output(const char* filename)
+{
 }
 
 // static member

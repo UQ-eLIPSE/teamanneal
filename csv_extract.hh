@@ -9,9 +9,7 @@
 #include "person.hh"
 #include <vector>
 #include <string>
-extern "C" {
-#include "csv.h"
-}
+#include "csv.hh"
 
 using namespace std;
 

@@ -13,13 +13,13 @@ void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_Fil
     for(int col = 0; col<data->numColumns; col++) {
 	// Work out type of column
         Attribute::Type t = Attribute::STRING;
-        if(data->columns[col].type == NUMBER) {
+        if(data->columns[col]->type == CSV_Column::NUMBER) {
             t = Attribute::NUMERICAL;
         }
-	Attribute* attr = new Attribute(data->columns[col].name, t);
+	Attribute* attr = new Attribute(data->columns[col]->name, t);
 	annealInfo.add_attribute(attr);
 
-        if(idField == data->columns[col].name) {
+        if(idField == data->columns[col]->name) {
 	    // This column name matches our ID field - specify this attribute as the id field
 	    // and keep track of the column number
 	    annealInfo.set_id_attribute(attr);
@@ -30,9 +30,9 @@ void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_Fil
     assert(idFieldNum >= 0);
 
     /* Now deal with each person */
-    for(int row=0; row<data->numRows; row++) {
+    for(int row=0; row<data->num_rows(); row++) {
 	// Find the ID of this person and create the empty person object
-        const char* id = data->rows[row].cells[idFieldNum].str;
+        string& id = data->rows[row]->cells[idFieldNum]->str;
         Person* person = new Person(id);
 
 	// For each column in the CSV file, add this data as an attribute 
@@ -41,12 +41,12 @@ void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_Fil
 	    Attribute* attr = annealInfo.get_attribute(col);
 	    // Add the value of this attribute for this person as one of the possible values for the 
 	    // attribute
-	    attr->add_value(string(data->rows[row].cells[col].str));
+	    attr->add_value(string(data->rows[row]->cells[col]->str));
 	    // Record the attribute value pair for this person. All values get recorded as strings
 	    // but numbers also get recorded as number. 
-	    person->add_attribute_value_pair(attr, string(data->rows[row].cells[col].str));
-            if(data->columns[col].type == NUMBER) {
-                person->add_attribute_value_pair(attr, data->rows[row].cells[col].d);
+	    person->add_attribute_value_pair(attr, string(data->rows[row]->cells[col]->str));
+            if(data->columns[col]->type == CSV_Column::NUMBER) {
+                person->add_attribute_value_pair(attr, data->rows[row]->cells[col]->d);
             }
         }
 

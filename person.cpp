@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Person::Person(const char* id) :
+Person::Person(const string& id) :
 	id(id) 
 {
 }

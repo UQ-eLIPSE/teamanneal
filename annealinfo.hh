@@ -49,7 +49,7 @@ public:
     // Level functions - the topmost level is the partition
     vector<Level*>& all_levels();
     void add_level(Level* level);
-    int num_levels();
+    int num_levels();		// Excluding partition level
     // Get the n'th level (0 = partition, 1 = top level)
     Level* get_level(int n);
 

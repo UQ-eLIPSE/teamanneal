@@ -29,6 +29,7 @@ public:
     ConstraintException(const char* mesg);
     ConstraintException(const char* mesg1, const char* mesg2);
     ConstraintException(const char* mesg1, const string& mesg2);
+    ConstraintException(const char* mesg1, double d);
 
     virtual const char* what() const noexcept;
 };

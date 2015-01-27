@@ -6,9 +6,7 @@
 #include "exceptions.hh"
 #include <iostream>
 #include <stdlib.h>
-extern "C" {
-#include "csv.h"
-}
+#include "csv.hh"
 
 using namespace std;
 
@@ -26,7 +24,7 @@ int main(int argc, char* argv[]) {
 	exit(2);
     } 
 
-    CSV_File* csvData = process_csv_file(filedata->getContents(), ',', '"',1);
-    print_file_data(csvData, ',');
+    CSV_File* csvData = new CSV_File(filedata->getContents(), ',', '"',1);
+    cout << *csvData;
     return 0;
 }

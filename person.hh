@@ -14,13 +14,13 @@ using namespace std;
 
 class Person {
 protected:
-    string id;
+    const string id;
 public:
     map<Attribute,string> stringAttributes;
     map<Attribute,double> numberAttributes;
 
     // Constructor
-    Person(const char* id);
+    Person(const string& id);
 
     // Add attribute value pair to this person. The first function is for string attributes,
     // the second is for numerical attributes. (We record all attributes as strings, but 

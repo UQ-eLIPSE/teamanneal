@@ -1,11 +1,14 @@
 /*
-** csv.c
+** csv.cpp
+** TO FIX
+**  - outputs messages to stderr using fprintf() - should throw exceptions on error
 */
 
-#include "csv.h"
+#include "csv.hh"
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <sstream>
 
 /* Given the file contents pointed to by *bufPtr, return a pointer to the 
 ** beginning of the next line of data (i.e. *bufPtr) or NULL if there is
@@ -13,7 +16,7 @@
 ** after any newline (or carriage return or newline-carriage return or
 ** carriage return-newline.
 */
-char* get_line(char** bufPtr) {
+static char* get_line(char** bufPtr) {
     char* linePtr;
     char* cursor;
 
@@ -46,7 +49,7 @@ char* get_line(char** bufPtr) {
 
 /* Count the number of fields in the given null-terminated line.
 */
-int count_fields(char* line, char separator, char quote) {
+static int count_fields(char* line, char separator, char quote) {
     char* cursor;
     int fieldCount = 1;
     int withinQuotes = 0;
@@ -91,7 +94,7 @@ int count_fields(char* line, char separator, char quote) {
 ** to the beginning of the next field, or is set to NULL if we reach the
 ** end of the line. 
 */
-ColumnType get_field(char** linePtr, CSV_Cell* cellPtr, char separator, char quote) {
+static CSV_Column::Type get_field(char** linePtr, CSV_Cell* cellPtr, char separator, char quote) {
     char* cursor;
     char* writeCursor;
     char* field;
@@ -123,7 +126,7 @@ ColumnType get_field(char** linePtr, CSV_Cell* cellPtr, char separator, char quo
 	    // Field was not properly quoted - error
 	    *linePtr = NULL;	// Give up on this line
 	    //printf("%s\n%s\n", field, cursor); fflush(stdout);
-	    return QUOTE_ERROR;
+	    return CSV_Column::QUOTE_ERROR;
 	}
 	assert(cursor[0] == quote);
 	cursor++;
@@ -150,7 +153,7 @@ ColumnType get_field(char** linePtr, CSV_Cell* cellPtr, char separator, char quo
     ** the type of the field. We just return EMPTY.
     */
     if(!cellPtr) {
-	return EMPTY;
+	return CSV_Column::EMPTY;
     }
     /* Work out the type of the field, set the value and return
     ** the appropriate type indicator.
@@ -158,34 +161,148 @@ ColumnType get_field(char** linePtr, CSV_Cell* cellPtr, char separator, char quo
     cellPtr->str = field;
     cellPtr->d = 0.0;
     if(*field == '\0') {
-	return EMPTY;
+	return CSV_Column::EMPTY;
     }
     cellPtr->d = strtod(field, &firstCharAfterConversion);
     if(cursor == firstCharAfterConversion) {
 	/* Whole field was consumed - value was a number */
-	return NUMBER;
+	return CSV_Column::NUMBER;
     }
 
     /* Return value isn't empty or a number - must be a string */
-    return STRING;
+    return CSV_Column::STRING;
 }
 
-CSV_File* process_csv_file(char* buffer, char separator, char quote, int expectTable) {
+// Ouptut string in a manner suitable for a CSV file - i.e. if the string contains a 
+// comma then we put double quotes around it. If such a string also contains a double
+// quote character then we double it up.
+static void output_string(ostream& os, const string& str) {
+    if(str.find(',') != string::npos) {
+	// Found ',' in string - enclose string in double quotes
+	os << '"';
+	// Output string character by character and replace double quotes by 
+	// doubled double quotes
+	string::const_iterator itr = str.begin();
+	while(itr != str.end()) {
+	    os << *itr;
+	    if(*itr == '"') {
+		os << '"';
+	    }
+	    ++itr;
+	}
+	// Final double quote enclosing the string
+	os << '"';
+    } else {
+	// No comma in the string - just output it
+	os << str;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CSV_Cell
+
+// Constructors
+CSV_Cell::CSV_Cell() :
+    d(0.0)
+{
+}
+
+CSV_Cell::CSV_Cell(const string& str) :
+    str(str), 
+    d(0.0)
+{
+}
+
+CSV_Cell::CSV_Cell(double d) :
+    d(d)
+{
+    ostringstream ostr;
+
+    ostr << d;
+    str = ostr.str();
+}
+
+CSV_Cell::CSV_Cell(const char* str) : 
+    str(str),
+    d(0.0)
+{
+}
+
+ostream& operator<<(ostream& os, const CSV_Cell& cell) {
+    output_string(os, cell.str);
+    return os;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CSV_Row
+
+// Constructor
+CSV_Row::CSV_Row()
+{
+}
+
+void CSV_Row::append(CSV_Cell* cell) 
+{
+    cells.push_back(cell);
+}
+
+void CSV_Row::append(const string& str)
+{
+    cells.push_back(new CSV_Cell(str));
+}
+
+ostream& operator<<(ostream& os, const CSV_Row& row) {
+    // For each cell, output its value
+    for(int col = 0; col < row.cells.size(); col++) { 
+	if(col != 0) {
+	    os << ',';
+	}
+	os << *(row.cells[col]);
+    }
+    os << endl;
+    return os;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CSV_Column
+
+// Constructor
+CSV_Column::CSV_Column(const string& name, CSV_Column::Type type) :
+	name(name),
+	type(type)
+{
+}
+
+ostream& operator<<(ostream& os, const CSV_Column& col) {
+    output_string(os, col.name);
+    if(col.type == CSV_Column::STRING) {
+	os << "(STRING)";
+    } else if(col.type == CSV_Column::NUMBER) {
+	os << "(NUMBER)";
+    } else if(col.type == CSV_Column::EMPTY) {
+	os << "(EMPTY)";
+    } else {
+	os << "(UNKNOWN)";
+    }
+    return os;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CSV_File
+
+// Constructor
+CSV_File::CSV_File(char* buffer, char separator, char quote, int expectTable) :
+	table(expectTable)
+{
     char* bufPtr = buffer;
     char* cursor;
-    CSV_File* data;
-    int col, row, line, errorFound;
-    ColumnType datatype;
+    int col, line, errorFound;
+    CSV_Column::Type datatype;
     CSV_Row* rowPtr;
 
     assert(buffer);
 
-    data = (CSV_File*)malloc(sizeof(CSV_File));
-    data->numRows = 0;
-    data->rows = 0;
-    data->columns = 0;
-    data->numColumns = 0;
-    data->table = expectTable;
     line = 0;
     if(expectTable) {
         cursor = get_line(&bufPtr);	/* first row - assumed to contain column names */
@@ -193,101 +310,89 @@ CSV_File* process_csv_file(char* buffer, char separator, char quote, int expectT
         /* Work out the number of columns based on the number of fields in the first row. This will
         ** be valid if we're expecting a table of data, otherwise, this will not be relevant.
         */
-        data->numColumns = count_fields(cursor, separator, quote);
-        data->columns = (CSV_Column*)malloc(sizeof(CSV_Column) * (data->numColumns));
+        numColumns = count_fields(cursor, separator, quote);
+	columns.reserve(numColumns);
+
         /* Populate the column names based on the values in the first row */
-        for(col=0; col < data->numColumns; col++) {
+        for(col=0; col < numColumns; col++) {
             assert(cursor);
-            data->columns[col].name = cursor;
-            data->columns[col].type = EMPTY; /* default value - we'll update the column type when we
-                                             ** read the actual data, rather than the headings. */
-            if(get_field(&cursor, NULL, separator, quote) == QUOTE_ERROR) {
+	    CSV_Cell* cellPtr = new CSV_Cell();
+            if(get_field(&cursor, cellPtr, separator, quote) == CSV_Column::QUOTE_ERROR) {
                 fprintf(stderr, "Line %d - error in quoted field\n", line);
                 errorFound = 1;
             }
+	    // Construct column with default type - we'll update the column type when we read the actual data,
+	    // rather than the headings
+	    columns.push_back(new CSV_Column(cellPtr->str, CSV_Column::EMPTY));
+	    delete cellPtr;
         }
     } else {
-        data->numColumns = 0;
-        data->columns = 0;
+        numColumns = 0;
     }
     /* Read all the remaining rows */
-    row = 0;
     errorFound = 0;
     while((cursor = get_line(&bufPtr))) {
         line++;
         /* Ensure we have enough space to store this row in our array of rows */
-	data->rows = (CSV_Row*)realloc(data->rows, sizeof(CSV_Row)*(row + 4)/4*4);
-        rowPtr = &(data->rows[row]);
-        rowPtr->numCells = 0;
-        rowPtr->cells = 0;
+	rowPtr = new CSV_Row();
+	rows.push_back(rowPtr);
+	int cellNum = 0;
         while(cursor) {
-            rowPtr->cells = (CSV_Cell*)realloc(rowPtr->cells, sizeof(CSV_Cell) * (rowPtr->numCells + 4)/4*4);
-            datatype = get_field(&cursor, &(rowPtr->cells[rowPtr->numCells]), separator, quote);
-            //printf("%s ", rowPtr->cells[rowPtr->numCells].str);
-            fflush(stdout);
-            if(datatype == QUOTE_ERROR) {
+	    CSV_Cell* cellPtr = new CSV_Cell();
+	    rowPtr->append(cellPtr);
+            datatype = get_field(&cursor, cellPtr, separator, quote);
+            if(datatype == CSV_Column::QUOTE_ERROR) {
                 fprintf(stderr, "Line %d - error in quoted field\n", line);
                 errorFound = 1;
-            } else if(expectTable && rowPtr->numCells < data->numColumns &&
-                    datatype > data->columns[rowPtr->numCells].type) {
+            } else if(expectTable && cellNum < numColumns &&
+                    datatype > columns[cellNum]->type) {
                 /* This is supposed to be a table and we haven't exceeded the column range
                 ** and the type of the column is different to what we thought it was previously
                 */
-                data->columns[rowPtr->numCells].type = datatype;
+                columns[cellNum]->type = datatype;
             }
-            (rowPtr->numCells)++;
+	    ++cellNum;
         }
         // Run out of fields in line. If this is a table, check we got the number expected
-        if(expectTable && rowPtr->numCells != data->numColumns) {
+        if(expectTable && rowPtr->cells.size() != numColumns) {
             fprintf(stderr, "Line %d - got %d fields, expecting %d)\n",
-                    line, rowPtr->numCells, data->numColumns);
+                    line, (int)rowPtr->cells.size(), numColumns);
             errorFound = 1;
             break;
         }
-        if(!expectTable && rowPtr->numCells > data->numColumns) {
-            data->numColumns = rowPtr->numCells;
+        if(!expectTable && rowPtr->cells.size() > numColumns) {
+            numColumns = rowPtr->cells.size();
         }
-	row++;
     }
     if(errorFound) {
 	exit(3);
     }
-    data->numRows = row;
-    return data;
 }
 
-void print_file_data(CSV_File* data, char separator) {
-    int r,c;
-    printf("Number of columns: %d\n", data->numColumns);
-    printf("Number of rows: %d\n", data->numRows);
-    if(data->table) {
-        for(c=0; c < data->numColumns; c++) {
-            if(c != 0) {
-                putchar(separator);
-            }
-            printf("%s", data->columns[c].name);
-            if(data->columns[c].type == STRING) {
-                printf("(STRING)");
-            } else if(data->columns[c].type == NUMBER) {
-                printf("(NUMBER)");
-            } else if(data->columns[c].type == EMPTY) {
-                printf("(EMPTY)");
-            } else {
-                printf("(UNKNOWN)");
-            }
-        }
-    }
-    for(r=0; r < data->numRows; r++) {
-	printf("\n");
-	for(c=0; c < data->rows[r].numCells; c++) {
-	    if(c != 0) {
-		putchar(separator);
+int CSV_File::num_rows() {
+    return rows.size();
+}
+
+int CSV_File::num_cols() {
+    return numColumns;
+}
+
+ostream& operator<<(ostream& os, const CSV_File& file) {
+    os << "Number of columns: " << file.numColumns << endl;
+    os << "Number of rows: " <<  file.rows.size() << endl;
+    if(file.table) {
+	// Have to output column titles first
+	for(int col = 0; col < file.numColumns; col++) {
+	    if(col != 0) {
+		os << ',';
 	    }
-	    // This doesn't work if the string has a comma in it - we should really
-	    // enclose such strings in double quotes (and escape double quotes in the 
-	    // string
-	    printf("%s", data->rows[r].cells[c].str);
+	    os << *(file.columns[col]);
 	}
+	os << endl;
     }
-    printf("\n");
+    // For each row, output each cell value
+    for(int row = 0; row < file.rows.size(); row++) {
+	os << *(file.rows[row]);
+    }
+    return os;
 }

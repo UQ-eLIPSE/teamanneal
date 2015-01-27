@@ -3,6 +3,7 @@
 //
 
 #include "jsonExtract.hh"
+#include <sstream>
 
 // The following are strings we'll look for in the JSON
 static const string VERSION_STRING = "tool-version";
@@ -54,56 +55,56 @@ void json_parse_teamanneal_v1(AnnealInfo& annealInfo, JSONObject* obj)
 {
     // Default partition (i.e. none)
     Attribute* partitionFieldAttribute = nullptr;
-    bool levelsDefined = false;
 
-    // Iterate over all the fields of the object
-    for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
-	if(it->first == PARTITION_STRING) {
-	    if(annealInfo.get_partition_field()) {
-		// Partition has already been set - this is an error
-		throw ConstraintException("Partition already set");
-	    } else if(levelsDefined) {
-		// Must not define levels before partition
-		throw ConstraintException("Partition must not be defined after levels");
-	    } else if(it->second->is_string()) {
-		// String value provided - this is to set our partition field
-		JSONString* str = (JSONString*)(it->second);
-		annealInfo.set_partition_field(str->get_value());
-		// Check that this field name corresponded to an attribute in our data
-		partitionFieldAttribute = annealInfo.get_partition_field();
-		if(!partitionFieldAttribute) {
-		    throw ConstraintException("Partition field not found: ", str->get_value());
-		}
-	    } else if(it->second->is_null()) {
-		// No partition specified - ignore
-		;
-	    } else {
-		throw ConstraintException("Expected string value for attribute ", PARTITION_STRING);
+    // If there is a partition attribute, process it first
+    if(obj->has_attribute(PARTITION_STRING)) {
+	JSONValue* jsonValue = obj->find(PARTITION_STRING);
+	if(jsonValue->is_string()) {
+	    JSONString* jsonString = (JSONString*)jsonValue;
+	    annealInfo.set_partition_field(jsonString->get_value());
+	    partitionFieldAttribute = annealInfo.get_partition_field();
+	    if(!partitionFieldAttribute) {
+		throw ConstraintException("Partition field not found: ", jsonString->get_value());
 	    }
-	} else if(it->first == LEVELS_STRING) {
-	    if(it->second->is_array()) {
-		json_parse_levels_v1(annealInfo, partitionFieldAttribute, (JSONArray*)(it->second));
-		levelsDefined = true;
-	    } else {
-		throw ConstraintException("Expected array value for attribute ", LEVELS_STRING);
-	    }
-	} else if(it->first == NAME_FORMAT_STRING) {
-	    if(it->second->is_object()) {
-		json_parse_name_format_v1(annealInfo, (JSONObject*)(it->second));
-	    } else {
-		throw ConstraintException("Expected object value for attribute ", 
-			NAME_FORMAT_STRING);
-	    }
-	} else if(it->first == CONSTRAINTS_STRING) {
-	    if(it->second->is_array()) {
-		json_parse_constraints_v1(annealInfo, (JSONArray*)(it->second));
-	    } else {
-		throw ConstraintException("Expected array value for attribute ", 
-			CONSTRAINTS_STRING);
-	    }
-	} else if(it->first == VERSION_STRING || it->first == IDENTIFIER_STRING) {
-	    // Do nothing - we've already extracted these
+	} else if(jsonValue->is_null()) {
+	    // No partition specified - no need to do anything
 	} else {
+	    throw ConstraintException("Expected string value for attribute ", PARTITION_STRING);
+	}
+    }
+
+    if(obj->has_attribute(LEVELS_STRING) && obj->find(LEVELS_STRING)->is_array()) {
+	// Found levels array
+	JSONArray* levelsJSONArray = (JSONArray*)(obj->find(LEVELS_STRING));
+	json_parse_levels_v1(annealInfo, partitionFieldAttribute, levelsJSONArray);
+    } else {
+	throw ConstraintException("Did not find array attribute ", LEVELS_STRING);
+    }
+
+    if(obj->has_attribute(NAME_FORMAT_STRING) && obj->find(NAME_FORMAT_STRING)->is_object()) {
+	// Found name format
+	JSONObject* nameFormatJSONObject = (JSONObject*)(obj->find(NAME_FORMAT_STRING));
+	json_parse_name_format_v1(annealInfo, nameFormatJSONObject);
+    } else {
+	throw ConstraintException("Did not find object attribute ", NAME_FORMAT_STRING);
+    }
+
+    if(obj->has_attribute(CONSTRAINTS_STRING) && obj->find(CONSTRAINTS_STRING)->is_array()) {
+	// Found levels array
+	JSONArray* constraintsJSONArray = (JSONArray*)(obj->find(CONSTRAINTS_STRING));
+	json_parse_constraints_v1(annealInfo, constraintsJSONArray);
+    } else {
+	throw ConstraintException("Did not find array attribute ", CONSTRAINTS_STRING);
+    }
+
+    // Iterate over all the fields of the object to make sure we don't have any invalid fields
+    for(JSONObject::Iterator it = obj->iterator(); it != obj->end(); ++it) {
+	if(it->first != VERSION_STRING &&
+		it->first != IDENTIFIER_STRING &&
+		it->first != PARTITION_STRING &&
+		it->first != LEVELS_STRING &&
+		it->first != NAME_FORMAT_STRING &&
+		it->first != CONSTRAINTS_STRING) {
 	    // Anything else is an invalid field
 	    throw ConstraintException("Unexpected attribute ", it->first);
 	}
@@ -191,6 +192,7 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, Attribute* partitionAtt
 	// This level will be the parent for the next level (if any)
 	parentLevel = level;
     }
+    //cout << "Number of levels: " << annealInfo.num_levels() << endl;
 }
 
 static void json_parse_name_format_v1(AnnealInfo& annealInfo, JSONObject* nameFormatObject)
@@ -222,7 +224,7 @@ static void json_parse_constraints_v1(AnnealInfo& annealInfo, JSONArray* constra
 	    throw ConstraintException("Constraint level must be 1, 2 or 3");
 	}
 	if(level > annealInfo.num_levels()) {
-	    throw ConstraintException("Invalid constraint level - not that many levels");
+	    throw ConstraintException("Invalid constraint level - not that many levels ", level);
 	}
 
 	const string& operatorString = obj->find_string("operator");
@@ -346,6 +348,17 @@ ConstraintException::ConstraintException(const char* mesg1, const string& mesg2)
 {
     message = mesg1;
     message += mesg2;
+}
+
+ConstraintException::ConstraintException(const char* mesg1, double d)
+{
+    ostringstream strs;
+    strs << d;
+
+    message = mesg1;
+    message += "(";
+    message += strs.str();
+    message += ")";
 }
 
 const char* ConstraintException::what() const noexcept

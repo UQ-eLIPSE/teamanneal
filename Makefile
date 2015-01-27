@@ -16,10 +16,10 @@ CC=gcc
 CXX=g++
 
 # Default C compilation options
-CFLAGS=-Wall -MMD
+CFLAGS=-Wall -MMD -g
 
 #Default C++ compilation options
-CXXFLAGS=-Wall -std=c++11 -MMD
+CXXFLAGS=-Wall -std=c++11 -MMD -g
 
 all: $(PROGRAMS)
 

@@ -101,7 +101,10 @@ void AnnealInfo::add_level(Level* level)
 
 int AnnealInfo::num_levels()
 {
-    return allLevels.size();
+    // We assume we have a partition level and don't include that in the count
+    // This function should not be called until we at least a partition level (0)
+    assert(allLevels.size() > 0);
+    return allLevels.size() - 1;
 }
 
 Level* AnnealInfo::get_level(int n)
