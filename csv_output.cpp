@@ -18,8 +18,8 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
 	csvFile->add_column(annealInfo.get_attribute(i)->get_name());
     }
 
-    // Now for level names (ignoring partition)
-    for(int i=1; i<= annealInfo.num_levels(); i++) {
+    // Now for level names (ignoring partition) - we work from the bottom level towards the top
+    for(int i=annealInfo.num_levels(); i>= 1;  --i) {
 	csvFile->add_column(annealInfo.get_level(i)->get_field_name());
     }
 
@@ -62,7 +62,6 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
         assert(numLevels == annealInfo.num_levels());
 	
 	// prepend our partition name to our vector of level names - in case it is needed
-	cout << "Partition name :" << team->get_name() << endl;
 	levelNames.insert(levelNames.begin(), team->get_name());
 
         // Output the overall name

@@ -23,7 +23,7 @@ class Entity {
 public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
-    const string& name;
+    const string name;
     TeamLevel* memberOf;	// team that this entity is part of, or null if top level
 
     // Constructor

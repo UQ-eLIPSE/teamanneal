@@ -149,7 +149,7 @@ string CharacterLevel::get_name(int teamNum, int numTeams) const
     std::stringstream s;
     int tmpTeamNum = teamNum;
     do {
-	s << (startAt + (teamNum % 26));
+	s << (char)(startAt + (teamNum % 26));
 	tmpTeamNum -= 26;
     } while(tmpTeamNum >= 0);
     return s.str();
