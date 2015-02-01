@@ -51,7 +51,7 @@ public:
     // Member functions
     // Append member to this entity list and specify the entity's parent team as given
     void append(Entity* member, TeamLevel* parent = nullptr);
-    void append_unique(Entity* member, TeamLevel* parent = nullptr);	// Does not append if already present
+    void append_unique(Entity* member, TeamLevel* parent);	// Does not append if already present
     Entity*& operator[](size_t i);
     Entity* find_entity_with_name(const string& name);
     size_t size() const;
@@ -129,8 +129,9 @@ public:
     Partition(AllTeamData* allTeamData, const Level& level, const string& name, int numPeople);
 
     // Other member functions
-    // Add a member to our partition. All members are added before teams are formed.
-    void add_member(Member* member);
+    // Add a member to our partition. All members are added before teams are formed. We return
+    // a pointer to the Member instance we create
+    Member* add_person(Person* member);
 
     void populate_random_teams();
     void populate_existing_teams();

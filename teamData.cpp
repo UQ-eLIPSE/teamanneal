@@ -265,9 +265,11 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 }
 
 // Other member functions
-void Partition::add_member(Member* member)
+Member* Partition::add_person(Person* person)
 {
+    Member* member = new Member(*person);
     allMembers.append(member);
+    return member;
 }
 
 void Partition::populate_random_teams()
@@ -337,6 +339,7 @@ void Partition::populate_existing_teams()
 
 	    // Get the value of this attribute for this person - it's possible the value is blank
 	    const string& teamLevelName = ((Member*)allMembers[i])->get_attribute_value(levelAttribute);
+
 	    // If the value is blank (at any level), this person is unallocated - abort - do not
 	    // create any more teams at any level for this person
 	    if(teamLevelName == "") {
@@ -355,7 +358,7 @@ void Partition::populate_existing_teams()
 	    if(levelNum == allTeamData->num_levels()) {
 		// At lowest level - add the team to our list of lowest level teams
 		// if we haven't already
-		lowestLevelTeams.append_unique(teamAtLevel);
+		lowestLevelTeams.append_unique(teamAtLevel, this);
 	    }
 	}
 	if(unallocated) {
@@ -374,7 +377,7 @@ TeamLevel* Partition::create_or_get_named_team(const string& teamName)
     if(!team) {
 	// Team doesn't exist - create one with that name
 	team = new TeamLevel(allTeamData->get_level(1), teamName);
-	members.append(team);
+	members.append(team, this);
     }
     return team;
 }
@@ -414,13 +417,12 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
     // Iterate over all the people to build up our list of members
     for(vector<Person*>::iterator it = annealInfo.all_people().begin();
 	    it != annealInfo.all_people().end(); ++it) {
-	Member* member = new Member(**it);
-	allMembers.append(member);
 	// Work out which partition they go in
 	if(partitionAttribute) {
 	    partition = find_partition((*it)->get_string_attribute_value(partitionAttribute));
 	} // else, no partitions. partition variable already holds a pointer to our one dummy partition
-	partition->add_member(member);
+	Member* member = partition->add_person(*it);
+	allMembers.append(member);
     }
 }
 
