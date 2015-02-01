@@ -276,6 +276,7 @@ CSV_Column::CSV_Column(const string& name, CSV_Column::Type type) :
 
 ostream& operator<<(ostream& os, const CSV_Column& col) {
     output_string(os, col.name);
+    /*
     if(col.type == CSV_Column::STRING) {
 	os << "(STRING)";
     } else if(col.type == CSV_Column::NUMBER) {
@@ -285,14 +286,22 @@ ostream& operator<<(ostream& os, const CSV_Column& col) {
     } else {
 	os << "(UNKNOWN)";
     }
+    */
     return os;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSV_File
 
-// Constructor
-CSV_File::CSV_File(char* buffer, char separator, char quote, int expectTable) :
+// Constructor - empty structure - assumed to be a table
+CSV_File::CSV_File() :
+	table(true),
+	numColumns(0)
+{
+}
+
+// Constructor - populate from file
+CSV_File::CSV_File(char* buffer, char separator, char quote, bool expectTable) :
 	table(expectTable)
 {
     char* bufPtr = buffer;
@@ -377,9 +386,23 @@ int CSV_File::num_cols() {
     return numColumns;
 }
 
+void CSV_File::add_column(const string& name, CSV_Column::Type type) 
+{
+    CSV_Column* col = new CSV_Column(name, type);
+    columns.push_back(col);
+    numColumns++;
+}
+
+void CSV_File::add_row(CSV_Row* row) 
+{
+    rows.push_back(row);
+}
+
 ostream& operator<<(ostream& os, const CSV_File& file) {
+    /*
     os << "Number of columns: " << file.numColumns << endl;
     os << "Number of rows: " <<  file.rows.size() << endl;
+    */
     if(file.table) {
 	// Have to output column titles first
 	for(int col = 0; col < file.numColumns; col++) {

@@ -11,6 +11,7 @@
 #include "csv_extract.hh"
 #include "filedata.hh"
 #include "teamData.hh"
+#include "csv_output.hh"
 
 
 #include <iostream>
@@ -95,7 +96,12 @@ int main(int argc, const char* argv[])
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
 		if(cmd == "create") {
-		    //teamData->output(argv[4]);
+		    // Do anneal
+		    teamData->populate_random_teams();
+
+		    // Update column names if required
+		    annealInfo->update_column_names_if_required();
+		    output_csv_file_from_team_data(teamData, argv[4]);
 		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
@@ -108,6 +114,9 @@ int main(int argc, const char* argv[])
 	    // Possible errors are file related (file doesn't exit) or syntax errors
 	    // inside a file.
 	    cerr << argv[0] << ": " << e.what() << endl;
+	    exit(2);
+	} catch(string& s) {
+	    cerr << s << endl;
 	    exit(2);
 	} catch(...) {
 	    cerr << argv[0] << ": unknown exception" << endl;

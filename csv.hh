@@ -43,7 +43,7 @@ public:
 
 class CSV_Column {
 public:
-typedef enum { NULLCOLUMN, EMPTY, NUMBER, STRING, QUOTE_ERROR } Type;
+typedef enum { NULLCOLUMN, EMPTY, NUMBER, STRING, QUOTE_ERROR, UNKNOWN } Type;
     string name;
     CSV_Column::Type type;
 
@@ -56,12 +56,15 @@ typedef enum { NULLCOLUMN, EMPTY, NUMBER, STRING, QUOTE_ERROR } Type;
 
 class CSV_File {
 public:
-    int table;          /* True if this represents a table with named columns */
+    bool table;          /* True if this represents a table with named columns */
     int numColumns;	// Same as columns.size() if table, otherwise records number of columns
     vector<CSV_Column*> columns;	/* Indexed by column number, only valid for a table */
     vector<CSV_Row*> rows;		/* Indexed by row number, excludes titles if this is a table */
 
-    // Constructor
+    // Constructors
+    // - empty structure
+    CSV_File();
+    // - from file contents
     // buffer - null terminated file contents
     // separator - the separator between fields - usually a comma
     // quote - the permitted quote character which can be present at the start and end
@@ -69,11 +72,13 @@ public:
     //              be contained in the field text
     // expectTable - true if a rectangular table of data is expected, i.e., same number of
     //              columns in every row, false otherwise.
-    CSV_File(char* buffer, char separator, char quote, int expectTable);
+    CSV_File(char* buffer, char separator, char quote, bool expectTable);
 
     // Other member functions
     int num_rows();
     int num_cols();
+    void add_column(const string& name, CSV_Column::Type type = CSV_Column::UNKNOWN);
+    void add_row(CSV_Row* row);
 
     // Output operator
     friend ostream& operator<<(ostream& os, const CSV_File& file);

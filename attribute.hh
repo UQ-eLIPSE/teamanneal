@@ -17,7 +17,7 @@ public:
     enum Type { NUMERICAL, STRING };
     typedef set<const string>::iterator ValueIterator;
 
-    const string name;
+    string name;
     Attribute::Type type;
     set<const string> values;	// Set of all possible values for this attribute (as strings)
 
@@ -34,6 +34,7 @@ public:
     bool is_string();
     bool is_numeric();
     size_t num_values();
+    void rename(const string& str);	// change the name of this attribute
 
     // Return an iterator to the beginning of the set of values
     ValueIterator iterator();

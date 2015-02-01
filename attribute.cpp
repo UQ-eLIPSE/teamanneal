@@ -62,6 +62,11 @@ size_t Attribute::num_values() {
     return values.size();
 }
 
+// We can rename an attribute if it has the same name as one of our output fields
+void Attribute::rename(const string& str) {
+    name = str;
+}
+
 Attribute::ValueIterator Attribute::iterator() {
     return values.begin();
 }

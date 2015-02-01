@@ -273,7 +273,7 @@ static void json_parse_constraints_v1(AnnealInfo& annealInfo, JSONArray* constra
 
 	if(constraintType == Constraint::HOMOGENEOUS || 
 		constraintType == Constraint::HETEROGENEOUS) {
-	    constraint = new SimilarityConstraint(constraintType, field, (int)level, weight);
+	    constraint = new SimilarityConstraint(constraintType, attr, (int)level, weight);
 	} else {
 	    // Count constraint
 	    CountConstraint* countConstraint;
@@ -306,10 +306,10 @@ static void json_parse_constraints_v1(AnnealInfo& annealInfo, JSONArray* constra
 		    throw ConstraintException("String constraints can only use 'equal to' or "
 			    "'not equal to' not ", fieldOperatorString);
 		}
-		countConstraint = new CountStringConstraint(constraintType, field, operation,
+		countConstraint = new CountStringConstraint(constraintType, attr, operation,
 			((JSONString*)fieldValue)->get_value(), (int)level, weight);
 	    } else if(fieldValue->is_number()) {
-		countConstraint = new CountNumberConstraint(constraintType, field, operation,
+		countConstraint = new CountNumberConstraint(constraintType, attr, operation,
 			((JSONNumber*)fieldValue)->get_value(), (int)level, weight);
 	    } else {
 		throw ConstraintException("Constraint field-value should be number or string");

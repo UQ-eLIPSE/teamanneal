@@ -5,6 +5,7 @@
 #ifndef CONSTRAINT_HH
 #define CONSTRAINT_HH
 
+#include "attribute.hh"
 #include <string>
 using namespace std;
 
@@ -23,8 +24,8 @@ public:
     // Type of this constraint
     Constraint::Type type;
 
-    // Field name (attribute) associated with this constraint
-    const string fieldName;
+    // Field (attribute) associated with this constraint
+    const Attribute* attribute;
 
     // Level that this constraint applies to (1 means top level, etc.)
     // Groups at the lowermost level (highest number) contain people, 
@@ -40,7 +41,7 @@ public:
     ////////////
 
     // Constructor
-    Constraint(Constraint::Type type, const string& field, int level, double weight);
+    Constraint(Constraint::Type type, const Attribute* attr, int level, double weight);
 
     // Other member functions
     Constraint::Type get_type(void);
@@ -55,7 +56,7 @@ public:
     Operation operation;	
 
     // Constructor
-    CountConstraint(Constraint::Type type, const string& field, Operation operation,
+    CountConstraint(Constraint::Type type, const Attribute* attr, Operation operation,
 	    int level, double weight);
 
     // Other member functions
@@ -68,7 +69,7 @@ public:
     string comparisonValue;	
 
     // Constructor
-    CountStringConstraint(Constraint::Type type, const string& field, Operation operation,
+    CountStringConstraint(Constraint::Type type, const Attribute* attr, Operation operation,
 	    const string& comparisonValue, int level, double weight);
 
 };
@@ -79,7 +80,7 @@ public:
     double comparisonValue;
 
     // Constructor
-    CountNumberConstraint(Constraint::Type type, const string& field, Operation operation,
+    CountNumberConstraint(Constraint::Type type, const Attribute* attr, Operation operation,
 	    double comparisonValue, int level, double weight);
 };
 
@@ -89,7 +90,7 @@ public:
     // Constructor
     // type must be one of HOMOGENEOUS or HETEROGENEOUS
     // field must be of string type
-    SimilarityConstraint(Constraint::Type type, const string& field, 
+    SimilarityConstraint(Constraint::Type type, const Attribute* attr,
 	    int level, double weight);
 };
 
@@ -99,7 +100,7 @@ public:
     // Constructor
     // type must be one of HOMOGENEOUS or HETEROGENEOUS
     // field must be numerical
-    RangeConstraint(Constraint::Type type, const string& field, 
+    RangeConstraint(Constraint::Type type, const Attribute* attr,
 	    int level, double weight);
 };
 

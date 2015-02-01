@@ -7,9 +7,9 @@
 
 ////////////////////// Constraint ///////////////////////////////////////////////
 
-Constraint::Constraint(Constraint::Type type, const string& field, int level, double weight) : 
+Constraint::Constraint(Constraint::Type type, const Attribute* attr, int level, double weight) : 
 	type(type),
-        fieldName(field), 
+        attribute(attr),
 	level(level),
 	applicableTeamSize(0),
 	weight(weight) {}
@@ -29,11 +29,11 @@ bool Constraint::applies_to_team_size(int teamSize) {
 ////////////////////// CountConstraint //////////////////////////////////////////
 
 CountConstraint::CountConstraint(Constraint::Type type,
-	    const string& field, 
+	    const Attribute* attr, 
 	    Operation operation, 
 	    int level, 
 	    double weight) :
-	Constraint(type, field, level, weight),
+	Constraint(type, attr, level, weight),
 	targetCount(0),
 	operation(operation)
 {
@@ -50,12 +50,12 @@ void CountConstraint::set_target(int target)
 ////////////////////// CountStringConstraint ////////////////////////////////////
 
 CountStringConstraint::CountStringConstraint(Constraint::Type type,
-	    const string& field, 
+	    const Attribute* attr, 
 	    Operation operation, 
 	    const string& comparisonValue,
 	    int level, 
 	    double weight) :
-	CountConstraint(type, field, operation, level, weight),
+	CountConstraint(type, attr, operation, level, weight),
 	comparisonValue(comparisonValue)
 {
     assert(operation == EQUAL || operation == NOT_EQUAL);
@@ -64,12 +64,12 @@ CountStringConstraint::CountStringConstraint(Constraint::Type type,
 ////////////////////// CountNumberConstraint ////////////////////////////////////
 
 CountNumberConstraint::CountNumberConstraint(Constraint::Type type,
-	    const string& field, 
+	    const Attribute* attr, 
 	    Operation operation, 
 	    double comparisonValue,
 	    int level, 
 	    double weight) :
-	CountConstraint(type, field, operation, level, weight),
+	CountConstraint(type, attr, operation, level, weight),
 	comparisonValue(comparisonValue)
 {
 }
@@ -77,8 +77,8 @@ CountNumberConstraint::CountNumberConstraint(Constraint::Type type,
 ////////////////////// SimilarityConstraint ////////////////////////////////////
 
 SimilarityConstraint::SimilarityConstraint(Constraint::Type type,
-	    const string& field, int level, double weight) :
-	Constraint(type, field, level, weight) 
+	    const Attribute* attr, int level, double weight) :
+	Constraint(type, attr, level, weight) 
 {
     assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
 }
@@ -86,8 +86,8 @@ SimilarityConstraint::SimilarityConstraint(Constraint::Type type,
 ////////////////////// RangeConstraint ////////////////////////////////////
 
 RangeConstraint::RangeConstraint(Constraint::Type type,
-	    const string& field, int level, double weight) :
-	Constraint(type, field, level, weight) 
+	    const Attribute* attr, int level, double weight) :
+	Constraint(type, attr, level, weight) 
 {
     assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
 }

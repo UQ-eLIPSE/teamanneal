@@ -16,8 +16,8 @@ class Person {
 protected:
     const string id;
 public:
-    map<Attribute,string> stringAttributes;
-    map<Attribute,double> numberAttributes;
+    map<Attribute*,string> stringAttributes;	// includes all attributes
+    map<Attribute*,double> numberAttributes;
 
     // Constructor
     Person(const string& id);
@@ -28,9 +28,13 @@ public:
     void add_attribute_value_pair(Attribute* attr, const string& strValue);
     void add_attribute_value_pair(Attribute* attr, double numValue);
 
-    const string& get_string_attribute_value(const Attribute* attr);
+    // Get the value of the given attribute. The person MUST have this attribute
+    const string& get_string_attribute_value(Attribute* attr);
     const string& get_id();
 
+    // Return true if the person has this (non-null) attribute
+    bool has_attribute(Attribute* attr);
+    // Return true if this person has this attribute AND the attribute has the given value
     bool has_attribute_value_pair(Attribute* attr, const string& strValue);
 
     // Operators

@@ -11,8 +11,6 @@
 
 using namespace std;
 
-class LevelNameIterator;
-
 // Abstract base class
 class Level {
 public:
@@ -41,10 +39,10 @@ public:
     const string& get_field_name() const;
     Attribute* get_field_attribute() const;
     void set_sizes(int min, int ideal, int max);
-    NameType get_type();
-    int get_min_size();
-    int get_ideal_size();
-    int get_max_size();
+    NameType get_type() const;
+    int get_min_size() const;
+    int get_ideal_size() const;
+    int get_max_size() const;
     void add_child_level(Level* child);
     Level* get_parent_level() const;
     Level* get_child_level() const;
@@ -52,21 +50,20 @@ public:
     bool is_highest() const;		// true if highest level (not partition)
 
     // Pure virtual - this gets overwritten in the child classes
-    virtual string getName(int teamNum) const = 0;
+    virtual string get_name(int teamNum, int numTeams) const = 0;
 };
 
 class NumericalLevel : public Level {
 public:
     int startAt;	// usually 0 or 1
     bool leadingZeros;	// true if leading zeros are to be used when outputing this team number
-    int numDigits;	// if leadingZeros is true, this is the field width to be used
 
     // Constructor
     NumericalLevel(Level* parentLevel, int levelNum, const string& fieldName, 
 	    Attribute* attr, int startAt);
 
     // Other member functions
-    virtual string getName(int teamNum) const;
+    virtual string get_name(int teamNum, int numTeams) const;
     void use_leading_zeros();
 };
 
@@ -79,7 +76,7 @@ public:
 	    Attribute* attr, char startAt);
 
     // Other member functions
-    virtual string getName(int teamNum) const;
+    virtual string get_name(int teamNum, int numTeams) const;
 };
 
 class StringLevel : public Level {
@@ -92,7 +89,7 @@ public:
 
     // Other member functions
     void add_name(const string& name);
-    virtual string getName(int teamNum) const;
+    virtual string get_name(int teamNum, int numTeams) const;
 };
 
 class PartitionLevel : public Level {
@@ -101,18 +98,7 @@ public:
     PartitionLevel(const string& fieldName, Attribute* attr);
 
     // Other member functions
-    virtual string getName(int teamNum) const;
-};
-
-class LevelNameIterator {
-private:
-    const Level& level;
-    int teamNum;
-public:
-    LevelNameIterator(const Level& level);
-    string operator*();			// return value of current
-    LevelNameIterator& operator++();	// prefix
-    LevelNameIterator operator++(int); // postfix
+    virtual string get_name(int teamNum, int numTeams) const;
 };
 
 #endif

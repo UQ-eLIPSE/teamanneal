@@ -4,6 +4,7 @@
 
 #include "annealinfo.hh"
 #include <assert.h>
+#include <sstream>
 
 // Constructor
 AnnealInfo::AnnealInfo() :
@@ -20,6 +21,11 @@ void AnnealInfo::add_attribute(Attribute* attr)
 {
     allAttributes.push_back(attr);
     attributeMap.insert(pair<string,Attribute*>(attr->get_name(), attr));
+}
+
+int AnnealInfo::num_attributes()
+{
+    return allAttributes.size();
 }
 
 Attribute* AnnealInfo::get_attribute(unsigned int i)
@@ -89,7 +95,7 @@ Attribute* AnnealInfo::get_partition_field()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Level related member functions
-vector<Level*>& AnnealInfo::all_levels()
+const vector<Level*>& AnnealInfo::all_levels() const
 {
     return allLevels;
 }
@@ -99,7 +105,7 @@ void AnnealInfo::add_level(Level* level)
     allLevels.push_back(level);
 }
 
-int AnnealInfo::num_levels()
+int AnnealInfo::num_levels() const
 {
     // We assume we have a partition level and don't include that in the count
     // This function should not be called until we at least a partition level (0)
@@ -107,7 +113,7 @@ int AnnealInfo::num_levels()
     return allLevels.size() - 1;
 }
 
-Level* AnnealInfo::get_level(int n)
+Level* AnnealInfo::get_level(int n) const
 {
     assert(n >= 0 && n < allLevels.size());
     return allLevels[n];
@@ -163,4 +169,30 @@ const string& AnnealInfo::get_team_name_format()
 const string& AnnealInfo::get_team_name_field()
 {
     return teamNameField;
+}
+
+// We update attribute names of columns which have the same name as our output (level)
+// columns. We update names by appending an integer to the level name. We increment this
+// integer until the column name is unique
+void AnnealInfo::update_column_names_if_required()
+{
+    // Iterate over each level name and check whether there is an attribute with this name
+    for(int levelNum = 1; levelNum <= num_levels(); ++levelNum) {
+	Level* level = get_level(levelNum);
+	Attribute* attr = level->get_field_attribute();
+	if(attr) {
+	    // There is an attribute associated with this level name - we need to rename the attribute
+	    stringstream str;
+	    int appendNumber = 1;
+	    do {
+		// Generate possible new name
+		str.str("");
+		str << level->get_field_name() << appendNumber;
+		// Check if it is unique
+		++appendNumber;
+	    } while (find_attribute(str.str()));
+	    // str.str() is a unique name - rename the attribute
+	    attr->rename(str.str());
+	} // else level name is already unique
+    }
 }

@@ -15,6 +15,7 @@ using namespace std;
 
 class AllTeamData;
 class EntityListIterator;
+class Member;
 class TeamLevel;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -23,6 +24,7 @@ public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
     const string& name;
+    TeamLevel* memberOf;	// team that this entity is part of, or null if top level
 
     // Constructor
     Entity(Entity::Type type);
@@ -30,7 +32,11 @@ public:
 
     // Other member functions
     bool has_name(const string& value) const;
+    const string& get_name() const;
     Entity::Type get_type() const;
+    void set_team(TeamLevel* team);
+    TeamLevel* get_team() const;
+    bool is_partition() const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,14 +49,16 @@ protected:
 public:
 
     // Member functions
-    void append(Entity* member);
-    void append_unique(Entity* member);	// Does not append if already present
+    // Append member to this entity list and specify the entity's parent team as given
+    void append(Entity* member, TeamLevel* parent = nullptr);
+    void append_unique(Entity* member, TeamLevel* parent = nullptr);	// Does not append if already present
     Entity*& operator[](size_t i);
     Entity* find_entity_with_name(const string& name);
     size_t size() const;
     void reserve(size_t size);
     TeamLevel* get_subteam(size_t i);	// members must be teams
     EntityListIterator list_iterator() const;
+    int find_index_of(Entity* member);	// return -1 if not found
 };
 
 
@@ -64,6 +72,7 @@ public:
     Entity& operator*();
     Entity* operator->();
     operator Entity*() const;
+    operator Member*() const;
     EntityListIterator& operator++();	// prefix
     EntityListIterator operator++(int);	// postfix
     bool done();	// returns true when the iterator has gone past the end of the list
@@ -82,7 +91,7 @@ public:
     Member(Person& person);
 
     // Other member functions
-    const string& get_attribute_value(const Attribute* attr);
+    const string& get_attribute_value(Attribute* attr);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -100,14 +109,16 @@ public:
     void add_member(Entity* member);
     TeamLevel* create_or_get_named_subteam(const string& subTeamName);
     const Level& get_level() const;
+    int num_members() const;
+    int find_index_of(Entity* member);	// return -1 if not found
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class Partition : public Entity {
+class Partition : public TeamLevel {
 public:
+    // highest level teams are those in the "members" inherited field
     AllTeamData* 	allTeamData;
     EntityList	 	lowestLevelTeams;
-    EntityList	 	highestLevelTeams;	
     EntityList	 	bestCostTeams;
     EntityList	 	allMembers;
     EntityList	 	unallocatedMembers;	// subset of allMembers
@@ -115,7 +126,7 @@ public:
     double 		bestCost;
 
     // Constructor
-    Partition(AllTeamData* allTeamData, const string& name, int numPeople);
+    Partition(AllTeamData* allTeamData, const Level& level, const string& name, int numPeople);
 
     // Other member functions
     // Add a member to our partition. All members are added before teams are formed.
@@ -130,7 +141,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class AllTeamData {
 public:
-    vector<Level*>& 		allLevels;	// topmost (level 0) is the partition
+    AnnealInfo&			annealInfo;
     map<string,Partition*> 	partitionMap;
     EntityList	 		allMembers;
 
@@ -147,8 +158,6 @@ public:
     // Other functions
     int num_levels() const;
     const Level& get_level(int levelNum) const;
-    // Output team data to csv file
-    void output(const char* filename);
 
     // Returns the number of teams needed given the size constraints. Throws an exception 
     // if not possible to meet the constraints
