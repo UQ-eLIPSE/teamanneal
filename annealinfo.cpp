@@ -172,8 +172,8 @@ const string& AnnealInfo::get_team_name_field()
 }
 
 // We update attribute names of columns which have the same name as our output (level)
-// columns. We update names by appending an integer to the level name. We increment this
-// integer until the column name is unique
+// columns and/or our team name column. We update names by appending an integer to the level name. 
+// We increment this integer until the column name is unique
 void AnnealInfo::update_column_names_if_required()
 {
     // Iterate over each level name and check whether there is an attribute with this name
@@ -195,4 +195,22 @@ void AnnealInfo::update_column_names_if_required()
 	    attr->rename(str.str());
 	} // else level name is already unique
     }
+
+    // Check the team name column
+    Attribute* attr = find_attribute(teamNameField);
+    if(attr) {
+	// There is an attribute already associated with this team name field - we need to rename the attribute
+	stringstream str;
+	int appendNumber = 1;
+	do {
+	    // Generate possible new name
+	    str.str("");
+	    str << teamNameField << appendNumber;
+	    // Check if it is unique
+	    ++appendNumber;
+	} while (find_attribute(str.str()));
+	// str.str() is a unique name - rename the attribute
+	attr->rename(str.str());
+    } // else team name field name is already unique
+
 }
