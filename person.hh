@@ -29,13 +29,13 @@ public:
     void add_attribute_value_pair(Attribute* attr, double numValue);
 
     // Get the value of the given attribute. The person MUST have this attribute
-    const string& get_string_attribute_value(Attribute* attr);
-    const string& get_id();
+    const string& get_string_attribute_value(Attribute* attr) const;
+    const string& get_id() const;
 
     // Return true if the person has this (non-null) attribute
-    bool has_attribute(Attribute* attr);
+    bool has_attribute(Attribute* attr) const;
     // Return true if this person has this attribute AND the attribute has the given value
-    bool has_attribute_value_pair(Attribute* attr, const string& strValue);
+    bool has_attribute_value_pair(Attribute* attr, const string& strValue) const;
 
     // Operators
     friend ostream& operator<<(ostream& os, const Person& p);

@@ -23,7 +23,7 @@ class Entity {
 public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
-    const string name;
+    const string& name;
     TeamLevel* memberOf;	// team that this entity is part of, or null if top level
 
     // Constructor
@@ -36,7 +36,12 @@ public:
     Entity::Type get_type() const;
     void set_team(TeamLevel* team);
     TeamLevel* get_team() const;
+    bool is_member() const;
+    bool is_team() const;
     bool is_partition() const;
+
+    // Copy this entity
+    virtual Entity* clone() = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,6 +52,11 @@ class EntityList {
 protected:
     vector<Entity*> members;
 public:
+    // Default Constructor
+    EntityList();
+
+    // Pseudo-copy Constructor
+    EntityList(const EntityList& list, TeamLevel* parent);
 
     // Member functions
     // Append member to this entity list and specify the entity's parent team as given
@@ -80,27 +90,40 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 class Member : public Entity {
-public:
+private:
     Person& person;	// links to attributes of this person
     vector<int> conditionMet;	// one entry for each constraint. If the constraint is a count
     				// constraint then this is 1 if the field-operator-value is true
 				// e.g. 1 if "GPA > 5", 0 otherwise
 				// Value ignored for non-count constraints.
 				// (Indexed by constraint number 0 to num constraints minus 1
+protected:
+    // Copy constructor
+    Member(const Member& member);
+
+public:
     // Constructor
     Member(Person& person);
 
     // Other member functions
     const string& get_attribute_value(Attribute* attr);
+    const Person& get_person();
+
+    // Copy this member (virtual
+    Member* clone();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 class TeamLevel : public Entity {
-public:
+protected:
     // Contains either another level of teams or individual members
     EntityList members;
     const Level& level;
 
+    // Copy constructor
+    TeamLevel(const TeamLevel& team);
+
+public:
     // Constructor
     TeamLevel(const Level& level);
     TeamLevel(const Level& level, const string& name);
@@ -111,6 +134,9 @@ public:
     const Level& get_level() const;
     int num_members() const;
     int find_index_of(Entity* member);	// return -1 if not found
+
+    // Copy this entity
+    TeamLevel* clone();
 };
 
 ///////////////////////////////////////////////////////////////////////////////

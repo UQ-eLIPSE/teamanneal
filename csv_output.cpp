@@ -30,7 +30,7 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
     EntityListIterator itr(data->allMembers);
     while(!itr.done()) {
         Member* member = itr;
-        Person& person = member->person;
+        const Person& person = member->get_person();
         CSV_Row* row = new CSV_Row();
         csvFile->add_row(row);
         // Iterate over each attribute and output that value (this is as read in)

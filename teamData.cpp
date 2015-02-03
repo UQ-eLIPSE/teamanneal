@@ -53,6 +53,16 @@ TeamLevel* Entity::get_team() const
     return memberOf;
 }
 
+bool Entity::is_member() const
+{
+    return (type == Entity::MEMBER);
+}
+
+bool Entity::is_team() const
+{
+    return (type == Entity::TEAM);
+}
+
 bool Entity::is_partition() const
 {
     return (type == Entity::PARTITION);
@@ -60,6 +70,20 @@ bool Entity::is_partition() const
 
 ///////////////////////////////////////////////////////////////////////////////
 // EntityList
+
+EntityList::EntityList()
+{
+}
+
+// Copy constructor
+EntityList::EntityList(const EntityList& list, TeamLevel* parent)
+{
+    members.reserve(list.size());
+    EntityListIterator itr(list);
+    while(!itr.done()) {
+	append(itr->clone(), parent);
+    }
+}
 
 void EntityList::append(Entity* member, TeamLevel* parent)
 {
@@ -187,7 +211,14 @@ bool EntityListIterator::done()
 ///////////////////////////////////////////////////////////////////////////////
 // Member
 
-// Constructor
+// Constructors
+Member::Member(const Member& member) :
+	Entity(Entity::MEMBER, member.person.get_id()),
+	person(member.person),
+	conditionMet(member.conditionMet)
+{
+}
+
 Member::Member(Person& person) :
 	Entity(Entity::MEMBER, person.get_id()),
 	person(person)
@@ -199,10 +230,29 @@ const string& Member::get_attribute_value(Attribute* attr)
     return person.get_string_attribute_value(attr);
 }
 
+const Person& Member::get_person()
+{
+    return person;
+}
+
+Member* Member::clone()
+{
+    return new Member(*this);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // TeamLevel
 
 // Constructors
+// Copy constructor
+TeamLevel::TeamLevel(const TeamLevel& team) :
+	Entity(Entity::TEAM, team.name),
+	members(team.members, this),
+	level(team.level)
+{
+}
+
 TeamLevel::TeamLevel(const Level& level) :
 	Entity(Entity::TEAM),
 	level(level)
@@ -248,6 +298,11 @@ int TeamLevel::num_members() const
 int TeamLevel::find_index_of(Entity* member)
 {
     return members.find_index_of(member);
+}
+
+TeamLevel* TeamLevel::clone() 
+{
+    return new TeamLevel(*this);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -407,7 +462,8 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
 	}
     } else {
 	// No partitions - just create one with an empty name
-	partition = new Partition(this, get_level(0), "", annealInfo.num_people());
+	string* partitionNamePtr = new string("");
+	partition = new Partition(this, get_level(0), *partitionNamePtr, annealInfo.num_people());
 	partitionMap.insert(pair<const string, Partition*>("", partition));
     }
 

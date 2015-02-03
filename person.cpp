@@ -20,29 +20,29 @@ void Person::add_attribute_value_pair(Attribute* attr, double numValue)
     numberAttributes.insert( pair<Attribute*,double>(attr, numValue) );
 }
 
-const string& Person::get_string_attribute_value(Attribute* attr)
+const string& Person::get_string_attribute_value(Attribute* attr) const
 {
-    map<Attribute*,string>::iterator it = stringAttributes.find(attr);
+    map<Attribute*,string>::const_iterator it = stringAttributes.find(attr);
     assert(it != stringAttributes.end()); 	// We must have found it
     return it->second;
 }
 
-const string& Person::get_id()
+const string& Person::get_id() const
 {
     return id;
 }
 
-bool Person::has_attribute(Attribute* attr)
+bool Person::has_attribute(Attribute* attr) const
 {
     assert(attr);
-    map<Attribute*,string>::iterator it = stringAttributes.find(attr);
+    map<Attribute*,string>::const_iterator it = stringAttributes.find(attr);
     return (it != stringAttributes.end());
 }
 
-bool Person::has_attribute_value_pair(Attribute* attr, const string& strValue) 
+bool Person::has_attribute_value_pair(Attribute* attr, const string& strValue) const
 {
     assert(attr);
-    map<Attribute*,string>::iterator it = stringAttributes.find(attr);
+    map<Attribute*,string>::const_iterator it = stringAttributes.find(attr);
     if(it != stringAttributes.end()) {
 	// Found the attribute - check if the value is a match
 	return (strValue == it->second);
