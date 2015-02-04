@@ -55,12 +55,12 @@ void AnnealInfo::set_id_attribute(Attribute* idAttr)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Person related member functions
-vector<Person*>& AnnealInfo::all_people()
+vector<const Person*>& AnnealInfo::all_people()
 {
     return allPeople;
 }
 
-void AnnealInfo::add_person(Person* person)
+void AnnealInfo::add_person(const Person* person)
 {
     allPeople.push_back(person);
 }
@@ -73,7 +73,7 @@ int AnnealInfo::num_people()
 int AnnealInfo::count_people_with_attribute_value(Attribute* attr, const string& value)
 {
     int count = 0;
-    for(vector<Person*>::iterator it = allPeople.begin(); it != allPeople.end(); ++it) {
+    for(vector<const Person*>::iterator it = allPeople.begin(); it != allPeople.end(); ++it) {
 	if((*it)->has_attribute_value_pair(attr, value)) {
 	    count++;
 	}

@@ -3,6 +3,7 @@
 //
 
 #include "teamData.hh"
+#include "person.hh"
 #include "attribute.hh"
 #include <exception>
 #include <fstream>
@@ -14,17 +15,24 @@ static string emptyString("");
 // Entity
 
 // Constructors
-Entity::Entity(Entity::Type type, const string& name) :
+Entity::Entity(Entity::Type type, Partition* partition) :
 	type(type),
-	name(name),
-	memberOf(nullptr)
+	name(emptyString),
+	memberOf(nullptr),
+	partition(partition)
 {
 }
 
-Entity::Entity(Entity::Type type) :
+Entity::Entity(Entity::Type type, const string& name, Partition* partition) :
 	type(type),
-	name(emptyString),
-	memberOf(nullptr)
+	name(name),
+	memberOf(nullptr),
+	partition(partition)
+{
+}
+
+// Destructor - nothing to be done, but we need this since the destructor is pure virtual
+Entity::~Entity()
 {
 }
 
@@ -68,6 +76,13 @@ bool Entity::is_partition() const
     return (type == Entity::PARTITION);
 }
 
+// Output operator
+ostream& operator<<(ostream& os, const Entity& entity)
+{
+    entity.output(os);
+    return os;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // EntityList
 
@@ -78,10 +93,23 @@ EntityList::EntityList()
 // Copy constructor
 EntityList::EntityList(const EntityList& list, TeamLevel* parent)
 {
+    assert(parent);
     members.reserve(list.size());
     EntityListIterator itr(list);
     while(!itr.done()) {
 	append(itr->clone(), parent);
+	++itr;
+    }
+}
+
+// Destructor
+EntityList::~EntityList()
+{
+    // Delete each of the entities that are part of this list.
+    EntityListIterator itr(*this);
+    while(!itr.done()) {
+	delete (Entity*)itr;
+	++itr;
     }
 }
 
@@ -157,7 +185,18 @@ int EntityList::find_index_of(Entity* member)
 	++count;
 	++itr;
     }
-    return -1;
+    return -1;	// Not found
+}
+
+ostream& operator<<(ostream& os, const EntityList& list)
+{
+    os << " {" << endl;
+    EntityListIterator itr(list);
+    while(!itr.done()) {
+	os << "   " << *itr;
+	++itr;
+    }
+    return os;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,14 +252,14 @@ bool EntityListIterator::done()
 
 // Constructors
 Member::Member(const Member& member) :
-	Entity(Entity::MEMBER, member.person.get_id()),
+	Entity(Entity::MEMBER, member.person.get_id(), member.partition),
 	person(member.person),
 	conditionMet(member.conditionMet)
 {
 }
 
-Member::Member(Person& person) :
-	Entity(Entity::MEMBER, person.get_id()),
+Member::Member(const Person& person, Partition* partition) :
+	Entity(Entity::MEMBER, person.get_id(), partition),
 	person(person)
 {
 }
@@ -235,11 +274,20 @@ const Person& Member::get_person()
     return person;
 }
 
-Member* Member::clone()
+void Member::output(ostream& os) const
 {
-    return new Member(*this);
+    os << "Member " << (long)this << " id: " << name <<
+	    " memberof: " << (long)memberOf <<
+	    " partition: " << (long)partition <<
+	    endl;
 }
 
+Member* Member::clone()
+{
+    Member* copy = new Member(*this);
+    partition->update_lowest_cost_member_map(&(copy->get_person()), copy);
+    return copy;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // TeamLevel
@@ -247,20 +295,20 @@ Member* Member::clone()
 // Constructors
 // Copy constructor
 TeamLevel::TeamLevel(const TeamLevel& team) :
-	Entity(Entity::TEAM, team.name),
+	Entity(Entity::TEAM, team.name, team.partition),
 	members(team.members, this),
 	level(team.level)
 {
 }
 
-TeamLevel::TeamLevel(const Level& level) :
-	Entity(Entity::TEAM),
+TeamLevel::TeamLevel(const Level& level, Partition* partition) :
+	Entity(Entity::TEAM, partition),
 	level(level)
 {
 }
 
-TeamLevel::TeamLevel(const Level& level, const string& teamName) :
-	Entity(Entity::TEAM, teamName),
+TeamLevel::TeamLevel(const Level& level, const string& teamName, Partition* partition) :
+	Entity(Entity::TEAM, teamName, partition),
 	level(level) 
 {
 }
@@ -279,7 +327,7 @@ TeamLevel* TeamLevel::create_or_get_named_subteam(const string& subTeamName)
     TeamLevel* team = (TeamLevel*)members.find_entity_with_name(subTeamName);
     if(!team) {
 	// Not found - create a new subteam with the given name
-	team = new TeamLevel(*(level.get_child_level()), subTeamName);
+	team = new TeamLevel(*(level.get_child_level()), subTeamName, partition);
 	members.append(team, this);
     }
     return team;
@@ -297,10 +345,20 @@ int TeamLevel::num_members() const
 
 int TeamLevel::find_index_of(Entity* member)
 {
-    return members.find_index_of(member);
+    int index = members.find_index_of(member);
+    assert(index != -1);	// Must be found
+    return index;
 }
 
-TeamLevel* TeamLevel::clone() 
+void TeamLevel::output(ostream& os) const
+{
+    os << "TeamLevel " << (long)this << " memberof : " << (long)memberOf <<
+	    " partition: " << (long)partition <<
+	    " level: " << level.get_level_num() <<
+	    endl << "Members:" << members << endl;
+}
+
+TeamLevel* TeamLevel::clone()
 {
     return new TeamLevel(*this);
 }
@@ -310,26 +368,27 @@ TeamLevel* TeamLevel::clone()
 
 // Constructor
 Partition::Partition(AllTeamData* allTeamData, const Level& level, const string& name, int numPeople) :
-	TeamLevel(level, name),
+	TeamLevel(level, name, this),
 	allTeamData(allTeamData),
 	cost(0.0),
-	bestCost(0.0)
+	lowestCost(0.0),
+	lowestCostTopLevelTeams(nullptr)
 {
     type = Entity::PARTITION;	// override default TEAM
     allMembers.reserve(numPeople);
 }
 
 // Other member functions
-Member* Partition::add_person(Person* person)
+Member* Partition::add_person(const Person* person)
 {
-    Member* member = new Member(*person);
+    Member* member = new Member(*person, this);
     allMembers.append(member);
     return member;
 }
 
 void Partition::populate_random_teams()
 {
-    const vector<Level*>& allLevels = allTeamData->annealInfo.all_levels();
+    const vector<Level*>& allLevels = allTeamData->all_levels();
 
     assert(members.size() == 0);
     assert(lowestLevelTeams.size() == 0);
@@ -344,7 +403,7 @@ void Partition::populate_random_teams()
     // Create all the necessary empty teams - assume the partition is the parent
     // for now
     for(int i = 0; i < numTeams; i++) {
-	lowestLevelTeams.append(new TeamLevel(**levelItr), this);
+	lowestLevelTeams.append(new TeamLevel(**levelItr, this), this);
     }
     // Iterate over all the members and put them in teams one by one
     for(int i = 0; i < allMembers.size(); ++i) 
@@ -365,7 +424,7 @@ void Partition::populate_random_teams()
 	currentLevelTeams.reserve(numTeams);
 	// Create all the necessary empty teams
 	for(int i = 0; i < numTeams; i++) {
-	    currentLevelTeams.append(new TeamLevel(**levelItr), this);
+	    currentLevelTeams.append(new TeamLevel(**levelItr, this), this);
 	}
 	// Iterate over all the members and put them in teams one by one
 	for(int i = 0; i < members.size(); ++i) {
@@ -426,15 +485,68 @@ void Partition::populate_existing_teams()
     }
 }
 
+void Partition::set_current_teams_as_lowest_cost()
+{
+    lowestCost = cost;
+    if(lowestCostTopLevelTeams) {
+	delete lowestCostTopLevelTeams;
+    }
+    lowestCostTopLevelTeams = new EntityList(members, this);
+}
+
+void Partition::update_lowest_cost_member_map(const Person* person, Member* member)
+{
+    lowestCostMemberMap.insert(pair<const Person*,Member*>(person, member));
+}
+
+Member* Partition::get_lowest_cost_member_for_person(const Person* person)
+{
+    map<const Person*,Member*>::iterator it = lowestCostMemberMap.find(person);
+    assert(it != lowestCostMemberMap.end()); // person must be found
+    return it->second;
+}
+
+int Partition::find_index_of(Entity* member)
+{
+    int index = members.find_index_of(member);
+    if(index == -1 && lowestCostTopLevelTeams) {
+	// Check in the lowest cost teams
+	index = lowestCostTopLevelTeams->find_index_of(member);
+    }
+    assert(index != -1);	// Must be found in one of the lists
+    return index;
+}
+
 TeamLevel* Partition::create_or_get_named_team(const string& teamName) 
 {
     TeamLevel* team = (TeamLevel*)members.find_entity_with_name(teamName);
     if(!team) {
 	// Team doesn't exist - create one with that name
-	team = new TeamLevel(allTeamData->get_level(1), teamName);
+	team = new TeamLevel(allTeamData->get_level(1), teamName, this);
 	members.append(team, this);
     }
     return team;
+}
+
+void Partition::output(ostream& os) const
+{
+    os << "Partition " << (long)this << " memberof : " << (long)memberOf <<
+	    " partition: " << (long)partition <<
+	    " level: " << level.get_level_num() <<
+	    endl << "Partition Members:" << endl << members <<
+	    "LowestLevelTeams:" << endl << lowestLevelTeams << 
+	    "allMembers:" << endl << allMembers << 
+	    "lowestCostTopLevelTeams:" << endl;
+    if(lowestCostTopLevelTeams) {
+	os << *(lowestCostTopLevelTeams);
+    }
+    os << "Lowest Cost Member Map" << endl;
+    map<const Person*,Member*>::const_iterator itr = lowestCostMemberMap.begin();
+    while(itr != lowestCostMemberMap.end()) {
+	os << "   " << itr->first->get_id() << " associated with member " << (long)itr->second << endl;
+	++itr;
+    }
+    os << "End Partition" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -468,18 +580,27 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
     }
 
     // Reserve space for the members we will have
-    allMembers.reserve(annealInfo.num_people());
+    ////allMembers.reserve(annealInfo.num_people());
 
     // Iterate over all the people to build up our list of members
-    for(vector<Person*>::iterator it = annealInfo.all_people().begin();
+    for(vector<const Person*>::iterator it = annealInfo.all_people().begin();
 	    it != annealInfo.all_people().end(); ++it) {
 	// Work out which partition they go in
 	if(partitionAttribute) {
 	    partition = find_partition((*it)->get_string_attribute_value(partitionAttribute));
 	} // else, no partitions. partition variable already holds a pointer to our one dummy partition
-	Member* member = partition->add_person(*it);
-	allMembers.append(member);
+
+	////Member* member = partition->add_person(*it);
+
+	partition->add_person(*it);
+	personToPartitionMap.insert(pair<const Person*,Partition*>(*it,partition));
+	////allMembers.append(member);
     }
+}
+
+AnnealInfo& AllTeamData::get_anneal_info()
+{
+    return annealInfo;
 }
 
 void AllTeamData::populate_random_teams()
@@ -487,6 +608,8 @@ void AllTeamData::populate_random_teams()
     // Iterate over each partition
     for(map<string,Partition*>::iterator it = partitionMap.begin(); it != partitionMap.end(); ++it) {
 	it->second->populate_random_teams();
+	it->second->set_current_teams_as_lowest_cost();
+	//it->second->set_current_teams_as_lowest_cost();
     }
 }
 
@@ -495,6 +618,7 @@ void AllTeamData::populate_existing_teams()
     // Iterate over each partition
     for(map<string,Partition*>::iterator it = partitionMap.begin(); it != partitionMap.end(); ++it) {
 	it->second->populate_existing_teams();
+	it->second->set_current_teams_as_lowest_cost();
     }
 }
 
@@ -520,6 +644,33 @@ int AllTeamData::num_levels() const
 const Level& AllTeamData::get_level(int levelNum) const
 {
     return *(annealInfo.get_level(levelNum));
+}
+
+const vector<Level*>& AllTeamData::all_levels() const
+{
+    return annealInfo.all_levels();
+}
+
+vector<const Person*>& AllTeamData::all_people() const
+{
+    return annealInfo.all_people();
+}
+
+Partition* AllTeamData::get_partition_for_person(const Person* person) const
+{
+    map<const Person*,Partition*>::const_iterator it = personToPartitionMap.find(person);
+    assert(it != personToPartitionMap.end()); // partition must be found
+    return it->second;
+}
+
+// Output operator
+ostream& operator<<(ostream& os, const AllTeamData& all)
+{
+    for(map<string,Partition*>::const_iterator it = all.partitionMap.begin(); it != all.partitionMap.end(); ++it) {
+	it->second->output(os);
+	os << "-----" << endl;
+    }
+    return os;
 }
 
 // static member

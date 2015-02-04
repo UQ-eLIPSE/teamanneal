@@ -93,13 +93,17 @@ int main(int argc, const char* argv[])
 		print_help_message(argv[0]);
 	    } else if(cmd == "evaluate" && argc == 4) {
 		teamData = set_up_data(*annealInfo, argv);
+		teamData->populate_existing_teams();
+		// Update column names if required and output the result
+		annealInfo->update_column_names_if_required();
+		output_csv_file_from_team_data(teamData, "out-evaluate.csv");
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
 		if(cmd == "create") {
 		    // Do anneal
 		    teamData->populate_random_teams();
 
-		    // Update column names if required
+		    // Update column names if required and output the result
 		    annealInfo->update_column_names_if_required();
 		    output_csv_file_from_team_data(teamData, argv[4]);
 		}

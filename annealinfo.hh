@@ -16,7 +16,7 @@ using namespace std;
 
 class AnnealInfo {
 private:
-    vector<Person*> 		allPeople;
+    vector<const Person*> 		allPeople;
     vector<Constraint*> 	allConstraints;
     vector<Attribute*> 		allAttributes;
     map<string, Attribute*> 	attributeMap;
@@ -39,8 +39,8 @@ public:
     void set_id_attribute(Attribute* idAttr);
 
     // Person functions
-    vector<Person*>& all_people();
-    void add_person(Person* person);
+    vector<const Person*>& all_people();
+    void add_person(const Person* person);
     int num_people();
     int count_people_with_attribute_value(Attribute* attr, const string& strValue);
 

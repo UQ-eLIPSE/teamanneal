@@ -35,7 +35,7 @@ public:
 	    Level::NameType type);
 
     // Other member functions
-    int get_level_num();
+    int get_level_num() const;
     const string& get_field_name() const;
     Attribute* get_field_attribute() const;
     void set_sizes(int min, int ideal, int max);

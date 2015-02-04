@@ -25,7 +25,7 @@ Level::Level(Level* parentLevel, int levelNum, const string& fieldName, Attribut
 }
 
 // Other member functions
-int Level::get_level_num()
+int Level::get_level_num() const
 {
     return levelNum;
 }

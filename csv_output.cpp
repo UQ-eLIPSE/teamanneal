@@ -11,7 +11,7 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
 {
     CSV_File* csvFile = new CSV_File();
 
-    AnnealInfo& annealInfo = data->annealInfo;
+    AnnealInfo& annealInfo = data->get_anneal_info();
 
     // Add column names for the attributes (columns have already been renamed if necessary)
     for(int i=0; i < annealInfo.num_attributes(); ++i) {
@@ -27,10 +27,16 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
     csvFile->add_column(annealInfo.get_team_name_field());
 
     // Iterate over each person
-    EntityListIterator itr(data->allMembers);
-    while(!itr.done()) {
-        Member* member = itr;
-        const Person& person = member->get_person();
+    vector<const Person*>& allPeople = data->all_people();
+    vector<const Person*>::const_iterator itr = allPeople.begin();
+    while(itr != allPeople.end()) {
+	// Get partition that person is part of
+	Partition* partition = data->get_partition_for_person(*itr);
+	// Get associated member (of the lowest cost teams)
+	Member* member = partition->get_lowest_cost_member_for_person(*itr);
+
+	const Person& person = **itr;
+
         CSV_Row* row = new CSV_Row();
         csvFile->add_row(row);
         // Iterate over each attribute and output that value (this is as read in)
@@ -47,6 +53,7 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
             numLevels++;
             // Get number of this team within the list of teams
             TeamLevel* parentTeam = team->get_team();
+	    assert(parentTeam);
             int teamNum = parentTeam->find_index_of(team);
             // Append the name of the team to the CSV row - the level can generate the
             // name based on the team number. Prepend the name to our vector of names
