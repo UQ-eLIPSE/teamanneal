@@ -34,3 +34,23 @@ FileOpenException::FileOpenException(const char* filename)
     s << "Unable to open file '" << filename << "'";
     message = s.str();
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// AnnealException
+
+AnnealException::AnnealException(const char* mesg)
+{
+    message = mesg;
+}
+
+AnnealException::AnnealException(const char* mesg1, const char* mesg2)
+{
+    message = mesg1;
+    message += mesg2;
+}
+
+const char* AnnealException::what() const noexcept
+{
+    return message.c_str();
+}
+

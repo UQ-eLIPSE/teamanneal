@@ -8,6 +8,7 @@
 #include <exception>
 #include <fstream>
 #include "assert.h"
+#include "exceptions.hh"
 
 static string emptyString("");
 
@@ -448,8 +449,11 @@ void Partition::populate_existing_teams()
 	    // Get the attribute for this level (there should be one in our team file - it
 	    // is an error if not)
 	    Attribute* levelAttribute = allTeamData->get_level(levelNum).get_field_attribute();
-	    // FIX - check earlier that attributes are present if we're using pre-existing teams?
-	    assert(levelAttribute);
+	    
+	    if(!levelAttribute) {
+		throw AnnealException("Could not find attribute in csv file: ",
+			allTeamData->get_level(levelNum).get_field_name().c_str());
+	    }
 
 	    // Get the value of this attribute for this person - it's possible the value is blank
 	    const string& teamLevelName = ((Member*)allMembers[i])->get_attribute_value(levelAttribute);
