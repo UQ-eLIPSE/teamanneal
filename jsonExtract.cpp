@@ -273,7 +273,12 @@ static void json_parse_constraints_v1(AnnealInfo& annealInfo, JSONArray* constra
 
 	if(constraintType == Constraint::HOMOGENEOUS || 
 		constraintType == Constraint::HETEROGENEOUS) {
-	    constraint = new SimilarityConstraint(constraintType, attr, (int)level, weight);
+	    if(attr->is_numeric()) {
+		constraint = new RangeConstraint(constraintType, attr, (int)level, weight);
+	    } else {
+		// string constraint
+		constraint = new SimilarityConstraint(constraintType, attr, (int)level, weight);
+	    }
 	} else {
 	    // Count constraint
 	    CountConstraint* countConstraint;
