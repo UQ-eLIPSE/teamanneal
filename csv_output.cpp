@@ -47,18 +47,18 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
         // Output the team names - one for each level - build up a vector with these
 	// for use in constructing the overall team name
         int numLevels = 0;
-        TeamLevel* team = member->get_team();
+        TeamLevel* team = member->get_parent();
 	vector<string> levelNames;
         do {
             numLevels++;
             // Get number of this team within the list of teams
-            TeamLevel* parentTeam = team->get_team();
+            TeamLevel* parentTeam = team->get_parent();
 	    assert(parentTeam);
             int teamNum = parentTeam->find_index_of(team);
             // Append the name of the team to the CSV row - the level can generate the
             // name based on the team number. Prepend the name to our vector of names
 	    string teamNameAtThisLevel = 
-		    team->get_level().get_name(teamNum, parentTeam->num_members());
+		    team->get_level().get_name(teamNum, parentTeam->num_children());
             row->append(teamNameAtThisLevel);
 	    levelNames.insert(levelNames.begin(), teamNameAtThisLevel);
             // Get ready to move up a level

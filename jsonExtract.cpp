@@ -136,7 +136,8 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, Attribute* partitionAtt
 	// There must be attributes "field", "size" and "format" in this object - find them.
 	// (Exception thrown if one is not found)
 	JSONString* levelString = (JSONString*)obj->find("field", JSON_STRING);
-	// Get the name of this level (e.g. "Team"). We also see if this corresponds to an attribute
+	// Get the name of this level (e.g. "Team"). 
+	// check if the level name corresponds to an attribute
 	// in our data (it may not, attr will be a null pointer in this case
 	const string& levelName = levelString->get_value();
 	Attribute* attr = annealInfo.find_attribute(levelName);	// could be nullptr

@@ -26,7 +26,7 @@ public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
     const string& name;
-    TeamLevel* memberOf;	// team that this entity is part of, or null if top level
+    TeamLevel* parent;	// team that this entity is part of, or null if top level (partition)
     Partition* partition;	// partition that this entity is part of
 
     // Constructor
@@ -40,9 +40,12 @@ public:
     // Other member functions
     bool has_name(const string& value) const;
     const string& get_name() const;
+
     Entity::Type get_type() const;
-    void set_team(TeamLevel* team);
-    TeamLevel* get_team() const;
+
+    void set_parent(TeamLevel* team);
+    TeamLevel* get_parent() const;
+
     bool is_member() const;
     bool is_team() const;
     bool is_partition() const;
@@ -64,8 +67,9 @@ class EntityList {
 protected:
     vector<Entity*> members;
 public:
-    // Default Constructor
+    // Constructors
     EntityList();
+    EntityList(Entity* child);
 
     // Destructor - which will delete all our members individually
     ~EntityList();
@@ -74,9 +78,9 @@ public:
     EntityList(const EntityList& list, TeamLevel* parent);
 
     // Member functions
-    // Append member to this entity list and specify the entity's parent team as given
-    void append(Entity* member, TeamLevel* parent = nullptr);
-    void append_unique(Entity* member, TeamLevel* parent);	// Does not append if already present
+    // Append member to this entity list 
+    void append(Entity* member);
+    void append_unique(Entity* member);	// Does not append if already present
     Entity*& operator[](size_t i);
     Entity* find_entity_with_name(const string& name);
     size_t size() const;
@@ -104,6 +108,7 @@ public:
     EntityListIterator& operator++();	// prefix
     EntityListIterator operator++(int);	// postfix
     bool done();	// returns true when the iterator has gone past the end of the list
+    void reset();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,7 +133,7 @@ public:
     const Person& get_person();
     void output(ostream& os) const;
 
-    // Copy this member (virtual
+    // Copy this member (virtual function)
     Member* clone();
 };
 
@@ -136,8 +141,9 @@ public:
 class TeamLevel : public Entity {
 protected:
     // Contains either another level of teams or individual members
-    EntityList members;
-    const Level& level;
+    EntityList 		children;
+    const Level& 	level;
+    EntityList 		allMembers;	// contains lowest level members
 
     // Copy constructor
     TeamLevel(const TeamLevel& team);
@@ -148,12 +154,15 @@ public:
     TeamLevel(const Level& level, const string& name, Partition* partition);
 
     // Other member functions
-    void add_member(Entity* member);
+    void add_child(Entity* child);
+    void add_low_level_members(EntityListIterator memberItr);	// NOT direct children, recursive
     TeamLevel* create_or_get_named_subteam(const string& subTeamName);
     const Level& get_level() const;
-    int num_members() const;
-    virtual int find_index_of(Entity* member);	// return -1 if not found
+    int num_children() const;
+    virtual int find_index_of(Entity* child);	// must be found
     void output(ostream& os) const;
+    EntityListIterator all_member_iterator() const;
+    EntityListIterator child_iterator() const;
 
     // Copy this entity
     TeamLevel* clone();
@@ -163,10 +172,9 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class Partition : public TeamLevel {
 public:
-    // highest level teams are those in the "members" inherited field
+    // highest level teams are those in the "children" inherited field
     AllTeamData* 	allTeamData;
     EntityList	 	lowestLevelTeams;
-    EntityList	 	allMembers;
     EntityList	 	unallocatedMembers;	// subset of allMembers
     double 		cost;
 
@@ -201,7 +209,6 @@ class AllTeamData {
 private:
     AnnealInfo&			annealInfo;
     map<string,Partition*> 	partitionMap;
-    ////EntityList	 		allMembers;
     map<const Person*,Partition*>	personToPartitionMap;
 
 public:
