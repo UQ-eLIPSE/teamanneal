@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <ostream>
+#include <stack>
 
 using namespace std;
 
@@ -80,14 +81,15 @@ public:
     // Member functions
     // Append member to this entity list 
     void append(Entity* member);
-    void append_unique(Entity* member);	// Does not append if already present
+    void append_unique(Entity* member);	// Does not append if already present, inefficient
     Entity*& operator[](size_t i);
-    Entity* find_entity_with_name(const string& name);
+    Entity* find_entity_with_name(const string& name);	// inefficient - searches list
     size_t size() const;
     void reserve(size_t size);
     TeamLevel* get_subteam(size_t i);	// members must be teams
     EntityListIterator list_iterator() const;
-    int find_index_of(Entity* member);	// return -1 if not found
+    int find_index_of(Entity* member);	// return -1 if not found, inefficient - searches list
+    Entity* first_member() const;
 
     // Output operator
     friend ostream& operator<<(ostream& os, const EntityList& list);
@@ -101,14 +103,31 @@ private:
     int entityNum;
 public:
     EntityListIterator(const EntityList& list);
-    Entity& operator*();
-    Entity* operator->();
+    Entity& operator*() const;
+    Entity* operator->() const;
     operator Entity*() const;
     operator Member*() const;
+    operator TeamLevel*() const;
     EntityListIterator& operator++();	// prefix
     EntityListIterator operator++(int);	// postfix
-    bool done();	// returns true when the iterator has gone past the end of the list
+    bool done() const;	// returns true when the iterator has gone past the end of the list
     void reset();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+class MemberIterator {
+private:
+    stack<EntityListIterator> listStack;
+    void find_next(bool advance);		// find the current member - if advance is true
+  						// then we move on to the next member.
+public:
+    MemberIterator(const TeamLevel* team);
+    Member& operator*() const;
+    Member* operator->() const;
+    operator Member*() const;
+    MemberIterator& operator++();	// prefix
+    MemberIterator operator++(int);	// postfix
+    bool done() const;	// returns true when the iterator has gone past the end of the list
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,7 +162,6 @@ protected:
     // Contains either another level of teams or individual members
     EntityList 		children;
     const Level& 	level;
-    EntityList 		allMembers;	// contains lowest level members
 
     // Copy constructor
     TeamLevel(const TeamLevel& team);
@@ -155,14 +173,15 @@ public:
 
     // Other member functions
     void add_child(Entity* child);
-    void add_low_level_members(EntityListIterator memberItr);	// NOT direct children, recursive
     TeamLevel* create_or_get_named_subteam(const string& subTeamName);
     const Level& get_level() const;
+    const EntityList& get_children() const;
+    Entity* get_first_child() const;
     int num_children() const;
     virtual int find_index_of(Entity* child);	// must be found
     void output(ostream& os) const;
-    EntityListIterator all_member_iterator() const;
     EntityListIterator child_iterator() const;
+    MemberIterator member_iterator() const;
 
     // Copy this entity
     TeamLevel* clone();
@@ -170,12 +189,16 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// NOTE - can't delete a Partition - the EntityList destructor will result in 
+// some entities being deleted multiple times
 class Partition : public TeamLevel {
 public:
     // highest level teams are those in the "children" inherited field
     AllTeamData* 	allTeamData;
     EntityList	 	lowestLevelTeams;
     EntityList	 	unallocatedMembers;	// subset of allMembers
+    EntityList 		allMembers;	// contains lowest level members - all members are added
+    					// to this list before being put in teams
     double 		cost;
 
     double 		lowestCost;

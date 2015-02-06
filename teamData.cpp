@@ -19,7 +19,7 @@ static string emptyString("");
 Entity::Entity(Entity::Type type, Partition* partition) :
 	type(type),
 	name(emptyString),
-	parent(partition),	// default parent is the partition
+	parent(nullptr),	// no parent by default
 	partition(partition)
 {
 }
@@ -27,7 +27,7 @@ Entity::Entity(Entity::Type type, Partition* partition) :
 Entity::Entity(Entity::Type type, const string& name, Partition* partition) :
 	type(type),
 	name(name),
-	parent(partition),
+	parent(nullptr),
 	partition(partition)
 {
 }
@@ -96,7 +96,7 @@ EntityList::EntityList(Entity* child)
     append(child);
 }
 
-// Copy constructor
+// Pseudo copy constructor - entities are made children of the given parent
 EntityList::EntityList(const EntityList& list, TeamLevel* parent)
 {
     assert(parent);
@@ -114,6 +114,8 @@ EntityList::EntityList(const EntityList& list, TeamLevel* parent)
 EntityList::~EntityList()
 {
     // Delete each of the entities that are part of this list.
+    // Because some entities are in multiple lists, we really should change this destructor to be
+    // more careful
     EntityListIterator itr(*this);
     while(!itr.done()) {
 	delete (Entity*)itr;
@@ -194,6 +196,12 @@ int EntityList::find_index_of(Entity* member)
     return -1;	// Not found
 }
 
+Entity* EntityList::first_member() const
+{
+    assert(members.size() > 0);
+    return members[0];
+}
+
 ostream& operator<<(ostream& os, const EntityList& list)
 {
     os << " {" << endl;
@@ -215,12 +223,12 @@ EntityListIterator::EntityListIterator(const EntityList& list) :
 {
 }
 
-Entity& EntityListIterator::operator*()
+Entity& EntityListIterator::operator*() const
 {
     return *(list.members[entityNum]);
 }
 
-Entity* EntityListIterator::operator->()
+Entity* EntityListIterator::operator->() const
 {
     return list.members[entityNum];
 }
@@ -233,6 +241,11 @@ EntityListIterator::operator Entity*() const
 EntityListIterator::operator Member*() const
 {
     return (Member*)(list.members[entityNum]);
+}
+
+EntityListIterator::operator TeamLevel*() const
+{
+    return (TeamLevel*)(list.members[entityNum]);
 }
 
 EntityListIterator& EntityListIterator::operator++()
@@ -248,7 +261,7 @@ EntityListIterator EntityListIterator::operator++(int)	// postfix
     return tmp;
 }
 
-bool EntityListIterator::done() 
+bool EntityListIterator::done() const
 {
     return entityNum >= list.size();
 }
@@ -256,6 +269,83 @@ bool EntityListIterator::done()
 void EntityListIterator::reset()
 {
     entityNum = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// MemberIterator
+void MemberIterator::find_next(bool advance)
+{
+    if(listStack.size() == 0) {
+	return;		// End of the road - we've traversed everything
+    }
+    EntityListIterator& top = listStack.top();
+    if(top.done()) {
+	// We're done at this level - go up one and keep trying
+	listStack.pop();
+	find_next(true);
+    } else if(advance) {
+	++top;
+	find_next(false);
+    } else if(top->is_member()) {
+	// We've found a member - stop here
+    } else {
+	assert(top->is_team());
+	// We're at a team level - go lower
+	listStack.emplace(((TeamLevel*)top)->get_children());
+	// Find next member if we're not at one
+	find_next(false);
+    }
+}
+
+// Constructor
+MemberIterator::MemberIterator(const TeamLevel* team)
+{
+    // Work our way down to the lowest level
+    listStack.emplace(team->get_children());
+    find_next(false);
+}
+
+Member& MemberIterator::operator*() const
+{
+    const EntityListIterator& top = listStack.top();
+    return *(Member*)top;
+}
+
+Member* MemberIterator::operator->() const
+{
+    const EntityListIterator& top = listStack.top();
+    return (Member*)top;
+}
+
+MemberIterator::operator Member*() const
+{
+    const EntityListIterator& top = listStack.top();
+    return (Member*)top;
+}
+
+MemberIterator& MemberIterator::operator++()	// prefix
+{
+    // Get top of stack - if it points to something
+    assert(!listStack.top().done());
+    find_next(true);
+    return *this;
+}
+
+MemberIterator MemberIterator::operator++(int)	// postfix
+{
+    MemberIterator tmp(*this);
+    ++(*this);
+    return tmp;
+}
+
+bool MemberIterator::done() const
+{
+    if(listStack.size() == 0) {
+	return true;
+    } else {
+	const EntityListIterator& top = listStack.top();
+	return top.done();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -326,32 +416,8 @@ TeamLevel::TeamLevel(const Level& level, const string& teamName, Partition* part
 
 void TeamLevel::add_child(Entity* child) 
 {
-    assert(!is_partition());
     children.append(child);
     child->set_parent(this);
-    if(child->is_member()) {
-	// child is a direct member - add to our list of member and those of parents
-	EntityList list(child);
-	add_low_level_members(list.list_iterator());
-    } else {
-	// child is a team - add all members of that team to be members of this and parents
-	add_low_level_members(((TeamLevel*)child)->all_member_iterator());
-    }
-}
-
-void TeamLevel::add_low_level_members(EntityListIterator memberItr)
-{
-    assert(!is_partition());
-    // Iterate over the members and add them to our list of members
-    while(!memberItr.done()) {
-	allMembers.append((Entity*)memberItr);
-	++memberItr;
-    }
-    memberItr.reset();
-    if(!parent->is_partition()) {
-	// recurse up
-	parent->add_low_level_members(memberItr);
-    }
 }
 
 TeamLevel* TeamLevel::create_or_get_named_subteam(const string& subTeamName) 
@@ -374,6 +440,16 @@ const Level& TeamLevel::get_level() const
     return level;
 }
 
+const EntityList& TeamLevel::get_children() const
+{
+    return children;
+}
+
+Entity* TeamLevel::get_first_child() const
+{
+    return children.first_member();
+}
+
 int TeamLevel::num_children() const
 {
     return children.size();
@@ -394,14 +470,14 @@ void TeamLevel::output(ostream& os) const
 	    endl << "Members:" << children << endl;
 }
 
-EntityListIterator TeamLevel::all_member_iterator() const
-{
-    return EntityListIterator(allMembers);
-}
-
 EntityListIterator TeamLevel::child_iterator() const
 {
     return EntityListIterator(children);
+}
+
+MemberIterator TeamLevel::member_iterator() const
+{
+    return MemberIterator(this);
 }
 
 TeamLevel* TeamLevel::clone()
@@ -422,7 +498,6 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 {
     type = Entity::PARTITION;	// override default TEAM
     allMembers.reserve(numPeople);
-    parent = nullptr;		// override the default parent (the partition)
 }
 
 // Other member functions
@@ -543,6 +618,7 @@ void Partition::set_current_teams_as_lowest_cost()
 {
     lowestCost = cost;
     if(lowestCostTopLevelTeams) {
+	// Delete the whole hierarchy of cloned teams and members
 	delete lowestCostTopLevelTeams;
     }
     lowestCostTopLevelTeams = new EntityList(children, this);
@@ -577,8 +653,7 @@ TeamLevel* Partition::create_or_get_named_team(const string& teamName)
     if(!team) {
 	// Team doesn't exist - create one with that name
 	team = new TeamLevel(allTeamData->get_level(1), teamName, this);
-	children.append(team);
-	team->set_parent(this);
+	add_child(team);
     }
     return team;
 }
@@ -600,6 +675,12 @@ void Partition::output(ostream& os) const
     while(itr != lowestCostMemberMap.end()) {
 	os << "   " << itr->first->get_id() << " associated with member " << (long)itr->second << endl;
 	++itr;
+    }
+    os << "----" << endl << "Lowest Level Members" << endl;
+    MemberIterator memberItr(this);
+    while(!memberItr.done()) {
+	os << memberItr->get_name() << " ";
+	++memberItr;
     }
     os << "End Partition" << endl;
 }

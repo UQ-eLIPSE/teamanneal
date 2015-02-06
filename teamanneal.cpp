@@ -106,6 +106,8 @@ int main(int argc, const char* argv[])
 		    // Update column names if required and output the result
 		    annealInfo->update_column_names_if_required();
 		    output_csv_file_from_team_data(teamData, argv[4]);
+		    // Debug
+		    //cout << *teamData;
 		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
