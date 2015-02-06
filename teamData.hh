@@ -108,6 +108,7 @@ public:
     operator Entity*() const;
     operator Member*() const;
     operator TeamLevel*() const;
+    operator Partition*() const;
     EntityListIterator& operator++();	// prefix
     EntityListIterator operator++(int);	// postfix
     bool done() const;	// returns true when the iterator has gone past the end of the list
@@ -232,6 +233,7 @@ class AllTeamData {
 private:
     AnnealInfo&			annealInfo;
     map<string,Partition*> 	partitionMap;
+    EntityList 			partitionList;
     map<const Person*,Partition*>	personToPartitionMap;
 
 public:
@@ -251,6 +253,7 @@ public:
     const vector<Level*>& all_levels() const;
     vector<const Person*>& all_people() const;
     Partition* get_partition_for_person(const Person* person) const;
+    EntityListIterator get_partition_iterator() const;
 
     // Output operator
     friend ostream& operator<<(ostream& os, const AllTeamData& all);

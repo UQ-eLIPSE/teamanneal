@@ -248,6 +248,11 @@ EntityListIterator::operator TeamLevel*() const
     return (TeamLevel*)(list.members[entityNum]);
 }
 
+EntityListIterator::operator Partition*() const
+{
+    return (Partition*)(list.members[entityNum]);
+}
+
 EntityListIterator& EntityListIterator::operator++()
 {
     entityNum++;
@@ -704,15 +709,17 @@ AllTeamData::AllTeamData(AnnealInfo& annealInfo) :
 		itr != partitionAttribute->end(); ++itr) {
 	    // itr will be a const string*
 	    // Create a new partition with the given name. The associated level is level 0.
-	    partitionMap.insert(pair<const string,Partition*>(*itr, new Partition(this, 
-		    get_level(0), *itr, 
-		    annealInfo.count_people_with_attribute_value(partitionAttribute, *itr))));
+	    Partition* partition = new Partition(this, get_level(0), *itr, 
+		    annealInfo.count_people_with_attribute_value(partitionAttribute, *itr));
+	    partitionMap.insert(pair<const string,Partition*>(*itr, partition));
+	    partitionList.append(partition);
 	}
     } else {
 	// No partitions - just create one with an empty name
 	string* partitionNamePtr = new string("");
 	partition = new Partition(this, get_level(0), *partitionNamePtr, annealInfo.num_people());
 	partitionMap.insert(pair<const string, Partition*>("", partition));
+	partitionList.append(partition);
     }
 
     // Iterate over all the people to build up our list of members
@@ -736,19 +743,22 @@ AnnealInfo& AllTeamData::get_anneal_info()
 void AllTeamData::populate_random_teams()
 {
     // Iterate over each partition
-    for(map<string,Partition*>::iterator it = partitionMap.begin(); it != partitionMap.end(); ++it) {
-	it->second->populate_random_teams();
-	it->second->set_current_teams_as_lowest_cost();
-	//it->second->set_current_teams_as_lowest_cost();
+    EntityListIterator itr(partitionList);
+    while(!itr.done()) {
+	((Partition*)itr)->populate_random_teams();
+	((Partition*)itr)->set_current_teams_as_lowest_cost();
+	++itr;
     }
 }
 
 void AllTeamData::populate_existing_teams()
 {
     // Iterate over each partition
-    for(map<string,Partition*>::iterator it = partitionMap.begin(); it != partitionMap.end(); ++it) {
-	it->second->populate_existing_teams();
-	it->second->set_current_teams_as_lowest_cost();
+    EntityListIterator itr(partitionList);
+    while(!itr.done()) {
+	((Partition*)itr)->populate_existing_teams();
+	((Partition*)itr)->set_current_teams_as_lowest_cost();
+	++itr;
     }
 }
 
