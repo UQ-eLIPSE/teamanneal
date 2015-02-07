@@ -11,6 +11,7 @@ Constraint::Constraint(Constraint::Type type, const Attribute* attr, int level, 
 	type(type),
         attribute(attr),
 	level(level),
+	constraintNumber(-1),	// dummy value - actual value is set later
 	applicableTeamSize(0),
 	weight(weight) 
 {
@@ -26,6 +27,11 @@ bool Constraint::is_count_constraint() const
     return (type < HOMOGENEOUS);
 }
 
+void Constraint::set_constraint_number(int constraintNum)
+{
+    constraintNumber = constraintNum;
+}
+
 void Constraint::set_applicable_team_size(int teamSize) 
 {
     applicableTeamSize = teamSize;
@@ -39,6 +45,12 @@ bool Constraint::applies_to_team_size(int teamSize) const
 const Attribute* Constraint::get_attribute() const
 {
     return attribute;
+}
+
+int Constraint::get_constraint_number() const
+{
+    assert(constraintNumber != -1);
+    return constraintNumber;
 }
 
 double Constraint::get_weight() const
@@ -67,6 +79,11 @@ void CountConstraint::set_target(int target)
     targetCount = target;
 }
 
+int CountConstraint::get_target() const
+{
+    return targetCount;
+}
+
 ////////////////////// CountStringConstraint ////////////////////////////////////
 
 CountStringConstraint::CountStringConstraint(Constraint::Type type,
@@ -84,10 +101,10 @@ CountStringConstraint::CountStringConstraint(Constraint::Type type,
 bool CountStringConstraint::evaluate_condition(const string& str) const
 {
     if(operation == EQUAL) {
-	return (str == comparisonValue);
+	return (str.compare(comparisonValue) == 0);
     } else {
 	assert(operation== NOT_EQUAL);
-	return (str != comparisonValue);
+	return (str.compare(comparisonValue) != 0);
     }
 }
 

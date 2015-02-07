@@ -3,7 +3,7 @@ FILEDATA_TEST_OBJECTS = filedata.o filedata_test.o exceptions.o
 CSV_TEST_OBJECTS = csv.o csv_test.o filedata.o exceptions.o
 JSON_TEST_OBJECTS = filedata.o jsonExceptions.o json.o json_test.o exceptions.o stringCursor.o
 TEST_TEAM_SIZE_OBJECTS = test_team_size.o teamData.o annealInfo.o attribute.o person.o level.o \
-	exceptions.o entity.o entityList.o memberIterator.o
+	exceptions.o entity.o entityList.o memberIterator.o constraint.o
 TEAMANNEAL_OBJECTS = teamanneal.o csv.o csv_extract.o person.o attribute.o exceptions.o filedata.o \
 	annealinfo.o json.o jsonExtract.o jsonExceptions.o stringCursor.o level.o constraint.o \
 	teamData.o csv_output.o cost.o entity.o memberIterator.o entityList.o

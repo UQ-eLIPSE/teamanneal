@@ -41,12 +41,13 @@ void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_Fil
 	    Attribute* attr = annealInfo.get_attribute(col);
 	    // Add the value of this attribute for this person as one of the possible values for the 
 	    // attribute
-	    attr->add_value(string(data->rows[row]->cells[col]->str));
+	    int attributeIndex = attr->add_value(string(data->rows[row]->cells[col]->str));
 	    // Record the attribute value pair for this person. All values get recorded as strings
 	    // but numbers also get recorded as number. 
-	    person->add_attribute_value_pair(attr, string(data->rows[row]->cells[col]->str));
+	    person->add_attribute_value_pair(attr, attributeIndex);
             if(data->columns[col]->type == CSV_Column::NUMBER) {
                 person->add_attribute_value_pair(attr, data->rows[row]->cells[col]->d);
+		attr->update_numeric_range_to_include(data->rows[row]->cells[col]->d);
             }
         }
 

@@ -33,14 +33,16 @@ protected:
     // others contain groups of groups
     int level;
 
+    // Number of this constraint within our set of constraints. Set after construction when
+    // the constraint is added to the list
+    int constraintNumber;
+
     // Team size that this constraint applies to (0 means all teams)
     int applicableTeamSize;
 
     // Weight associated with this constraint
     double weight;
     
-    ////////////
-
     // Constructor
     Constraint(Constraint::Type type, const Attribute* attr, int level, double weight);
 
@@ -48,9 +50,11 @@ public:
     // Other member functions
     Constraint::Type get_type() const;
     bool is_count_constraint() const;
+    void set_constraint_number(int constraintNum);
     void set_applicable_team_size(int teamSize);
     bool applies_to_team_size(int teamSize) const;
     const Attribute* get_attribute() const;
+    int get_constraint_number() const;
     double get_weight() const;
     // The following are used by count constraints
     virtual bool evaluate_condition(const string& str) const = 0;
@@ -70,6 +74,7 @@ public:
 
     // Other member functions
     void set_target(int target);
+    int get_target() const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

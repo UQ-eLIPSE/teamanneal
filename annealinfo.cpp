@@ -124,6 +124,8 @@ Level* AnnealInfo::get_level(int n) const
 void AnnealInfo::add_constraint(Constraint* constraint) 
 {
     allConstraints.push_back(constraint);
+    int constraintNum = allConstraints.size() - 1;
+    constraint->set_constraint_number(constraintNum);
 }
 
 int AnnealInfo::num_constraints()

@@ -101,9 +101,19 @@ Member::Member(const Person& person, Partition* partition) :
 {
 }
 
-const string& Member::get_attribute_value(Attribute* attr) 
+const string& Member::get_attribute_value(const Attribute* attr) 
 {
     return person.get_string_attribute_value(attr);
+}
+
+double Member::get_numeric_attribute_value(const Attribute* attr)
+{
+    return person.get_numeric_attribute_value(attr);
+}
+
+int Member::get_attribute_value_index(const Attribute* attr)
+{
+    return person.get_string_attribute_index(attr);
 }
 
 const Person& Member::get_person()
@@ -379,6 +389,12 @@ int Partition::find_index_of(Entity* member)
     }
     assert(index != -1);	// Must be found in one of the lists
     return index;
+}
+
+EntityListIterator Partition::teams_at_level_iterator(int levelNum)
+{
+    assert(levelNum >= 1 && levelNum <= allTeamData->num_levels());
+    return EntityListIterator(*(teamsAtEachLevel[levelNum]));
 }
 
 void Partition::output(ostream& os) const

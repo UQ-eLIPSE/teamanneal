@@ -78,7 +78,9 @@ public:
     Member(const Person& person, Partition* partition);
 
     // Other member functions
-    const string& get_attribute_value(Attribute* attr);
+    const string& get_attribute_value(const Attribute* attr);
+    double get_numeric_attribute_value(const Attribute* attr);
+    int get_attribute_value_index(const Attribute* attr);
     const Person& get_person();
     void output(ostream& os) const;
     void append_condition_value(bool met);
@@ -153,6 +155,8 @@ public:
     Member* get_lowest_cost_member_for_person(const Person* person);
     // This checks the current member teams as well as the lowest cost teams, returns -1 if not found
     int find_index_of(Entity* member);
+    // Get an iterator over teams at the given level
+    EntityListIterator teams_at_level_iterator(int levelNum);
 
     void output(ostream& os) const;
 };

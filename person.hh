@@ -16,7 +16,7 @@ class Person {
 protected:
     const string id;
 public:
-    map<const Attribute*,string> stringAttributes;	// includes all attributes
+    map<const Attribute*,int> stringAttributes;	// includes all attributes - we map to a value index
     map<const Attribute*,double> numberAttributes;
 
     // Constructor
@@ -25,11 +25,13 @@ public:
     // Add attribute value pair to this person. The first function is for string attributes,
     // the second is for numerical attributes. (We record all attributes as strings, but 
     // only some as numbers.)
-    void add_attribute_value_pair(const Attribute* attr, const string& strValue);
+    // The string is stored as an index into the list of possible attribute string values
+    void add_attribute_value_pair(const Attribute* attr, int attributeValueIndex);
     void add_attribute_value_pair(const Attribute* attr, double numValue);
 
     // Get the value of the given attribute. The person MUST have this attribute
     const string& get_string_attribute_value(const Attribute* attr) const;
+    int get_string_attribute_index(const Attribute* attr) const;
     double get_numeric_attribute_value(const Attribute* attr) const;
     const string& get_id() const;
 
