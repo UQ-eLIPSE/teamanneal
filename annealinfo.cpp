@@ -126,6 +126,17 @@ void AnnealInfo::add_constraint(Constraint* constraint)
     allConstraints.push_back(constraint);
 }
 
+int AnnealInfo::num_constraints()
+{
+    return allConstraints.size();
+}
+
+Constraint* AnnealInfo::get_constraint(int n) 
+{
+    assert(n >= 0 && n < allConstraints.size());
+    return allConstraints[n];
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Team name related member functions
 void AnnealInfo::set_team_name_format(const string& format)
@@ -136,17 +147,6 @@ void AnnealInfo::set_team_name_format(const string& format)
 void AnnealInfo::set_team_name_field(const string& fieldName)
 {
     teamNameField = fieldName;
-}
-
-int AnnealInfo::num_constraints()
-{
-    return allConstraints.size();
-}
-
-Constraint* AnnealInfo::get_constraint(int n) 
-{
-    assert(n >= 0 && n < allConstraints.size());
-    return allConstraints[n];
 }
 
 /*

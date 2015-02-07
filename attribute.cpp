@@ -6,13 +6,17 @@
 using namespace std;
 
 Attribute::Attribute(const string& name, Attribute::Type type) : 
-        name(name), type(type) {}
+        name(name), type(type) 
+{
+}
 
-bool Attribute::operator <(const Attribute& rhs) const {
+bool Attribute::operator <(const Attribute& rhs) const 
+{
     return (name < rhs.name);
 }
 
-ostream& operator<<(ostream& os, const Attribute& a) {
+ostream& operator<<(ostream& os, const Attribute& a) 
+{
     os << a.name << ",";
     if(a.type == Attribute::NUMERICAL) { 
         os << "NUM," << a.values.size();
@@ -42,35 +46,43 @@ ostream& operator<<(ostream& os, const Attribute& a) {
     return os;
 }
 
-void Attribute::add_value(const string& value) {
+void Attribute::add_value(const string& value) 
+{
     values.insert(value);
 }
 
-const string& Attribute::get_name() {
+const string& Attribute::get_name() const
+{
     return name;
 }
 
-bool Attribute::is_string() {
+bool Attribute::is_string() const
+{
     return type == Attribute::STRING;
 }
 
-bool Attribute::is_numeric() {
+bool Attribute::is_numeric() const
+{
     return type == Attribute::NUMERICAL;
 }
 
-size_t Attribute::num_values() {
+size_t Attribute::num_values() const
+{
     return values.size();
 }
 
 // We can rename an attribute if it has the same name as one of our output fields
-void Attribute::rename(const string& str) {
+void Attribute::rename(const string& str) 
+{
     name = str;
 }
 
-Attribute::ValueIterator Attribute::iterator() {
+Attribute::ValueIterator Attribute::iterator() 
+{
     return values.begin();
 }
 
-Attribute::ValueIterator Attribute::end() {
+Attribute::ValueIterator Attribute::end() 
+{
     return values.end();
 }

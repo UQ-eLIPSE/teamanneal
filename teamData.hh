@@ -135,8 +135,8 @@ public:
 class Member : public Entity {
 private:
     const Person& person;	// links to attributes of this person
-    vector<int> conditionMet;	// one entry for each constraint. If the constraint is a count
-    				// constraint then this is 1 if the field-operator-value is true
+    vector<bool> conditionMet;	// one entry for each constraint. If the constraint is a count
+    				// constraint then this is true if the field-operator-value is true
 				// e.g. 1 if "GPA > 5", 0 otherwise
 				// Value ignored for non-count constraints.
 				// (Indexed by constraint number 0 to num constraints minus 1
@@ -152,6 +152,8 @@ public:
     const string& get_attribute_value(Attribute* attr);
     const Person& get_person();
     void output(ostream& os) const;
+    void append_condition_value(bool met);
+    bool is_condition_met(int constraintNumber) const;
 
     // Copy this member (virtual function)
     Member* clone();
@@ -179,6 +181,7 @@ public:
     const EntityList& get_children() const;
     Entity* get_first_child() const;
     int num_children() const;
+    int size() const;
     virtual int find_index_of(Entity* child);	// must be found
     void output(ostream& os) const;
     EntityListIterator child_iterator() const;

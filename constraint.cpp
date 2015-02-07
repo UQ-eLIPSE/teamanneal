@@ -12,18 +12,38 @@ Constraint::Constraint(Constraint::Type type, const Attribute* attr, int level, 
         attribute(attr),
 	level(level),
 	applicableTeamSize(0),
-	weight(weight) {}
+	weight(weight) 
+{
+}
 
-Constraint::Type Constraint::get_type() {
+Constraint::Type Constraint::get_type() const
+{
     return type;
 }
 
-void Constraint::set_applicable_team_size(int teamSize) {
+bool Constraint::is_count_constraint() const
+{
+    return (type < HOMOGENEOUS);
+}
+
+void Constraint::set_applicable_team_size(int teamSize) 
+{
     applicableTeamSize = teamSize;
 }
 
-bool Constraint::applies_to_team_size(int teamSize) {
+bool Constraint::applies_to_team_size(int teamSize) const
+{
     return (applicableTeamSize == 0 || teamSize == applicableTeamSize);
+}
+
+const Attribute* Constraint::get_attribute() const
+{
+    return attribute;
+}
+
+double Constraint::get_weight() const
+{
+    return weight;
 }
 
 ////////////////////// CountConstraint //////////////////////////////////////////
@@ -61,6 +81,21 @@ CountStringConstraint::CountStringConstraint(Constraint::Type type,
     assert(operation == EQUAL || operation == NOT_EQUAL);
 }
 
+bool CountStringConstraint::evaluate_condition(const string& str) const
+{
+    if(operation == EQUAL) {
+	return (str == comparisonValue);
+    } else {
+	assert(operation== NOT_EQUAL);
+	return (str != comparisonValue);
+    }
+}
+
+bool CountStringConstraint::evaluate_condition(double d) const
+{
+    assert(false);	// This should never be called for this type of constraint
+}
+
 ////////////////////// CountNumberConstraint ////////////////////////////////////
 
 CountNumberConstraint::CountNumberConstraint(Constraint::Type type,
@@ -74,6 +109,32 @@ CountNumberConstraint::CountNumberConstraint(Constraint::Type type,
 {
 }
 
+bool CountNumberConstraint::evaluate_condition(const string& str) const
+{
+    assert(false);	// This should never be called for this type of constraint
+}
+
+bool CountNumberConstraint::evaluate_condition(double d) const
+{
+    switch(operation) {
+	case LESS_THAN:
+	    return (d < comparisonValue);
+	case LESS_THAN_OR_EQUAL:
+	    return (d <= comparisonValue);
+	case EQUAL:
+	    return (d == comparisonValue);
+	case GREATER_THAN_OR_EQUAL:
+	    return (d >= comparisonValue);
+	case GREATER_THAN:
+	    return (d > comparisonValue);
+	case NOT_EQUAL:
+	    return (d != comparisonValue);
+	default:
+	    assert(false);	// This shouldn't happen
+	    return false;
+    }
+}
+
 ////////////////////// SimilarityConstraint ////////////////////////////////////
 
 SimilarityConstraint::SimilarityConstraint(Constraint::Type type,
@@ -83,6 +144,16 @@ SimilarityConstraint::SimilarityConstraint(Constraint::Type type,
     assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
 }
 
+bool SimilarityConstraint::evaluate_condition(const string& str) const
+{
+    assert(false);	// This should never be called for this type of constraint
+}
+
+bool SimilarityConstraint::evaluate_condition(double d) const
+{
+    assert(false);	// This should never be called for this type of constraint
+}
+
 ////////////////////// RangeConstraint ////////////////////////////////////
 
 RangeConstraint::RangeConstraint(Constraint::Type type,
@@ -90,5 +161,15 @@ RangeConstraint::RangeConstraint(Constraint::Type type,
 	Constraint(type, attr, level, weight) 
 {
     assert(type == HOMOGENEOUS || type == HETEROGENEOUS);
+}
+
+bool RangeConstraint::evaluate_condition(const string& str) const
+{
+    assert(false);	// This should never be called for this type of constraint
+}
+
+bool RangeConstraint::evaluate_condition(double d) const
+{
+    assert(false);	// This should never be called for this type of constraint
 }
 

@@ -21,6 +21,7 @@ public:
             GREATER_THAN,
             NOT_EQUAL };
     
+protected:
     // Type of this constraint
     Constraint::Type type;
 
@@ -43,16 +44,24 @@ public:
     // Constructor
     Constraint(Constraint::Type type, const Attribute* attr, int level, double weight);
 
+public:
     // Other member functions
-    Constraint::Type get_type(void);
+    Constraint::Type get_type() const;
+    bool is_count_constraint() const;
     void set_applicable_team_size(int teamSize);
-    bool applies_to_team_size(int teamSize);
+    bool applies_to_team_size(int teamSize) const;
+    const Attribute* get_attribute() const;
+    double get_weight() const;
+    // The following are used by count constraints
+    virtual bool evaluate_condition(const string& str) const = 0;
+    virtual bool evaluate_condition(double d) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 class CountConstraint : public Constraint {
 public:
     int targetCount;		// Only for COUNT_EXACT, ...NOT_EXACT, ...AT_LEAST, ...AT_MOST
+				// Ignored for COUNT_MAXIMISE and COUNT_MINIMISE
     Operation operation;	
 
     // Constructor
@@ -72,6 +81,8 @@ public:
     CountStringConstraint(Constraint::Type type, const Attribute* attr, Operation operation,
 	    const string& comparisonValue, int level, double weight);
 
+    bool evaluate_condition(const string& str) const;
+    bool evaluate_condition(double d) const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -82,6 +93,9 @@ public:
     // Constructor
     CountNumberConstraint(Constraint::Type type, const Attribute* attr, Operation operation,
 	    double comparisonValue, int level, double weight);
+
+    bool evaluate_condition(const string& str) const;
+    bool evaluate_condition(double d) const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,6 +106,9 @@ public:
     // field must be of string type
     SimilarityConstraint(Constraint::Type type, const Attribute* attr,
 	    int level, double weight);
+
+    bool evaluate_condition(const string& str) const;
+    bool evaluate_condition(double d) const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,6 +119,9 @@ public:
     // field must be numerical
     RangeConstraint(Constraint::Type type, const Attribute* attr,
 	    int level, double weight);
+
+    bool evaluate_condition(const string& str) const;
+    bool evaluate_condition(double d) const;
 };
 
 #endif

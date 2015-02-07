@@ -385,7 +385,25 @@ void Member::output(ostream& os) const
     os << "Member " << (long)this << " id: " << name <<
 	    " memberof: " << (long)parent <<
 	    " partition: " << (long)partition <<
-	    endl;
+	    " conditionMet: ";
+    for(int i=0; i < conditionMet.size(); i++) {
+	if(conditionMet[i]) {
+	    os << "1";
+	} else {
+	    os << "0";
+	}
+    }
+    os << endl;
+}
+
+void Member::append_condition_value(bool met)
+{
+    conditionMet.push_back(met);
+}
+
+bool Member::is_condition_met(int constraintNumber) const
+{
+    return conditionMet[constraintNumber];
 }
 
 Member* Member::clone()
@@ -456,6 +474,11 @@ Entity* TeamLevel::get_first_child() const
 }
 
 int TeamLevel::num_children() const
+{
+    return children.size();
+}
+
+int TeamLevel::size() const
 {
     return children.size();
 }
@@ -801,6 +824,11 @@ Partition* AllTeamData::get_partition_for_person(const Person* person) const
     map<const Person*,Partition*>::const_iterator it = personToPartitionMap.find(person);
     assert(it != personToPartitionMap.end()); // partition must be found
     return it->second;
+}
+
+EntityListIterator AllTeamData::get_partition_iterator() const
+{
+    return EntityListIterator(partitionList);
 }
 
 // Output operator

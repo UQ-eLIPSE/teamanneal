@@ -30,10 +30,10 @@ public:
 
     // Other Member Functions
     void add_value(const string& value);
-    const string& get_name();
-    bool is_string();
-    bool is_numeric();
-    size_t num_values();
+    const string& get_name() const;
+    bool is_string() const;
+    bool is_numeric() const;
+    size_t num_values() const;
     void rename(const string& str);	// change the name of this attribute
 
     // Return an iterator to the beginning of the set of values

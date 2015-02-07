@@ -12,7 +12,7 @@
 #include "filedata.hh"
 #include "teamData.hh"
 #include "csv_output.hh"
-
+#include "cost.hh"
 
 #include <iostream>
 #include <stdlib.h>	// for exit()
@@ -100,14 +100,16 @@ int main(int argc, const char* argv[])
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
 		if(cmd == "create") {
-		    // Do anneal
+		    // Set up initial "random" teams
 		    teamData->populate_random_teams();
+		    initialise_condition_met_flags(teamData);
+		    // Do anneal
 
 		    // Update column names if required and output the result
 		    annealInfo->update_column_names_if_required();
 		    output_csv_file_from_team_data(teamData, argv[4]);
 		    // Debug
-		    //cout << *teamData;
+		    cout << *teamData;
 		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
