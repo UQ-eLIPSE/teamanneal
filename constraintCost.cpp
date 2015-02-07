@@ -1,8 +1,8 @@
 //
-// cost.cpp
+// constraintCost.cpp
 //
 
-#include "cost.hh"
+#include "constraintCost.hh"
 #include "teamData.hh"
 #include "assert.h"
 #include <cmath>

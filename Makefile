@@ -6,7 +6,7 @@ TEST_TEAM_SIZE_OBJECTS = test_team_size.o teamData.o annealInfo.o attribute.o pe
 	exceptions.o entity.o entityList.o memberIterator.o constraint.o
 TEAMANNEAL_OBJECTS = teamanneal.o csv.o csv_extract.o person.o attribute.o exceptions.o filedata.o \
 	annealinfo.o json.o jsonExtract.o jsonExceptions.o stringCursor.o level.o constraint.o \
-	teamData.o csv_output.o cost.o entity.o memberIterator.o entityList.o
+	teamData.o csv_output.o constraintCost.o entity.o memberIterator.o entityList.o
 
 OBJS = $(FILEDATA_TEST_OBJECTS) $(CSV_TEST_OBJECTS) $(JSON_TEST_OBJECTS) \
 	$(TEST_TEAM_SIZE_OBJECTS) $(TEAMANNEAL_OBJECTS) 
