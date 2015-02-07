@@ -82,11 +82,12 @@ public:
     // Append member to this entity list 
     void append(Entity* member);
     void append_unique(Entity* member);	// Does not append if already present, inefficient
-    Entity*& operator[](size_t i);
+    Entity* operator[](size_t i) const;
+    TeamLevel* get_subteam(size_t i) const;	// members must be teams
+    Entity* get_member(size_t i) const;	// members can be any type
     Entity* find_entity_with_name(const string& name);	// inefficient - searches list
     size_t size() const;
     void reserve(size_t size);
-    TeamLevel* get_subteam(size_t i);	// members must be teams
     EntityListIterator list_iterator() const;
     int find_index_of(Entity* member);	// return -1 if not found, inefficient - searches list
     Entity* first_member() const;
@@ -176,7 +177,6 @@ public:
 
     // Other member functions
     void add_child(Entity* child);
-    TeamLevel* create_or_get_named_subteam(const string& subTeamName);
     const Level& get_level() const;
     const EntityList& get_children() const;
     Entity* get_first_child() const;
@@ -199,7 +199,7 @@ class Partition : public TeamLevel {
 public:
     // highest level teams are those in the "children" inherited field
     AllTeamData* 	allTeamData;
-    EntityList	 	lowestLevelTeams;
+    EntityList*		teamsAtEachLevel[MAX_LEVELS + 1];
     EntityList	 	unallocatedMembers;	// subset of allMembers
     EntityList 		allMembers;	// contains lowest level members - all members are added
     					// to this list before being put in teams
@@ -225,8 +225,6 @@ public:
     Member* get_lowest_cost_member_for_person(const Person* person);
     // This checks the current member teams as well as the lowest cost teams, returns -1 if not found
     int find_index_of(Entity* member);
-
-    TeamLevel* create_or_get_named_team(const string& teamName);
 
     void output(ostream& os) const;
 };

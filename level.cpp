@@ -94,6 +94,11 @@ bool Level::is_highest() const
     return (levelNum == 1);
 }
 
+bool Level::is_partition() const
+{
+    return (levelNum == 0);
+}
+
 ////////////// NumericalLevel /////////////////////////////////////////////////
 
 // Constructor

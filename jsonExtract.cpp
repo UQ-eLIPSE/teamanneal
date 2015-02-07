@@ -3,6 +3,7 @@
 //
 
 #include "jsonExtract.hh"
+#include "level.hh"
 #include <sstream>
 
 // The following are strings we'll look for in the JSON
@@ -193,7 +194,9 @@ static void json_parse_levels_v1(AnnealInfo& annealInfo, Attribute* partitionAtt
 	// This level will be the parent for the next level (if any)
 	parentLevel = level;
     }
-    //cout << "Number of levels: " << annealInfo.num_levels() << endl;
+    if(annealInfo.num_levels() > MAX_LEVELS) {
+	throw ConstraintException("Too many levels");
+    }
 }
 
 static void json_parse_name_format_v1(AnnealInfo& annealInfo, JSONObject* nameFormatObject)

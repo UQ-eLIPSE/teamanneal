@@ -9,6 +9,8 @@
 #include <vector>
 #include "attribute.hh"
 
+#define MAX_LEVELS (3)
+
 using namespace std;
 
 // Abstract base class
@@ -48,6 +50,7 @@ public:
     Level* get_child_level() const;
     bool is_lowest() const;
     bool is_highest() const;		// true if highest level (not partition)
+    bool is_partition() const;
 
     // Pure virtual - this gets overwritten in the child classes
     virtual string get_name(int teamNum, int numTeams) const = 0;

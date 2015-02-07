@@ -97,12 +97,14 @@ int main(int argc, const char* argv[])
 		// Update column names if required and output the result
 		annealInfo->update_column_names_if_required();
 		output_csv_file_from_team_data(teamData, "out-evaluate.csv");
+		// Debug
+		cout << *teamData;
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
 		if(cmd == "create") {
 		    // Set up initial "random" teams
 		    teamData->populate_random_teams();
-		    initialise_condition_met_flags(teamData);
+		    initialise_costs(teamData);
 		    // Do anneal
 
 		    // Update column names if required and output the result
