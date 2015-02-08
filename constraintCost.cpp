@@ -141,6 +141,9 @@ SimilarityConstraintCost::SimilarityConstraintCost(const TeamLevel* team, const 
 	numAttributeValues(constraint->get_attribute()->num_values())
 {
     assert(constraint->get_attribute()->is_string());
+
+    this->do_count();
+    this->evaluate();
 }
 
 void SimilarityConstraintCost::do_count()
@@ -209,6 +212,9 @@ RangeConstraintCost::RangeConstraintCost(const TeamLevel* team, const Constraint
     if(attr->num_values() > 0) {
 	attributeValueRange = attr->get_numerical_max_value() - attr->get_numerical_min_value();
     }
+
+    this->do_count();
+    this->evaluate();
 }
 
 void RangeConstraintCost::do_count()
@@ -247,14 +253,14 @@ void RangeConstraintCost::evaluate()
     switch(constraint->get_type()) {
 	case Constraint::HOMOGENEOUS:
 	    if(numMembersConsidered > 0 && attributeValueRange > 0.0) {
-		cost = constraint->get_weight() * std_dev() / attributeValueRange;
+		cost = constraint->get_weight() * 2.0 * std_dev() / attributeValueRange;
 	    } else {
 		cost = 0.0;
 	    }
 	    break;
 	case Constraint::HETEROGENEOUS:
 	    if(numMembersConsidered > 0 && attributeValueRange > 0.0) {
-		cost = constraint->get_weight() * (attributeValueRange - std_dev()) / attributeValueRange;
+		cost = constraint->get_weight() * (attributeValueRange - 2.0 * std_dev()) / attributeValueRange;
 	    } else {
 		cost = 0.0;
 	    }

@@ -96,9 +96,9 @@ int main(int argc, const char* argv[])
 		teamData->populate_existing_teams();
 		// Update column names if required and output the result
 		annealInfo->update_column_names_if_required();
-		output_csv_file_from_team_data(teamData, "out-evaluate.csv");
 		// Debug
-		cout << *teamData;
+		output_csv_file_from_team_data(teamData, "out-evaluate.csv");
+		//cout << *teamData;
 	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
 		if(cmd == "create") {
@@ -111,7 +111,8 @@ int main(int argc, const char* argv[])
 		    annealInfo->update_column_names_if_required();
 		    output_csv_file_from_team_data(teamData, argv[4]);
 		    // Debug
-		    cout << *teamData;
+		    //cout << *teamData;
+		    //output_cost_data(cout);
 		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
