@@ -78,10 +78,11 @@ public:
     Member(const Person& person, Partition* partition);
 
     // Other member functions
-    const string& get_attribute_value(const Attribute* attr);
-    double get_numeric_attribute_value(const Attribute* attr);
-    int get_attribute_value_index(const Attribute* attr);
-    const Person& get_person();
+    const string& get_attribute_value(const Attribute* attr) const;
+    double get_numeric_attribute_value(const Attribute* attr) const;
+    int get_attribute_value_index(const Attribute* attr) const;
+    const Person& get_person() const;
+    const string& get_id() const;
     void output(ostream& os) const;
     void append_condition_value(bool met);
     bool is_condition_met(int constraintNumber) const;

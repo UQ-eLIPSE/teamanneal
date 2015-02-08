@@ -53,7 +53,9 @@ public:
     void set_constraint_number(int constraintNum);
     void set_applicable_team_size(int teamSize);
     bool applies_to_team_size(int teamSize) const;
+    bool applies_to_string_field() const;
     const Attribute* get_attribute() const;
+    int get_level() const;
     int get_constraint_number() const;
     double get_weight() const;
     // The following are used by count constraints

@@ -12,7 +12,7 @@
 #include "filedata.hh"
 #include "teamData.hh"
 #include "csv_output.hh"
-#include "constraintCost.hh"
+#include "cost.hh"
 
 #include <iostream>
 #include <stdlib.h>	// for exit()

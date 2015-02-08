@@ -101,24 +101,29 @@ Member::Member(const Person& person, Partition* partition) :
 {
 }
 
-const string& Member::get_attribute_value(const Attribute* attr) 
+const string& Member::get_attribute_value(const Attribute* attr) const
 {
     return person.get_string_attribute_value(attr);
 }
 
-double Member::get_numeric_attribute_value(const Attribute* attr)
+double Member::get_numeric_attribute_value(const Attribute* attr) const
 {
     return person.get_numeric_attribute_value(attr);
 }
 
-int Member::get_attribute_value_index(const Attribute* attr)
+int Member::get_attribute_value_index(const Attribute* attr) const
 {
     return person.get_string_attribute_index(attr);
 }
 
-const Person& Member::get_person()
+const Person& Member::get_person() const
 {
     return person;
+}
+
+const string& Member::get_id() const
+{
+    return person.get_id();
 }
 
 void Member::output(ostream& os) const

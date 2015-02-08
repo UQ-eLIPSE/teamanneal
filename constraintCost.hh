@@ -9,12 +9,6 @@
 #include "constraint.hh"
 #include "person.hh"
 #include <map>
-#include "constraintCostList.hh"
-
-// Global functions
-
-// Initialise all cost related structures and variables
-void initialise_costs(AllTeamData* data);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +30,13 @@ public:
     // return 0;
     double get_cost();
 
+    const TeamLevel* get_team() const;
+    const Constraint* get_constraint() const;
+
     virtual void evaluate() = 0;
+
+    // Factory
+    static ConstraintCost* construct(const TeamLevel* team, const Constraint* constraint);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -42,9 +42,19 @@ bool Constraint::applies_to_team_size(int teamSize) const
     return (applicableTeamSize == 0 || teamSize == applicableTeamSize);
 }
 
+bool Constraint::applies_to_string_field() const
+{
+    return attribute->is_string();
+}
+
 const Attribute* Constraint::get_attribute() const
 {
     return attribute;
+}
+
+int Constraint::get_level() const
+{
+    return level;
 }
 
 int Constraint::get_constraint_number() const
