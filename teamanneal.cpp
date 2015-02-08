@@ -94,6 +94,8 @@ int main(int argc, const char* argv[])
 	    } else if(cmd == "evaluate" && argc == 4) {
 		teamData = set_up_data(*annealInfo, argv);
 		teamData->populate_existing_teams();
+		initialise_costs(teamData);
+
 		// Update column names if required and output the result
 		annealInfo->update_column_names_if_required();
 		// Debug

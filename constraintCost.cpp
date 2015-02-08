@@ -85,16 +85,15 @@ void ConstraintCost::undo_pending()
 // Constructor
 CountConstraintCost::CountConstraintCost(const TeamLevel* team, const Constraint* constraint) :
 	ConstraintCost(team, constraint),
+	target(((const CountConstraint*)constraint)->get_target()),
+	constraintNumber(constraint->get_constraint_number()),
 	numMembersConsidered(0),
 	count(0),
-	target(0),
 	numMembersPendingMove(0),
 	countPendingMove(0)
 {
     // Make sure the constraint is a count constraint
     assert(constraint->is_count_constraint());
-    const CountConstraint* countConstraint = (const CountConstraint*)constraint;
-    target = countConstraint->get_target();
 
     this->initialise();
 }
@@ -103,12 +102,11 @@ CountConstraintCost::CountConstraintCost(const TeamLevel* team, const Constraint
 void CountConstraintCost::initialise()
 {
     // Iterate over each member of the team and count how many satisfy the condition
-    int constraintNum = constraint->get_constraint_number();
     countPendingMove = 0;
     numMembersPendingMove = 0;
     MemberIterator memberItr(team);
     while(!memberItr.done()) {
-	if(memberItr->is_condition_met(constraintNum)) {
+	if(memberItr->is_condition_met(constraintNumber)) {
 	    countPendingMove++;
 	}
 	++memberItr;
@@ -179,31 +177,57 @@ void CountConstraintCost::undo_pending()
     numMembersPendingMove = numMembersConsidered;
 }
 
+double CountConstraintCost::pend_remove_member(Member* member)
+{
+    // We assume, but do not check that the member is part of the team
+    double costBefore = costPendingMove;
+    --numMembersPendingMove;
+    if(member->is_condition_met(constraintNumber)) {
+	--countPendingMove;
+    }
+    evaluate();
+    return (costPendingMove - costBefore);
+}
+
+double CountConstraintCost::pend_add_member(Member* member)
+{
+    // We assume, but do not check that the member is not part of the team
+    double costBefore = costPendingMove;
+    ++numMembersPendingMove;
+    if(member->is_condition_met(constraintNumber)) {
+	++countPendingMove;
+    }
+    evaluate();
+    return (costPendingMove - costBefore);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // SimilarityConstraintCost
 
 // Constructor
 SimilarityConstraintCost::SimilarityConstraintCost(const TeamLevel* team, const Constraint* constraint) :
 	ConstraintCost(team, constraint),
+	attribute(constraint->get_attribute()),
+	numAttributeValues(constraint->get_attribute()->num_values()),
 	countDistinctValues(0),
 	numMembersConsidered(0),
-	numAttributeValues(constraint->get_attribute()->num_values()),
 	countDistinctValuesPendingMove(0),
 	numMembersPendingMove(0)
 {
-    assert(constraint->get_attribute()->is_string());
+    assert(attribute->is_string());
 
     this->initialise();
 }
 
 void SimilarityConstraintCost::initialise()
 {
-    const Attribute* attribute = constraint->get_attribute();
-
+    // This initialiser updates both the committed and pending values - it's easier that way
     // Clear the map of values to counts
     valueCount.clear();
+    valueCountPendingMove.clear();
     // Create an entry for each possible attribute value and initialise the count to 0 for each
-    valueCount.resize(attribute->num_values(), 0);
+    valueCount.resize(numAttributeValues, 0);
+    valueCountPendingMove.resize(numAttributeValues, 0);
     countDistinctValuesPendingMove = 0;
     numMembersPendingMove = 0;
 
@@ -212,6 +236,7 @@ void SimilarityConstraintCost::initialise()
     while(!memberItr.done()) {
 	int attributeValueIndex = memberItr->get_attribute_value_index(attribute);
 	++valueCount[attributeValueIndex];
+	++valueCountPendingMove[attributeValueIndex];
 	if(valueCount[attributeValueIndex] == 1) {
 	    ++countDistinctValuesPendingMove;
 	}
@@ -220,8 +245,7 @@ void SimilarityConstraintCost::initialise()
 	// Move on to next member
 	++memberItr;
     }
-    valueCountsToIncrementPendingMove.clear();
-    valueCountsToDecrementPendingMove.clear();
+    valueCountsToUpdate.clear();
     this->evaluate();
     this->commit_pending();
 }
@@ -254,14 +278,10 @@ void SimilarityConstraintCost::commit_pending()
 
     countDistinctValues = countDistinctValuesPendingMove;
     numMembersConsidered = numMembersPendingMove;
-    for(int i=0; i< valueCountsToIncrementPendingMove.size(); ++i) {
-	int index = valueCountsToIncrementPendingMove[i];
-	++valueCount[index];
+    for(int i=0; i< valueCountsToUpdate.size(); ++i) {
+	valueCount[i] = valueCountPendingMove[i];
     }
-    for(int i=0; i< valueCountsToDecrementPendingMove.size(); ++i) {
-	int index = valueCountsToDecrementPendingMove[i];
-	--valueCount[index];
-    }
+    valueCountsToUpdate.clear();
 }
 
 void SimilarityConstraintCost::undo_pending()
@@ -270,8 +290,48 @@ void SimilarityConstraintCost::undo_pending()
 
     countDistinctValuesPendingMove = countDistinctValues;
     numMembersPendingMove = numMembersConsidered;
-    valueCountsToIncrementPendingMove.clear();
-    valueCountsToDecrementPendingMove.clear();
+    for(int i=0; i< valueCountsToUpdate.size(); ++i) {
+	valueCountPendingMove[i] = valueCount[i];
+    }
+    valueCountsToUpdate.clear();
+}
+
+double SimilarityConstraintCost::pend_remove_member(Member* member)
+{
+    // We assume, but do not check that the member is part of the team
+    double costBefore = costPendingMove;
+    --numMembersPendingMove;
+
+    int attributeValueIndex = member->get_attribute_value_index(attribute);
+    assert(valueCountPendingMove[attributeValueIndex] > 0);
+    --valueCountPendingMove[attributeValueIndex];
+    valueCountsToUpdate.push_back(attributeValueIndex);	// add this index to our list of indices to 
+    							// update if we commit this change
+    if(valueCountPendingMove[attributeValueIndex] == 0) {
+	// One fewer distinct value now
+	assert(countDistinctValuesPendingMove > 0);
+	--countDistinctValuesPendingMove;
+    }
+    evaluate();
+    return (costPendingMove - costBefore);
+}
+
+double SimilarityConstraintCost::pend_add_member(Member* member)
+{
+    // We assume, but do not check that the member is not part of the team
+    double costBefore = costPendingMove;
+    ++numMembersPendingMove;
+
+    int attributeValueIndex = member->get_attribute_value_index(attribute);
+    ++valueCountPendingMove[attributeValueIndex];
+    valueCountsToUpdate.push_back(attributeValueIndex);	// add this index to our list of indices to 
+    							// update if we commit this change
+    if(valueCountPendingMove[attributeValueIndex] == 1) {
+	// One more distinct value now
+	++countDistinctValuesPendingMove;
+    }
+    evaluate();
+    return (costPendingMove - costBefore);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -280,22 +340,27 @@ void SimilarityConstraintCost::undo_pending()
 // Constructor
 RangeConstraintCost::RangeConstraintCost(const TeamLevel* team, const Constraint* constraint) :
 	ConstraintCost(team, constraint),
+	attribute(constraint->get_attribute()),
+	attributeValueRange(0.0),
+	/*
 	minValue(INFINITY),
 	maxValue(-INFINITY),
+	*/
 	sumOfValues(0.0),
 	sumOfSquareValues(0.0),
 	numMembersConsidered(0),
-	attributeValueRange(0.0),
+	/*
 	minValuePendingMove(INFINITY),
 	maxValuePendingMove(-INFINITY),
+	*/
 	sumOfValuesPendingMove(0.0),
 	sumOfSquareValuesPendingMove(0.0),
 	numMembersPendingMove(0)
 {
-    const Attribute* attr = constraint->get_attribute();
-    assert(attr->is_numeric());
-    if(attr->num_values() > 0) {
-	attributeValueRange = attr->get_numerical_max_value() - attr->get_numerical_min_value();
+    assert(attribute->is_numeric());
+    if(attribute->num_values() > 0) {
+	attributeValueRange = attribute->get_numerical_max_value() - 
+		attribute->get_numerical_min_value();
     }
 
     this->initialise();
@@ -303,11 +368,12 @@ RangeConstraintCost::RangeConstraintCost(const TeamLevel* team, const Constraint
 
 void RangeConstraintCost::initialise()
 {
-    const Attribute* attribute = constraint->get_attribute();
 
     // Reset measures
+    /*
     minValuePendingMove = INFINITY;
     maxValuePendingMove = -INFINITY;
+    */
     sumOfValuesPendingMove = 0.0;
     sumOfSquareValuesPendingMove = 0.0;
     numMembersPendingMove = 0;
@@ -318,12 +384,14 @@ void RangeConstraintCost::initialise()
 	double value = memberItr->get_numeric_attribute_value(attribute);
 	sumOfValuesPendingMove += value;
 	sumOfSquareValuesPendingMove += (value * value);
+	/*
 	if(value < minValuePendingMove) {
 	    minValuePendingMove = value;
 	}
 	if(value > maxValuePendingMove) {
 	    maxValuePendingMove = value;
 	}
+	*/
 
 	++numMembersPendingMove;
 
@@ -362,8 +430,10 @@ void RangeConstraintCost::commit_pending()
 {
     ConstraintCost::commit_pending();
 
+    /*
     minValue = minValuePendingMove;
     maxValue = maxValuePendingMove;
+    */
     sumOfValues = sumOfValuesPendingMove;
     sumOfSquareValues = sumOfSquareValuesPendingMove;
     numMembersConsidered = numMembersPendingMove;
@@ -373,12 +443,43 @@ void RangeConstraintCost::undo_pending()
 {
     ConstraintCost::undo_pending();
 
+    /*
     minValuePendingMove = minValue;
     maxValuePendingMove = maxValue;
+    */
     sumOfValuesPendingMove = sumOfValues;
     sumOfSquareValuesPendingMove = sumOfSquareValues;
     numMembersPendingMove = numMembersConsidered;
 }
+
+double RangeConstraintCost::pend_remove_member(Member* member)
+{
+    // We assume, but do not check that the member is part of the team
+    double costBefore = costPendingMove;
+    --numMembersPendingMove;
+
+    double value = member->get_numeric_attribute_value(attribute);
+    sumOfValuesPendingMove -= value;
+    sumOfSquareValuesPendingMove -= (value * value);
+
+    evaluate();
+    return (costPendingMove - costBefore);
+}
+
+double RangeConstraintCost::pend_add_member(Member* member)
+{
+    // We assume, but do not check that the member is not part of the team
+    double costBefore = costPendingMove;
+    ++numMembersPendingMove;
+
+    double value = member->get_numeric_attribute_value(attribute);
+    sumOfValuesPendingMove += value;
+    sumOfSquareValuesPendingMove += (value * value);
+
+    evaluate();
+    return (costPendingMove - costBefore);
+}
+
 
 double RangeConstraintCost::std_dev()
 {
@@ -388,8 +489,10 @@ double RangeConstraintCost::std_dev()
 	    sumOfValuesPendingMove * sumOfValuesPendingMove) / num;
 }
 
+#if 0
 double RangeConstraintCost::range()
 {
     assert(numMembersPendingMove > 0);
     return (maxValuePendingMove - minValuePendingMove);
 }
+#endif
