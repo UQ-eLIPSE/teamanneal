@@ -21,7 +21,9 @@ class ConstraintCost {
 protected:
     const TeamLevel* team;
     const Constraint* constraint;
-    double cost;
+    double cost;			// of current state and committed moves
+    double costPendingMove;
+    int teamSizePendingMove;
     // Constructor
     ConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
@@ -29,11 +31,17 @@ public:
     // Check that the constraint applies (team size wise) and if so, return the cost, otherwise
     // return 0;
     double get_cost();
+    double get_pending_cost();
+    double delta_cost();		// pending minus committed
 
     const TeamLevel* get_team() const;
     const Constraint* get_constraint() const;
 
-    virtual void evaluate() = 0;
+    virtual void evaluate() = 0;	// evaluate cost of current situation (pending move)
+    virtual void commit_pending();	// commit the cost changes associated with pending moves
+    					// (we assume this happens after teams are updated so that
+					// we can update the teamSizePendingMove)
+    virtual void undo_pending();	// Undo any pending changes (team membership unchanged)
 
     // Factory
     static ConstraintCost* construct(const TeamLevel* team, const Constraint* constraint);
@@ -48,12 +56,19 @@ private:
     int numMembersConsidered;
     int count;
     int target;
+
+    int numMembersPendingMove;
+    int countPendingMove;
 public:
     // Constructor
     CountConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
-    void do_count();
-    void evaluate();
+private:
+    void initialise();		// initalise
+public:
+    void evaluate();		// update pending cost based on current count, num members, target, constraint etc.
+    void commit_pending();	// commit the pending move(s) - update count, numMembersConsidered, cost
+    void undo_pending();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,13 +80,24 @@ private:
     vector<int> valueCount;	// Indexed by attribute string value index
     int countDistinctValues;
     int numMembersConsidered;
+
     int numAttributeValues;
+
+    vector<int> valueCountsToIncrementPendingMove;
+    vector<int> valueCountsToDecrementPendingMove;
+    int countDistinctValuesPendingMove;
+    int numMembersPendingMove;
+
 public:
     // Constructor
     SimilarityConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
-    void do_count();
-    void evaluate();
+private:
+    void initialise();		// intialise
+public:
+    void evaluate();		// update pending cost based on current data
+    void commit_pending();	// commit the pending move(s) - update member variables
+    void undo_pending();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,40 +111,28 @@ private:
     double sumOfValues;
     double sumOfSquareValues;
     int numMembersConsidered;
+
     double attributeValueRange;
+
+    double minValuePendingMove;
+    double maxValuePendingMove;
+    double sumOfValuesPendingMove;
+    double sumOfSquareValuesPendingMove;
+    int numMembersPendingMove;
 public:
     // Constructor
     RangeConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
-    void do_count();
-    void evaluate();
-
-    double std_dev();	// return standard deviation of values in this team
-    double range();	// return range of values in this team
-};
-
-///////////////////////////////////////////////////////////////////////////////
-#if 0
-class PartitionCostDetails {
-    map<const TeamLevel*,ConstraintCostList> teamToCostMap;	// which costs are applicable to the given team
-    double cost;
-    double lowestCost;
-};
-
-class constraintCost {
+private:
+    void initialise();
 public:
-    int constraintNumber;	// 0 to number of constraints minus one
-    TeamLevel* team;		// Each constraint applies at only one level
+    void evaluate();		// update pending cost based on current data
+    void commit_pending();
+    void undo_pending();
 
-    virtual void evaluate() = 0;	// how we evaluate the cost will depend on the type
-    					// of constraint
+    double std_dev();	// return standard deviation of values in this team - pending moves
+    double range();	// return range of values in this team - pending moves
 };
-
-class numericalRangeConstraintCost : public constraintCost {
-
-    virtual void evaluate();
-};
-#endif
 
 #endif
 

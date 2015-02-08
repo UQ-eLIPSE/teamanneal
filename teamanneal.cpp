@@ -112,7 +112,7 @@ int main(int argc, const char* argv[])
 		    output_csv_file_from_team_data(teamData, argv[4]);
 		    // Debug
 		    //cout << *teamData;
-		    //output_cost_data(cout);
+		    output_cost_data(cout);
 		}
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
