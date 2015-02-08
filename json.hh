@@ -23,6 +23,8 @@ public:
 
     // Constructor
     JSONValue(JSONType t);
+    // Destructor
+    virtual ~JSONValue();
 
     // Factory method - construct a JSONValue from the contents of a file.
     static JSONValue *readJSON(const char *filename);
@@ -54,7 +56,6 @@ class JSONString: public JSONValue {
 private:
     string value;
 public:
-
     // Constructor
     JSONString(string val);
 
@@ -97,9 +98,16 @@ public:
     // Constructor
     JSONObject(void);
 
+    // Destructor
+    ~JSONObject();
+
     // Other member functions
     // Append
     void append(const string& name, JSONValue* const value);
+    void append(const string& name, const string& value);
+    void append(const string& name, double d);
+    void append(const string& name, bool b);
+    void append_null(const string& name);
 
     // Returns whether the object has an attribute with the given name
     bool has_attribute(const string& name);
@@ -137,10 +145,17 @@ public:
     // Constructor
     JSONArray(void);
 
+    // Destructor
+    ~JSONArray();
+
     // Other member functions
     // Append operator
     JSONArray& operator+=(JSONValue* const rhs);
     void append(JSONValue* const rhs);
+    void append(const string& value);
+    void append(double value);
+    void append(bool value);
+    void append_null();
 
     // Return an iterator to the beginning of the array
     Iterator iterator();
@@ -174,7 +189,7 @@ protected:
 class JSONNull: public JSONValue {
 public:
     // Constructor
-    JSONNull(void);
+    JSONNull();
 
 protected:
     // Output function

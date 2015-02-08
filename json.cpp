@@ -191,6 +191,10 @@ JSONValue::JSONValue(JSONType t)
 {
 }
 
+JSONValue::~JSONValue()
+{
+}
+
 // Construct a JSONValue from a file
 JSONValue* JSONValue::readJSON(const char *filename)
 {
@@ -314,14 +318,45 @@ void JSONNumber::print(ostream& str) const
 
 ///////////////////////////////////////////////////////////////////////////////
 // JSONObject
+// Constructor
 JSONObject::JSONObject(void) :
 	JSONValue(JSON_OBJECT)
 {
 }
 
+// Destructor
+JSONObject::~JSONObject()
+{
+    Iterator itr = iterator();
+    while(itr != end()) {
+	delete itr->second;
+	++itr;
+    }
+}
+
 void JSONObject::append(const string& name, JSONValue* const value)
 {
     nameValuePairs.insert(make_pair(name, value));
+}
+
+void JSONObject::append(const string& name, const string& value)
+{
+    nameValuePairs.insert(make_pair(name, new JSONString(value)));
+}
+
+void JSONObject::append(const string& name, double d)
+{
+    nameValuePairs.insert(make_pair(name, new JSONNumber(d)));
+}
+
+void JSONObject::append(const string& name, bool b)
+{
+    nameValuePairs.insert(make_pair(name, new JSONBool(b)));
+}
+
+void JSONObject::append_null(const string& name)
+{
+    nameValuePairs.insert(make_pair(name, new JSONNull()));
 }
 
 bool JSONObject::has_attribute(const string& name)
@@ -395,9 +430,21 @@ void JSONObject::print(ostream& str) const
 
 ///////////////////////////////////////////////////////////////////////////////
 // JSONArray
+
+// Constructor
 JSONArray::JSONArray(void) : 
 	JSONValue(JSON_ARRAY)
 {
+}
+
+// Destructor
+JSONArray::~JSONArray()
+{
+    Iterator itr = iterator();
+    while(itr != end()) {
+	delete *itr;
+	++itr;
+    }
 }
 
 JSONArray& JSONArray::operator+=(JSONValue* const rhs)
@@ -409,6 +456,26 @@ JSONArray& JSONArray::operator+=(JSONValue* const rhs)
 void JSONArray::append(JSONValue* const rhs)
 {
     members.push_back(rhs);
+}
+
+void JSONArray::append(const string& value)
+{
+    members.push_back(new JSONString(value));
+}
+
+void JSONArray::append(double d)
+{
+    members.push_back(new JSONNumber(d));
+}
+
+void JSONArray::append(bool b)
+{
+    members.push_back(new JSONBool(b));
+}
+
+void JSONArray::append_null()
+{
+    members.push_back(new JSONNull());
 }
 
 JSONArray::Iterator JSONArray::iterator()
