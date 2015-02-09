@@ -47,6 +47,11 @@ EntityList::~EntityList()
     }
 }
 
+void EntityList::clear()
+{
+    members.clear();
+}
+
 void EntityList::append(Entity* member)
 {
     members.push_back(member);

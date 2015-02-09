@@ -39,7 +39,7 @@ Entity::~Entity()
 
 bool Entity::has_name(const string& value) const
 {
-    return (name == value);
+    return (name.compare(value) == 0);
 }
 
 const string& Entity::get_name() const
@@ -47,9 +47,12 @@ const string& Entity::get_name() const
     return name;
 }
 
-void Entity::set_name(const string& value) 
+const string& Entity::set_name(const string& value) 
 {
-    name = value;
+    //if(name.compare("") == 0) {
+	name = value;
+    //}
+    return name;
 }
 
 Entity::Type Entity::get_type() const
@@ -172,7 +175,8 @@ Member* Member::clone()
 TeamLevel::TeamLevel(const TeamLevel& team) :
 	Entity(Entity::TEAM, team.name, team.partition),
 	children(team.children, this),
-	level(team.level)
+	level(team.level),
+	fullTeamName("UNINITIALISED")
 {
 }
 
@@ -244,9 +248,23 @@ MemberIterator TeamLevel::member_iterator() const
     return MemberIterator(this);
 }
 
+void TeamLevel::set_full_team_name(const string& fullName)
+{
+    fullTeamName = fullName;
+}
+
+const string& TeamLevel::get_full_team_name() const
+{
+    return fullTeamName;
+}
+
 TeamLevel* TeamLevel::clone()
 {
-    return new TeamLevel(*this);
+    TeamLevel* team = new TeamLevel(*this);
+    if(team->get_level().is_lowest()) {
+	team->partition->add_lowest_cost_low_level_team(team);
+    }
+    return team;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -382,6 +400,12 @@ void Partition::set_current_teams_as_lowest_cost()
 	delete lowestCostTopLevelTeams;
     }
     lowestCostTopLevelTeams = new EntityList(children, this);
+    lowestCostLowLevelTeams.clear();
+}
+
+void Partition::add_lowest_cost_low_level_team(TeamLevel* team)
+{
+    lowestCostLowLevelTeams.append(team);
 }
 
 void Partition::update_lowest_cost_member_map(const Person* person, Member* member)
@@ -407,10 +431,20 @@ int Partition::find_index_of(Entity* member)
     return index;
 }
 
-EntityListIterator Partition::teams_at_level_iterator(int levelNum)
+EntityListIterator Partition::teams_at_level_iterator(int levelNum) const
 {
     assert(levelNum >= 1 && levelNum <= allTeamData->num_levels());
     return EntityListIterator(*(teamsAtEachLevel[levelNum]));
+}
+
+EntityListIterator Partition::teams_at_lowest_level_iterator() const
+{
+    return EntityListIterator(*(teamsAtEachLevel[allTeamData->num_levels()]));
+}
+
+EntityListIterator Partition::lowest_cost_teams_iterator() const
+{
+    return EntityListIterator(lowestCostLowLevelTeams);
 }
 
 AllTeamData* Partition::get_all_team_data() const

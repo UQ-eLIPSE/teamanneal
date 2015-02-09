@@ -43,6 +43,10 @@ public:
     Partition* get_partition_for_person(const Person* person) const;
     EntityListIterator get_partition_iterator() const;
 
+    // Call this after annealing in order to set team names - this sets names for the 
+    // main teams - copy lowest cost teams back to the main structure before calling this
+    void set_names_for_all_teams();
+
     // Output operator
     friend ostream& operator<<(ostream& os, const AllTeamData& all);
 

@@ -131,6 +131,68 @@ EntityListIterator AllTeamData::get_partition_iterator() const
     return EntityListIterator(partitionList);
 }
 
+void AllTeamData::set_names_for_all_teams()
+{
+    // Iterate over each person
+    vector<const Person*>& allPeople = annealInfo.all_people();
+    vector<const Person*>::const_iterator itr = allPeople.begin();
+    while(itr != allPeople.end()) {
+        // Get partition that person is part of
+        Partition* partition = get_partition_for_person(*itr);
+        // Get associated member (of the lowest cost teams)
+        Member* member = partition->get_lowest_cost_member_for_person(*itr);
+
+        // Construct the team names - one for each level - build up a vector with these
+        // for use in constructing the overall team name
+        int numLevels = 0;
+        TeamLevel* lowestLevelTeam = member->get_parent();
+        TeamLevel* team = lowestLevelTeam;
+        vector<string> levelNames;
+        do {
+            numLevels++;
+            // Get number of this team within the list of teams
+            TeamLevel* parentTeam = team->get_parent();
+            assert(parentTeam);
+            int teamNum = parentTeam->find_index_of(team);
+            // Get the name and set it and save it to our list of level names
+            string teamNameAtThisLevel = 
+                    team->get_level().get_name(teamNum, parentTeam->num_children());
+            teamNameAtThisLevel = team->set_name(teamNameAtThisLevel);	// will happen if not already set
+            levelNames.insert(levelNames.begin(), teamNameAtThisLevel);
+            // Get ready to move up a level
+            team = parentTeam;
+        }
+        while (!team->is_partition());
+        // Check we haven't run out of levels - there must be this many parent teams
+        assert(numLevels == annealInfo.num_levels());
+
+        // prepend our partition name to our vector of level names - in case it is needed
+        levelNames.insert(levelNames.begin(), team->get_name());
+
+        // Output the overall name
+        string teamName = annealInfo.get_team_name_format();
+        // For each level, replace any instance of %levelNum (e.g. %0) with the name of the team
+        // at that level. Level 0 = partition
+        for(int level = 0; level < levelNames.size(); level++) {
+            assert(level < 10); // we can only handle single digit levels
+            string escapeSequence = "%";
+            escapeSequence += to_string(level);
+            // Look for escape sequence in the team name format
+            size_t posn = teamName.find(escapeSequence);
+            while(posn != string::npos) {
+                // escape sequence has been found - replace it by the team name at this level
+                teamName.replace(posn, 2, levelNames[level]);
+                // Look for another match
+                posn = teamName.find(escapeSequence);
+            }
+        }
+        lowestLevelTeam->set_full_team_name(teamName);
+
+        // Move on to next person
+        ++itr;
+    }
+}
+
 // Output operator
 ostream& operator<<(ostream& os, const AllTeamData& all)
 {

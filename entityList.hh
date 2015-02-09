@@ -37,6 +37,7 @@ public:
 
     // Member functions
     // Append member to this entity list 
+    void clear();
     void append(Entity* member);
     void append_unique(Entity* member);	// Does not append if already present, inefficient
     Entity* operator[](size_t i) const;

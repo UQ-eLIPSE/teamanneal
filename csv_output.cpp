@@ -44,53 +44,20 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
             Attribute* attr = annealInfo.get_attribute(i);
             row->append(person.get_string_attribute_value(attr));
         }
+
         // Output the team names - one for each level - build up a vector with these
 	// for use in constructing the overall team name
-        int numLevels = 0;
-        TeamLevel* team = member->get_parent();
-	vector<string> levelNames;
+	TeamLevel* lowestLevelTeam = member->get_parent();
+        TeamLevel* team = lowestLevelTeam;
         do {
-            numLevels++;
-            // Get number of this team within the list of teams
+	    row->append(team->get_name());
             TeamLevel* parentTeam = team->get_parent();
 	    assert(parentTeam);
-            int teamNum = parentTeam->find_index_of(team);
-            // Append the name of the team to the CSV row - the level can generate the
-            // name based on the team number. Prepend the name to our vector of names
-	    string teamNameAtThisLevel = 
-		    team->get_level().get_name(teamNum, parentTeam->num_children());
-            row->append(teamNameAtThisLevel);
-	    team->set_name(teamNameAtThisLevel);
-	    levelNames.insert(levelNames.begin(), teamNameAtThisLevel);
-            // Get ready to move up a level
             team = parentTeam;
         }
         while (!team->is_partition());
-        // Check we haven't run out of levels - there must be this many parent teams
-        assert(numLevels == annealInfo.num_levels());
 	
-	// prepend our partition name to our vector of level names - in case it is needed
-	levelNames.insert(levelNames.begin(), team->get_name());
-
-        // Output the overall name
-	string teamName = annealInfo.get_team_name_format();
-	// For each level, replace any instance of %levelNum (e.g. %0) with the name of the team
-	// at that level. Level 0 = partition
-	for(int level = 0; level < levelNames.size(); level++) {
-	    assert(level < 10);	// we can only handle single digit levels
-	    string escapeSequence = "%";
-	    escapeSequence += to_string(level);
-	    // Look for escape sequence in the team name format
-	    size_t posn = teamName.find(escapeSequence);
-	    while(posn != string::npos) {
-		// escape sequence has been found - replace it by the team name at this level
-		teamName.replace(posn, 2, levelNames[level]);
-		// Look for another match
-		posn = teamName.find(escapeSequence);
-	    }
-	}
-	row->append(teamName);
-	FIX need to save this team name
+	row->append(lowestLevelTeam->get_full_team_name());
 
         // Move on to next person
         ++itr;
