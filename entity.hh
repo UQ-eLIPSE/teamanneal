@@ -26,7 +26,7 @@ class Entity {
 public:
     enum Type { MEMBER, TEAM, PARTITION };
     Entity::Type type;
-    const string& name;
+    string name;
     TeamLevel* parent;	// team that this entity is part of, or null if top level (partition)
     Partition* partition;	// partition that this entity is part of
 
@@ -41,6 +41,7 @@ public:
     // Other member functions
     bool has_name(const string& value) const;
     const string& get_name() const;
+    void set_name(const string& value);
 
     Entity::Type get_type() const;
 
@@ -124,10 +125,12 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Partition
+
 // NOTE - can't delete a Partition - the EntityList destructor will result in 
 // some entities being deleted multiple times
 class Partition : public TeamLevel {
-public:
+protected:
     // highest level teams are those in the "children" inherited field
     AllTeamData* 	allTeamData;
     EntityList*		teamsAtEachLevel[MAX_LEVELS + 1];
@@ -139,11 +142,13 @@ public:
     double 		lowestCost;
     EntityList*	 	lowestCostTopLevelTeams;
     map<const Person*,Member*>	lowestCostMemberMap;
+public:
 
     // Constructor
     Partition(AllTeamData* allTeamData, const Level& level, const string& name, int numPeople);
 
     // Other member functions
+    Attribute* get_partition_attribute() const;		// nullptr if there is none
     // Add a member to our partition. All members are added before teams are formed. We return
     // a pointer to the Member instance we create
     Member* add_person(const Person* member);
@@ -158,6 +163,7 @@ public:
     int find_index_of(Entity* member);
     // Get an iterator over teams at the given level
     EntityListIterator teams_at_level_iterator(int levelNum);
+    AllTeamData* get_all_team_data() const;
 
     void output(ostream& os) const;
 };

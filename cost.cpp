@@ -6,7 +6,7 @@
 #include "teamData.hh"
 #include "assert.h"
 
-static AllCostData* allCostData = nullptr;
+AllCostData* allCostData = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Local functions
@@ -123,14 +123,14 @@ void CostData::add_constraint_cost(ConstraintCost* constraintCost)
 
     const TeamLevel* team = constraintCost->get_team();
     const Constraint* constraint = constraintCost->get_constraint();
-
+    TeamToCostMap* teamCostMap;
 
     // Check if we have a list for this team
-    map<const TeamLevel*,ConstraintCostList*>::iterator teamListItr = teamToConstraintCostsMap.find(team);
-    if(teamListItr == teamToConstraintCostsMap.end()) {
+    map<const TeamLevel*,ConstraintCostList*>::iterator teamListItr = teamToCostListMap.find(team);
+    if(teamListItr == teamToCostListMap.end()) {
 	// No entry found for this team - create one and add it to our map
 	costList = new ConstraintCostList();
-	teamToConstraintCostsMap.insert(pair<const TeamLevel*,ConstraintCostList*>(team,costList));
+	teamToCostListMap.insert(pair<const TeamLevel*,ConstraintCostList*>(team,costList));
     } else {
 	// Found the list
 	costList = teamListItr->second;
@@ -140,27 +140,63 @@ void CostData::add_constraint_cost(ConstraintCost* constraintCost)
 
     // Check if we have a list for this constraint
     map<const Constraint*,ConstraintCostList*>::iterator constraintListItr = 
-	    constraintToConstraintCostsMap.find(constraint);
-    if(constraintListItr == constraintToConstraintCostsMap.end()) {
+	    constraintToCostListMap.find(constraint);
+    if(constraintListItr == constraintToCostListMap.end()) {
 	// No entry found for this constraint - create one and add it to our map
 	costList = new ConstraintCostList();
-	constraintToConstraintCostsMap.insert(pair<const Constraint*,ConstraintCostList*>(constraint,costList));
+	constraintToCostListMap.insert(pair<const Constraint*,ConstraintCostList*>(constraint,costList));
+	// Also need to create an entry for our team-to-cost map
+	teamCostMap = new TeamToCostMap();
+	constraintToTeamCostMap.insert(pair<const Constraint*,TeamToCostMap*>(constraint,teamCostMap));
     } else {
 	// Found the list
 	costList = constraintListItr->second;
+	// Get the existing team map - there must be one
+	map<const Constraint*,TeamToCostMap*>::iterator itr = constraintToTeamCostMap.find(constraint);
+	assert(itr != constraintToTeamCostMap.end());
+	teamCostMap = itr->second;
     }
-    // Add the cost to this list
+    // Add the cost to this list and to the individual team cost map
     costList->append(constraintCost);
+    teamCostMap->insert(pair<const TeamLevel*,ConstraintCost*>(team, constraintCost));
 }
 
 map<const TeamLevel*,ConstraintCostList*>::const_iterator CostData::team_begin() const
 {
-    return teamToConstraintCostsMap.cbegin();
+    return teamToCostListMap.cbegin();
 }
 
 map<const TeamLevel*,ConstraintCostList*>::const_iterator CostData::team_end() const
 {
-    return teamToConstraintCostsMap.cend();
+    return teamToCostListMap.cend();
+}
+
+ConstraintCostList* CostData::get_costs_for_constraint(Constraint* constraint) const
+{
+    map<const Constraint*,ConstraintCostList*>::const_iterator itr = 
+	    constraintToCostListMap.find(constraint);
+    assert(itr != constraintToCostListMap.end());		// must be found
+    return itr->second;
+}
+
+ConstraintCostList* CostData::get_costs_for_team(TeamLevel* team) const
+{
+    map<const TeamLevel*,ConstraintCostList*>::const_iterator itr = 
+	    teamToCostListMap.find(team);
+    assert(itr != teamToCostListMap.end());		// must be found
+    return itr->second;
+}
+
+ConstraintCost* CostData::get_cost(Constraint* constraint, TeamLevel* team) const
+{
+    map<const Constraint*,TeamToCostMap*>::const_iterator itr = 
+	    constraintToTeamCostMap.find(constraint);
+    assert(itr != constraintToTeamCostMap.end());	// must be found
+    // Have found our map from teams to individual constraint costs, now look for the team
+    // within this
+    TeamToCostMap::const_iterator costItr = itr->second->find(team);
+    assert(costItr != itr->second->end());		// must be found
+    return costItr->second;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

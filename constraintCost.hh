@@ -51,6 +51,11 @@ public:
     virtual double pend_remove_member(Member* member) = 0;
     virtual double pend_add_member(Member* member) = 0;
 
+    // For statistics purposes - percentage (0 to 100) of constraint satisfaction
+    // (value will usually be 0 or 100 - except for minimise/maximise constraints)
+    // (If the constraint does not apply to teams of this size then we return 100%)
+    virtual double percent_constraint_met() = 0;
+
     // Factory
     static ConstraintCost* construct(const TeamLevel* team, const Constraint* constraint);
 };
@@ -81,6 +86,8 @@ public:
     void undo_pending();
     double pend_remove_member(Member* member);
     double pend_add_member(Member* member);
+
+    double percent_constraint_met();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -114,6 +121,8 @@ public:
     void undo_pending();
     double pend_remove_member(Member* member);
     double pend_add_member(Member* member);
+
+    double percent_constraint_met();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -152,6 +161,8 @@ public:
     void undo_pending();
     double pend_remove_member(Member* member);
     double pend_add_member(Member* member);
+
+    double percent_constraint_met();
 
     double std_dev();	// return standard deviation of values in this team - pending moves
     //double range();	// return range of values in this team - pending moves

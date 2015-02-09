@@ -109,6 +109,11 @@ const vector<Level*>& AllTeamData::all_levels() const
     return annealInfo.all_levels();
 }
 
+const vector<Constraint*>& AllTeamData::all_constraints() const
+{
+    return annealInfo.all_constraints();
+}
+
 vector<const Person*>& AllTeamData::all_people() const
 {
     return annealInfo.all_people();

@@ -47,6 +47,11 @@ const string& Entity::get_name() const
     return name;
 }
 
+void Entity::set_name(const string& value) 
+{
+    name = value;
+}
+
 Entity::Type Entity::get_type() const
 {
     return type;
@@ -264,6 +269,12 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 }
 
 // Other member functions
+
+Attribute* Partition::get_partition_attribute() const
+{
+    return level.get_field_attribute();
+}
+
 Member* Partition::add_person(const Person* person)
 {
     Member* member = new Member(*person, this);
@@ -400,6 +411,11 @@ EntityListIterator Partition::teams_at_level_iterator(int levelNum)
 {
     assert(levelNum >= 1 && levelNum <= allTeamData->num_levels());
     return EntityListIterator(*(teamsAtEachLevel[levelNum]));
+}
+
+AllTeamData* Partition::get_all_team_data() const
+{
+    return allTeamData;
 }
 
 void Partition::output(ostream& os) const

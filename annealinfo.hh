@@ -59,6 +59,7 @@ public:
     void add_constraint(Constraint* constraint);
     int num_constraints();
     Constraint* get_constraint(int n);
+    const vector<Constraint*>& all_constraints() const;
     //Attribute* get_partition_field();
     //Attribute* get_id_field();
 

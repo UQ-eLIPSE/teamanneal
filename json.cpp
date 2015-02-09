@@ -339,19 +339,25 @@ void JSONObject::append(const string& name, JSONValue* const value)
     nameValuePairs.insert(make_pair(name, value));
 }
 
-void JSONObject::append(const string& name, const string& value)
+JSONString* JSONObject::append(const string& name, const string& value)
 {
-    nameValuePairs.insert(make_pair(name, new JSONString(value)));
+    JSONString* stringValue = new JSONString(value);
+    nameValuePairs.insert(make_pair(name, stringValue));
+    return stringValue;
 }
 
-void JSONObject::append(const string& name, double d)
+JSONNumber* JSONObject::append(const string& name, double d)
 {
-    nameValuePairs.insert(make_pair(name, new JSONNumber(d)));
+    JSONNumber* numberValue = new JSONNumber(d);
+    nameValuePairs.insert(make_pair(name, numberValue));
+    return numberValue;
 }
 
-void JSONObject::append(const string& name, bool b)
+JSONBool* JSONObject::append(const string& name, bool b)
 {
-    nameValuePairs.insert(make_pair(name, new JSONBool(b)));
+    JSONBool* boolValue = new JSONBool(b);
+    nameValuePairs.insert(make_pair(name, boolValue));
+    return boolValue;
 }
 
 void JSONObject::append_null(const string& name)
@@ -458,19 +464,25 @@ void JSONArray::append(JSONValue* const rhs)
     members.push_back(rhs);
 }
 
-void JSONArray::append(const string& value)
+JSONString* JSONArray::append(const string& value)
 {
-    members.push_back(new JSONString(value));
+    JSONString* stringValue = new JSONString(value);
+    members.push_back(stringValue);
+    return stringValue;
 }
 
-void JSONArray::append(double d)
+JSONNumber* JSONArray::append(double d)
 {
-    members.push_back(new JSONNumber(d));
+    JSONNumber* numberValue = new JSONNumber(d);
+    members.push_back(numberValue);
+    return numberValue;
 }
 
-void JSONArray::append(bool b)
+JSONBool* JSONArray::append(bool b)
 {
-    members.push_back(new JSONBool(b));
+    JSONBool* boolValue = new JSONBool(b);
+    members.push_back(boolValue);
+    return boolValue;
 }
 
 void JSONArray::append_null()

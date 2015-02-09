@@ -139,6 +139,11 @@ Constraint* AnnealInfo::get_constraint(int n)
     return allConstraints[n];
 }
 
+const vector<Constraint*>& AnnealInfo::all_constraints() const
+{
+    return allConstraints;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Team name related member functions
 void AnnealInfo::set_team_name_format(const string& format)

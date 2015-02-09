@@ -60,6 +60,7 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
 	    string teamNameAtThisLevel = 
 		    team->get_level().get_name(teamNum, parentTeam->num_children());
             row->append(teamNameAtThisLevel);
+	    team->set_name(teamNameAtThisLevel);
 	    levelNames.insert(levelNames.begin(), teamNameAtThisLevel);
             // Get ready to move up a level
             team = parentTeam;
@@ -89,6 +90,7 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
 	    }
 	}
 	row->append(teamName);
+	FIX need to save this team name
 
         // Move on to next person
         ++itr;

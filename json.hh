@@ -14,6 +14,8 @@ using namespace std;
 
 typedef enum { JSON_STRING, JSON_NUMBER, JSON_OBJECT, JSON_ARRAY, JSON_BOOL, JSON_NULL } JSONType;
 
+class JSONBool;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Virtual base class
 class JSONValue {
@@ -104,9 +106,9 @@ public:
     // Other member functions
     // Append
     void append(const string& name, JSONValue* const value);
-    void append(const string& name, const string& value);
-    void append(const string& name, double d);
-    void append(const string& name, bool b);
+    JSONString* append(const string& name, const string& value);
+    JSONNumber* append(const string& name, double d);
+    JSONBool* append(const string& name, bool b);
     void append_null(const string& name);
 
     // Returns whether the object has an attribute with the given name
@@ -152,9 +154,9 @@ public:
     // Append operator
     JSONArray& operator+=(JSONValue* const rhs);
     void append(JSONValue* const rhs);
-    void append(const string& value);
-    void append(double value);
-    void append(bool value);
+    JSONString* append(const string& value);
+    JSONNumber* append(double value);
+    JSONBool* append(bool value);
     void append_null();
 
     // Return an iterator to the beginning of the array

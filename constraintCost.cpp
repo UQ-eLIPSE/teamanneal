@@ -201,6 +201,43 @@ double CountConstraintCost::pend_add_member(Member* member)
     return (costPendingMove - costBefore);
 }
 
+double CountConstraintCost::percent_constraint_met()
+{
+    assert(costPendingMove == cost);
+    if(!constraint->applies_to_team_size(team->size())) {
+	return 100.0;	// constraints are assumed to be met if they do not apply to this team size
+    }
+    switch(constraint->get_type()) {
+	case Constraint::COUNT_EXACT:
+	case Constraint::COUNT_NOT_EXACT:
+	case Constraint::COUNT_AT_LEAST:
+	case Constraint::COUNT_AT_MOST:
+	    if(cost == 0.0) {
+		return 100.0;
+	    } else {
+		return 0;
+	    }
+	    break;
+	case Constraint::COUNT_MAXIMISE:
+	    if(numMembersConsidered > 0) {
+		return (100.0*(double)count/(double)numMembersConsidered);
+	    } else {
+		return 100.0;
+	    }
+	    break;
+	case Constraint::COUNT_MINIMISE:
+	    if(numMembersConsidered > 0) {
+		return 100.0 - (100.0*(double)count/(double)numMembersConsidered);
+	    } else {
+		return 100.0;
+	    }
+	    break;
+	default:
+	    // Shouldn't happen
+	    assert(false);
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // SimilarityConstraintCost
 
@@ -332,6 +369,19 @@ double SimilarityConstraintCost::pend_add_member(Member* member)
     }
     evaluate();
     return (costPendingMove - costBefore);
+}
+
+double SimilarityConstraintCost::percent_constraint_met()
+{
+    assert(costPendingMove == cost);
+    if(!constraint->applies_to_team_size(team->size())) {
+	return 100.0;	// constraints are assumed to be met if they do not apply to this team size
+    } else if(cost == 0.0) {
+	return 100.0; 	// constraint satisfied
+    } else {
+	return 0.0;
+    }
+    return (costPendingMove == 0.0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -480,6 +530,29 @@ double RangeConstraintCost::pend_add_member(Member* member)
     return (costPendingMove - costBefore);
 }
 
+double RangeConstraintCost::percent_constraint_met()
+{
+    if(!constraint->applies_to_team_size(team->size())) {
+	return 100.0;	// constraints are assumed to be met if they do not apply to this team size
+    } else if(constraint->get_type() == Constraint::HOMOGENEOUS) {
+	if(attributeValueRange == 0.0) {
+	    return 100.0; // constraint met
+	} else if ((std_dev() / attributeValueRange) < 0.1) {
+	    return 100.0;	// we'll consider the constraint met
+	} else {
+	    return 0.0;
+	}
+    } else { // Constraint::HETEROGENEOUS:
+	if(attributeValueRange == 0.0) {
+	    return 0.0;
+	} else if ((std_dev() / attributeValueRange) > 0.25) {
+	    // consider constraint met
+	    return 100.0;
+	} else {
+	    return 0.0;
+	}
+    }
+}
 
 double RangeConstraintCost::std_dev()
 {

@@ -38,6 +38,7 @@ public:
     int num_levels() const;
     const Level& get_level(int levelNum) const;
     const vector<Level*>& all_levels() const;
+    const vector<Constraint*>& all_constraints() const;
     vector<const Person*>& all_people() const;
     Partition* get_partition_for_person(const Person* person) const;
     EntityListIterator get_partition_iterator() const;

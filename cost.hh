@@ -12,6 +12,10 @@
 #include <map>
 #include <ostream>
 
+// Global data
+class AllCostData;
+extern AllCostData* allCostData;
+
 // Global functions
 
 // Initialise all cost related structures and variables
@@ -20,15 +24,25 @@ void output_cost_data(ostream& os);
 
 ///////////////////////////////////////////////////////////////////////////////
 class CostData {
+public:
+    typedef map<const TeamLevel*,ConstraintCost*> TeamToCostMap;
 private:
-    map<const TeamLevel*,ConstraintCostList*>	teamToConstraintCostsMap;
-    map<const Constraint*,ConstraintCostList*> constraintToConstraintCostsMap;
+    map<const TeamLevel*,ConstraintCostList*>	teamToCostListMap;
+    map<const Constraint*,ConstraintCostList*> constraintToCostListMap;
+
+    // This map allows us to map from a constraint to a sub-map and then within that
+    // map from a team to an individual constraint cost
+    map<const Constraint*,TeamToCostMap*> constraintToTeamCostMap;
 
 public:
     void add_constraint_cost(ConstraintCost* constraintCost);
 
     map<const TeamLevel*,ConstraintCostList*>::const_iterator team_begin() const;
     map<const TeamLevel*,ConstraintCostList*>::const_iterator team_end() const;
+
+    ConstraintCostList* get_costs_for_constraint(Constraint* constraint) const;
+    ConstraintCostList* get_costs_for_team(TeamLevel* team) const;
+    ConstraintCost* get_cost(Constraint* constraint, TeamLevel* team) const;
 
 };
 
