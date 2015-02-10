@@ -20,7 +20,10 @@
 
 using namespace std;
 
-[[noreturn]] void print_usage_message_and_exit(const char* progName) 
+///////////////////////////////////////////////////////////////////////////////
+// Helper functions
+
+[[noreturn]] static void print_usage_message_and_exit(const char* progName) 
 {
     cerr << "Usage: " << progName << " cmd args ..." << endl;
     cerr << "Use" << endl << " " << progName << " help" << endl
@@ -28,7 +31,7 @@ using namespace std;
     exit(1);
 }
 
-void print_help_message(const char* progName) 
+static void print_help_message(const char* progName) 
 {
     cout << "Usage: " << progName << " subcommand args ..." << endl;
     cout << "Subcommands are:\n\
@@ -57,7 +60,7 @@ acquire team-csv-file constraint-json-file team-name [partition-name]\n\
 // Extract data from the files referred to on the command line - argv[2] and argv[3]
 // Create the initial team allocation - either from existing data in the CSV file or 
 // randomly.
-AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
+static AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 {
     // Read team file and parse the CSV 
     FileData* teamFileData = new FileData(argv[2]);
@@ -79,6 +82,56 @@ AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
     return new AllTeamData(annealInfo);
 }
 
+static void teamanneal_evaluate(AllTeamData* teamData, const char* argv[])
+{
+    teamData->populate_existing_teams();
+    initialise_costs(teamData);
+
+    // Update column names if required and output the result
+    teamData->get_anneal_info().update_column_names_if_required();
+    // Debug
+    output_csv_file_from_team_data(teamData, "out-evaluate.csv");
+    //cout << *teamData;
+}
+
+static void teamanneal_create(AllTeamData* teamData, const char* argv[])
+{
+    // Init stats
+    stats_init(argv[2], argv[3], argv[4]);
+    // Set up initial "random" teams
+    teamData->populate_random_teams();
+    initialise_costs(teamData);
+    // Do anneal
+
+    // Set the team names
+    teamData->set_names_for_all_teams();
+
+    // Update column names if required and output the result
+    teamData->get_anneal_info().update_column_names_if_required();
+    output_csv_file_from_team_data(teamData, argv[4]);
+    // Debug
+    //cout << *teamData;
+    output_cost_data(cout);
+    stats_set_end_time();
+    stats_add_for_all_partitions(teamData);
+    stats_output(cout);
+}
+
+static void teamanneal_move(AllTeamData* teamData, const char* argv[])
+{
+}
+
+static void teamanneal_swap(AllTeamData* teamData, const char* argv[])
+{
+}
+
+static void teamanneal_acquire(AllTeamData* teamData, const char* argv[])
+{
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// main
 
 int main(int argc, const char* argv[]) 
 {
@@ -92,41 +145,21 @@ int main(int argc, const char* argv[])
 	try {
 	    if(cmd == "help") {
 		print_help_message(argv[0]);
-	    } else if(cmd == "evaluate" && argc == 4) {
+	    } else if(cmd.compare("evaluate") == 0 && argc == 4) {
 		teamData = set_up_data(*annealInfo, argv);
-		teamData->populate_existing_teams();
-		initialise_costs(teamData);
-
-		// Update column names if required and output the result
-		annealInfo->update_column_names_if_required();
-		// Debug
-		output_csv_file_from_team_data(teamData, "out-evaluate.csv");
-		//cout << *teamData;
-	    } else if((cmd == "create" || cmd == "move" || cmd == "swap") && argc == 5) {
+		teamanneal_evaluate(teamData, argv);
+	    } else if(cmd.compare("create") == 0 && argc == 5) {
 		teamData = set_up_data(*annealInfo, argv);
-		if(cmd == "create") {
-		    // Init stats
-		    stats_init(argv[2], argv[3], argv[4]);
-		    // Set up initial "random" teams
-		    teamData->populate_random_teams();
-		    initialise_costs(teamData);
-		    // Do anneal
-
-		    // Set the team names
-		    teamData->set_names_for_all_teams();
-
-		    // Update column names if required and output the result
-		    annealInfo->update_column_names_if_required();
-		    output_csv_file_from_team_data(teamData, argv[4]);
-		    // Debug
-		    //cout << *teamData;
-		    output_cost_data(cout);
-		    stats_set_end_time();
-		    stats_add_for_all_partitions(teamData);
-		    stats_output(cout);
-		}
+		teamanneal_create(teamData, argv);
+	    } else if(cmd.compare("move") == 0 && argc == 5) {
+		teamData = set_up_data(*annealInfo, argv);
+		teamanneal_move(teamData, argv);
+	    } else if(cmd.compare("swap") == 0 && argc == 5) {
+		teamData = set_up_data(*annealInfo, argv);
+		teamanneal_swap(teamData, argv);
 	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
 		teamData = set_up_data(*annealInfo, argv);
+		teamanneal_acquire(teamData, argv);
 	    } else {
 		// Invalid subcommand or incorrect number of arguments
 		print_usage_message_and_exit(argv[0]);
