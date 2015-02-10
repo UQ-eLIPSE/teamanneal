@@ -119,7 +119,7 @@ int main(int argc, const char* argv[])
 		    annealInfo->update_column_names_if_required();
 		    output_csv_file_from_team_data(teamData, argv[4]);
 		    // Debug
-		    cout << *teamData;
+		    //cout << *teamData;
 		    output_cost_data(cout);
 		    stats_set_end_time();
 		    stats_add_for_all_partitions(teamData);

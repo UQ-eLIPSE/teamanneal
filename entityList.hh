@@ -32,12 +32,18 @@ public:
     // Destructor - which will delete all our members individually
     ~EntityList();
 
-    // Pseudo-copy Constructor
-    EntityList(const EntityList& list, TeamLevel* parent);
+    // Copy constructor - shallow copy
+    EntityList(const EntityList& list);
+
+    // Pseudo-copy Constructor - semi-deep copy - we don't copy members, only teams. We
+    // set new parents on copied teams to account for the new structure.
+    // If the elements are at the lowest level (members) we only set their parents if
+    // setMemberParents is true
+    EntityList(const EntityList& list, TeamLevel* parent, bool setMemberParents);
 
     // Member functions
     // Append member to this entity list 
-    void clear();
+    void clear();			// Does not destroy members - warning - memory may be lost
     void append(Entity* member);
     void append_unique(Entity* member);	// Does not append if already present, inefficient
     Entity* operator[](size_t i) const;

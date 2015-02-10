@@ -71,7 +71,7 @@ static JSONArray* stats_team_stats(Partition* partition, CostData* costData)
 {
     JSONArray* statsForAllTeams = new JSONArray();
     // Iterate over each lowest level team
-    EntityListIterator teamItr = partition->lowest_cost_teams_iterator();
+    EntityListIterator teamItr = partition->teams_at_lowest_level_iterator();
     while(!teamItr.done()) {
 	TeamLevel* team = teamItr;
 	JSONObject* teamStats = new JSONObject();
@@ -79,9 +79,7 @@ static JSONArray* stats_team_stats(Partition* partition, CostData* costData)
 	teamStats->append("name", nameArray);
 	teamStats->append("size", (double)team->size());
 	nameArray->append(team->get_full_team_name());
-	cout << "*** " << team->get_full_team_name() << endl;
 	while(!team->is_partition()) {
-	    cout << "***** " << team->get_name() << endl;
 	    nameArray->append(team->get_name());
 	    team = team->get_parent();
 	}

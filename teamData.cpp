@@ -140,7 +140,7 @@ void AllTeamData::set_names_for_all_teams()
         // Get partition that person is part of
         Partition* partition = get_partition_for_person(*itr);
         // Get associated member (of the lowest cost teams)
-        Member* member = partition->get_lowest_cost_member_for_person(*itr);
+        Member* member = partition->get_member_for_person(*itr);
 
         // Construct the team names - one for each level - build up a vector with these
         // for use in constructing the overall team name

@@ -57,8 +57,6 @@ public:
     // Output operator
     friend ostream& operator<<(ostream& os, const Entity& list);
 
-    // Copy this entity
-    virtual Entity* clone() = 0;
     // Output details about this entity
     virtual void output(ostream& os) const = 0;
 };
@@ -89,9 +87,6 @@ public:
     void output(ostream& os) const;
     void append_condition_value(bool met);
     bool is_condition_met(int constraintNumber) const;
-
-    // Copy this member (virtual function)
-    Member* clone();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,11 +97,13 @@ protected:
     const Level& 	level;
     string	fullTeamName;		// only used for lowest level teams
 
-    // Copy constructor
-    TeamLevel(const TeamLevel& team);
 
 public:
     // Constructor
+    // Pseudo-copy constructor - we clone the team, all the way down to, but excluding, 
+    // the lowest level members. If setMemberParents is true we set the parents of the
+    // members to be the new teams
+    TeamLevel(const TeamLevel* team, bool setMemberParents);
     TeamLevel(const Level& level, Partition* partition);
     TeamLevel(const Level& level, const string& name, Partition* partition);
 
@@ -125,8 +122,8 @@ public:
     void set_full_team_name(const string& name);
     const string& get_full_team_name() const;
 
-    // Copy this entity
-    TeamLevel* clone();
+    // Copy this team
+    TeamLevel* clone(bool setMemberParents);
 
 };
 
@@ -143,12 +140,12 @@ protected:
     EntityList	 	unallocatedMembers;	// subset of allMembers
     EntityList 		allMembers;	// contains lowest level members - all members are added
     					// to this list before being put in teams
+    map<const Person*,Member*>	personToMemberMap;
+
     double 		cost;
 
     double 		lowestCost;
     EntityList*	 	lowestCostTopLevelTeams;
-    EntityList	 	lowestCostLowLevelTeams;
-    map<const Person*,Member*>	lowestCostMemberMap;
 public:
 
     // Constructor
@@ -159,20 +156,22 @@ public:
     // Add a member to our partition. All members are added before teams are formed. We return
     // a pointer to the Member instance we create
     Member* add_person(const Person* member);
+    Member* get_member_for_person(const Person*);
 
+    void clear();	// clear out memberships in preparation for copying them from elsewhere
+    			// e.g. from lowest cost or random or ...
     void populate_random_teams();
     void populate_existing_teams();
+    void restore_lowest_cost_teams();
 
     void set_current_teams_as_lowest_cost();
-    void add_lowest_cost_low_level_team(TeamLevel* team);
-    void update_lowest_cost_member_map(const Person* person, Member* member);
-    Member* get_lowest_cost_member_for_person(const Person* person);
+
+
     // This checks the current member teams as well as the lowest cost teams, returns -1 if not found
     int find_index_of(Entity* member);
     // Get an iterator over teams at the given level
     EntityListIterator teams_at_level_iterator(int levelNum) const;
     EntityListIterator teams_at_lowest_level_iterator() const;
-    EntityListIterator lowest_cost_teams_iterator() const;	// at lowest level
     AllTeamData* get_all_team_data() const;
 
     void output(ostream& os) const;

@@ -32,8 +32,8 @@ void output_csv_file_from_team_data(AllTeamData* data, const char* filename)
     while(itr != allPeople.end()) {
 	// Get partition that person is part of
 	Partition* partition = data->get_partition_for_person(*itr);
-	// Get associated member (of the lowest cost teams)
-	Member* member = partition->get_lowest_cost_member_for_person(*itr);
+	// Get associated member 
+	Member* member = partition->get_member_for_person(*itr);
 
 	const Person& person = **itr;
 

@@ -49,6 +49,7 @@ const string& Entity::get_name() const
 
 const string& Entity::set_name(const string& value) 
 {
+    // FIX THIS?
     //if(name.compare("") == 0) {
 	name = value;
     //}
@@ -101,6 +102,7 @@ Member::Member(const Member& member) :
 	person(member.person),
 	conditionMet(member.conditionMet)
 {
+    assert(false);	// We never copy members
 }
 
 Member::Member(const Person& person, Partition* partition) :
@@ -160,23 +162,16 @@ bool Member::is_condition_met(int constraintNumber) const
     return conditionMet[constraintNumber];
 }
 
-Member* Member::clone()
-{
-    Member* copy = new Member(*this);
-    partition->update_lowest_cost_member_map(&(copy->get_person()), copy);
-    return copy;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // TeamLevel
 
 // Constructors
-// Copy constructor
-TeamLevel::TeamLevel(const TeamLevel& team) :
-	Entity(Entity::TEAM, team.name, team.partition),
-	children(team.children, this),
-	level(team.level),
-	fullTeamName("UNINITIALISED")
+// Pseudo-copy constructor
+TeamLevel::TeamLevel(const TeamLevel* team, bool setMemberParents) :
+	Entity(Entity::TEAM, team->name, team->partition),
+	children(team->children, this, setMemberParents),
+	level(team->level),
+	fullTeamName("")
 {
 }
 
@@ -258,15 +253,6 @@ const string& TeamLevel::get_full_team_name() const
     return fullTeamName;
 }
 
-TeamLevel* TeamLevel::clone()
-{
-    TeamLevel* team = new TeamLevel(*this);
-    if(team->get_level().is_lowest()) {
-	team->partition->add_lowest_cost_low_level_team(team);
-    }
-    return team;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Partition
 
@@ -280,7 +266,7 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 {
     type = Entity::PARTITION;	// override default TEAM
     allMembers.reserve(numPeople);
-    teamsAtEachLevel[0] = nullptr;
+    teamsAtEachLevel[0] = nullptr;	// we don't use this entry
     for(int i = 1; i <= allTeamData->num_levels(); i++) {
 	teamsAtEachLevel[i] = new EntityList();
     }
@@ -297,7 +283,34 @@ Member* Partition::add_person(const Person* person)
 {
     Member* member = new Member(*person, this);
     allMembers.append(member);
+    personToMemberMap.insert(pair<const Person*,Member*>(person, member));
     return member;
+}
+
+Member* Partition::get_member_for_person(const Person* person)
+{
+    map<const Person*, Member*>::iterator it = personToMemberMap.find(person);
+    assert(it != personToMemberMap.end());		// person must be found
+    return it->second;
+}
+
+void Partition::clear()
+{
+    // Remove teams at the top level - this does not destroy the members, we keep pointers
+    // to them in the teamsAtEachLevel element
+    children.clear();
+
+    // Delete the teams - this will recursively destroy all sub teams (but not the underlying members)
+    delete teamsAtEachLevel[1];
+
+    // Recreate the empty list at level one
+    teamsAtEachLevel[1] = new EntityList();
+
+    // For lower level teams - clear the lists (this removes elements within but does not try to 
+    // destroy them since we will have just destroyed them (teams anyway).
+    for(int i = 2; i <= allTeamData->num_levels(); i++) {
+	teamsAtEachLevel[i]->clear();
+    }
 }
 
 void Partition::populate_random_teams()
@@ -336,12 +349,13 @@ void Partition::populate_random_teams()
 	++levelItr;
     } while(!(*levelItr)->is_partition());
 
-    // Set the children of this partition as the teams at level 1
+    // Set the children of this partition as the teams at level 1 - we copy the list (shallow copy)
     children = *(teamsAtEachLevel[1]);
 }
 
 void Partition::populate_existing_teams()
 {
+    assert(children.size() == 0);
     // Work from the top level down
     // Iterate over all the members in the partition
     for(int i = 0; i < allMembers.size(); ++i) {
@@ -392,6 +406,33 @@ void Partition::populate_existing_teams()
     }
 }
 
+void Partition::restore_lowest_cost_teams()
+{
+    this->clear();
+
+    // Copy the list. This is a recursive semi-deep copy - teams are copied, but members are not copied.
+    // The "true" argument at the end ensures that the parents of any members are updated to their 
+    // new (copied) teams
+    EntityList* newTeams = new EntityList(*lowestCostTopLevelTeams, this, true);
+    // Shallow copy to the children of this partition
+    children = *newTeams;
+
+    // Update the list of teams at each level
+    *(teamsAtEachLevel[1]) = children;
+    int level = 1;
+    while(level < allTeamData->num_levels()) {
+	// Iterate over all the teams at the current level add lower level teams to their list
+	EntityListIterator itr(*(teamsAtEachLevel[level]));
+	while(!itr.done()) {
+	    teamsAtEachLevel[level+1]->append((Entity*)itr);
+	    ++itr;
+	}
+	++level;
+    }
+
+    cost = lowestCost;
+}
+
 void Partition::set_current_teams_as_lowest_cost()
 {
     lowestCost = cost;
@@ -399,25 +440,9 @@ void Partition::set_current_teams_as_lowest_cost()
 	// Delete the whole hierarchy of cloned teams and members
 	delete lowestCostTopLevelTeams;
     }
-    lowestCostTopLevelTeams = new EntityList(children, this);
-    lowestCostLowLevelTeams.clear();
-}
-
-void Partition::add_lowest_cost_low_level_team(TeamLevel* team)
-{
-    lowestCostLowLevelTeams.append(team);
-}
-
-void Partition::update_lowest_cost_member_map(const Person* person, Member* member)
-{
-    lowestCostMemberMap.insert(pair<const Person*,Member*>(person, member));
-}
-
-Member* Partition::get_lowest_cost_member_for_person(const Person* person)
-{
-    map<const Person*,Member*>::iterator it = lowestCostMemberMap.find(person);
-    assert(it != lowestCostMemberMap.end()); // person must be found
-    return it->second;
+    // "false" as the last argument here means that we do not update the "parent" links
+    // in each member - we just copy the team structure
+    lowestCostTopLevelTeams = new EntityList(children, this, false);
 }
 
 int Partition::find_index_of(Entity* member)
@@ -442,11 +467,6 @@ EntityListIterator Partition::teams_at_lowest_level_iterator() const
     return EntityListIterator(*(teamsAtEachLevel[allTeamData->num_levels()]));
 }
 
-EntityListIterator Partition::lowest_cost_teams_iterator() const
-{
-    return EntityListIterator(lowestCostLowLevelTeams);
-}
-
 AllTeamData* Partition::get_all_team_data() const
 {
     return allTeamData;
@@ -466,9 +486,9 @@ void Partition::output(ostream& os) const
     if(lowestCostTopLevelTeams) {
 	os << *(lowestCostTopLevelTeams);
     }
-    os << "Lowest Cost Member Map" << endl;
-    map<const Person*,Member*>::const_iterator itr = lowestCostMemberMap.begin();
-    while(itr != lowestCostMemberMap.end()) {
+    os << "Person to Member Map" << endl;
+    map<const Person*,Member*>::const_iterator itr = personToMemberMap.begin();
+    while(itr != personToMemberMap.end()) {
 	os << "   " << itr->first->get_id() << " associated with member " << (long)itr->second << endl;
 	++itr;
     }

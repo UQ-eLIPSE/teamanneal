@@ -20,16 +20,31 @@ EntityList::EntityList(Entity* child)
     append(child);
 }
 
-// Pseudo copy constructor - entities are made children of the given parent
-EntityList::EntityList(const EntityList& list, TeamLevel* parent)
+// Copy constructor
+EntityList::EntityList(const EntityList& list) :
+    members(list.members)
+{
+}
+
+// Pseudo copy constructor - teams which are members of this list are cloned and made children
+// of the given parent, members are are not cloned and we don't change their parent unless 
+// setMemberParents is true
+EntityList::EntityList(const EntityList& list, TeamLevel* parent, bool setMemberParents)
 {
     assert(parent);
     members.reserve(list.size());
     EntityListIterator itr(list);
     while(!itr.done()) {
-	Entity* copy = itr->clone();
-	append(copy);
-	copy->set_parent(parent);
+	if(itr->is_member()) {
+	    append((Member*)itr);
+	    if(setMemberParents) {
+		itr->set_parent(parent);
+	    }
+	} else {
+	    TeamLevel* teamCopy = new TeamLevel((TeamLevel*)itr, setMemberParents);
+	    append(teamCopy);
+	    teamCopy->set_parent(parent);
+	}
 	++itr;
     }
 }
@@ -37,12 +52,12 @@ EntityList::EntityList(const EntityList& list, TeamLevel* parent)
 // Destructor
 EntityList::~EntityList()
 {
-    // Delete each of the entities that are part of this list.
-    // Because some entities are in multiple lists, we really should change this destructor to be
-    // more careful
+    // Delete each of the teams that are part of this list. Members are not deleted.
     EntityListIterator itr(*this);
     while(!itr.done()) {
-	delete (Entity*)itr;
+	if(!itr->is_member()) {
+	    delete (Entity*)itr;
+	}
 	++itr;
     }
 }
