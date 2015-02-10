@@ -11,9 +11,11 @@
 #include "csv_extract.hh"
 #include "filedata.hh"
 #include "teamData.hh"
+#include "entity.hh"
 #include "csv_output.hh"
 #include "cost.hh"
 #include "stats.hh"
+#include <assert.h>
 
 #include <iostream>
 #include <stdlib.h>	// for exit()
@@ -82,18 +84,12 @@ static AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
     return new AllTeamData(annealInfo);
 }
 
-static void teamanneal_evaluate(AllTeamData* teamData, const char* argv[])
-{
-    teamData->populate_existing_teams();
-    initialise_costs(teamData);
-
-    // Update column names if required and output the result
-    teamData->get_anneal_info().update_column_names_if_required();
-    // Debug
-    output_csv_file_from_team_data(teamData, "out-evaluate.csv");
-    //cout << *teamData;
-}
-
+///////////////////////////////////////////////////////////////////////////////
+// create function
+//
+// argv[2] is team csv file
+// argv[3] is constraint file name
+// argv[4] is output csv file name
 static void teamanneal_create(AllTeamData* teamData, const char* argv[])
 {
     // Init stats
@@ -117,16 +113,72 @@ static void teamanneal_create(AllTeamData* teamData, const char* argv[])
     stats_output(cout);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// evaluate function
+//
+// argv[2] is team-csv-file
+// argv[3] is constraint file name
+static void teamanneal_evaluate(AllTeamData* teamData, const char* argv[])
+{
+    teamData->populate_existing_teams();
+    initialise_costs(teamData);
+    stats_init(argv[2], argv[3], "");
+    stats_add_for_all_partitions(teamData);
+    stats_output(cout);
+
+    // Update column names if required and output the result
+    //teamData->get_anneal_info().update_column_names_if_required();
+    // Debug
+    //output_csv_file_from_team_data(teamData, "out-evaluate.csv");
+    //cout << *teamData;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// move function
+//
+// argv[2] is team csv file
+// argv[3] is constraint file name
+// argv[4] is id of member to consider moving
 static void teamanneal_move(AllTeamData* teamData, const char* argv[])
 {
+    teamData->populate_existing_teams();
+    const Person* person = teamData->get_anneal_info().find_person_with_id(argv[4]);
+    assert(person);
+    initialise_costs(teamData);
+    teamData->set_names_for_all_teams();		// FIX - do we need this
+    //move_stats(teamData, person);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// swap function
+//
+// argv[2] is team csv file
+// argv[3] is constraint file name
+// argv[4] is id of member to consider swapping
 static void teamanneal_swap(AllTeamData* teamData, const char* argv[])
 {
+    teamData->populate_existing_teams();
+    const Person* person = teamData->get_anneal_info().find_person_with_id(argv[4]);
+    assert(person);
+    initialise_costs(teamData);
+    teamData->set_names_for_all_teams();		// FIX - do we need this
+    //swap_stats(teamData, person);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// acquire function
+//
+// argv[2] is team csv file
+// argv[3] is constraint file name
+// argv[4] is name of team that we're considering adding a member to
+// argv[5] (optional) is the name of the partition to restrict this analysis to
 static void teamanneal_acquire(AllTeamData* teamData, const char* argv[])
 {
+    teamData->populate_existing_teams();
+    //const TeamLevel* team = teamData->find_team(argv[4]);
+
+    initialise_costs(teamData);
+    teamData->set_names_for_all_teams();
 }
 
 
@@ -145,24 +197,24 @@ int main(int argc, const char* argv[])
 	try {
 	    if(cmd == "help") {
 		print_help_message(argv[0]);
-	    } else if(cmd.compare("evaluate") == 0 && argc == 4) {
-		teamData = set_up_data(*annealInfo, argv);
-		teamanneal_evaluate(teamData, argv);
-	    } else if(cmd.compare("create") == 0 && argc == 5) {
-		teamData = set_up_data(*annealInfo, argv);
-		teamanneal_create(teamData, argv);
-	    } else if(cmd.compare("move") == 0 && argc == 5) {
-		teamData = set_up_data(*annealInfo, argv);
-		teamanneal_move(teamData, argv);
-	    } else if(cmd.compare("swap") == 0 && argc == 5) {
-		teamData = set_up_data(*annealInfo, argv);
-		teamanneal_swap(teamData, argv);
-	    } else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
-		teamData = set_up_data(*annealInfo, argv);
-		teamanneal_acquire(teamData, argv);
-	    } else {
-		// Invalid subcommand or incorrect number of arguments
+	    } else if (argc < 4) {
 		print_usage_message_and_exit(argv[0]);
+	    } else {
+		teamData = set_up_data(*annealInfo, argv);
+		if(cmd.compare("create") == 0 && argc == 5) {
+		    teamanneal_create(teamData, argv);
+		} else if(cmd.compare("evaluate") == 0 && argc == 4) {
+		    teamanneal_evaluate(teamData, argv);
+		} else if(cmd.compare("move") == 0 && argc == 5) {
+		    teamanneal_move(teamData, argv);
+		} else if(cmd.compare("swap") == 0 && argc == 5) {
+		    teamanneal_swap(teamData, argv);
+		} else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
+		    teamanneal_acquire(teamData, argv);
+		} else {
+		    // Invalid subcommand or incorrect number of arguments
+		    print_usage_message_and_exit(argv[0]);
+		}
 	    }
 	} catch(std::exception& e) {
 	    // Some sort of error occurred - print it and exit

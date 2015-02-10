@@ -355,15 +355,27 @@ void Partition::populate_random_teams()
 
 void Partition::populate_existing_teams()
 {
+    const string& nameFieldName = allTeamData->get_anneal_info().get_team_name_field();
+    Attribute* nameFieldAttribute = allTeamData->get_anneal_info().find_attribute(nameFieldName);
+    if(!nameFieldAttribute) {
+	throw AnnealException("Could not find overall name field in csv file: ", nameFieldName.c_str());
+    }
+    int lowestLevelNum = allTeamData->num_levels();
+
     assert(children.size() == 0);
     // Work from the top level down
     // Iterate over all the members in the partition
     for(int i = 0; i < allMembers.size(); ++i) {
+	Member* member = (Member*)allMembers[i];
 	// Iterate over all the attributes of the member which are the names of the levels
 	// We iterate from the top level down
 	TeamLevel* teamAtLevel = this;	// partition
 	bool unallocated = false;
-	for(int levelNum = 1; levelNum <= allTeamData->num_levels(); levelNum++) {
+	const string& fullTeamName = member->get_attribute_value(nameFieldAttribute);
+	if(fullTeamName.compare("") == 0) {
+	    unallocated = true;
+	}
+	for(int levelNum = 1; levelNum <= lowestLevelNum; levelNum++) {
 	    TeamLevel* parent = teamAtLevel;
 	    // Get the attribute for this level (there should be one in our team file - it
 	    // is an error if not)
@@ -375,11 +387,11 @@ void Partition::populate_existing_teams()
 	    }
 
 	    // Get the value of this attribute for this person - it's possible the value is blank
-	    const string& teamLevelName = ((Member*)allMembers[i])->get_attribute_value(levelAttribute);
+	    const string& teamLevelName = member->get_attribute_value(levelAttribute);
 
 	    // If the value is blank (at any level), this person is unallocated - abort - do not
 	    // create any more teams at any level for this person
-	    if(teamLevelName == "") {
+	    if(teamLevelName.compare("") == 0) {
 		unallocated = true;
 		break;
 	    }
@@ -388,6 +400,10 @@ void Partition::populate_existing_teams()
 	    if(!teamAtLevel) {
 		// Team doesn't exist - create it
 		teamAtLevel = new TeamLevel(allTeamData->get_level(levelNum), teamLevelName, this);
+		if(levelNum == lowestLevelNum) {
+		    // lowest level team - set full team name
+		    teamAtLevel->set_full_team_name(fullTeamName);
+		}
 		// Add team to the list of teams at this level
 		teamsAtEachLevel[levelNum]->append(teamAtLevel);
 		// Insert team into the hierarchy

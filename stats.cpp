@@ -134,7 +134,7 @@ void stats_init(const string& inputCSVFileName,
     statsJSON->append("output-csv-file-name", outputCSVFileName);
 
     statsJSON->append("start-time", get_current_time());
-    endTime = statsJSON->append("end-time", string(""));
+    endTime = statsJSON->append("end-time", get_current_time());
 
     partitionStatsArray = new JSONArray();
     statsJSON->append("stats", partitionStatsArray);

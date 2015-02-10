@@ -47,6 +47,11 @@ const string& Person::get_id() const
     return id;
 }
 
+bool Person::has_id(const string& name) const
+{
+    return (id.compare(name) == 0);
+}
+
 bool Person::has_attribute(const Attribute* attr) const
 {
     assert(attr);

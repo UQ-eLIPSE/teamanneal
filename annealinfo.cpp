@@ -81,6 +81,16 @@ int AnnealInfo::count_people_with_attribute_value(Attribute* attr, const string&
     return count;
 }
 
+const Person* AnnealInfo::find_person_with_id(const string& id) const
+{
+    for(vector<const Person*>::const_iterator it = allPeople.begin(); it != allPeople.end(); ++it) {
+	if((*it)->has_id(id)) {
+	    return (*it);
+	}
+    }
+    throw("Did not find specified member in team file");
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Partition related member functions
 void AnnealInfo::set_partition_field(const string& fieldName)

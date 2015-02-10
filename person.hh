@@ -34,6 +34,7 @@ public:
     int get_string_attribute_index(const Attribute* attr) const;
     double get_numeric_attribute_value(const Attribute* attr) const;
     const string& get_id() const;
+    bool has_id(const string& id) const;
 
     // Return true if the person has this (non-null) attribute
     bool has_attribute(const Attribute* attr) const;

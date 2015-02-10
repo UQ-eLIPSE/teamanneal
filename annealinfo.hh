@@ -43,6 +43,7 @@ public:
     void add_person(const Person* person);
     int num_people();
     int count_people_with_attribute_value(Attribute* attr, const string& strValue);
+    const Person* find_person_with_id(const string& id) const;
 
     // Partition functions
     void set_partition_field(const string& fieldName);
