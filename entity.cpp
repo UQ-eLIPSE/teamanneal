@@ -262,7 +262,10 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 	allTeamData(allTeamData),
 	cost(0.0),
 	lowestCost(0.0),
-	lowestCostTopLevelTeams(nullptr)
+	lowestCostTopLevelTeams(nullptr),
+	rnGenerator(),			// No seed for our random number generator
+	rnDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
+	dice(bind(rnDistribution,rnGenerator))
 {
     type = Entity::PARTITION;	// override default TEAM
     allMembers.reserve(numPeople);
@@ -459,6 +462,11 @@ void Partition::set_current_teams_as_lowest_cost()
     // "false" as the last argument here means that we do not update the "parent" links
     // in each member - we just copy the team structure
     lowestCostTopLevelTeams = new EntityList(children, this, false);
+}
+
+Member* Partition::get_random_member()
+{
+    return (Member*)allMembers[dice()];
 }
 
 int Partition::find_index_of(Entity* member)

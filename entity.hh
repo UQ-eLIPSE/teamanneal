@@ -13,6 +13,8 @@
 #include <map>
 #include <string>
 #include <ostream>
+#include <functional>
+#include <random>
 
 using namespace std;
 
@@ -146,6 +148,11 @@ protected:
 
     double 		lowestCost;
     EntityList*	 	lowestCostTopLevelTeams;
+
+private:
+    mt19937 rnGenerator;	// Mersenne twister 19937 state generator
+    uniform_int_distribution<int> rnDistribution;
+    function<int()> dice;
 public:
 
     // Constructor
@@ -166,6 +173,7 @@ public:
 
     void set_current_teams_as_lowest_cost();
 
+    Member* get_random_member();
 
     // This checks the current member teams as well as the lowest cost teams, returns -1 if not found
     int find_index_of(Entity* member);
