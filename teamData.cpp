@@ -80,6 +80,11 @@ void AllTeamData::populate_existing_teams()
     }
 }
 
+bool AllTeamData::has_partitions() const
+{
+    return (annealInfo.get_partition_field() != nullptr);
+}
+
 Partition* AllTeamData::find_partition(const string& name)
 {
     map<string,Partition*>::iterator it;

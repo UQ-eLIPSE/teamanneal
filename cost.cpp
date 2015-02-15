@@ -3,6 +3,8 @@
 //
 
 #include "cost.hh"
+#include "constraintCost.hh"
+#include "constraintCostList.hh"
 #include "teamData.hh"
 #include "assert.h"
 
@@ -88,7 +90,7 @@ void output_cost_data(ostream& os)
 	Partition* partition = partitionItr->first;
 	os << "Cost data for Partition " << partition->get_name() << endl;
 	CostData* costData = partitionItr->second;
-	map<const TeamLevel*,ConstraintCostList*>::const_iterator teamItr = costData->team_begin();
+	CostData::TeamIterator teamItr = costData->team_begin();
 	while(teamItr != costData->team_end()) {
 	    const TeamLevel* team = teamItr->first;
 	    const ConstraintCostList* constraintCostList = teamItr->second;
@@ -117,6 +119,14 @@ void output_cost_data(ostream& os)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// CostData
+
+CostData::CostData() :
+	cost(0.0),
+	costPendingMove(0.0)
+{
+}
+
 void CostData::add_constraint_cost(ConstraintCost* constraintCost)
 {
     ConstraintCostList* costList;
@@ -159,14 +169,18 @@ void CostData::add_constraint_cost(ConstraintCost* constraintCost)
     // Add the cost to this list and to the individual team cost map
     costList->append(constraintCost);
     teamCostMap->insert(pair<const TeamLevel*,ConstraintCost*>(team, constraintCost));
+
+    // Update cost totals
+    cost += constraintCost->get_cost();
+    costPendingMove += constraintCost->get_pending_cost();	// should be the same as above
 }
 
-map<const TeamLevel*,ConstraintCostList*>::const_iterator CostData::team_begin() const
+CostData::TeamIterator CostData::team_begin() const
 {
     return teamToCostListMap.cbegin();
 }
 
-map<const TeamLevel*,ConstraintCostList*>::const_iterator CostData::team_end() const
+CostData::TeamIterator CostData::team_end() const
 {
     return teamToCostListMap.cend();
 }
@@ -181,13 +195,12 @@ ConstraintCostList* CostData::get_costs_for_constraint(Constraint* constraint) c
 
 ConstraintCostList* CostData::get_costs_for_team(TeamLevel* team) const
 {
-    map<const TeamLevel*,ConstraintCostList*>::const_iterator itr = 
-	    teamToCostListMap.find(team);
+    CostData::TeamIterator itr = teamToCostListMap.find(team);
     assert(itr != teamToCostListMap.end());		// must be found
     return itr->second;
 }
 
-ConstraintCost* CostData::get_cost(Constraint* constraint, TeamLevel* team) const
+ConstraintCost* CostData::get_constraint_cost(Constraint* constraint, TeamLevel* team) const
 {
     map<const Constraint*,TeamToCostMap*>::const_iterator itr = 
 	    constraintToTeamCostMap.find(constraint);
@@ -197,6 +210,77 @@ ConstraintCost* CostData::get_cost(Constraint* constraint, TeamLevel* team) cons
     TeamToCostMap::const_iterator costItr = itr->second->find(team);
     assert(costItr != itr->second->end());		// must be found
     return costItr->second;
+}
+
+double CostData::get_cost_value() const
+{
+    return cost;
+}
+
+double CostData::get_pending_cost_value() const
+{
+    return costPendingMove;
+}
+
+double CostData::pend_remove_member(Member* member)
+{
+    // Work out which team this member is in
+    TeamLevel* team = member->get_parent();
+    assert(team);
+
+    double deltaCost = 0.0;
+    // Iterate over the constraint costs for the team to update their costs
+    ConstraintCostListIterator itr(get_costs_for_team(team));
+    while(!itr.done()) {
+	deltaCost += itr->pend_remove_member(member);
+	costsToBeUpdatedOnMove.insert(itr);
+	++itr;
+    }
+    costPendingMove += deltaCost;
+    return deltaCost;
+}
+
+
+double CostData::pend_add_member(Member* member, TeamLevel* lowLevelTeam)
+{
+    double deltaCost = 0.0;
+    // Iterate over the constraint costs for the team to update their costs
+    ConstraintCostListIterator itr(get_costs_for_team(lowLevelTeam));
+    while(!itr.done()) {
+	deltaCost += itr->pend_add_member(member);
+	costsToBeUpdatedOnMove.insert(itr);
+	++itr;
+    }
+    costPendingMove += deltaCost;
+    return deltaCost;
+}
+
+void CostData::commit_pending()
+{
+    // Iterate over all the pending cost changes and apply them
+    unordered_set<ConstraintCost*>::iterator itr = costsToBeUpdatedOnMove.begin();
+    while(itr != costsToBeUpdatedOnMove.end()) {
+	(*itr)->commit_pending();
+	++itr;
+    }
+    // Clear list of pending moves
+    costsToBeUpdatedOnMove.clear();
+    // Update overall cost
+    cost = costPendingMove;
+}
+
+void CostData::undo_pending()
+{
+    // Iterate over all the pending cost changes and undo them
+    unordered_set<ConstraintCost*>::iterator itr = costsToBeUpdatedOnMove.begin();
+    while(itr != costsToBeUpdatedOnMove.end()) {
+	(*itr)->undo_pending();
+	++itr;
+    }
+    // Clear list of pending moves
+    costsToBeUpdatedOnMove.clear();
+    // Restore the cost pending any moves
+    costPendingMove = cost;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

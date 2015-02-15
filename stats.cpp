@@ -89,7 +89,7 @@ static JSONArray* stats_team_stats(Partition* partition, CostData* costData)
 	const vector<Constraint*>& constraints = partition->get_all_team_data()->all_constraints();
 	vector<Constraint*>::const_iterator constraintItr = constraints.begin();
 	while(constraintItr != constraints.end()) {
-	    ConstraintCost* cost = costData->get_cost(*constraintItr, teamItr);
+	    ConstraintCost* cost = costData->get_constraint_cost(*constraintItr, teamItr);
 	    constraintPerformanceArray->append(cost->percent_constraint_met());
 	    ++constraintItr;
 	}

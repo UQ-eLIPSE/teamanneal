@@ -32,6 +32,7 @@ public:
     void populate_random_teams();
     void populate_existing_teams();
 
+    bool has_partitions() const;
     Partition* find_partition(const string& name);
 
     // Other functions

@@ -71,6 +71,11 @@ TeamLevel* Entity::get_parent() const
     return parent;
 }
 
+bool Entity::has_parent() const
+{
+    return (parent != nullptr);
+}
+
 bool Entity::is_member() const
 {
     return (type == Entity::MEMBER);
@@ -193,6 +198,12 @@ void TeamLevel::add_child(Entity* child)
     child->set_parent(this);
 }
 
+void TeamLevel::remove_child(Entity* child)
+{
+    children.remove(child);
+    child->set_parent(nullptr);
+}
+
 const Level& TeamLevel::get_level() const
 {
     return level;
@@ -260,12 +271,13 @@ const string& TeamLevel::get_full_team_name() const
 Partition::Partition(AllTeamData* allTeamData, const Level& level, const string& name, int numPeople) :
 	TeamLevel(level, name, this),
 	allTeamData(allTeamData),
-	cost(0.0),
-	lowestCost(0.0),
 	lowestCostTopLevelTeams(nullptr),
-	rnGenerator(),			// No seed for our random number generator
-	rnDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
-	dice(bind(rnDistribution,rnGenerator))
+	randomNumberGenerator(),			// No seed for our random number generator
+	memberRandomDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
+	teamRandomDistribution(0,0),			// We'll reset the bounds of this later when we
+							// know how many teams there are
+	memberdice(bind(memberRandomDistribution,randomNumberGenerator)),
+	teamdice(bind(teamRandomDistribution,randomNumberGenerator))
 {
     type = Entity::PARTITION;	// override default TEAM
     allMembers.reserve(numPeople);
@@ -273,6 +285,7 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
     for(int i = 1; i <= allTeamData->num_levels(); i++) {
 	teamsAtEachLevel[i] = new EntityList();
     }
+    teamsAtLowestLevel = teamsAtEachLevel[allTeamData->num_levels()];
 }
 
 // Other member functions
@@ -314,6 +327,7 @@ void Partition::clear()
     for(int i = 2; i <= allTeamData->num_levels(); i++) {
 	teamsAtEachLevel[i]->clear();
     }
+    teamsAtLowestLevel = teamsAtEachLevel[allTeamData->num_levels()];
 }
 
 void Partition::populate_random_teams()
@@ -354,6 +368,7 @@ void Partition::populate_random_teams()
 
     // Set the children of this partition as the teams at level 1 - we copy the list (shallow copy)
     children = *(teamsAtEachLevel[1]);
+    reset_random_team_distribution();
 }
 
 void Partition::populate_existing_teams()
@@ -423,6 +438,7 @@ void Partition::populate_existing_teams()
 	    teamAtLevel->add_child(allMembers[i]);
 	}
     }
+    reset_random_team_distribution();
 }
 
 void Partition::restore_lowest_cost_teams()
@@ -449,12 +465,11 @@ void Partition::restore_lowest_cost_teams()
 	++level;
     }
 
-    cost = lowestCost;
+    reset_random_team_distribution();
 }
 
 void Partition::set_current_teams_as_lowest_cost()
 {
-    lowestCost = cost;
     if(lowestCostTopLevelTeams) {
 	// Delete the whole hierarchy of cloned teams and members
 	delete lowestCostTopLevelTeams;
@@ -466,16 +481,40 @@ void Partition::set_current_teams_as_lowest_cost()
 
 Member* Partition::get_random_member()
 {
-    return (Member*)allMembers[dice()];
+    return (Member*)allMembers[memberdice()];
+}
+
+TeamLevel* Partition::get_random_team()
+{
+    return teamsAtLowestLevel->get_subteam(teamdice());
+}
+
+void Partition::reset_random_team_distribution()
+{
+    teamRandomDistribution.param(uniform_int_distribution<int>::param_type(0, teamsAtLowestLevel->size()-1));
+}
+
+void Partition::remove_member_from_lowest_level_team(Member* member)
+{
+    TeamLevel* team = member->get_parent();
+    assert(team);
+    team->remove_child(member);
+}
+
+void Partition::add_member_to_lowest_level_team(Member* member, TeamLevel* team)
+{
+    team->add_child(member);
 }
 
 int Partition::find_index_of(Entity* member)
 {
     int index = children.find_index_of(member);
+#if 0
     if(index == -1 && lowestCostTopLevelTeams) {
 	// Check in the lowest cost teams
 	index = lowestCostTopLevelTeams->find_index_of(member);
     }
+#endif
     assert(index != -1);	// Must be found in one of the lists
     return index;
 }
@@ -488,7 +527,7 @@ EntityListIterator Partition::teams_at_level_iterator(int levelNum) const
 
 EntityListIterator Partition::teams_at_lowest_level_iterator() const
 {
-    return EntityListIterator(*(teamsAtEachLevel[allTeamData->num_levels()]));
+    return EntityListIterator(*teamsAtLowestLevel);
 }
 
 AllTeamData* Partition::get_all_team_data() const

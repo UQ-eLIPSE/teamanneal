@@ -77,7 +77,8 @@ private:
     double value;
 public:
 
-    // Constructor
+    // Constructors
+    JSONNumber();
     JSONNumber(double d);
 
     // Other member functions

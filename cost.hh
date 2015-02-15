@@ -11,6 +11,7 @@
 #include "constraint.hh"
 #include <map>
 #include <ostream>
+#include <unordered_set>
 
 // Global data
 class AllCostData;
@@ -23,27 +24,47 @@ void initialise_costs(AllTeamData* data);
 void output_cost_data(ostream& os);
 
 ///////////////////////////////////////////////////////////////////////////////
+// CostData
+//
+// One of these per partition
+
 class CostData {
 public:
     typedef map<const TeamLevel*,ConstraintCost*> TeamToCostMap;
+    typedef map<const TeamLevel*,ConstraintCostList*>::const_iterator TeamIterator;
 private:
     map<const TeamLevel*,ConstraintCostList*>	teamToCostListMap;
     map<const Constraint*,ConstraintCostList*> constraintToCostListMap;
+    double cost;
+    double costPendingMove;
+    unordered_set<ConstraintCost*> costsToBeUpdatedOnMove;
 
     // This map allows us to map from a constraint to a sub-map and then within that
     // map from a team to an individual constraint cost
     map<const Constraint*,TeamToCostMap*> constraintToTeamCostMap;
 
 public:
+    // Constructor
+    CostData();
+
     void add_constraint_cost(ConstraintCost* constraintCost);
 
-    map<const TeamLevel*,ConstraintCostList*>::const_iterator team_begin() const;
-    map<const TeamLevel*,ConstraintCostList*>::const_iterator team_end() const;
+    TeamIterator team_begin() const;
+    TeamIterator team_end() const;
 
     ConstraintCostList* get_costs_for_constraint(Constraint* constraint) const;
     ConstraintCostList* get_costs_for_team(TeamLevel* team) const;
-    ConstraintCost* get_cost(Constraint* constraint, TeamLevel* team) const;
+    ConstraintCost* get_constraint_cost(Constraint* constraint, TeamLevel* team) const;
+    double get_cost_value() const;
+    double get_pending_cost_value() const;
 
+    // Queue a potential move - returns the delta cost of this move (negative is better).
+    // Updates the list of pending moves
+    double pend_remove_member(Member* member);
+    double pend_add_member(Member* member, TeamLevel* lowLevelTeam);
+    // Commit/undo the pending changes
+    void commit_pending();		// This should be done AFTER actual team changes
+    void undo_pending();
 };
 
 ///////////////////////////////////////////////////////////////////////////////

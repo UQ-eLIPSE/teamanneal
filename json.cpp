@@ -290,6 +290,14 @@ void JSONString::print(ostream& str) const
 
 ///////////////////////////////////////////////////////////////////////////////
 // JSONNumber
+
+// Constructors
+JSONNumber::JSONNumber() :
+	JSONValue(JSON_NUMBER),
+	value(0.0)
+{
+}
+
 JSONNumber::JSONNumber(double d) :
 	JSONValue(JSON_NUMBER),
 	value(d)

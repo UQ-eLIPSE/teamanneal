@@ -45,7 +45,9 @@ public:
     // Append member to this entity list 
     void clear();			// Does not destroy members - warning - memory may be lost
     void append(Entity* member);
-    void append_unique(Entity* member);	// Does not append if already present, inefficient
+    // Remove member from the entity list. Any iterators on the list are then invalid. Order may change.
+    void remove(Entity* member);
+    //void append_unique(Entity* member);	// Does not append if already present, inefficient
     Entity* operator[](size_t i) const;
     TeamLevel* get_subteam(size_t i) const;	// members must be teams
     Entity* get_member(size_t i) const;	// members can be any type

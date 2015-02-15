@@ -72,6 +72,23 @@ void EntityList::append(Entity* member)
     members.push_back(member);
 }
 
+void EntityList::remove(Entity* member)
+{
+    vector<Entity*>::iterator itr = members.begin();
+    while(itr != members.end()) {
+	if((*itr) == member) {
+	    // Found the member - remove from the list
+	    members.erase(itr);
+	    return;
+	}
+	++itr;
+    }
+    // Did not find the member - this is an error
+    throw("Did not find member in list when removing");
+}
+
+#if 0
+// Not needed now?
 // Not very efficient
 void EntityList::append_unique(Entity* member)
 {
@@ -86,6 +103,7 @@ void EntityList::append_unique(Entity* member)
     // Did not find member - add it
     members.push_back(member);
 }
+#endif
 
 Entity* EntityList::operator[](size_t i) const
 {

@@ -15,6 +15,7 @@
 #include "csv_output.hh"
 #include "cost.hh"
 #include "stats.hh"
+#include "moveStats.hh"
 #include <assert.h>
 
 #include <iostream>
@@ -146,7 +147,8 @@ static void teamanneal_move(AllTeamData* teamData, const char* argv[])
     assert(person);
     initialise_costs(teamData);
     teamData->set_names_for_all_teams();		// FIX - do we need this
-    //move_stats(teamData, person);
+    calculate_move_stats(teamData, person);
+    output_move_stats(cout);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,16 +202,20 @@ int main(int argc, const char* argv[])
 	    } else if (argc < 4) {
 		print_usage_message_and_exit(argv[0]);
 	    } else {
-		teamData = set_up_data(*annealInfo, argv);
 		if(cmd.compare("create") == 0 && argc == 5) {
+		    teamData = set_up_data(*annealInfo, argv);
 		    teamanneal_create(teamData, argv);
 		} else if(cmd.compare("evaluate") == 0 && argc == 4) {
+		    teamData = set_up_data(*annealInfo, argv);
 		    teamanneal_evaluate(teamData, argv);
 		} else if(cmd.compare("move") == 0 && argc == 5) {
+		    teamData = set_up_data(*annealInfo, argv);
 		    teamanneal_move(teamData, argv);
 		} else if(cmd.compare("swap") == 0 && argc == 5) {
+		    teamData = set_up_data(*annealInfo, argv);
 		    teamanneal_swap(teamData, argv);
 		} else if(cmd == "acquire" && (argc == 5 || argc == 6)) {
+		    teamData = set_up_data(*annealInfo, argv);
 		    teamanneal_acquire(teamData, argv);
 		} else {
 		    // Invalid subcommand or incorrect number of arguments

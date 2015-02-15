@@ -51,6 +51,7 @@ public:
 
     void set_parent(TeamLevel* team);
     TeamLevel* get_parent() const;
+    bool has_parent() const;
 
     bool is_member() const;
     bool is_team() const;
@@ -111,6 +112,7 @@ public:
 
     // Other member functions
     void add_child(Entity* child);
+    void remove_child(Entity* child);
     const Level& get_level() const;
     const EntityList& get_children() const;
     Entity* get_first_child() const;
@@ -139,20 +141,20 @@ protected:
     // highest level teams are those in the "children" inherited field
     AllTeamData* 	allTeamData;
     EntityList*		teamsAtEachLevel[MAX_LEVELS + 1];
+    EntityList*		teamsAtLowestLevel;
     EntityList	 	unallocatedMembers;	// subset of allMembers
     EntityList 		allMembers;	// contains lowest level members - all members are added
     					// to this list before being put in teams
     map<const Person*,Member*>	personToMemberMap;
 
-    double 		cost;
-
-    double 		lowestCost;
     EntityList*	 	lowestCostTopLevelTeams;
 
 private:
-    mt19937 rnGenerator;	// Mersenne twister 19937 state generator
-    uniform_int_distribution<int> rnDistribution;
-    function<int()> dice;
+    mt19937 randomNumberGenerator;	// Mersenne twister 19937 state generator
+    uniform_int_distribution<int> memberRandomDistribution;
+    uniform_int_distribution<int> teamRandomDistribution;
+    function<int()> memberdice;
+    function<int()> teamdice;
 public:
 
     // Constructor
@@ -174,8 +176,13 @@ public:
     void set_current_teams_as_lowest_cost();
 
     Member* get_random_member();
+    TeamLevel* get_random_team();		// at the lowest level
+    void reset_random_team_distribution();	// must be called after teams are created, 
+    						// before get_random_team()
+    void remove_member_from_lowest_level_team(Member* member);
+    void add_member_to_lowest_level_team(Member* member, TeamLevel* team);
 
-    // This checks the current member teams as well as the lowest cost teams, returns -1 if not found
+    // Finds the position of the given element in the children of this
     int find_index_of(Entity* member);
     // Get an iterator over teams at the given level
     EntityListIterator teams_at_level_iterator(int levelNum) const;
