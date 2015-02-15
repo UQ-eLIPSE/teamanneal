@@ -3,6 +3,7 @@
 //
 
 #include "constraintCostList.hh"
+#include "constraintCost.hh"
 
 void ConstraintCostList::append(ConstraintCost* member)
 {
@@ -17,6 +18,16 @@ ConstraintCost* ConstraintCostList::operator[](size_t i) const
 size_t ConstraintCostList::size() const
 {
     return members.size();
+}
+
+void ConstraintCostList::delete_members()
+{
+    ConstraintCostListIterator itr(this);
+    while(!itr.done()) {
+	delete (ConstraintCost*)itr;
+	++itr;
+    }
+    members.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

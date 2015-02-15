@@ -166,6 +166,7 @@ public:
     // a pointer to the Member instance we create
     Member* add_person(const Person* member);
     Member* get_member_for_person(const Person*);
+    int num_members() const;
 
     void clear();	// clear out memberships in preparation for copying them from elsewhere
     			// e.g. from lowest cost or random or ...
@@ -187,6 +188,7 @@ public:
     // Get an iterator over teams at the given level
     EntityListIterator teams_at_level_iterator(int levelNum) const;
     EntityListIterator teams_at_lowest_level_iterator() const;
+    int num_teams_at_lowest_level() const;
     AllTeamData* get_all_team_data() const;
 
     void output(ostream& os) const;

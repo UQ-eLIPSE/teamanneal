@@ -20,6 +20,11 @@ ConstraintCost::ConstraintCost(const TeamLevel* team, const Constraint* constrai
 {
 }
 
+// Destructor
+ConstraintCost::~ConstraintCost()
+{
+}
+
 double ConstraintCost::get_cost()
 {
     if(constraint->applies_to_team_size(team->size())) {
@@ -96,6 +101,11 @@ CountConstraintCost::CountConstraintCost(const TeamLevel* team, const Constraint
     assert(constraint->is_count_constraint());
 
     this->initialise();
+}
+
+// Destructor
+CountConstraintCost::~CountConstraintCost()
+{
 }
 
 // Count how many team members meet the constraint
@@ -254,6 +264,11 @@ SimilarityConstraintCost::SimilarityConstraintCost(const TeamLevel* team, const 
     assert(attribute->is_string());
 
     this->initialise();
+}
+
+// Destructor
+SimilarityConstraintCost::~SimilarityConstraintCost()
+{
 }
 
 void SimilarityConstraintCost::initialise()
@@ -416,6 +431,11 @@ RangeConstraintCost::RangeConstraintCost(const TeamLevel* team, const Constraint
     this->initialise();
 }
 
+// Destructor
+RangeConstraintCost::~RangeConstraintCost()
+{
+}
+
 void RangeConstraintCost::initialise()
 {
 
@@ -558,8 +578,12 @@ double RangeConstraintCost::std_dev()
 {
     assert(numMembersPendingMove > 0);
     double num = numMembersPendingMove;
-    return sqrt(num * sumOfSquareValuesPendingMove - 
-	    sumOfValuesPendingMove * sumOfValuesPendingMove) / num;
+    double delta = num * sumOfSquareValuesPendingMove - sumOfValuesPendingMove * sumOfValuesPendingMove;
+    if(delta > 0.0) {
+	return sqrt(delta) / num;
+    } else {
+	return 0;
+    }
 }
 
 #if 0

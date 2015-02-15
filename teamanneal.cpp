@@ -16,8 +16,9 @@
 #include "cost.hh"
 #include "stats.hh"
 #include "moveStats.hh"
-#include <assert.h>
+#include "anneal.hh"
 
+#include <assert.h>
 #include <iostream>
 #include <stdlib.h>	// for exit()
 
@@ -98,10 +99,12 @@ static void teamanneal_create(AllTeamData* teamData, const char* argv[])
     // Set up initial "random" teams
     teamData->populate_random_teams();
     initialise_costs(teamData);
-    // Do anneal
 
     // Set the team names
     teamData->set_names_for_all_teams();
+
+    // Do anneal
+    anneal_all_partitions(teamData, allCostData);
 
     // Update column names if required and output the result
     teamData->get_anneal_info().update_column_names_if_required();

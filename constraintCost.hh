@@ -31,6 +31,10 @@ protected:
     ConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
 public:
+    // Destructor (virtual)
+    virtual ~ConstraintCost();
+
+public:
     // Check that the constraint applies (team size wise) and if so, return the cost, otherwise
     // return 0;
     double get_cost();
@@ -78,6 +82,9 @@ public:
     // Constructor
     CountConstraintCost(const TeamLevel* team, const Constraint* constraint);
 
+    // Destructor
+    ~CountConstraintCost();
+
 private:
     void initialise();		// initalise
 public:
@@ -112,6 +119,9 @@ private:
 public:
     // Constructor
     SimilarityConstraintCost(const TeamLevel* team, const Constraint* constraint);
+
+    // Destructor
+    ~SimilarityConstraintCost();
 
 private:
     void initialise();		// intialise
@@ -152,6 +162,9 @@ private:
 public:
     // Constructor
     RangeConstraintCost(const TeamLevel* team, const Constraint* constraint);
+
+    // Destructor
+    ~RangeConstraintCost();
 
 private:
     void initialise();

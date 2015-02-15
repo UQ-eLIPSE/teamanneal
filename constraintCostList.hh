@@ -19,6 +19,7 @@ public:
     void append(ConstraintCost* member);
     ConstraintCost* operator[](size_t i) const;
     size_t size() const;
+    void delete_members();
 };
 
 class ConstraintCostListIterator {

@@ -9,6 +9,7 @@
 #include <exception>
 #include "assert.h"
 #include "exceptions.hh"
+#include <ctime>
 
 static string emptyString("");
 
@@ -272,7 +273,7 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 	TeamLevel(level, name, this),
 	allTeamData(allTeamData),
 	lowestCostTopLevelTeams(nullptr),
-	randomNumberGenerator(),			// No seed for our random number generator
+	randomNumberGenerator(time(nullptr)),		// See RN generator with current time
 	memberRandomDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
 	teamRandomDistribution(0,0),			// We'll reset the bounds of this later when we
 							// know how many teams there are
@@ -308,6 +309,11 @@ Member* Partition::get_member_for_person(const Person* person)
     map<const Person*, Member*>::iterator it = personToMemberMap.find(person);
     assert(it != personToMemberMap.end());		// person must be found
     return it->second;
+}
+
+int Partition::num_members() const
+{
+    return allMembers.size();
 }
 
 void Partition::clear()
@@ -528,6 +534,11 @@ EntityListIterator Partition::teams_at_level_iterator(int levelNum) const
 EntityListIterator Partition::teams_at_lowest_level_iterator() const
 {
     return EntityListIterator(*teamsAtLowestLevel);
+}
+
+int Partition::num_teams_at_lowest_level() const
+{
+    return teamsAtLowestLevel->size();
 }
 
 AllTeamData* Partition::get_all_team_data() const

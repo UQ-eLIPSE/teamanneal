@@ -30,6 +30,8 @@ void output_cost_data(ostream& os);
 
 class CostData {
 public:
+    AnnealInfo& annealInfo;
+    Partition* partition;
     typedef map<const TeamLevel*,ConstraintCost*> TeamToCostMap;
     typedef map<const TeamLevel*,ConstraintCostList*>::const_iterator TeamIterator;
 private:
@@ -45,7 +47,9 @@ private:
 
 public:
     // Constructor
-    CostData();
+    CostData(AnnealInfo& annealInfo, Partition* partition);
+
+    void initialise_constraint_costs();
 
     void add_constraint_cost(ConstraintCost* constraintCost);
 
