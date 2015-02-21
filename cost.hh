@@ -45,13 +45,12 @@ private:
     // map from a team to an individual constraint cost
     map<const Constraint*,TeamToCostMap*> constraintToTeamCostMap;
 
+    void add_constraint_cost(ConstraintCost* constraintCost);
 public:
     // Constructor
     CostData(AnnealInfo& annealInfo, Partition* partition);
 
     void initialise_constraint_costs();
-
-    void add_constraint_cost(ConstraintCost* constraintCost);
 
     TeamIterator team_begin() const;
     TeamIterator team_end() const;

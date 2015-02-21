@@ -108,7 +108,8 @@ MoveSet::MoveSet(Partition* partition, CostData* costData) :
 	costData(costData),
 	temperature(0.0),
 	lowestCost(costData->get_cost_value()),
-	randomNumberGenerator(time(nullptr)), 	// Seed RN generator with current time
+	randomNumberGenerator(0),
+	//randomNumberGenerator(time(nullptr)), 	// Seed RN generator with current time
 	moveDistribution(moveProbabilities.begin(), moveProbabilities.end()),
 	uniform0to1Distribution(0.0, 1.0),
 	moveDice(bind(moveDistribution, randomNumberGenerator)),
@@ -153,13 +154,25 @@ void MoveSet::initial_loop()
 int MoveSet::anneal_inner_loop(int iterations)
 {
     reset_stats();
+    costData->initialise_constraint_costs();
     int movesAccepted = 0;
     for(int i=0; i < iterations; i++) {
         AnnealMove* move = this->get_random_move_type();
+	cout << endl;
+	output_cost_data(cout);
+	cout << "Cost: " << costData->get_cost_value() << endl;
         move->generate_and_evaluate_random_move(temperature);
         if(move->accepted()) {
             movesAccepted++;
-        }
+	    double cost1 = costData->get_cost_value();
+	    cout << " New Cost: " << cost1 << endl;
+	    // recalculate cost
+	    costData->initialise_constraint_costs();
+	    double cost2 = costData->get_cost_value();
+	    cout << " New Cost: recalculated: " << cost2 << endl;
+	    output_cost_data(cout);
+	    assert(abs(cost1-cost2)/cost1 < 0.0000001);
+	}
     }
     cout << endl << "Completed inner loop - accepted " << movesAccepted << " of "
             << iterations << " iterations. Uphill prob = " << uphill_probability() <<  endl << endl;

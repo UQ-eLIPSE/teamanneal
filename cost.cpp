@@ -91,55 +91,6 @@ void output_cost_data(ostream& os)
 ///////////////////////////////////////////////////////////////////////////////
 // CostData
 
-CostData::CostData(AnnealInfo& annealInfo, Partition* partition) :
-	annealInfo(annealInfo),
-	partition(partition),
-	cost(0.0),
-	costPendingMove(0.0)
-{
-    // Iterate over each member in the partition and determine whether the conditions are 
-    // met for each constraint (set the "conditionMet" property)
-    int numConstraints = annealInfo.num_constraints();
-    MemberIterator memberItr = partition->member_iterator();
-    while(!memberItr.done()) {
-	// Iterate over each constraint
-	for(int c = 0; c < numConstraints; ++c) {
-	    Constraint* constraint = annealInfo.get_constraint(c);
-	    memberItr->append_condition_value(condition_met(constraint, memberItr->get_person()));
-	}
-	++memberItr;
-    }
-    initialise_constraint_costs();
-}
-
-void CostData::initialise_constraint_costs()
-{
-    cout << "---------------------------------" << endl;
-    cout << "| Initialising constraint costs |" << endl;
-    cout << "---------------------------------" << endl;
-    // Iterate over all the constraint cost lists and delete all the members
-    CostData::TeamIterator teamListItr = this->team_begin();
-    while(teamListItr != this->team_end()) {
-	teamListItr->second->delete_members();
-	delete teamListItr->second;
-	++teamListItr;
-    }
-    teamToCostListMap.clear();
-    constraintToCostListMap.clear();
-
-    // For each constraint, iterate over the teams at that level and built up the cost data
-    int numConstraints = annealInfo.num_constraints();
-    for(int c = 0; c < numConstraints; ++c) {
-	Constraint* constraint = annealInfo.get_constraint(c);
-	EntityListIterator teamItr(partition->teams_at_level_iterator(constraint->get_level()));
-	// Iterate over the teams at this level
-	while(!teamItr.done()) {
-	    this->add_constraint_cost(ConstraintCost::construct((TeamLevel*)teamItr, constraint));
-	    ++teamItr;
-	}
-    }
-}
-
 void CostData::add_constraint_cost(ConstraintCost* constraintCost)
 {
     ConstraintCostList* costList;
@@ -186,6 +137,60 @@ void CostData::add_constraint_cost(ConstraintCost* constraintCost)
     // Update cost totals
     cost += constraintCost->get_cost();
     costPendingMove += constraintCost->get_pending_cost();	// should be the same as above
+}
+
+// Constructor
+CostData::CostData(AnnealInfo& annealInfo, Partition* partition) :
+	annealInfo(annealInfo),
+	partition(partition),
+	cost(0.0),
+	costPendingMove(0.0)
+{
+    // Iterate over each member in the partition and determine whether the conditions are 
+    // met for each constraint (set the "conditionMet" property)
+    int numConstraints = annealInfo.num_constraints();
+    MemberIterator memberItr = partition->member_iterator();
+    while(!memberItr.done()) {
+	// Iterate over each constraint
+	for(int c = 0; c < numConstraints; ++c) {
+	    Constraint* constraint = annealInfo.get_constraint(c);
+	    memberItr->append_condition_value(condition_met(constraint, memberItr->get_person()));
+	}
+	++memberItr;
+    }
+    initialise_constraint_costs();
+}
+
+void CostData::initialise_constraint_costs()
+{
+    cout << "---------------------------------" << endl;
+    cout << "| Initialising constraint costs |" << endl;
+    cout << "---------------------------------" << endl;
+    // Iterate over all the constraint cost lists and delete all the members
+    CostData::TeamIterator teamListItr = this->team_begin();
+    while(teamListItr != this->team_end()) {
+	teamListItr->second->delete_members();
+	delete teamListItr->second;
+	++teamListItr;
+    }
+    teamToCostListMap.clear();
+    constraintToCostListMap.clear();
+    costsToBeUpdatedOnMove.clear();
+    constraintToTeamCostMap.clear();
+    cost = 0;
+    costPendingMove = 0;
+
+    // For each constraint, iterate over the teams at that level and built up the cost data
+    int numConstraints = annealInfo.num_constraints();
+    for(int c = 0; c < numConstraints; ++c) {
+	Constraint* constraint = annealInfo.get_constraint(c);
+	EntityListIterator teamItr(partition->teams_at_level_iterator(constraint->get_level()));
+	// Iterate over the teams at this level
+	while(!teamItr.done()) {
+	    this->add_constraint_cost(ConstraintCost::construct((TeamLevel*)teamItr, constraint));
+	    ++teamItr;
+	}
+    }
 }
 
 CostData::TeamIterator CostData::team_begin() const
