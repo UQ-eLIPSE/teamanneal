@@ -190,25 +190,25 @@ void CountConstraintCost::undo_pending()
 double CountConstraintCost::pend_remove_member(Member* member)
 {
     // We assume, but do not check that the member is part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     --numMembersPendingMove;
     if(member->is_condition_met(constraintNumber)) {
 	--countPendingMove;
     }
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double CountConstraintCost::pend_add_member(Member* member)
 {
     // We assume, but do not check that the member is not part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     ++numMembersPendingMove;
     if(member->is_condition_met(constraintNumber)) {
 	++countPendingMove;
     }
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double CountConstraintCost::percent_constraint_met()
@@ -351,7 +351,7 @@ void SimilarityConstraintCost::undo_pending()
 double SimilarityConstraintCost::pend_remove_member(Member* member)
 {
     // We assume, but do not check that the member is part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     --numMembersPendingMove;
 
     int attributeValueIndex = member->get_attribute_value_index(attribute);
@@ -365,13 +365,13 @@ double SimilarityConstraintCost::pend_remove_member(Member* member)
 	--countDistinctValuesPendingMove;
     }
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double SimilarityConstraintCost::pend_add_member(Member* member)
 {
     // We assume, but do not check that the member is not part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     ++numMembersPendingMove;
 
     int attributeValueIndex = member->get_attribute_value_index(attribute);
@@ -383,7 +383,7 @@ double SimilarityConstraintCost::pend_add_member(Member* member)
 	++countDistinctValuesPendingMove;
     }
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double SimilarityConstraintCost::percent_constraint_met()
@@ -525,7 +525,7 @@ void RangeConstraintCost::undo_pending()
 double RangeConstraintCost::pend_remove_member(Member* member)
 {
     // We assume, but do not check that the member is part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     --numMembersPendingMove;
 
     double value = member->get_numeric_attribute_value(attribute);
@@ -533,13 +533,13 @@ double RangeConstraintCost::pend_remove_member(Member* member)
     sumOfSquareValuesPendingMove -= (value * value);
 
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double RangeConstraintCost::pend_add_member(Member* member)
 {
     // We assume, but do not check that the member is not part of the team
-    double costBefore = costPendingMove;
+    double costBefore = get_pending_cost();
     ++numMembersPendingMove;
 
     double value = member->get_numeric_attribute_value(attribute);
@@ -547,7 +547,7 @@ double RangeConstraintCost::pend_add_member(Member* member)
     sumOfSquareValuesPendingMove += (value * value);
 
     evaluate();
-    return (costPendingMove - costBefore);
+    return (get_pending_cost() - costBefore);
 }
 
 double RangeConstraintCost::percent_constraint_met()

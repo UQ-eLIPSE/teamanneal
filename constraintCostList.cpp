@@ -35,30 +35,35 @@ void ConstraintCostList::delete_members()
 
 // Constructors
 ConstraintCostListIterator::ConstraintCostListIterator(const ConstraintCostList* list) :
-	list(*list),
+	list(list),
 	posn(0)
 {
 }
 
 ConstraintCostListIterator::ConstraintCostListIterator(const ConstraintCostList& list) :
-	list(list),
+	list(&list),
 	posn(0)
 {
 }
 
 bool ConstraintCostListIterator::done() const
 {
-    return (posn >= list.size());
+    return (posn >= list->size());
+}
+
+void ConstraintCostListIterator::reset()
+{
+    posn = 0;
 }
 
 ConstraintCostListIterator::operator ConstraintCost*() const
 {
-    return list.members[posn];
+    return list->members[posn];
 }
 
 ConstraintCost* ConstraintCostListIterator::operator->() const
 {
-    return list.members[posn];
+    return list->members[posn];
 }
 
 ConstraintCostListIterator& ConstraintCostListIterator::operator++()	//prefix

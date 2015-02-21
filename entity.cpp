@@ -177,7 +177,7 @@ TeamLevel::TeamLevel(const TeamLevel* team, bool setMemberParents) :
 	Entity(Entity::TEAM, team->name, team->partition),
 	children(team->children, this, setMemberParents),
 	level(team->level),
-	fullTeamName("")
+	fullTeamName(team->fullTeamName)
 {
 }
 
@@ -273,8 +273,8 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 	TeamLevel(level, name, this),
 	allTeamData(allTeamData),
 	lowestCostTopLevelTeams(nullptr),
-	//randomNumberGenerator(time(nullptr)),		// See RN generator with current time
-	randomNumberGenerator(0),
+	randomNumberGenerator(time(nullptr)),		// See RN generator with current time
+	//randomNumberGenerator(0),
 	memberRandomDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
 	teamRandomDistribution(0,0),			// We'll reset the bounds of this later when we
 							// know how many teams there are

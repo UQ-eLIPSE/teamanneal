@@ -163,9 +163,6 @@ CostData::CostData(AnnealInfo& annealInfo, Partition* partition) :
 
 void CostData::initialise_constraint_costs()
 {
-    cout << "---------------------------------" << endl;
-    cout << "| Initialising constraint costs |" << endl;
-    cout << "---------------------------------" << endl;
     // Iterate over all the constraint cost lists and delete all the members
     CostData::TeamIterator teamListItr = this->team_begin();
     while(teamListItr != this->team_end()) {
@@ -248,12 +245,20 @@ double CostData::pend_remove_member(Member* member)
 
     double deltaCost = 0.0;
     // Iterate over the constraint costs for the team to update their costs
+#if 0
     ConstraintCostListIterator itr(get_costs_for_team(team));
     while(!itr.done()) {
 	deltaCost += itr->pend_remove_member(member);
 	costsToBeUpdatedOnMove.insert(itr);
 	++itr;
     }
+#else
+    ConstraintCostList* costsForTeam = get_costs_for_team(team);
+    for(int i=costsForTeam->size() - 1; i >= 0; --i) {
+	deltaCost += (*costsForTeam)[i]->pend_remove_member(member);
+	costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+    }
+#endif
     costPendingMove += deltaCost;
     return deltaCost;
 }
@@ -263,12 +268,20 @@ double CostData::pend_add_member(Member* member, TeamLevel* lowLevelTeam)
 {
     double deltaCost = 0.0;
     // Iterate over the constraint costs for the team to update their costs
+#if 0
     ConstraintCostListIterator itr(get_costs_for_team(lowLevelTeam));
     while(!itr.done()) {
 	deltaCost += itr->pend_add_member(member);
 	costsToBeUpdatedOnMove.insert(itr);
 	++itr;
     }
+#else
+    ConstraintCostList* costsForTeam = get_costs_for_team(lowLevelTeam);
+    for(int i=costsForTeam->size() - 1; i >= 0; --i) {
+	deltaCost += (*costsForTeam)[i]->pend_add_member(member);
+	costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+    }
+#endif
     costPendingMove += deltaCost;
     return deltaCost;
 }

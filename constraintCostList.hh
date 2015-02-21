@@ -24,12 +24,13 @@ public:
 
 class ConstraintCostListIterator {
 private:
-    const ConstraintCostList& list;
+    const ConstraintCostList* list;
     int posn;
 public:
     ConstraintCostListIterator(const ConstraintCostList* list);
     ConstraintCostListIterator(const ConstraintCostList& list);
     bool done() const;
+    void reset();
     operator ConstraintCost*() const;
     ConstraintCost* operator->() const;
     ConstraintCostListIterator& operator++(); // prefix
