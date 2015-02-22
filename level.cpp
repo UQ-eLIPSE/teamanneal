@@ -121,7 +121,7 @@ string NumericalLevel::get_name(int teamNum, int numTeams) const
     // Apply print format
     if(leadingZeros) {
 	int numDigits = 1;
-	while(numTeams > 10) {
+	while(numTeams >= 10) {
 	    numTeams /= 10;
 	    numDigits++;
 	}

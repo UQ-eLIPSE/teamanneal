@@ -17,7 +17,7 @@
 #include "stats.hh"
 #include "moveStats.hh"
 #include "anneal.hh"
-
+#include <fstream>
 #include <assert.h>
 #include <iostream>
 #include <stdlib.h>	// for exit()
@@ -66,6 +66,7 @@ acquire team-csv-file constraint-json-file team-name [partition-name]\n\
 // randomly.
 static AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 {
+    cout << "Parsing files" << endl;
     // Read team file and parse the CSV 
     FileData* teamFileData = new FileData(argv[2]);
     CSV_File* csvContents = new CSV_File(teamFileData->getContents(), ',', '"', 1);
@@ -109,9 +110,13 @@ static void teamanneal_create(AllTeamData* teamData, const char* argv[])
     // Update column names if required and output the result
     teamData->get_anneal_info().update_column_names_if_required();
     output_csv_file_from_team_data(teamData, argv[4]);
+
     // Debug
     //cout << *teamData;
-    output_cost_data(cout);
+
+    ofstream ofs("cost_stats.txt");
+    output_cost_data(ofs);
+
     stats_set_end_time();
     stats_add_for_all_partitions(teamData);
     stats_output(cout);

@@ -11,6 +11,7 @@
 #include "cost.hh"
 
 class MoveSet;
+class AnnealThread;
 
 ///////////////////////////////////////////////////////////////////////////////
 // AnnealMove
@@ -85,7 +86,7 @@ public:
     void reduce_temperature();
 
     // Undertake the anneal
-    void do_anneal();
+    void do_anneal(AnnealThread* thread);
 
     // Statistics functions. Statistics should be reset before every inner/initial loop
     void reset_stats();

@@ -7,6 +7,7 @@
 #include <cmath>
 #include "assert.h"
 #include <algorithm>
+#include "anneal.hh"
 
 ///////////////////////////////////////////////////////////////////////////////
 // static member definition
@@ -147,8 +148,8 @@ void MoveSet::initial_loop()
     // We want the probability of accepting moves of this cost to be 70%
     temperature = - costAt90Percent / log(0.7);
 
-    cout << endl << "Completed initial toop - setting temperature to " << temperature << endl;
-    cout << "Cost at 90 percent = " << costAt90Percent << endl;
+    //cout << endl << "Completed initial toop - setting temperature to " << temperature << endl;
+    //cout << "Cost at 90 percent = " << costAt90Percent << endl;
 }
 
 int MoveSet::anneal_inner_loop(int iterations)
@@ -196,15 +197,24 @@ void MoveSet::reduce_temperature()
         temperature *= 0.98;
 }
 
-void MoveSet::do_anneal()
+void MoveSet::do_anneal(AnnealThread* thread)
 {
+    double probabilityHistory[8] = {1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
+    double probabilitySum = 8.0;
+    int progressPercent = 0;
+
     // Do some initial moves (accepting all by setting the temperature to be 0) 
     // to gather some statistics and work out an appropriate initial temperature
     initial_loop();
 
     int iterationsPerLoop = partition->num_members() * 4;
-    for(int step = 0; step < 600; ++step) {
+    int step = 0;
+    while(true) {
         anneal_inner_loop(iterationsPerLoop);
+	if(costData->get_cost_value() == 0.0) {
+	    // Have reached optimal solution
+	    break;
+	}
         if(uphill_probability() > 0.7 || uphill_probability() < 0.2) {
             iterationsPerLoop = partition->num_members() * 4;
         } else if(uphill_probability() > 0.6 || uphill_probability() < 0.3) {
@@ -214,11 +224,26 @@ void MoveSet::do_anneal()
         }
         // Reduce temperature
 	reduce_temperature();
-	cout << endl;
-	cout << "Cost: " << costData->get_cost_value() << endl;
-	//cout << "Lowest cost: " << lowestCost << endl;
-        cout << "Reducing temperature to " << temperature << endl << endl;
+	//cout << endl;
+	//cout << "Cost: " << costData->get_cost_value() << endl;
+        //cout << "Reducing temperature to " << temperature << endl << endl;
+
+	probabilitySum -= probabilityHistory[step%8];
+	probabilityHistory[step%8] = uphill_probability();
+	probabilitySum += probabilityHistory[step%8];
+	double probabilityAverage = probabilitySum / 8.0;
+	if(probabilityAverage < 0.0025) {
+	    break;	// give up now - few uphill moves are being accepted
+	}
+	int nextProgressPercent = (int)floor(100.0 * pow(1.0-probabilityAverage,2));
+	if(nextProgressPercent > progressPercent) {
+	    progressPercent = nextProgressPercent;
+	} // else - can't go backwards
+	thread->update_progress(progressPercent);
+	++step;
     }
+    //cout << "Terminated after " << step << " steps" << endl;
+    thread->update_progress(100);	// done (100%)
 }
 
 void MoveSet::reset_stats()
