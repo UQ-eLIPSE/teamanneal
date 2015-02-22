@@ -160,10 +160,10 @@ void CountConstraintCost::evaluate()
 	    }
 	    break;
 	case Constraint::COUNT_MAXIMISE:
-	    costPendingMove = (numMembersPendingMove - countPendingMove) * constraint->get_weight();
+	    costPendingMove = pow(numMembersPendingMove - countPendingMove, 1.5) * constraint->get_weight();
 	    break;
 	case Constraint::COUNT_MINIMISE:
-	    costPendingMove = countPendingMove * constraint->get_weight();
+	    costPendingMove = pow(countPendingMove, 1.5) * constraint->get_weight();
 	    break;
 	default:
 	    // Shouldn't happen
