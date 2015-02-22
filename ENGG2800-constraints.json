@@ -30,7 +30,7 @@
 		},
 		{
 			"level" : 1,
-			"weight" : "ideally has",
+			"weight" : "should have",
 			"operator" : "at least",
 			"count" : 1,
 			"field" : "Plan",
@@ -68,12 +68,32 @@
 		{
 			"level" : 1,
 			"of-size" : 3,
-			"weight" : "ideally has",
+			"weight" : "must have",
 			"operator" : "exactly",
 			"count" : 3,
 			"field" : "GPA",
 			"field-operator" : "greater than or equal to",
-			"field-value" : 5
+			"field-value" : 5.5
+		},
+		{
+			"level" : 1,
+			"of-size" : 3,
+			"weight" : "must have",
+			"operator" : "exactly",
+			"count" : 0,
+			"field" : "Gender",
+			"field-operator" : "equal to",
+			"field-value" : "Female"
+		},
+		{
+			"level" : 1,
+			"of-size" : 3,
+			"weight" : "must have",
+			"operator" : "at most",
+			"count" : 1,
+			"field" : "Language",
+			"field-operator" : "not equal to",
+			"field-value" : "English"
 		}
 	]
 }
