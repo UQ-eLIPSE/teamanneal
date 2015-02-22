@@ -27,6 +27,35 @@ static JSONObject* extractJSONObject(StringCursor& cursor);
 static JSONNumber* extractJSONNumber(StringCursor& cursor);
 static JSONString* extractJSONString(StringCursor& cursor);
 
+// Indent manipulator related functions
+int get_indent_manipulator_index() {
+    static int index = ios_base::xalloc();
+    return index;
+}
+
+ios_base& increase_indent(ios_base& stream) {
+    stream.iword(get_indent_manipulator_index())++;
+    return stream;
+}
+
+ios_base& decrease_indent(ios_base& stream) {
+    stream.iword(get_indent_manipulator_index())--;
+    return stream;
+}
+
+ostream& indent(ostream& stream) {
+    int indent_level = stream.iword(get_indent_manipulator_index());
+    while(indent_level >= 4) {
+	stream << '\t';
+	indent_level -= 4;
+    }
+    while(indent_level > 0) {
+	stream << "  ";
+	--indent_level;
+    }
+    return stream;
+}
+
 // Extract the next JSON value from the given string. This function may be called recursively when
 // returning an array or an object. The cursor is updated to point to the next character after any
 // consumed text and any following whitespace. 
@@ -238,6 +267,7 @@ bool JSONValue::is_string() 	{ return (type == JSON_STRING); }
 bool JSONValue::is_number() 	{ return (type == JSON_NUMBER); }
 bool JSONValue::is_bool() 	{ return (type == JSON_BOOL); }
 bool JSONValue::is_null()	{ return (type == JSON_NULL); }
+bool JSONValue::is_compound_object() { return ((type == JSON_ARRAY) || (type == JSON_OBJECT)); }
 
 bool JSONValue::match(const string& str)
 {
@@ -285,7 +315,7 @@ void JSONString::set_value(const string& str)
 void JSONString::print(ostream& str) const
 {
     // NEED to fix this to escape characters appropriately.
-    str << '"' << value << "\" ";
+    str << '"' << value << "\"";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -321,11 +351,12 @@ void JSONNumber::set_value(double d)
 
 void JSONNumber::print(ostream& str) const
 {
-    str << value << ' ';
+    str << value;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // JSONObject
+
 // Constructor
 JSONObject::JSONObject(void) :
 	JSONValue(JSON_OBJECT)
@@ -429,17 +460,17 @@ JSONObject::Iterator JSONObject::end()
 
 void JSONObject::print(ostream& str) const
 {
-    str << "{ ";
+    str << "{" << increase_indent << endl;
     bool first = true;
     for(map<string,JSONValue*>::const_iterator it = nameValuePairs.begin(); 
 	    it != nameValuePairs.end(); it++) {
 	if(!first) {
-	    str << ", ";
+	    str << "," << endl;
 	}
-	str << '"' << it->first << '"' << " : " << *(it->second);
+	str << indent << '"' << it->first << '"' << " : " << *(it->second);
 	first = false;
     }
-    str << "} ";
+    str << endl << decrease_indent << indent << "}";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -510,17 +541,32 @@ JSONArray::Iterator JSONArray::end()
 
 void JSONArray::print(ostream& str) const
 {
-    str << "[ ";
+    str << increase_indent << "[ ";
     bool first = true;
+    bool arrayOfSimpleTypes = true;
     for(vector<JSONValue* const>::iterator it = members.begin();
 	    it != members.end(); it++) {
-	if(!first) {
-	    str << ", ";
+	arrayOfSimpleTypes = arrayOfSimpleTypes && !((*it)->is_compound_object());
+	if(first) {
+	    if(arrayOfSimpleTypes) {
+		str << **it;
+	    } else {
+		str << endl << indent << **it;
+	    }
+	} else {
+	    if(arrayOfSimpleTypes) {
+		str << ", " << **it;
+	    } else {
+		str << "," << endl << indent << **it;
+	    }
 	}
-	str << **it;
 	first = false;
     }
-    str << "] ";
+    if(arrayOfSimpleTypes) {
+	str << " ]" << decrease_indent;
+    } else {
+	str << endl << decrease_indent << indent << "]";
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

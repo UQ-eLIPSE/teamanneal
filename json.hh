@@ -43,6 +43,7 @@ public:
     bool is_number();
     bool is_bool();
     bool is_null();
+    bool is_compound_object();	// true if array or object
 
     // Returns true if the JSON value is a string which matches the given string str
     bool match(const string& str);
