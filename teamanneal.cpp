@@ -66,7 +66,7 @@ acquire team-csv-file constraint-json-file team-name [partition-name]\n\
 // randomly.
 static AllTeamData* set_up_data(AnnealInfo& annealInfo, const char* argv[])
 {
-    cout << "Parsing files" << endl;
+    cerr << "Parsing files" << endl;
     // Read team file and parse the CSV 
     FileData* teamFileData = new FileData(argv[2]);
     CSV_File* csvContents = new CSV_File(teamFileData->getContents(), ',', '"', 1);
