@@ -105,7 +105,11 @@ static void teamanneal_create(AllTeamData* teamData, const char* argv[])
     teamData->set_names_for_all_teams();
 
     // Do anneal
+#ifdef SINGLE_THREAD
+    anneal_all_partitions_single_thread(teamData, allCostData);
+#else 
     anneal_all_partitions(teamData, allCostData);
+#endif
 
     // Update column names if required and output the result
     teamData->get_anneal_info().update_column_names_if_required();

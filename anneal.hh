@@ -15,6 +15,7 @@
 // Global function
 
 void anneal_all_partitions(AllTeamData* teamData, AllCostData* allCostData);
+void anneal_all_partitions_single_thread(AllTeamData* teamData, AllCostData* allCostData);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Classes

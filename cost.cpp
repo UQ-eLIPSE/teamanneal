@@ -52,19 +52,25 @@ void initialise_costs(AllTeamData* data)
     }
 }
 
-// Output all the cost data to the given stream
-void output_cost_data(ostream& os)
+// Output all the cost data to the given stream. If partition argument is given (not null) - only output
+// data for the given partition
+void output_cost_data(ostream& os, Partition* partitionFilter)
 {
     map<Partition*,CostData*>::const_iterator partitionItr = allCostData->begin();
     while(partitionItr != allCostData->end()) {
 	Partition* partition = partitionItr->first;
+	if(partitionFilter && partition != partitionFilter) {
+	    // Move on to next partition
+	    ++partitionItr;
+	    continue;
+	}
 	os << "Cost data for Partition " << partition->get_name() << endl;
 	CostData* costData = partitionItr->second;
 	CostData::TeamIterator teamItr = costData->team_begin();
 	while(teamItr != costData->team_end()) {
 	    const TeamLevel* team = teamItr->first;
 	    const ConstraintCostList* constraintCostList = teamItr->second;
-	    os << "  Team " << team->get_name() << ": ";
+	    os << "  Team: " << team->get_full_team_name() << ": ";
 	    // Show team members
 	    MemberIterator memberItr = team->member_iterator();
 	    while(!memberItr.done()) {
@@ -211,8 +217,12 @@ ConstraintCostList* CostData::get_costs_for_constraint(Constraint* constraint) c
 ConstraintCostList* CostData::get_costs_for_team(TeamLevel* team) const
 {
     CostData::TeamIterator itr = teamToCostListMap.find(team);
-    assert(itr != teamToCostListMap.end());		// must be found
-    return itr->second;
+    if(itr != teamToCostListMap.end()) {
+	// Constraint cost list for this team has been found
+	return itr->second;
+    } else {
+	return nullptr;
+    }
 }
 
 ConstraintCost* CostData::get_constraint_cost(Constraint* constraint, TeamLevel* team) const
@@ -254,9 +264,11 @@ double CostData::pend_remove_member(Member* member)
     }
 #else
     ConstraintCostList* costsForTeam = get_costs_for_team(team);
-    for(int i=costsForTeam->size() - 1; i >= 0; --i) {
-	deltaCost += (*costsForTeam)[i]->pend_remove_member(member);
-	costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+    if(costsForTeam) {
+	for(int i=costsForTeam->size() - 1; i >= 0; --i) {
+	    deltaCost += (*costsForTeam)[i]->pend_remove_member(member);
+	    costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+	}
     }
 #endif
     costPendingMove += deltaCost;
@@ -277,9 +289,11 @@ double CostData::pend_add_member(Member* member, TeamLevel* lowLevelTeam)
     }
 #else
     ConstraintCostList* costsForTeam = get_costs_for_team(lowLevelTeam);
-    for(int i=costsForTeam->size() - 1; i >= 0; --i) {
-	deltaCost += (*costsForTeam)[i]->pend_add_member(member);
-	costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+    if(costsForTeam) {
+	for(int i=costsForTeam->size() - 1; i >= 0; --i) {
+	    deltaCost += (*costsForTeam)[i]->pend_add_member(member);
+	    costsToBeUpdatedOnMove.insert((*costsForTeam)[i]);
+	}
     }
 #endif
     costPendingMove += deltaCost;

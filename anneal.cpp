@@ -26,6 +26,7 @@ void anneal_all_partitions(AllTeamData* teamData, AllCostData* allCostData)
     // Start all the threads
     while(!partitionItr.done()) {
 	Partition* partition = (Partition*)partitionItr;
+	cerr << "Starting partition " << partition->get_name() << endl;
 	allThreads.push_back(new AnnealThread(partition, allCostData->get_cost_data_for_partition(partition)));
 	++partitionItr;
 	++numPartitions;
@@ -51,6 +52,41 @@ void anneal_all_partitions(AllTeamData* teamData, AllCostData* allCostData)
 	}
 	int percentComplete = sumPercent / numPartitions;
 	cerr << "Percent complete: " << percentComplete << "%" << endl;
+    }
+}
+
+void anneal_all_partitions_single_thread(AllTeamData* teamData, AllCostData* allCostData) 
+{
+    int countDonePartitions = 0;
+    int numPartitions = teamData->num_partitions();
+    EntityListIterator partitionItr = teamData->get_partition_iterator();
+    // Start all the threads
+    while(!partitionItr.done()) {
+	Partition* partition = (Partition*)partitionItr;
+	CostData* costData = allCostData->get_cost_data_for_partition(partition);
+	AnnealThread* thread = new AnnealThread(partition, costData);
+	cerr << "Starting partition " << thread->get_partition_name() << endl;
+	while(true) {
+	    this_thread::sleep_for(chrono::milliseconds(500));
+	    int sumPercent = countDonePartitions * 100;
+	    int percentProgressThisPartition = thread->get_progress_percent();
+	    if(percentProgressThisPartition == 100) {
+		// Partition is done
+		countDonePartitions++;
+		if(numPartitions > 1) {
+		    cerr << "Partition " << thread->get_partition_name() << " is done" << endl;
+		}
+		// Delete the data structure (this joins the thread)
+		delete thread;
+		break;
+	    }
+
+	    sumPercent += percentProgressThisPartition;
+	    int percentComplete = sumPercent / numPartitions;
+	    cerr << "Percent complete: " << percentComplete << "%" << endl;
+	}
+
+	++partitionItr;
     }
 }
 

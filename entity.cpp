@@ -189,7 +189,8 @@ TeamLevel::TeamLevel(const Level& level, Partition* partition) :
 
 TeamLevel::TeamLevel(const Level& level, const string& teamName, Partition* partition) :
 	Entity(Entity::TEAM, teamName, partition),
-	level(level) 
+	level(level),
+	fullTeamName(teamName)
 {
 }
 
@@ -273,8 +274,11 @@ Partition::Partition(AllTeamData* allTeamData, const Level& level, const string&
 	TeamLevel(level, name, this),
 	allTeamData(allTeamData),
 	lowestCostTopLevelTeams(nullptr),
-	randomNumberGenerator(time(nullptr)),		// See RN generator with current time
-	//randomNumberGenerator(0),
+#ifdef CONSTANT_RANDOM_SEED
+	randomNumberGenerator(0),
+#else
+	randomNumberGenerator(time(nullptr)),		// Seed RN generator with current time
+#endif
 	memberRandomDistribution(0,numPeople-1),	// Random number distribution 0 to numPeople - 1
 	teamRandomDistribution(0,0),			// We'll reset the bounds of this later when we
 							// know how many teams there are

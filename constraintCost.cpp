@@ -483,7 +483,7 @@ void RangeConstraintCost::evaluate()
 	    }
 	    break;
 	case Constraint::HETEROGENEOUS:
-	    if(numMembersConsidered > 0 && attributeValueRange > 0.0) {
+	    if(numMembersPendingMove > 0 && attributeValueRange > 0.0) {
 		costPendingMove  = constraint->get_weight() * 
 			(attributeValueRange - 2.0 * std_dev()) / attributeValueRange;
 	    } else {

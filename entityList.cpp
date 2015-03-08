@@ -27,7 +27,7 @@ EntityList::EntityList(const EntityList& list) :
 }
 
 // Pseudo copy constructor - teams which are members of this list are cloned and made children
-// of the given parent, members are are not cloned and we don't change their parent unless 
+// of the given parent, members are not cloned and we don't change their parent unless 
 // setMemberParents is true
 EntityList::EntityList(const EntityList& list, TeamLevel* parent, bool setMemberParents)
 {

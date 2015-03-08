@@ -41,7 +41,9 @@ MoveMember::MoveMember(MoveSet* moveSet, Partition* partition, CostData* costDat
 
 double MoveMember::generate_and_evaluate_random_move(double temperature)
 {
-    //cout << "Move Member - doing nothing " << endl;
+#ifdef DEBUG
+    cout << "Move Member - doing nothing " << endl;
+#endif
     return 0.0;
 }
 
@@ -62,7 +64,9 @@ double SwapMembers::generate_and_evaluate_random_move(double temperature)
     do {
 	member2 = partition->get_random_member();
     } while (member1->get_parent() == member2->get_parent());
-    //cout << "Swapping " << member1->get_id() << " and " << member2->get_id() << ": ";
+#ifdef DEBUG
+    cout << "Swapping " << member1->get_id() << " and " << member2->get_id() << ": ";
+#endif
     // Now have two members in different teams
     TeamLevel* team1 = member1->get_parent();
     TeamLevel* team2 = member2->get_parent();
@@ -81,11 +85,15 @@ double SwapMembers::generate_and_evaluate_random_move(double temperature)
 	    lastMoveAccepted = false;
 	    moveSet->log_cost(deltaCost, lastMoveAccepted);
 	    costData->undo_pending();
-	    //cout << "no" << endl;
+#ifdef DEBUG
+	    cout << "no" << endl;
+#endif
 	    return deltaCost;
 	}
     }
-    //cout << "yes (" << deltaCost << ")" << endl;
+#ifdef DEBUG
+    cout << "yes (" << deltaCost << ")" << endl;
+#endif
     // If we get here, we accept the move
     lastMoveAccepted = true;
     moveSet->log_cost(deltaCost, lastMoveAccepted);
@@ -109,8 +117,11 @@ MoveSet::MoveSet(Partition* partition, CostData* costData) :
 	costData(costData),
 	temperature(0.0),
 	lowestCost(costData->get_cost_value()),
-	//randomNumberGenerator(0),
+#ifdef CONSTANT_RANDOM_SEED
+	randomNumberGenerator(0),
+#else
 	randomNumberGenerator(time(nullptr)), 	// Seed RN generator with current time
+#endif
 	moveDistribution(moveProbabilities.begin(), moveProbabilities.end()),
 	uniform0to1Distribution(0.0, 1.0),
 	moveDice(bind(moveDistribution, randomNumberGenerator)),
@@ -134,9 +145,27 @@ void MoveSet::initial_loop()
     vector<double> uphillCosts;
     const int numUphillMovesToLookFor = 200;
     uphillCosts.reserve(numUphillMovesToLookFor);
+#ifdef DEBUG
+    output_cost_data(cout, partition);
+#endif
     while(uphillCosts.size() < numUphillMovesToLookFor) {
         AnnealMove* move = this->get_random_move_type();
         double deltaCost = move->generate_and_evaluate_random_move(temperature);
+#ifdef DEBUG
+	output_cost_data(cout, partition);
+#endif
+#ifdef RECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK
+        if(move->accepted()) {
+	    double cost1 = costData->get_cost_value();
+	    // recalculate cost
+	    costData->initialise_constraint_costs();
+	    double cost2 = costData->get_cost_value();
+	    if(abs(cost1-cost2)/cost1 >= 0.00001) {
+		cerr << "Cost1: " << cost1 << ", Cost2: " << cost2 << endl;
+	    }
+	    assert(abs(cost1-cost2)/cost1 < 0.00001);
+	}
+#endif
 	if(deltaCost > 0) {
 	    uphillCosts.push_back(deltaCost);
 	}
@@ -148,8 +177,10 @@ void MoveSet::initial_loop()
     // We want the probability of accepting moves of this cost to be 70%
     temperature = - costAt90Percent / log(0.7);
 
-    //cout << endl << "Completed initial toop - setting temperature to " << temperature << endl;
-    //cout << "Cost at 90 percent = " << costAt90Percent << endl;
+#ifdef DEBUG
+    cout << endl << "Completed initial toop - setting temperature to " << temperature << endl;
+    cout << "Cost at 90 percent = " << costAt90Percent << endl;
+#endif
 }
 
 int MoveSet::anneal_inner_loop(int iterations)
@@ -157,6 +188,9 @@ int MoveSet::anneal_inner_loop(int iterations)
     reset_stats();
     costData->initialise_constraint_costs();
     int movesAccepted = 0;
+#ifdef DEBUG
+    output_cost_data(cout, partition);
+#endif
     for(int i=0; i < iterations; i++) {
         AnnealMove* move = this->get_random_move_type();
         move->generate_and_evaluate_random_move(temperature);
@@ -167,26 +201,29 @@ int MoveSet::anneal_inner_loop(int iterations)
 	    // recalculate cost
 	    costData->initialise_constraint_costs();
 	    double cost2 = costData->get_cost_value();
-	    assert(abs(cost1-cost2)/cost1 < 0.0000001);
+	    if(abs(cost1-cost2)/cost1 >= 0.00001) {
+		cerr << "Cost1: " << cost1 << ", Cost2: " << cost2 << endl;
+	    }
+	    assert(abs(cost1-cost2)/cost1 < 0.00001);
 #endif
 	}
     }
-    /*
+#ifdef DEBUG
     cout << endl << "Completed inner loop - accepted " << movesAccepted << " of "
             << iterations << " iterations. Uphill prob = " << uphill_probability() <<  endl << endl;
-    */
+#endif
     if(lowestCost < costData->get_cost_value()) {
 	// reset to lowest cost teams found so far
-	/*
+#ifdef DEBUG
 	cout << "****** Lowest cost: " << lowestCost << " < " << costData->get_cost_value() 
 		<< " - restoring" << endl;
-	*/
+#endif
 	partition->restore_lowest_cost_teams();
 	costData->initialise_constraint_costs();
 	lowestCost = costData->get_cost_value();
-	/*
+#ifdef DEBUG
 	cout << "****** New cost: " << lowestCost << endl;
-	*/
+#endif
     }
 
     return movesAccepted;
@@ -224,9 +261,11 @@ void MoveSet::do_anneal(AnnealThread* thread)
         }
         // Reduce temperature
 	reduce_temperature();
-	//cout << endl;
-	//cout << "Cost: " << costData->get_cost_value() << endl;
-        //cout << "Reducing temperature to " << temperature << endl << endl;
+#ifdef DEBUG
+	cout << endl;
+	cout << "Cost: " << costData->get_cost_value() << endl;
+        cout << "Reducing temperature to " << temperature << endl << endl;
+#endif
 
 	probabilitySum -= probabilityHistory[step%8];
 	probabilityHistory[step%8] = uphill_probability();
@@ -242,7 +281,9 @@ void MoveSet::do_anneal(AnnealThread* thread)
 	thread->update_progress(progressPercent);
 	++step;
     }
-    //cout << "Terminated after " << step << " steps" << endl;
+#ifdef DEBUG
+    cout << "Terminated after " << step << " steps" << endl;
+#endif
     thread->update_progress(100);	// done (100%)
 }
 

@@ -85,6 +85,11 @@ bool AllTeamData::has_partitions() const
     return (annealInfo.get_partition_field() != nullptr);
 }
 
+int AllTeamData::num_partitions() const
+{
+    return partitionList.size();
+}
+
 Partition* AllTeamData::find_partition(const string& name)
 {
     map<string,Partition*>::iterator it;
@@ -163,6 +168,13 @@ void AllTeamData::set_names_for_all_teams()
             string teamNameAtThisLevel = 
                     team->get_level().get_name(teamNum, parentTeam->num_children());
             teamNameAtThisLevel = team->set_name(teamNameAtThisLevel);	// will happen if not already set
+
+	    // Work out a default full team name (names at the lowest level will get overwritten later)
+	    string name = team->get_level().get_field_name();
+	    name += " ";
+	    name += teamNameAtThisLevel;
+	    team->set_full_team_name(name);		// Default name
+
             levelNames.insert(levelNames.begin(), teamNameAtThisLevel);
             // Get ready to move up a level
             team = parentTeam;

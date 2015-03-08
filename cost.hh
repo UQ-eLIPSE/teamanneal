@@ -21,7 +21,7 @@ extern AllCostData* allCostData;
 
 // Initialise all cost related structures and variables
 void initialise_costs(AllTeamData* data);
-void output_cost_data(ostream& os);
+void output_cost_data(ostream& os, Partition* partition = nullptr);
 
 ///////////////////////////////////////////////////////////////////////////////
 // CostData
