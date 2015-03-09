@@ -23,8 +23,9 @@ CFLAGS=-Wall -MMD -Ofast
 CFLAGS=-Wall -MMD -g
 
 #Default C++ compilation options
-CXXFLAGS=-Wall -std=c++11 -MMD -Ofast
+CXXFLAGS=-Wall -std=c++11 -MMD -g -DCONSTANT_RANDOM_SEED
 CXXFLAGS=-Wall -std=c++11 -MMD -g -DDEBUG -DRECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK -DCONSTANT_RANDOM_SEED -DSINGLE_THREAD
+CXXFLAGS=-Wall -std=c++11 -MMD -Ofast
 
 all: $(PROGRAMS)
 

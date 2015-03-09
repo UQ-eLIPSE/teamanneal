@@ -331,7 +331,7 @@ void SimilarityConstraintCost::commit_pending()
     countDistinctValues = countDistinctValuesPendingMove;
     numMembersConsidered = numMembersPendingMove;
     for(int i=0; i< valueCountsToUpdate.size(); ++i) {
-	valueCount[i] = valueCountPendingMove[i];
+	valueCount[valueCountsToUpdate[i]] = valueCountPendingMove[valueCountsToUpdate[i]];
     }
     valueCountsToUpdate.clear();
 }
@@ -343,7 +343,7 @@ void SimilarityConstraintCost::undo_pending()
     countDistinctValuesPendingMove = countDistinctValues;
     numMembersPendingMove = numMembersConsidered;
     for(int i=0; i< valueCountsToUpdate.size(); ++i) {
-	valueCountPendingMove[i] = valueCount[i];
+	valueCountPendingMove[valueCountsToUpdate[i]] = valueCount[valueCountsToUpdate[i]];
     }
     valueCountsToUpdate.clear();
 }
@@ -352,7 +352,7 @@ double SimilarityConstraintCost::pend_remove_member(Member* member)
 {
     // We assume, but do not check that the member is part of the team
     double costBefore = get_pending_cost();
-    --numMembersPendingMove;
+    --numMembersPendingMove;		// removing members - reduce our member count
 
     int attributeValueIndex = member->get_attribute_value_index(attribute);
     assert(valueCountPendingMove[attributeValueIndex] > 0);

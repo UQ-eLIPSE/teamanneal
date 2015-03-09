@@ -104,17 +104,18 @@ public:
 class SimilarityConstraintCost : public ConstraintCost {
 private:
     const Attribute* const attribute;
-    const int numAttributeValues;
+    const int numAttributeValues;	// Number of different possible values for this attribute
 
-    vector<int> valueCount;	// Indexed by attribute string value index
-    int countDistinctValues;
-    int numMembersConsidered;
+    vector<int> valueCount;	// Indexed by attribute string value index - number of members with their
+    				// attribute value being this value
+    int countDistinctValues;		// Number of different values for the attribute in this (original) team
+    int numMembersConsidered;		// Number of members in team
 
     vector<int> valueCountPendingMove;
     vector<int> valueCountsToUpdate;		// records index of value counts that are different 
     						// between the committed and pending arrays
-    int countDistinctValuesPendingMove;
-    int numMembersPendingMove;
+    int countDistinctValuesPendingMove;	// Number of different values for the attribute in the pending team
+    int numMembersPendingMove;		// Number of members in the pending team
 
 public:
     // Constructor
