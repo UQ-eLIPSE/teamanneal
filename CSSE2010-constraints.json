@@ -1,0 +1,61 @@
+{
+	"tool-version" : "1",
+	"identifier" : "StudentID",
+	"partition" : "Session",
+
+	"levels" : [
+		{
+			"field" : "Table",
+			"size" : {
+				"min" : 2,
+				"ideal" : 3,
+				"max" : 3
+			},
+			"format" : {
+			    "type" : "numerical-1",
+			    "leading-0" : true
+			}
+		},
+		{
+			"field" : "Group",
+			"size" : {
+				"min" : 2,
+				"ideal" : 3,
+				"max" : 3
+			},
+			"format" : {
+			    "type" : "character-upper"
+			}
+		}
+	],
+	"name-format" : {
+		"field" : "Team Name",
+		"format" : "%0 - Table %1 - Group %2"
+	},
+	"constraints" : [
+		{
+			"level" : 2,
+			"operator" : "as similar as possible",
+			"field" : "GPA",
+			"weight" : "ideally has"
+		},
+		{
+			"level": 2,
+			"weight": "ideally has",
+			"operator": "as few as possible",
+			"field": "Language",
+			"field-operator": "not equal to",
+			"field-value": "English"
+		},
+		{
+
+			"level" : 2,
+			"weight" : "must have",
+			"operator" : "not exactly",
+			"count" : 1,
+			"field" : "Gender",
+			"field-operator" : "equal to",
+			"field-value" : "Female"
+		}
+	]
+}
