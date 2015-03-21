@@ -470,7 +470,11 @@ void Partition::restore_lowest_cost_teams()
 	// Iterate over all the teams at the current level add lower level teams to their list
 	EntityListIterator itr(*(teamsAtEachLevel[level]));
 	while(!itr.done()) {
-	    teamsAtEachLevel[level+1]->append((Entity*)itr);
+	    EntityListIterator childItr = ((TeamLevel*)itr)->child_iterator();
+	    while(!childItr.done()) {
+		teamsAtEachLevel[level+1]->append((Entity*)childItr);
+		++childItr;
+	    }
 	    ++itr;
 	}
 	++level;

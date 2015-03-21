@@ -42,8 +42,8 @@ public:
     EntityList(const EntityList& list, TeamLevel* parent, bool setMemberParents);
 
     // Member functions
-    // Append member to this entity list 
     void clear();			// Does not destroy members - warning - memory may be lost
+    // Append member to this entity list 
     void append(Entity* member);
     // Remove member from the entity list. Any iterators on the list are then invalid. Order may change.
     void remove(Entity* member);
