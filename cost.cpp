@@ -227,14 +227,22 @@ ConstraintCostList* CostData::get_costs_for_team(TeamLevel* team) const
 
 ConstraintCost* CostData::get_constraint_cost(Constraint* constraint, TeamLevel* team) const
 {
+    // Find the list of constraintcosts associated with this constraint
     map<const Constraint*,TeamToCostMap*>::const_iterator itr = 
 	    constraintToTeamCostMap.find(constraint);
     assert(itr != constraintToTeamCostMap.end());	// must be found
+
     // Have found our map from teams to individual constraint costs, now look for the team
-    // within this
+    // within this - this may not be found if the constraint doesn't apply at the level of this team
     TeamToCostMap::const_iterator costItr = itr->second->find(team);
-    assert(costItr != itr->second->end());		// must be found
-    return costItr->second;
+    if(costItr != itr->second->end()) {
+	return costItr->second;
+    } else {
+	// ConstraintCost wasn't found - look in the parent team - must be found before we get to the partition
+	team = team->get_parent();
+	assert(!team->is_partition());
+	return get_constraint_cost(constraint, team);
+    }
 }
 
 double CostData::get_cost_value() const
@@ -255,12 +263,15 @@ double CostData::pend_remove_member(Member* member)
 
     double deltaCost = 0.0;
     // Iterate over the constraint costs for the team to update their costs
-#if 0
-    ConstraintCostListIterator itr(get_costs_for_team(team));
-    while(!itr.done()) {
-	deltaCost += itr->pend_remove_member(member);
-	costsToBeUpdatedOnMove.insert(itr);
-	++itr;
+#if 1
+    while(!team->is_partition()) {
+	ConstraintCostListIterator itr(get_costs_for_team(team));
+	while(!itr.done()) {
+	    deltaCost += itr->pend_remove_member(member);
+	    costsToBeUpdatedOnMove.insert(itr);
+	    ++itr;
+	}
+	team = team->get_parent();
     }
 #else
     ConstraintCostList* costsForTeam = get_costs_for_team(team);
@@ -279,13 +290,17 @@ double CostData::pend_remove_member(Member* member)
 double CostData::pend_add_member(Member* member, TeamLevel* lowLevelTeam)
 {
     double deltaCost = 0.0;
+    TeamLevel* team = lowLevelTeam;
     // Iterate over the constraint costs for the team to update their costs
-#if 0
-    ConstraintCostListIterator itr(get_costs_for_team(lowLevelTeam));
-    while(!itr.done()) {
-	deltaCost += itr->pend_add_member(member);
-	costsToBeUpdatedOnMove.insert(itr);
-	++itr;
+#if 1
+    while(!team->is_partition()) {
+	ConstraintCostListIterator itr(get_costs_for_team(team));
+	while(!itr.done()) {
+	    deltaCost += itr->pend_add_member(member);
+	    costsToBeUpdatedOnMove.insert(itr);
+	    ++itr;
+	}
+	team = team->get_parent();
     }
 #else
     ConstraintCostList* costsForTeam = get_costs_for_team(lowLevelTeam);

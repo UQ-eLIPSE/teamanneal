@@ -4,6 +4,7 @@
 
 #include "constraintCostList.hh"
 #include "constraintCost.hh"
+#include <assert.h>
 
 void ConstraintCostList::append(ConstraintCost* member)
 {
@@ -48,7 +49,7 @@ ConstraintCostListIterator::ConstraintCostListIterator(const ConstraintCostList&
 
 bool ConstraintCostListIterator::done() const
 {
-    return (posn >= list->size());
+    return (!list || (posn >= list->size()));
 }
 
 void ConstraintCostListIterator::reset()
@@ -58,22 +59,26 @@ void ConstraintCostListIterator::reset()
 
 ConstraintCostListIterator::operator ConstraintCost*() const
 {
+    assert(list);
     return list->members[posn];
 }
 
 ConstraintCost* ConstraintCostListIterator::operator->() const
 {
+    assert(list);
     return list->members[posn];
 }
 
 ConstraintCostListIterator& ConstraintCostListIterator::operator++()	//prefix
 {
+    assert(list);
     posn++;
     return (*this);
 }
 
 ConstraintCostListIterator  ConstraintCostListIterator::operator++(int)	// postfix
 {
+    assert(list);
     ConstraintCostListIterator tmp(*this);	// Copy iterator to preserve state before increment
     posn++;
     return tmp;

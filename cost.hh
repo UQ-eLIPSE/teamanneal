@@ -57,7 +57,11 @@ public:
 
     ConstraintCostList* get_costs_for_constraint(Constraint* constraint) const;
     ConstraintCostList* get_costs_for_team(TeamLevel* team) const;
+
+    // If there is a constraint associated with this team level then return the cost information
+    // (Look in the parent team if necessary - data must be found at some level.)
     ConstraintCost* get_constraint_cost(Constraint* constraint, TeamLevel* team) const;
+
     double get_cost_value() const;
     double get_pending_cost_value() const;
 

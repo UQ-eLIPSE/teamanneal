@@ -22,14 +22,15 @@ public:
     void delete_members();
 };
 
+// Iterator over a constraint cost list (above)
 class ConstraintCostListIterator {
 private:
     const ConstraintCostList* list;
     int posn;
 public:
-    ConstraintCostListIterator(const ConstraintCostList* list);
+    ConstraintCostListIterator(const ConstraintCostList* list);	// can be nullptr
     ConstraintCostListIterator(const ConstraintCostList& list);
-    bool done() const;
+    bool done() const;		// true if no list or advanced past end of list
     void reset();
     operator ConstraintCost*() const;
     ConstraintCost* operator->() const;
