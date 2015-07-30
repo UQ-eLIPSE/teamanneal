@@ -254,7 +254,7 @@ void CSV_Row::append(const string& str)
 
 ostream& operator<<(ostream& os, const CSV_Row& row) {
     // For each cell, output its value
-    for(int col = 0; col < row.cells.size(); col++) { 
+    for(unsigned int col = 0; col < row.cells.size(); col++) { 
 	if(col != 0) {
 	    os << ',';
 	}
@@ -306,7 +306,7 @@ CSV_File::CSV_File(char* buffer, char separator, char quote, bool expectTable) :
 {
     char* bufPtr = buffer;
     char* cursor;
-    int col, line, errorFound;
+    int line, errorFound;
     CSV_Column::Type datatype;
     CSV_Row* rowPtr;
 
@@ -323,7 +323,7 @@ CSV_File::CSV_File(char* buffer, char separator, char quote, bool expectTable) :
 	columns.reserve(numColumns);
 
         /* Populate the column names based on the values in the first row */
-        for(col=0; col < numColumns; col++) {
+        for(unsigned int col=0; col < numColumns; col++) {
             assert(cursor);
 	    CSV_Cell* cellPtr = new CSV_Cell();
             if(get_field(&cursor, cellPtr, separator, quote) == CSV_Column::QUOTE_ERROR) {
@@ -345,7 +345,7 @@ CSV_File::CSV_File(char* buffer, char separator, char quote, bool expectTable) :
         /* Ensure we have enough space to store this row in our array of rows */
 	rowPtr = new CSV_Row();
 	rows.push_back(rowPtr);
-	int cellNum = 0;
+	unsigned int cellNum = 0;
         while(cursor) {
 	    CSV_Cell* cellPtr = new CSV_Cell();
 	    rowPtr->append(cellPtr);
@@ -405,7 +405,7 @@ ostream& operator<<(ostream& os, const CSV_File& file) {
     */
     if(file.table) {
 	// Have to output column titles first
-	for(int col = 0; col < file.numColumns; col++) {
+	for(unsigned int col = 0; col < file.numColumns; col++) {
 	    if(col != 0) {
 		os << ',';
 	    }
@@ -414,7 +414,7 @@ ostream& operator<<(ostream& os, const CSV_File& file) {
 	os << endl;
     }
     // For each row, output each cell value
-    for(int row = 0; row < file.rows.size(); row++) {
+    for(unsigned int row = 0; row < file.rows.size(); row++) {
 	os << *(file.rows[row]);
     }
     return os;

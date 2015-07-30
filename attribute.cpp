@@ -84,9 +84,9 @@ const string& Attribute::get_name() const
     return name;
 }
 
-const string& Attribute::get_string_value(int index) const
+const string& Attribute::get_string_value(unsigned int index) const
 {
-    assert(index >=0 && index < stringValues.size());
+    assert(index < stringValues.size());
     return stringValues[index];
 }
 

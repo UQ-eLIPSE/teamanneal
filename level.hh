@@ -53,7 +53,7 @@ public:
     bool is_partition() const;
 
     // Pure virtual - this gets overwritten in the child classes
-    virtual string get_name(int teamNum, int numTeams) const = 0;
+    virtual string get_name(unsigned int teamNum, int numTeams) const = 0;
 };
 
 class NumericalLevel : public Level {
@@ -66,7 +66,7 @@ public:
 	    Attribute* attr, int startAt);
 
     // Other member functions
-    virtual string get_name(int teamNum, int numTeams) const;
+    virtual string get_name(unsigned int teamNum, int numTeams) const;
     void use_leading_zeros();
 };
 
@@ -79,7 +79,7 @@ public:
 	    Attribute* attr, char startAt);
 
     // Other member functions
-    virtual string get_name(int teamNum, int numTeams) const;
+    virtual string get_name(unsigned int teamNum, int numTeams) const;
 };
 
 class StringLevel : public Level {
@@ -92,7 +92,7 @@ public:
 
     // Other member functions
     void add_name(const string& name);
-    virtual string get_name(int teamNum, int numTeams) const;
+    virtual string get_name(unsigned int teamNum, int numTeams) const;
 };
 
 class PartitionLevel : public Level {
@@ -101,7 +101,7 @@ public:
     PartitionLevel(const string& fieldName, Attribute* attr);
 
     // Other member functions
-    virtual string get_name(int teamNum, int numTeams) const;
+    virtual string get_name(unsigned int teamNum, int numTeams) const;
 };
 
 #endif

@@ -148,7 +148,7 @@ void Member::output(ostream& os) const
 	    " memberof: " << (long)parent <<
 	    " partition: " << (long)partition <<
 	    " conditionMet: ";
-    for(int i=0; i < conditionMet.size(); i++) {
+    for(unsigned int i=0; i < conditionMet.size(); i++) {
 	if(conditionMet[i]) {
 	    os << "1";
 	} else {
@@ -348,7 +348,7 @@ void Partition::populate_random_teams()
     assert(children.size() == 0);
 
     // Work out our lowest level - use a reverse iterator.
-    vector<Level* const>::reverse_iterator levelItr = allLevels.rbegin(); 
+    vector<Level*>::const_reverse_iterator levelItr = allLevels.rbegin(); 
     // Iterate over all the levels (from the bottom up) and create our teams at each level
     EntityList* membersToPutInTeams = &allMembers;
     do {
@@ -368,7 +368,7 @@ void Partition::populate_random_teams()
 	}
 	// Iterate over all the teams/members at the level below and put them in teams
 	// at this level
-	for(int i = 0; i < membersToPutInTeams->size(); i++) {
+	for(unsigned int i = 0; i < membersToPutInTeams->size(); i++) {
 	    teamsAtEachLevel[levelNum]->get_subteam(i % numTeams)->add_child((*membersToPutInTeams)[i]);
 	}
 
@@ -394,7 +394,7 @@ void Partition::populate_existing_teams()
     assert(children.size() == 0);
     // Work from the top level down
     // Iterate over all the members in the partition
-    for(int i = 0; i < allMembers.size(); ++i) {
+    for(unsigned int i = 0; i < allMembers.size(); ++i) {
 	Member* member = (Member*)allMembers[i];
 	// Iterate over all the attributes of the member which are the names of the levels
 	// We iterate from the top level down

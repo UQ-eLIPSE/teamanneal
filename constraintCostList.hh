@@ -26,7 +26,7 @@ public:
 class ConstraintCostListIterator {
 private:
     const ConstraintCostList* list;
-    int posn;
+    unsigned int posn;
 public:
     ConstraintCostListIterator(const ConstraintCostList* list);	// can be nullptr
     ConstraintCostListIterator(const ConstraintCostList& list);

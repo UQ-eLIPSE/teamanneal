@@ -111,7 +111,7 @@ NumericalLevel::NumericalLevel(Level* parentLevel, int levelNum,
 }
 
 // Other member functions
-string NumericalLevel::get_name(int teamNum, int numTeams) const
+string NumericalLevel::get_name(unsigned int teamNum, int numTeams) const
 {
     std::stringstream s;
 
@@ -148,7 +148,7 @@ CharacterLevel::CharacterLevel(Level* parentLevel, int levelNum,
 }
 
 // Other member functions
-string CharacterLevel::get_name(int teamNum, int numTeams) const
+string CharacterLevel::get_name(unsigned int teamNum, int numTeams) const
 {
     // startAt will be 'a' or 'A' - print team number as a,b,z,aa,bb,cc etc or A,B,..Z,AA,BB etc.
     std::stringstream s;
@@ -175,7 +175,7 @@ void StringLevel::add_name(const string& name)
     names.push_back(name);
 }
 
-string StringLevel::get_name(int teamNum, int numTeams) const
+string StringLevel::get_name(unsigned int teamNum, int numTeams) const
 {
     std::stringstream s;
     if(teamNum < names.size()) {
@@ -194,7 +194,7 @@ PartitionLevel::PartitionLevel(const string& fieldName, Attribute* attr) :
 {
 }
 
-string PartitionLevel::get_name(int teamNum, int numTeams) const
+string PartitionLevel::get_name(unsigned int teamNum, int numTeams) const
 {
     // FIX - WHAT SHOULD THIS BE
     return "";

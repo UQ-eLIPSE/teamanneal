@@ -54,12 +54,12 @@ public:
     void add_level(Level* level);
     int num_levels() const;		// Excluding partition level
     // Get the n'th level (0 = partition, 1 = top level)
-    Level* get_level(int n) const;
+    Level* get_level(unsigned int n) const;
 
     // Constraint functions
     void add_constraint(Constraint* constraint);
     int num_constraints();
-    Constraint* get_constraint(int n);
+    Constraint* get_constraint(unsigned int n);
     const vector<Constraint*>& all_constraints() const;
     //Attribute* get_partition_field();
     //Attribute* get_id_field();

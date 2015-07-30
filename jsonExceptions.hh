@@ -8,7 +8,7 @@
 
 #include <exception>
 #include <string>
-#include "stringcursor.hh"
+#include "stringCursor.hh"
 
 using namespace std;
 

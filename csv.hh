@@ -56,10 +56,11 @@ typedef enum { NULLCOLUMN, EMPTY, NUMBER, STRING, QUOTE_ERROR, UNKNOWN } Type;
 
 class CSV_File {
 public:
-    bool table;          /* True if this represents a table with named columns */
-    int numColumns;	// Same as columns.size() if table, otherwise records number of columns
-    vector<CSV_Column*> columns;	/* Indexed by column number, only valid for a table */
-    vector<CSV_Row*> rows;		/* Indexed by row number, excludes titles if this is a table */
+    bool table;                 // True if this represents a table with named columns
+    unsigned int numColumns;	// Same as columns.size() if table, otherwise records 
+                                // number of columns
+    vector<CSV_Column*> columns;// Indexed by column number, only valid for a table 
+    vector<CSV_Row*> rows;	// Indexed by row number, excludes titles if this is a table
 
     // Constructors
     // - empty structure

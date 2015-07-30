@@ -123,9 +123,9 @@ int AnnealInfo::num_levels() const
     return allLevels.size() - 1;
 }
 
-Level* AnnealInfo::get_level(int n) const
+Level* AnnealInfo::get_level(unsigned int n) const
 {
-    assert(n >= 0 && n < allLevels.size());
+    assert(n < allLevels.size());
     return allLevels[n];
 }
 
@@ -143,9 +143,9 @@ int AnnealInfo::num_constraints()
     return allConstraints.size();
 }
 
-Constraint* AnnealInfo::get_constraint(int n) 
+Constraint* AnnealInfo::get_constraint(unsigned int n) 
 {
-    assert(n >= 0 && n < allConstraints.size());
+    assert(n < allConstraints.size());
     return allConstraints[n];
 }
 

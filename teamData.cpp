@@ -190,7 +190,7 @@ void AllTeamData::set_names_for_all_teams()
         string teamName = annealInfo.get_team_name_format();
         // For each level, replace any instance of %levelNum (e.g. %0) with the name of the team
         // at that level. Level 0 = partition
-        for(int level = 0; level < levelNames.size(); level++) {
+        for(unsigned int level = 0; level < levelNames.size(); level++) {
             assert(level < 10); // we can only handle single digit levels
             string escapeSequence = "%";
             escapeSequence += to_string(level);

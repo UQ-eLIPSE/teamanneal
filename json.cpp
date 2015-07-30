@@ -213,6 +213,8 @@ const char* JSONValue::type_to_string(JSONType t)
 	default:
 	    assert("Invalid JSONType");
     }
+    // Should never get here - suppress warning
+    return 0;
 }
 
 JSONValue::JSONValue(JSONType t)
@@ -544,7 +546,7 @@ void JSONArray::print(ostream& str) const
     str << increase_indent << "[ ";
     bool first = true;
     bool arrayOfSimpleTypes = true;
-    for(vector<JSONValue* const>::iterator it = members.begin();
+    for(vector<JSONValue*>::const_iterator it = members.begin();
 	    it != members.end(); it++) {
 	arrayOfSimpleTypes = arrayOfSimpleTypes && !((*it)->is_compound_object());
 	if(first) {

@@ -5,7 +5,7 @@
 #ifndef CSV_EXTRACT_HH
 #define CSV_EXTRACT_HH
 
-#include "annealInfo.hh"
+#include "annealinfo.hh"
 #include "person.hh"
 #include <vector>
 #include <string>

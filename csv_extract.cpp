@@ -37,7 +37,7 @@ void extract_people_and_attributes_from_csv_data(AnnealInfo& annealInfo, CSV_Fil
 
 	// For each column in the CSV file, add this data as an attribute 
 	// to our person - either a string attribute or a numerical attribute
-        for(int col=0; col<data->numColumns; col++) {
+        for(unsigned int col=0; col<data->numColumns; col++) {
 	    Attribute* attr = annealInfo.get_attribute(col);
 	    // Add the value of this attribute for this person as one of the possible values for the 
 	    // attribute

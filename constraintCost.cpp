@@ -330,7 +330,7 @@ void SimilarityConstraintCost::commit_pending()
 
     countDistinctValues = countDistinctValuesPendingMove;
     numMembersConsidered = numMembersPendingMove;
-    for(int i=0; i< valueCountsToUpdate.size(); ++i) {
+    for(unsigned int i=0; i< valueCountsToUpdate.size(); ++i) {
 	valueCount[valueCountsToUpdate[i]] = valueCountPendingMove[valueCountsToUpdate[i]];
     }
     valueCountsToUpdate.clear();
@@ -342,7 +342,7 @@ void SimilarityConstraintCost::undo_pending()
 
     countDistinctValuesPendingMove = countDistinctValues;
     numMembersPendingMove = numMembersConsidered;
-    for(int i=0; i< valueCountsToUpdate.size(); ++i) {
+    for(unsigned int i=0; i< valueCountsToUpdate.size(); ++i) {
 	valueCountPendingMove[valueCountsToUpdate[i]] = valueCount[valueCountsToUpdate[i]];
     }
     valueCountsToUpdate.clear();

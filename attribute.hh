@@ -15,7 +15,7 @@ using namespace std;
 class Attribute {
 public:
     enum Type { NUMERICAL, STRING };
-    typedef vector<const string>::iterator ValueIterator;
+    typedef vector<string>::const_iterator ValueIterator;
 
     string name;
     Attribute::Type type;
@@ -37,7 +37,7 @@ public:
     						// (numeric constraints only, value must be added 
 						// separately as a string)
     const string& get_name() const;
-    const string& get_string_value(int index) const;
+    const string& get_string_value(unsigned int index) const;
     bool is_string() const;
     bool is_numeric() const;
     size_t num_values() const;

@@ -67,7 +67,7 @@ public:
 class EntityListIterator {
 private:
     const EntityList& list;
-    int entityNum;
+    unsigned int entityNum;
 public:
     EntityListIterator(const EntityList& list);
     Entity& operator*() const;
