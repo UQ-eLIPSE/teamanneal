@@ -98,7 +98,9 @@ static void teamanneal_create(AllTeamData* teamData, const char* argv[])
     // Init stats
     stats_init(argv[2], argv[3], argv[4]);
     // Set up initial "random" teams
+    cerr << "Populating random teams" << endl;
     teamData->populate_random_teams();
+    cerr << "Initialising costs" << endl;
     initialise_costs(teamData);
 
     // Set the team names
