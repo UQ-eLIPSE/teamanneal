@@ -1,0 +1,21 @@
+{
+  "name": "teamanneal.js",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "author": "eLIPSE",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/papaparse": "^4.1.28",
+    "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "file-saver": "^1.3.3",
+    "papaparse": "^4.1.4",
+    "requirejs": "^2.3.3"
+  }
+}

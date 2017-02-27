@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "umd",
+        
+        "rootDir": "./src",
+
+        "outDir": "./build",
+
+        "sourceMap": true,
+
+        "alwaysStrict": true,
+
+        "forceConsistentCasingInFileNames": true,
+
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+
+        "strictNullChecks": true,
+
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true
+    },
+
+    "include": [
+        "./src/index.ts",
+        "./src/thread.ts"
+    ]
+}
