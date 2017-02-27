@@ -84,6 +84,6 @@
 			"field" : "Gender",
 			"field-operator" : "equal to",
 			"field-value" : "Female"
-		},
+		}
 	]
 }

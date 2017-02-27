@@ -198,6 +198,6 @@
 			"weight" : "ideally has",
 			"operator" : "as similar as possible",
 			"field" : "GradeExpect"
-		},
+		}
 	]
 }
