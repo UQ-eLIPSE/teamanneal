@@ -5,7 +5,7 @@ JSON_TEST_OBJECTS = filedata.o jsonExceptions.o json.o json_test.o exceptions.o 
 TEST_TEAM_SIZE_OBJECTS = test_team_size.o teamData.o annealInfo.o attribute.o person.o level.o \
 	exceptions.o entity.o entityList.o memberIterator.o constraint.o
 TEAMANNEAL_OBJECTS = teamanneal.o csv.o csv_extract.o person.o attribute.o exceptions.o filedata.o \
-	annealinfo.o json.o jsonExtract.o jsonExceptions.o stringCursor.o level.o constraint.o \
+	annealInfo.o json.o jsonExtract.o jsonExceptions.o stringCursor.o level.o constraint.o \
 	teamData.o csv_output.o constraintCost.o entity.o memberIterator.o entityList.o cost.o \
 	constraintCostList.o stats.o moveStats.o anneal.o moveSet.o
 
@@ -19,30 +19,30 @@ CC=gcc
 CXX=g++
 
 # Default C compilation options
-CFLAGS=-Wall -MMD -Ofast
+# CFLAGS=-Wall -MMD -Ofast
 CFLAGS=-Wall -MMD -g
 
 #Default C++ compilation options
-CXXFLAGS=-Wall -std=c++11 -MMD -g -DDEBUG -DRECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK -DCONSTANT_RANDOM_SEED -DSINGLE_THREAD
-CXXFLAGS=-Wall -std=c++11 -MMD -g -DDEBUG -DRECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK -DCONSTANT_RANDOM_SEED -DSINGLE_THREAD
-CXXFLAGS=-Wall -std=c++11 -MMD -Ofast 
+#CXXFLAGS=-Wall -std=c++11 -MMD -g -DDEBUG -DRECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK -DCONSTANT_RANDOM_SEED -DSINGLE_THREAD
+#CXXFLAGS=-Wall -std=c++11 -MMD -g -DDEBUG -DRECALCULATE_COSTS_FROM_SCRATCH_TO_DOUBLE_CHECK -DCONSTANT_RANDOM_SEED -DSINGLE_THREAD
+CXXFLAGS=-Wall -std=c++11 -MMD -O3
 
 all: $(PROGRAMS)
 
 filedata_test: $(FILEDATA_TEST_OBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 csv_test: $(CSV_TEST_OBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 json_test: $(JSON_TEST_OBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 teamanneal: $(TEAMANNEAL_OBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 test_team_size: $(TEST_TEAM_SIZE_OBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -pthread
 
 clean:
 	rm -f $(PROGRAMS) *.o *.d

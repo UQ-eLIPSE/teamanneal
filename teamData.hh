@@ -7,7 +7,7 @@
 
 #include "person.hh"
 #include "entity.hh"
-#include "annealinfo.hh"
+#include "annealInfo.hh"
 #include "level.hh"
 #include <map>
 #include <string>

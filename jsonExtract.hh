@@ -6,7 +6,7 @@
 #ifndef JSONEXTRACT_HH
 #define JSONEXTRACT_HH
 
-#include "annealinfo.hh"
+#include "annealInfo.hh"
 #include "json.hh"
 #include <exception>
 

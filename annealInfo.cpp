@@ -2,7 +2,7 @@
 // annealinfo.cpp
 //
 
-#include "annealinfo.hh"
+#include "annealInfo.hh"
 #include <assert.h>
 #include <sstream>
 

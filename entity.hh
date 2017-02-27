@@ -6,7 +6,7 @@
 #define ENTITY_HH
 
 #include "person.hh"
-#include "annealinfo.hh"
+#include "annealInfo.hh"
 #include "entityList.hh"
 #include "memberIterator.hh"
 #include <vector>
