@@ -1,129 +1,83 @@
-import * as Config from "./Config";
-
-import * as Constraint from "./Constraint";
+/*
+ * AnnealRound
+ * 
+ * 
+ */
 import * as Partition from "./Partition";
-
 import * as Util from "./Util";
-import * as Random from "./Random";
-
 import * as AnnealOperation from "./AnnealOperation";
 import * as CostFunction from "./CostFunction";
 
 
 
-
-
-export interface AnnealRound {
-    // readonly temperature: {
-    //     start: number,
-    //     end: number,
-    // }
-
-    readonly startTemperature: number,
-
-    readonly partition: Partition.PartitionWithGroup,
-    readonly cost: number,
-    readonly costDiff: number,
-
-    readonly operation: {
-        readonly name: string,
-
-        readonly startTime: number,
-        readonly endTime: number,
-        readonly executionMs: number,
-
-        readonly details: AnnealOperation.OpOutputDetail | null,
-    }
-
-    readonly time: {
-        start: number,
-        end: number,
-        executionMs: number,
-    }
-
-    readonly accepted: boolean,
+export interface AnnealRoundResult extends ReadonlyArray<Partition.Partition | number> {
+    /** partition */        0: Partition.Partition,
+    /** cost */             1: number,
+    /** costDiff */         2: number,
+    /** accepted */         3: number,
 }
 
 
 
 
 
+export const __getter = <T>(i: number) => (r: AnnealRoundResult): T => (r as any)[i];
+export const __setter = <T>(i: number) => (r: AnnealRoundResult) => (val: T): T => (r as any)[i] = val;
+
+export const getPartition = __getter<Partition.Partition>(0);
+export const getCost = __getter<number>(1);
+export const getCostDiff = __getter<number>(2);
+export const getAccepted = __getter<number>(3);
+
+
+
+
 export const newAnnealRound =
-    (constraints: ReadonlyArray<Constraint.Constraint<Config.Constraint>>) =>
-        (prevPartition: Partition.PartitionWithGroup) =>
+    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
+        (prevPartition: Partition.Partition) =>
             (prevCost: number) =>
                 (prevTemp: number) => {
-                    const timerStart = Util.timer();
-                    const startTime = Util.timestamp();
-
                     // Perform operation
                     const annealOperation = AnnealOperation.pickRandomAnnealOperation();
-                    const operationResult = annealOperation(prevPartition);
+                    const partition = annealOperation(prevPartition);
 
                     // Pick apart the result
-                    const startTemperature = prevTemp;
-                    const partition = operationResult.partition;
-                    const cost = partition.groups.reduce(
-                        (cost, group) => {
-                            return cost + CostFunction.calculateCostOfGroup(constraints)(group)
+                    const cost = partition.reduce(
+                        (cost, recordSet) => {
+                            return cost +
+                                CostFunction.getCostUsingAppliedRecordSetCostFunctions(appliedRecordSetCostFunctions)(recordSet);
                         },
                         0
                     );
                     const costDiff = calculateCostDifference(prevCost)(cost);
 
-                    // // Calculate new temperature
-                    // const remainingTemperature = calculateNewTemperature(startTemperature);
-
                     // Check acceptance
-                    const accepted = isNewCostAcceptable(prevTemp)(prevCost)(cost);
+                    const accepted = Util.boolToInt(isNewCostAcceptable(prevTemp)(prevCost)(cost));
 
-
-                    const output: AnnealRound = {
-                        // temperature: {
-                        //     start: startTemperature,
-                        //     end: remainingTemperature,
-                        // },
-
-                        startTemperature,
-
+                    const output: AnnealRoundResult = [
                         partition,
                         cost,
                         costDiff,
-
-                        operation: {
-                            name: operationResult.name,
-                            startTime: operationResult.startTime,
-                            endTime: operationResult.endTime,
-                            executionMs: operationResult.executionMs,
-                            details: operationResult.details,
-                        },
-
                         accepted,
-
-                        time: {
-                            start: startTime,
-                            end: Util.timestamp(),
-                            executionMs: Util.timer(timerStart),
-                        }
-                    }
+                    ];
 
                     return output;
                 }
 
-export const calculateCostDifference =
+const calculateCostDifference =
     (prevCost: number) =>
         (newCost: number) => {
             return newCost - prevCost;
         }
 
-export const isNewCostBetter =
+const isNewCostBetter =
     (prevCost: number) =>
         (newCost: number) => {
             // We should expect to go down in cost if solutions are better
             return calculateCostDifference(prevCost)(newCost) < 0;
         }
 
-export const isNewCostAcceptable =
+const isNewCostAcceptable =
     (prevTemp: number) =>
         (prevCost: number) =>
             (newCost: number) => {
@@ -136,16 +90,19 @@ export const isNewCostAcceptable =
                 return shouldWeAcceptNewBadCost(prevTemp)(prevCost)(newCost);
             }
 
-export const shouldWeAcceptNewBadCost =
+const shouldWeAcceptNewBadCost =
     (prevTemp: number) =>
         (prevCost: number) =>
             (newCost: number) => {
                 const costDiff = calculateCostDifference(prevCost)(newCost);
 
                 const acceptProbability = Math.exp(-costDiff / prevTemp);
-                const testThreshold = Random.generateRandomFloat();
+                const testThreshold = Util.randFloat64();
 
                 // Over time, it becomes less likely that the random test threshold
                 // will result in the system accepting bad rounds
                 return testThreshold < acceptProbability;
             }
+
+export const isAccepted =
+    (result: AnnealRoundResult) => Util.intToBool(getAccepted(result));

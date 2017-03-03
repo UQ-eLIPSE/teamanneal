@@ -1,19 +1,15 @@
-import * as Config from "./Config";
-
-import * as Constraint from "./Constraint";
+/*
+ * Anneal
+ * 
+ * 
+ */
+import * as SourceRecordSet from "./SourceRecordSet";
 import * as Partition from "./Partition";
-
 import * as Util from "./Util";
-
 import * as AnnealRound from "./AnnealRound";
+import * as CostFunction from "./CostFunction";
 
 
-
-
-export interface AnnealRunResult {
-    history: ReadonlyArray<ReadonlyArray<AnnealRound.AnnealRound>>,
-    result: AnnealRound.AnnealRound,
-}
 
 
 
@@ -27,15 +23,19 @@ export const defaultStepTemperatureScaling = 0.98;
 export const defaultAvgUphillProbabilityThreshold: number = 0.0025;
 export const defaultAvgProbabilityWindowSize: number = 8;
 
+
+
+
+
 export const calculateNewTemperature =
     (currTemp: number) => defaultStepTemperatureScaling * currTemp;
 
 export const guessStartingTemperature =
-    (constraints: ReadonlyArray<Constraint.Constraint<Config.Constraint>>) =>
-        (partition: Partition.PartitionWithGroup) =>
+    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
+        (partition: Partition.Partition) =>
             (testAttempts: number) => {
                 // Try out attempts and keep track of costs
-                const performRound = () => AnnealRound.newAnnealRound(constraints)(partition)(0)(0);
+                const performRound = () => AnnealRound.newAnnealRound(appliedRecordSetCostFunctions)(partition)(0)(0);
 
                 const costs = Util.blankArray(testAttempts).map(
                     () => {
@@ -43,7 +43,7 @@ export const guessStartingTemperature =
                         let costDiff: number;
 
                         do {
-                            costDiff = performRound().costDiff;
+                            costDiff = AnnealRound.getCostDiff(performRound());
                         } while (costDiff === 0);
 
                         return costDiff;
@@ -61,8 +61,8 @@ export const guessStartingTemperature =
             }
 
 export const performIterations =
-    (constraints: ReadonlyArray<Constraint.Constraint<Config.Constraint>>) =>
-        (startPartition: Partition.PartitionWithGroup) =>
+    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
+        (startPartition: Partition.Partition) =>
             (startCost: number) =>
                 (startTemp: number) =>
                     (iterations: number) => {
@@ -72,44 +72,55 @@ export const performIterations =
                         let T = startTemp;          // temperature
 
                         // Create function for performing round
-                        const performRound = AnnealRound.newAnnealRound(constraints);
+                        const performRound = AnnealRound.newAnnealRound(appliedRecordSetCostFunctions);
 
-                        // Return array of results
-                        return Util.blankArray(iterations).map(
-                            () => {
-                                // Perform round
-                                const result = performRound(p)($)(T);
+                        // Run iterations
+                        return Util.blankArray(iterations).map(() => {
+                            // Perform round
+                            const roundResult = performRound(p)($)(T);
 
-                                // If accepted, update state
-                                if (result.accepted) {
-                                    p = result.partition;
-                                    $ = result.cost;
-                                    T = calculateNewTemperature(T)
-                                }
-
-                                return result;
+                            // If accepted, update state
+                            const accepted = AnnealRound.isAccepted(roundResult);
+                            if (accepted) {
+                                p = AnnealRound.getPartition(roundResult);
+                                $ = AnnealRound.getCost(roundResult);
                             }
-                        );
+                            
+                            // Always decrease temperature with every iteration
+                            T = calculateNewTemperature(T);
+
+                            const costDiff = AnnealRound.getCostDiff(roundResult);
+
+                            const output: AnnealIterationResult = [
+                                p,
+                                $,
+                                costDiff,
+                                Util.boolToInt(accepted),
+                                T,
+                            ];
+
+                            return output;
+                        });
                     }
 
 export const run =
-    (constraints: ReadonlyArray<Constraint.Constraint<Config.Constraint>>) =>
-        (startPartition: Partition.PartitionWithGroup): AnnealRunResult => {
+    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
+        (startPartition: Partition.Partition): AnnealIterationResult => {
             // Copying variables and shortening names
-            const c = constraints;                  // constraints
+            const f = appliedRecordSetCostFunctions;// pre-applied record set cost functions
             let p = startPartition;                 // partition
-            const numRecords = p.records.length;    // number of records in partition
+            const numRecords =                      // number of records in partition
+                p.reduce((acc, recordSet) => acc + SourceRecordSet.size(recordSet), 0);
             let $ = 0;                              // cost
             let T =                                 // temperature
-                guessStartingTemperature(c)(p)(defaultTestTemperatureAttempts);
+                guessStartingTemperature(f)(p)(defaultTestTemperatureAttempts);
 
             let numOfAcceptedUphill: number = 0;
             let numOfUphill: number = 0;
             const uphillAcceptanceProbabilityWindow: number[] =
                 Util.initArray(1)(defaultAvgProbabilityWindowSize);
 
-            let bestResult: AnnealRound.AnnealRound | undefined;
-            let resultHistory: AnnealRound.AnnealRound[][] = [];
+            let bestResult: AnnealIterationResult | undefined;
             let itScalar: number = defaultStepIterationScalar;  // iteration number scalar for next round
 
             // Set up helper functions
@@ -118,14 +129,14 @@ export const run =
              * @return {boolean} Whether the input result was considered "best" (lowest cost) so far
              */
             const updateBestResult =
-                (result: AnnealRound.AnnealRound) => {
+                (result: AnnealIterationResult) => {
                     // If best result does not exist or this result is better; update
 
                     if (!result) {
                         return false;
                     }
 
-                    if (!bestResult || result.cost < bestResult.cost) {
+                    if (!bestResult || getCost(result) < getCost(bestResult)) {
                         bestResult = result;
                         return true;
                     }
@@ -146,16 +157,16 @@ export const run =
              * @return {number[]} [number of accepted uphill rounds, number of total uphill rounds]
              */
             const updateUphillAcceptanceStats =
-                (iterationResults: AnnealRound.AnnealRound[]) => {
+                (iterationResults: AnnealIterationResult[]) => {
                     iterationResults.forEach(
-                        (round) => {
+                        (iterationResult) => {
                             // Only consider uphill
-                            if (round.costDiff <= 0) {
+                            if (getCostDiff(iterationResult) <= 0) {
                                 return;
                             }
 
                             // Accumulate accepted/total uphill figures
-                            if (round.accepted) {
+                            if (isAccepted(iterationResult)) {
                                 ++numOfAcceptedUphill;
                             }
 
@@ -181,7 +192,7 @@ export const run =
 
 
             // Curry the iteration function with constant constraints
-            const iterate = performIterations(c);
+            const iterate = performIterations(f);
 
             // Main annealing iteration loop
             while (true) {
@@ -189,26 +200,20 @@ export const run =
                 const iterationResults = iterate(p)($)(T)(numRecords * itScalar);
                 const endResult = iterationResults[iterationResults.length - 1];
 
-                resultHistory.push(iterationResults);
-
                 // Determine if end result was best so far; update state accordingly
                 const endResultWasBest = updateBestResult(endResult);
 
                 if (endResultWasBest) {
-                    p = endResult.partition;
-                    $ = endResult.cost;
+                    p = getPartition(endResult);
+                    $ = getCost(endResult);
                 }
 
-                // Temperature is always updated
-                // (unless you miraculously gained energy somewhere)
-                T = calculateNewTemperature(endResult.startTemperature);
+                // Get end temperature from iterations
+                T = getTemperature(endResult);
 
                 // If we're already at cost or temp = 0 then stop
                 if ($ === 0 || T < temperatureTolerance) {
-                    return {
-                        history: resultHistory,
-                        result: bestResult!,        // TODO: Check `bestResult` undefinedness
-                    };
+                    return bestResult!;
                 }
 
                 // Update uphill acceptance info
@@ -218,15 +223,15 @@ export const run =
                 const avgUphillProbability = getAvgWindowUphillAcceptanceProbability();
 
                 if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
-                    return {
-                        history: resultHistory,
-                        result: bestResult!,        // TODO: Check `bestResult` undefinedness
-                    };
+                    return bestResult!;
                 }
 
                 // Set iteration scalar depending on uphill acceptance rate
                 const uphillAcceptanceRate = getUphillAcceptanceRate();
 
+
+                // TODO: Acceptance thresholds/scalars should be
+                //       extracted into own variables
                 if (uphillAcceptanceRate > 0.7 || uphillAcceptanceRate < 0.2) {
                     itScalar = 4;
                 } else if (uphillAcceptanceRate > 0.6 || uphillAcceptanceRate < 0.3) {
@@ -237,3 +242,30 @@ export const run =
             }
 
         }
+
+
+
+
+
+
+
+export interface AnnealIterationResult extends ReadonlyArray<Partition.Partition | number> {
+    /** partition */        0: Partition.Partition,
+    /** cost */             1: number,
+    /** costDiff */         2: number,
+    /** accepted */         3: number,
+    /** temperature */      4: number,
+
+}
+
+export const __getter = <T>(i: number) => (r: AnnealIterationResult): T => (r as any)[i];
+export const __setter = <T>(i: number) => (r: AnnealIterationResult) => (val: T): T => (r as any)[i] = val;
+
+export const getPartition = __getter<Partition.Partition>(0);
+export const getCost = __getter<number>(1);
+export const getCostDiff = __getter<number>(2);
+export const getAccepted = __getter<number>(3);
+export const getTemperature = __getter<number>(4);
+
+export const isAccepted =
+    (result: AnnealIterationResult) => Util.intToBool(getAccepted(result));

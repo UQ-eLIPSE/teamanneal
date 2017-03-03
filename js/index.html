@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="utf-8">
-
+    
+    <script src="./node_modules/promise-polyfill/promise.min.js"></script>
     <script src="./node_modules/file-saver/FileSaver.min.js"></script>
     <script src="./node_modules/papaparse/papaparse.min.js"></script>
 
@@ -20,10 +21,12 @@
     <h1>teamanneal.js</h1>
     <ul>
         <li>Source Records (*.csv): <input type="file" id="csvFileInput" accept=".csv"></li>
-        <li>Constraints (*.json): <input type="file" id="constraintsFileInput" accept=".json"></li>
+        <li>Config (*.json): <input type="file" id="configFileInput" accept=".json"></li>
     </ul>
     <p>
-        <button id="performAnneal">Perform Anneal</button> (Will produce CSV for download)
+        <button id="performAnneal">Perform Anneal</button>
+        <button id="performAnnealSingleThread">Perform Anneal (single thread)</button>
+        <button id="killThreads">Kill Threads</button>
     </p>
     <hr>
     <h3>Notes</h3>

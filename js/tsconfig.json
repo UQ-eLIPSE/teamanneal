@@ -1,7 +1,13 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es5",
         "module": "umd",
+        "lib": [
+            "dom",
+            "es5",
+            "es2015.promise",
+            "es2015.collection"
+        ],
         
         "rootDir": "./src",
 
@@ -21,7 +27,10 @@
 
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+
+
+        "allowUnreachableCode": true
     },
 
     "include": [

@@ -1,5 +1,12 @@
-import * as Config from "./Config";
+/*
+ * TestFunction
+ * 
+ * 
+ */
 import * as SourceRecord from "./SourceRecord";
+import * as SourceRecordSet from "./SourceRecordSet";
+import * as Constraint from "./Constraint";
+import * as Util from "./Util";
 
 
 export type RecordValueTestFunction =
@@ -12,7 +19,7 @@ export type RecordTestFunction =
 
 
 export const countTestsOverRecords =
-    (records: SourceRecord.Set) =>
+    (records: SourceRecordSet.SourceRecordSet) =>
         (testFunc: RecordTestFunction) => {
             return records.reduce(
                 (count, record) => count + (testFunc(record) ? 1 : 0),
@@ -21,23 +28,19 @@ export const countTestsOverRecords =
         }
 
 export const mapFieldOperatorToRecordValueTestFunction =
-    (fieldOperator: Config.ConstraintCountableFieldOperator) => {
-        switch (fieldOperator) {
-            case "equal to":
-                return eq;
-            case "not equal to":
-                return neq;
-            case "less than or equal to":
-                return lte;
-            case "less than":
-                return lt;
-            case "greater than or equal to":
-                return gte;
-            case "greater than":
-                return gt;
-        }
+    (fieldOperator: Constraint.CountableFieldOperator) => {
+        // Field operator value check
+        const $ = (op: Constraint.CountableFieldOperator) => fieldOperator === op;
 
-        throw new Error(`Unexpected field operator "${fieldOperator}"`);
+        // Lookup
+        if ($(0)) return eq;        // "equal to"
+        if ($(1)) return neq;       // "not equal to"
+        if ($(2)) return lte;       // "less than or equal to"
+        if ($(3)) return lt;        // "less than"
+        if ($(4)) return gte;       // "greater than or equal to"
+        if ($(5)) return gt;        // "greater than"
+
+        return Util.throwErr(new Error(`TestFunction: Unexpected field operator "${fieldOperator}"`))
     }
 
 
@@ -77,10 +80,8 @@ export const gte: RecordValueTestFunction =
 export const testRecord =
     (testFunc: RecordValueTestFunction) =>
         (targetValue: SourceRecord.Value) =>
-            (column: string): RecordTestFunction =>
+            (columnIndex: number): RecordTestFunction =>
                 (record) => {
-                    const recordValue = SourceRecord.getRecordValue(record)(column);
+                    const recordValue = SourceRecord.get(record)(columnIndex);
                     return testFunc(targetValue)(recordValue);
                 }
-
-

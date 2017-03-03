@@ -1,110 +1,76 @@
-import * as Config from "./Config";
+/*
+ * CostFunction
+ * 
+ * 
+ */
 import * as SourceRecord from "./SourceRecord";
-
+import * as SourceRecordSet from "./SourceRecordSet";
 import * as Constraint from "./Constraint";
 import * as ColumnInfo from "./ColumnInfo";
-
-import * as Group from "./Group";
-
+import * as ColumnDesc from "./ColumnDesc";
 import * as TestFunction from "./TestFunction";
 import * as Util from "./Util";
 
 
 
 
-export type CostFunction<T extends Constraint.Constraint<Config.ConstraintBase>> =
-    (constraint: T) =>
-        (records: SourceRecord.Set) => number;
+export type CostFunction =
+    (columnInfo: ColumnInfo.ColumnInfo) =>
+        (constraint: Constraint.Constraint) =>
+            (records: SourceRecordSet.SourceRecordSet) => number;
+
+
+export type AppliedRecordSetCostFunction =
+    (records: SourceRecordSet.SourceRecordSet) => number;
+
 
 
 export const mapWeightToCost =
-    (weight: Config.ConstraintWeight) => {
-        switch (weight) {
-            case "must have":
-                return 1000;
-            case "should have":
-                return 50;
-            case "ideally has":
-                return 10;
-            case "could have":
-                return 2;
-        }
+    (weight: Constraint.Weight) => {
+        // Weight value check
+        const $ = (w: Constraint.Weight) => weight === w;
 
-        throw new Error(`Unexpected constraint weight "${weight}"`);
+        // Lookup
+        if ($(0)) return 1000;      // "must have"
+        if ($(1)) return 50;        // "should have"
+        if ($(2)) return 10;        // "ideally has"
+        if ($(3)) return 2;         // "could have"
+
+        return Util.throwErr(new Error(`CostFunction: Unexpected constraint weight "${weight}"`))
     }
 
-export const mapCountableThresholdOperatorToCostFunction =
-    (operator: Config.ConstraintCountableThresholdOperator) => {
-        switch (operator) {
-            case "exactly":
-                return Countable.Threshold.exactly;
-            case "not exactly":
-                return Countable.Threshold.notExactly;
-            case "at least":
-                return Countable.Threshold.atLeast;
-            case "at most":
-                return Countable.Threshold.atMost;
-        }
+export const mapOperatorToCostFunction =
+    (operator: Constraint.Operator) => {
+        // Operator value check
+        const $ = (op: Constraint.Operator) => operator === op;
 
-        throw new Error(`Unexpected countable constraint threshold operator "${operator}"`);
+        // Lookup
+        if ($(0)) return Countable.Threshold.exactly;       // "exactly"
+        if ($(1)) return Countable.Threshold.notExactly;    // "not exactly"
+        if ($(2)) return Countable.Threshold.atLeast;       // "at least"
+        if ($(3)) return Countable.Threshold.atMost;        // "at most"
+        if ($(4)) return Countable.Limit.maximise;          // "as many as possible"
+        if ($(5)) return Countable.Limit.minimise;          // "as few as possible"
+        if ($(6)) return Similarity.similar;                // "as similar as possible"
+        if ($(7)) return Similarity.different;              // "as different as possible"
+
+        return Util.throwErr(new Error(`CostFunction: Unexpected constraint operator "${operator}"`))
     }
-
-export const mapCountableLimitOperatorToCostFunction =
-    (operator: Config.ConstraintCountableLimitOperator) => {
-        switch (operator) {
-            case "as many as possible":
-                return Countable.Limit.maximise;
-            case "as few as possible":
-                return Countable.Limit.maximise;
-        }
-
-        throw new Error(`Unexpected countable constraint limit operator "${operator}"`);
-    }
-
-export const mapSimilarityTypeOperatorToCostFunction =
-    (type: "number" | "string") =>
-        (operator: Config.ConstraintSimilarityOperator) => {
-            switch (type) {
-                case "number": {
-                    switch (operator) {
-                        case "as similar as possible":
-                            return Similarity.Number.similar;
-                        case "as different as possible":
-                            return Similarity.Number.different;
-                    }
-
-                    throw new Error(`Unexpected similarity constraint operator "${operator}"`);
-                }
-
-                case "string": {
-                    switch (operator) {
-                        case "as similar as possible":
-                            return Similarity.String.similar;
-                        case "as different as possible":
-                            return Similarity.String.different;
-                    }
-
-                    throw new Error(`Unexpected similarity constraint operator "${operator}"`);
-                }
-            }
-
-            throw new Error(`Unexpected similarity constraint type "${type}"`);
-        }
 
 export namespace Countable {
     export namespace Threshold {
-        type Constraint = Constraint.Constraint<Config.ConstraintCountableThreshold>;
         type ThresholdFunction = (threshold: number) => (count: number) => boolean;
 
         export const costFunction =
             (thresholdFunc: ThresholdFunction) =>
-                (testFunc: TestFunction.RecordTestFunction): CostFunction<Constraint> =>
-                    (constraint) =>
-                        (records) => {
-                            const testCount = TestFunction.countTestsOverRecords(records)(testFunc);
+                (testFunc: TestFunction.RecordTestFunction): CostFunction =>
+                    (_columnInfo) =>
+                        (constraint) =>
+                            (records) => {
+                                const testCount = TestFunction.countTestsOverRecords(records)(testFunc);
 
-                            return thresholdFunc(constraint.description.count)(testCount) ? 0 : mapWeightToCost(constraint.description.weight);
-                        }
+                                return thresholdFunc(Constraint.getCount(constraint))(testCount) ? 0 : mapWeightToCost(Constraint.getWeight(constraint));
+                            }
 
         export const exactly = costFunction((threshold) => (count) => count === threshold);
         export const notExactly = costFunction((threshold) => (count) => count !== threshold);
@@ -113,18 +79,18 @@ export namespace Countable {
     }
 
     export namespace Limit {
-        type Constraint = Constraint.Constraint<Config.ConstraintCountableLimit>;
         type CostBaseFunction = (size: number) => (count: number) => number;
 
         export const costFunction =
             (costBaseFunc: CostBaseFunction) =>
-                (testFunc: TestFunction.RecordTestFunction): CostFunction<Constraint> =>
-                    (constraint) =>
-                        (records) => {
-                            const testCount = TestFunction.countTestsOverRecords(records)(testFunc);
+                (testFunc: TestFunction.RecordTestFunction): CostFunction =>
+                    (_columnInfo) =>
+                        (constraint) =>
+                            (records) => {
+                                const testCount = TestFunction.countTestsOverRecords(records)(testFunc);
 
-                            return Math.pow(costBaseFunc(records.length)(testCount), 1.5) * mapWeightToCost(constraint.description.weight);
-                        }
+                                return Math.pow(costBaseFunc(records.length)(testCount), 1.5) * mapWeightToCost(Constraint.getWeight(constraint));
+                            }
 
         export const maximise = costFunction((size) => (count) => size - count);
         export const minimise = costFunction((_size) => (count) => count);
@@ -132,149 +98,162 @@ export namespace Countable {
 }
 
 export namespace Similarity {
-    type Constraint = Constraint.Constraint<Config.ConstraintSimilarity>;
+    export const similar =
+        (_testFunc: TestFunction.RecordTestFunction): CostFunction =>
+            (columnInfo) =>
+                (constraint) => {
+                    const columnIndex = Constraint.getColumnIndex(constraint);
+                    const columnDesc = ColumnInfo.get(columnInfo)(columnIndex);
+                    const cost = mapWeightToCost(Constraint.getWeight(constraint));
 
-    export namespace Number {
-        export const similar: CostFunction<Constraint> =
-            (constraint) =>
-                (records) => {
-                    if (!records.length) {
-                        return 0;
+                    if (ColumnDesc.isNumeric(columnDesc)) {
+                        return (records) => {
+                            if (!records.length) {
+                                return 0;
+                            }
+
+                            const range = ColumnDesc.getRange(columnDesc);
+
+                            // Get record values (numbers); drop any NaN values
+                            const recordValues = records
+                                .map(record => record[columnIndex])
+                                .filter(val => !Util.isNaN(val));
+
+                            return cost * 2 * Util.stdDev(recordValues) / range;
+                        };
                     }
 
-                    if (!ColumnInfo.isNumeric(constraint.columnInfo)) {
-                        throw new Error("Column not numeric");
+                    if (ColumnDesc.isString(columnDesc)) {
+                        return (records) => {
+                            if (!records.length) {
+                                return 0;
+                            }
+
+                            // Get record values (numbers); drop any NaN values
+                            const recordValues = records
+                                .map(record => record[columnIndex])
+                                .filter(val => !Util.isNaN(val));
+
+                            // Create set of string pointers; determine size = number of distinct values
+                            const distinctRecordValues = recordValues
+                                .reduce((set, val) => {
+                                    set.add(val);
+                                    return set;
+                                },
+                                new Set<SourceRecord.Value>()
+                                )
+                                .size;
+
+                            if (distinctRecordValues <= 1) {
+                                return 0;
+                            }
+
+                            return cost * (distinctRecordValues - 1);
+                        };
                     }
 
-                    const range = constraint.columnInfo.range.max - constraint.columnInfo.range.min;
-                    const column = constraint.description.field;
-
-                    // Number casting is done regardless because blank strings may appear
-                    const recordValues = records.map(record => +(SourceRecord.getRecordValue(record)(column) || 0));
-                    return mapWeightToCost(constraint.description.weight) * 2 * Util.stdDev(recordValues) / range;
+                    return Util.throwErr(new Error(`CostFunction: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
                 }
 
-        export const different: CostFunction<Constraint> =
-            (constraint) =>
-                (records) => {
-                    if (!records.length) {
-                        return 0;
+    export const different =
+        (_testFunc: TestFunction.RecordTestFunction): CostFunction =>
+            (columnInfo) =>
+                (constraint) => {
+                    const columnIndex = Constraint.getColumnIndex(constraint);
+                    const columnDesc = ColumnInfo.get(columnInfo)(columnIndex);
+                    const cost = mapWeightToCost(Constraint.getWeight(constraint));
+
+                    if (ColumnDesc.isNumeric(columnDesc)) {
+                        return (records) => {
+                            if (!records.length) {
+                                return 0;
+                            }
+
+                            const range = ColumnDesc.getRange(columnDesc);
+
+                            // Get record values (numbers); drop any NaN values
+                            const recordValues = records
+                                .map(record => record[columnIndex])
+                                .filter(val => !Util.isNaN(val));
+
+                            return cost * (range - 2 * Util.stdDev(recordValues)) / range;
+                        };
                     }
 
-                    if (!ColumnInfo.isNumeric(constraint.columnInfo)) {
-                        throw new Error("Column not numeric");
+                    if (ColumnDesc.isString(columnDesc)) {
+                        return (records) => {
+                            if (!records.length) {
+                                return 0;
+                            }
+
+                            // Get record values (numbers); drop any NaN values
+                            const recordValues = records
+                                .map(record => record[columnIndex])
+                                .filter(val => !Util.isNaN(val));
+
+                            // Maximum number of different values is either the size of the input records or 
+                            // the number of possible distinct values in the column
+                            const maxPossibleValues = Math.min(records.length, ColumnDesc.getStringDistinct(columnDesc));
+
+                            // Create set of string pointers; determine size = number of distinct values
+                            const distinctRecordValues = recordValues
+                                .reduce((set, val) => {
+                                    set.add(val);
+                                    return set;
+                                },
+                                new Set<SourceRecord.Value>()
+                                )
+                                .size;
+
+                            return cost * (maxPossibleValues - distinctRecordValues);
+                        };
                     }
 
-                    const range = constraint.columnInfo.range.max - constraint.columnInfo.range.min;
-                    const column = constraint.description.field;
-
-                    // Number casting is done regardless because blank strings may appear
-                    const recordValues = records.map(record => +(SourceRecord.getRecordValue(record)(column) || 0));
-                    return mapWeightToCost(constraint.description.weight) * (range - 2 * Util.stdDev(recordValues)) / range;
+                    return Util.throwErr(new Error(`CostFunction: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
                 }
-    }
-
-    export namespace String {
-        export const similar: CostFunction<Constraint> =
-            (constraint) =>
-                (records) => {
-                    const column = constraint.description.field;
-                    const distinctRecordValues = ColumnInfo.getColumnValueSet(records)(column).size;
-
-                    if (distinctRecordValues <= 1) {
-                        return 0;
-                    }
-
-                    return (distinctRecordValues - 1) * mapWeightToCost(constraint.description.weight);
-                }
-
-        export const different: CostFunction<Constraint> =
-            (constraint) =>
-                (records) => {
-                    if (!records.length) {
-                        return 0;
-                    }
-
-                    if (!ColumnInfo.isString(constraint.columnInfo)) {
-                        throw new Error("Column not string");
-                    }
-
-                    const column = constraint.description.field;
-                    const distinctRecordValues = ColumnInfo.getColumnValueSet(records)(column).size;
-
-                    const maxPossibleValues = Math.min(records.length, constraint.columnInfo.distinctValues);
-
-                    return (maxPossibleValues - distinctRecordValues) * mapWeightToCost(constraint.description.weight);
-                }
-    }
-
 }
 
+export const generateAppliedRecordSetCostFunctions =
+    (columnInfo: ColumnInfo.ColumnInfo) =>
+        (constraints: Constraint.Constraint[]): AppliedRecordSetCostFunction[] => {
+            return constraints.map(
+                (constraint) => {
+                    const operator = Constraint.getOperator(constraint);
+                    const columnIndex = Constraint.getColumnIndex(constraint);
 
+                    // Work out record test function by type
+                    let recordTestFunc: TestFunction.RecordTestFunction;
 
-
-
-
-
-export const calculateCostOfGroup =
-    (constraints: ReadonlyArray<Constraint.Constraint<Config.Constraint>>) =>
-        (group: Group.Group) => {
-            const records = group.records;
-
-            return constraints.reduce(
-                (cost, constraint) => {
-                    if (Constraint.isConstraintCountableThreshold(constraint)) {
-                        // Pull in the info we need for costing
-                        const targetValue = constraint.description["field-value"];
-                        const column = constraint.description.field;
+                    if (Constraint.isCountable(constraint)) {
+                        const targetValue = Constraint.getFieldValue(constraint);
+                        const fieldOperator = Constraint.getFieldOperator(constraint);
 
                         // Get the record value test function
-                        const recordValueTestOp = constraint.description["field-operator"];
-                        const recordValueTestFunc = TestFunction.mapFieldOperatorToRecordValueTestFunction(recordValueTestOp);
-                        const recordTestFunc = TestFunction.testRecord(recordValueTestFunc)(targetValue)(column);
+                        const recordValueTestFunc = TestFunction.mapFieldOperatorToRecordValueTestFunction(fieldOperator);
+                        recordTestFunc = TestFunction.testRecord(recordValueTestFunc)(targetValue)(columnIndex);
 
-                        // Get the cost function for the "operator"; apply record test func
-                        const costFunction = mapCountableThresholdOperatorToCostFunction(constraint.description.operator)(recordTestFunc);
+                    } else if (Constraint.isSimilarity(constraint)) {
+                        // recordTestFunc is ignored for similarity constraints
+                        recordTestFunc = _ => true;
 
-                        // Calculate the cost
-                        const thisCost = costFunction(constraint)(records);
-
-                        return cost + thisCost;
+                    } else {
+                        return Util.throwErr(new Error(`CostFunction: Unexpected constraint type`));
                     }
 
-                    if (Constraint.isConstraintCountableLimit(constraint)) {
-                        // Pull in the info we need for costing
-                        const targetValue = constraint.description["field-value"];
-                        const column = constraint.description.field;
+                    // Get the cost function for the "operator"; apply record test func
+                    const costFunction = mapOperatorToCostFunction(operator)(recordTestFunc);
 
-                        // Get the record value test function
-                        const recordValueTestOp = constraint.description["field-operator"];
-                        const recordValueTestFunc = TestFunction.mapFieldOperatorToRecordValueTestFunction(recordValueTestOp);
-                        const recordTestFunc = TestFunction.testRecord(recordValueTestFunc)(targetValue)(column);
+                    // Return the cost function for a set of records
+                    return costFunction(columnInfo)(constraint);
+                });
+        }
 
-                        // Get the cost function for the "operator"; apply record test func
-                        const costFunction = mapCountableLimitOperatorToCostFunction(constraint.description.operator)(recordTestFunc);
-
-                        // Calculate the cost
-                        const thisCost = costFunction(constraint)(records);
-
-                        return cost + thisCost;
-                    }
-
-                    if (Constraint.isConstraintSimilarity(constraint)) {
-                        // Pull in the info we need for costing
-                        const type = constraint.columnInfo.type;
-
-                        // Get the cost function for the "operator"
-                        const costFunction = mapSimilarityTypeOperatorToCostFunction(type)(constraint.description.operator);
-
-                        // Calculate the cost
-                        const thisCost = costFunction(constraint)(records);
-
-                        return cost + thisCost;
-                    }
-
-                    throw new Error("Unexpected constraint type");
+export const getCostUsingAppliedRecordSetCostFunctions =
+    (appliedRecordSetCostFunctions: AppliedRecordSetCostFunction[]) =>
+        (records: SourceRecordSet.SourceRecordSet) => {
+            return appliedRecordSetCostFunctions.reduce(
+                (cost, costFunc) => {
+                    return cost + costFunc(records);
                 },
                 0
             );
