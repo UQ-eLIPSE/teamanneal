@@ -32,12 +32,8 @@
     <h3>Notes</h3>
     <ul>
         <li style="color: red;">Messages and errors are not presented to UI; please monitor console during execution</li>
-        <li style="color: darkblue;">Code designed for use with browsers released after August 2016 with good ES6 support</li>
+        <li style="color: darkblue;">Code designed for use with browsers IE11+, Chrome, Firefox (should be okay with Safari 8+)</li>
         <li>Local execution under file: URI only appears to work in Firefox; please use http: URI scheme otherwise</li>
-        <li>Memory usage is high (~50-100MB) due to code recording ALL objects/arrays during anneal history for debugging purposes;
-            should normally be around ~5MB otherwise (for source record size ~1000 entries)</li>
-        <li>Output CSV may have reordered columns</li>
-        <li>Group names are generated in fixed format (P<i>m</i>::G<i>n</i>) and are under column "__groups"</li>
         <li>Not all features in original TeamAnneal constraints file supported (name formats, only last level used, etc.)</li>
     </ul>
 </body>
