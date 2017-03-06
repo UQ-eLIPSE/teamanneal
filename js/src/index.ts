@@ -294,7 +294,8 @@ const teamAnneal = {
         const config: Config.Root = JSON.parse(configText);
 
         // Find partition generation information
-        const level = config.levels[config.levels.length - 1];
+        const levelNumber = config.levels.length;   // Only one level supported (last one)
+        const level = config.levels[levelNumber - 1];
         const minSize = level.size.min;
         const idealSize = level.size.ideal;
         const maxSize = level.size.max;
@@ -307,7 +308,7 @@ const teamAnneal = {
         // Prepare
         const stringMap = teamAnneal.prepareStringMap();
         const { columnInfo, records } = teamAnneal.prepareColumnInfoAndRecords(stringMap)(headers)(rawRecords);
-        const constraints = teamAnneal.prepareConstraints(stringMap)(headers)(config.constraints);
+        const constraints = teamAnneal.prepareConstraints(stringMap)(headers)(config.constraints).filter(constraint => Constraint.getLevel(constraint) === levelNumber);
         const partitions = teamAnneal.preparePartitions(partitionColumnIndex)(minSize)(idealSize)(maxSize)(records);
 
         // Run
@@ -454,7 +455,8 @@ const teamAnneal = {
         const config: Config.Root = JSON.parse(configText);
 
         // Find partition generation information
-        const level = config.levels[config.levels.length - 1];
+        const levelNumber = config.levels.length;   // Only one level supported (last one)
+        const level = config.levels[levelNumber - 1];
         const minSize = level.size.min;
         const idealSize = level.size.ideal;
         const maxSize = level.size.max;
@@ -467,7 +469,7 @@ const teamAnneal = {
         // Prepare
         const stringMap = teamAnneal.prepareStringMap();
         const { columnInfo, records } = teamAnneal.prepareColumnInfoAndRecords(stringMap)(headers)(rawRecords);
-        const constraints = teamAnneal.prepareConstraints(stringMap)(headers)(config.constraints);
+        const constraints = teamAnneal.prepareConstraints(stringMap)(headers)(config.constraints).filter(constraint => Constraint.getLevel(constraint) === levelNumber);
         const partitions = teamAnneal.preparePartitions(partitionColumnIndex)(minSize)(idealSize)(maxSize)(records);
 
         let numberOfThreads = teamAnneal.estimateThreadsToUse();
