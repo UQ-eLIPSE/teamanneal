@@ -1,0 +1,99 @@
+{
+	"tool-version" : "1",
+	"identifier" : "StudentID",
+	"partition" : null,
+
+	"levels" : [
+		{
+			"field" : "Team",
+			"size" : {
+				"min" : 3,
+				"ideal" : 4,
+				"max" : 4
+			},
+			"format" : {
+			    "type" : "numerical-1",
+			    "leading-0" : true
+			}
+		}
+	],
+	"name-format" : {
+		"field" : "Team Name",
+		"format" : "Team %1"
+	},
+	"constraints" : [
+		{
+			"level" : 1,
+			"operator" : "as similar as possible",
+			"field" : "GPA",
+			"weight" : "ideally has"
+		},
+		{
+			"level" : 1,
+			"weight" : "should have",
+			"operator" : "at least",
+			"count" : 1,
+			"field" : "Plan",
+			"field-operator" : "equal to",
+			"field-value" : "Software"
+		},
+		{
+			"level" : 1,
+			"of-size" : 4,
+			"weight" : "should have",
+			"operator" : "at least",
+			"count" : 2,
+			"field" : "Plan",
+			"field-operator" : "equal to",
+			"field-value" : "Electrical"
+		},
+		{
+			"level": 1,
+			"weight": "ideally has",
+			"operator": "as few as possible",
+			"field": "Language",
+			"field-operator": "not equal to",
+			"field-value": "English"
+		},
+		{
+
+			"level" : 1,
+			"weight" : "must have",
+			"operator" : "not exactly",
+			"count" : 1,
+			"field" : "Gender",
+			"field-operator" : "equal to",
+			"field-value" : "Female"
+		},
+		{
+			"level" : 1,
+			"of-size" : 3,
+			"weight" : "must have",
+			"operator" : "exactly",
+			"count" : 3,
+			"field" : "GPA",
+			"field-operator" : "greater than or equal to",
+			"field-value" : 5.5
+		},
+		{
+			"level" : 1,
+			"of-size" : 3,
+			"weight" : "must have",
+			"operator" : "exactly",
+			"count" : 0,
+			"field" : "Gender",
+			"field-operator" : "equal to",
+			"field-value" : "Female"
+		},
+		{
+			"level" : 1,
+			"of-size" : 3,
+			"weight" : "must have",
+			"operator" : "at most",
+			"count" : 1,
+			"field" : "Language",
+			"field-operator" : "not equal to",
+			"field-value" : "English"
+		}
+	]
+}
