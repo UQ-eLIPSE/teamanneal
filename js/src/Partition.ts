@@ -51,6 +51,9 @@ export const size =
         return partition.length;
     }
 
+export const shallowCopy =
+    (partition: Partition): Partition => partition.slice();
+
 /**
  * Calculates the number of groups that should be formed.
  * 

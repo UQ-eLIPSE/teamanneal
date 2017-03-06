@@ -9,7 +9,7 @@ import * as SourceRecord from "./SourceRecord";
 
 
 
-export interface SourceRecordSet extends Array<SourceRecord.Record> {};
+export interface SourceRecordSet extends Array<SourceRecord.Record> { };
 
 
 
@@ -44,5 +44,8 @@ export const push =
             set.push(record);
             return set;
         }
+
+export const shallowCopy =
+    (set: SourceRecordSet): SourceRecordSet => set.slice();
 
 export const size = (set: SourceRecordSet) => set.length;

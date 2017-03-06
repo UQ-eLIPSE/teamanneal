@@ -7,6 +7,7 @@ import * as Partition from "./Partition";
 import * as Util from "./Util";
 import * as AnnealOperation from "./AnnealOperation";
 import * as CostFunction from "./CostFunction";
+import * as SourceRecordSet from "./SourceRecordSet";
 
 
 
@@ -39,7 +40,13 @@ export const newAnnealRound =
                 (prevTemp: number) => {
                     // Perform operation
                     const annealOperation = AnnealOperation.pickRandomAnnealOperation();
-                    const partition = annealOperation(prevPartition);
+
+                    // Partition MUST be copied, otherwise you'll be mutating the object coming in
+                    const prevPartitionCopy = prevPartition.map(
+                        // Only shallow copying record sets because we don't touch the record content
+                        recordSet => SourceRecordSet.shallowCopy(recordSet)
+                    );
+                    const partition = annealOperation(prevPartitionCopy);
 
                     // Pick apart the result
                     const cost = partition.reduce(

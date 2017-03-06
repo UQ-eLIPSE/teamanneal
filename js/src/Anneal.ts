@@ -85,7 +85,7 @@ export const performIterations =
                                 p = AnnealRound.getPartition(roundResult);
                                 $ = AnnealRound.getCost(roundResult);
                             }
-                            
+
                             // Always decrease temperature with every iteration
                             T = calculateNewTemperature(T);
 
@@ -102,6 +102,29 @@ export const performIterations =
                             return output;
                         });
                     }
+
+export const getLastAcceptedFromIterations =
+    (iterationResults: AnnealIterationResult[]) => {
+        let i = iterationResults.length - 1;
+
+        if (i < 0) {
+            throw new Error("Anneal: Iteration results must be non-empty");
+        }
+
+        let result: AnnealIterationResult | undefined;
+
+        while (i--) {
+            result = iterationResults[i];
+
+            // Return last accepted in iteration result set
+            if (isAccepted(result)) {
+                return result;
+            }
+        }
+
+        // If none accepted, we get the first in the iteration
+        return result!;
+    }
 
 export const run =
     (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
@@ -131,11 +154,6 @@ export const run =
             const updateBestResult =
                 (result: AnnealIterationResult) => {
                     // If best result does not exist or this result is better; update
-
-                    if (!result) {
-                        return false;
-                    }
-
                     if (!bestResult || getCost(result) < getCost(bestResult)) {
                         bestResult = result;
                         return true;
@@ -177,7 +195,7 @@ export const run =
                     // Also update the window while we're here
                     updateUphillAcceptanceProbabilityWindow(getUphillAcceptanceRate());
 
-                    return [numOfAcceptedUphill, numOfUphill];
+                    // return [numOfAcceptedUphill, numOfUphill];
                 }
 
             const getUphillAcceptanceRate =
@@ -198,7 +216,9 @@ export const run =
             while (true) {
                 // Run iterations
                 const iterationResults = iterate(p)($)(T)(numRecords * itScalar);
-                const endResult = iterationResults[iterationResults.length - 1];
+                
+                // We get the last accepted result from the iteration run
+                const endResult = getLastAcceptedFromIterations(iterationResults);
 
                 // Determine if end result was best so far; update state accordingly
                 const endResultWasBest = updateBestResult(endResult);
@@ -208,7 +228,7 @@ export const run =
                     $ = getCost(endResult);
                 }
 
-                // Get end temperature from iterations
+                // Update temperature from iterations
                 T = getTemperature(endResult);
 
                 // If we're already at cost or temp = 0 then stop
