@@ -1,5 +1,3 @@
-import * as SourceRecord from "./SourceRecord";
-
 export interface Root {
     readonly "tool-version": string,
     readonly identifier: string,
@@ -60,7 +58,7 @@ export interface ConstraintBase {
 
 export interface ConstraintCountable extends ConstraintBase {
     readonly "field-operator": ConstraintCountableFieldOperator,
-    readonly "field-value": SourceRecord.Value,
+    readonly "field-value": number | string,
 }
 
 export interface ConstraintCountableThreshold extends ConstraintCountable {
@@ -75,6 +73,11 @@ export interface ConstraintCountableLimit extends ConstraintCountable {
 export interface ConstraintSimilarity extends ConstraintBase {
     readonly operator: ConstraintSimilarityOperator,
 }
+
+export type ConstraintOperator = 
+    ConstraintCountableThresholdOperator |
+    ConstraintCountableLimitOperator |
+    ConstraintSimilarityOperator;
 
 export type ConstraintCountableThresholdOperator =
     "exactly" |

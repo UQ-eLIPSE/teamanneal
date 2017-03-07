@@ -1,136 +1,142 @@
-// import * as Config from "./Config";
+/*
+ * ColumnInfo
+ * 
+ * 
+ */
 import * as SourceRecord from "./SourceRecord";
+import * as SourceRecordSet from "./SourceRecordSet";
+import * as StringMap from "./StringMap";
+import * as ColumnDesc from "./ColumnDesc";
+import * as Util from "./Util";
 
 
 
-export type ColumnInfo =
-    ColumnInfoNumber |
-    ColumnInfoString;
-
-export interface ColumnInfoNumber {
-    readonly type: "number",
-
-    readonly range: ColumnInfoNumberRange,
-}
-
-export interface ColumnInfoNumberRange {
-    readonly min: number,
-    readonly max: number,
-}
-
-export interface ColumnInfoString {
-    readonly type: "string",
-
-    readonly distinctValues: number,
+export interface ColumnInfo extends Array<ColumnDesc.ColumnDesc> {
 }
 
 
 
 
+export const initFrom =
+    (stringMap: StringMap.StringMap) =>
+        (headers: string[]) =>
+            (rawRecords: SourceRecord.RawRecord[]) => {
+                // Prepare column infos
+                const columnInfo: ColumnInfo =
+                    headers
+                        .map(StringMap.add(stringMap))
+                        .map(
+                        (headerNamePointer) => {
+                            const columnDesc = ColumnDesc.init();
+                            ColumnDesc.setName(columnDesc)(headerNamePointer);
+                            return columnDesc;
+                        }
+                        );
 
+                // Detect column types
+                const numberOfColumns = headers.length;
+                let numberOfColumnTypesDetected = 0;
 
+                for (let record of rawRecords) {
+                    for (let i = 0; i < numberOfColumns; ++i) {
+                        const columnDesc = columnInfo[i];
 
-export const isNumeric =
-    (columnInfo: ColumnInfo): columnInfo is ColumnInfoNumber => columnInfo.type === "number";
+                        // Skip column if type already determined
+                        if (ColumnDesc.isTypeSet(columnDesc)) { continue; }
 
-export const isString =
-    (columnInfo: ColumnInfo): columnInfo is ColumnInfoString => columnInfo.type === "string";
+                        // Check type
+                        const value = record[i];
+                        const type = typeof value;
 
+                        if (type === "string") {
+                            // Don't accept determination on a blank string
+                            if ((value as string).length === 0) { continue; }
 
+                            ColumnDesc.setTypeString(columnDesc);
+                            ++numberOfColumnTypesDetected;
+                            break;
+                        }
 
+                        if (type === "number") {
+                            ColumnDesc.setTypeNumeric(columnDesc);
+                            ++numberOfColumnTypesDetected;
+                            break;
+                        }
 
-
-export const generateColumnInfo =
-    (sourceRecordSet: SourceRecord.Set) =>
-        (column: string) => {
-            const type = detectColumnType(sourceRecordSet)(column);
-
-            switch (type) {
-                case "number": {
-                    const columnInfo: ColumnInfo = {
-                        type,
-                        range: getColumnValueRange(sourceRecordSet)(column),
+                        Util.throwErr(new Error(`ColumnInfo: Unexpected raw value "${value}"`));
                     }
 
-                    return columnInfo;
-                }
-
-                case "string": {
-                    const columnInfo: ColumnInfo = {
-                        type,
-                        distinctValues: getColumnValueSet(sourceRecordSet)(column).size,
+                    // Stop once we've detected all column types
+                    if (numberOfColumns === numberOfColumnTypesDetected) {
+                        break;
                     }
-
-                    return columnInfo;
                 }
+
+                return columnInfo;
             }
 
-            throw new Error(`Unexpected column type "${type}" for column "${column}"`);
-        }
+export const populateFrom =
+    (columnInfo: ColumnInfo) =>
+        (records: SourceRecordSet.SourceRecordSet) => {
+            const numberOfColumns = size(columnInfo);
 
-export const detectColumnType =
-    (sourceRecordSet: SourceRecord.Set) =>
-        (column: string) => {
-            for (let i = 0; i < sourceRecordSet.length; ++i) {
-                const record = SourceRecord.getIthRecord(sourceRecordSet)(i);
-                const value = SourceRecord.getRecordValue(record)(column);
+            let columnMin = Util.initArray(Infinity)(numberOfColumns);
+            let columnMax = Util.initArray(-Infinity)(numberOfColumns);
+            const columnStringDistinctPointers = Util.blankArray(numberOfColumns).map(() => new Set<StringMap.StringPointer>());
 
-                // Skip to next record if null
-                if (value === null) {
-                    continue;
-                }
+            // Go over all records to pick up ranges, distinct values
+            records.forEach((record) => {
+                record.forEach((value, column) => {
+                    const columnDesc = get(columnInfo)(column);
 
-                // Detect type
-                const type = typeof value;
+                    if (ColumnDesc.isNumeric(columnDesc)) {
+                        // Find min, max
+                        if (value < columnMin[column]) {
+                            columnMin[column] = value;
+                        }
 
-                switch (type) {
-                    case "string": {
-                        // Don't accept determination on a blank string
-                        if ((value as string).length === 0) { continue; }
-                        
-                        return type;
-                    }
-                    case "number":
-                        return type;
-                }
+                        if (value > columnMax[column]) {
+                            columnMin[column] = value;
+                        }
 
-                throw new Error(`Unexpected value type "${type}" in column "${column}"`);
-            }
-
-            throw new Error(`Undetectable value type in column "${column}"`);
-        }
-
-export const getColumnValueRange =
-    (sourceRecordSet: SourceRecord.Set) =>
-        (column: string) => {
-            const startRange: ColumnInfoNumberRange = {
-                min: Infinity,
-                max: -Infinity,
-            }
-
-            return sourceRecordSet.reduce(
-                (range, record) => {
-                    const value = SourceRecord.getRecordValue(record)(column) as number;
-
-                    const newRange: ColumnInfoNumberRange = {
-                        min: Math.min(range.min, value),
-                        max: Math.max(range.max, value),
+                        return; // Break to next forEach iteration
                     }
 
-                    return newRange;
-                },
-                startRange
-            );
+                    if (ColumnDesc.isString(columnDesc)) {
+                        // Add string pointer to set
+                        columnStringDistinctPointers[column].add(value);
+
+                        return; // Break to next forEach iteration
+                    }
+
+                    return Util.throwErr(new Error(`ColumnInfo: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
+                });
+            });
+
+            // Set ranges, distinct info
+            columnInfo.forEach((columnDesc, i) => {
+                if (ColumnDesc.isNumeric(columnDesc)) {
+                    ColumnDesc.setRangeMin(columnDesc)(columnMin[i]);
+                    ColumnDesc.setRangeMax(columnDesc)(columnMax[i]);
+                    return; // Break to next forEach iteration
+                }
+
+                if (ColumnDesc.isString(columnDesc)) {
+                    ColumnDesc.setStringDistinct(columnDesc)(columnStringDistinctPointers[i].size);
+                    return; // Break to next forEach iteration
+                }
+
+                return Util.throwErr(new Error(`ColumnInfo: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
+            });
+
+
+            return columnInfo;
         }
 
-export const getColumnValueSet =
-    (sourceRecordSet: SourceRecord.Set) =>
-        (column: string) => {
-            return sourceRecordSet.reduce(
-                (set, record) => {
-                    const value = SourceRecord.getRecordValue(record)(column);
-                    return set.add(value);
-                },
-                new Set<SourceRecord.Value>()
-            );
+export const get =
+    (columnInfo: ColumnInfo) =>
+        (i: number) => {
+            return columnInfo[i];
         }
+
+export const size = (columnInfo: ColumnInfo) => columnInfo.length;

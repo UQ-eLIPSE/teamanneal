@@ -1,6 +1,7 @@
-importScripts("../node_modules/requirejs/require.js");
+declare const require: Function;
+declare const importScripts: Function;
 
-declare const require: any;
+importScripts("../node_modules/requirejs/require.js");
 
 require(
     {

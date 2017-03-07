@@ -1,27 +1,16 @@
+/*
+ * AnnealOperation
+ * 
+ * 
+ */
 import * as Partition from "./Partition";
-
-import * as Random from "./Random";
-import * as Group from "./Group";
-
 import * as Util from "./Util";
+import * as SourceRecordSet from "./SourceRecordSet";
 
-export interface OpOutputDetail {
-    readonly [key: string]: any,
-}
 
-export interface OpOutput {
-    readonly name: string,
 
-    readonly partition: Partition.PartitionWithGroup,
 
-    readonly startTime: number,
-    readonly endTime: number,
-    readonly executionMs: number,
-
-    readonly details: OpOutputDetail | null,
-}
-
-export type OpFunction = (partition: Partition.PartitionWithGroup) => OpOutput;
+export type OpFunction = (partition: Partition.Partition) => Partition.Partition;
 
 export interface OpProbability {
     readonly operation: OpFunction,
@@ -30,34 +19,14 @@ export interface OpProbability {
 
 
 
-export const randomOpGenerator =
-    (opProbs: ReadonlyArray<OpProbability>) => {
-        const probabilities = opProbs.map(x => x.probability);
-        const operations = opProbs.map(x => x.operation);
 
-        const getRandomIndex = Random.randomIntDistGenerator(probabilities);
-        return () => operations[getRandomIndex()];
-    }
 
 
 export namespace Nop {
     export const execute: OpFunction =
         (partition) => {
             // Do nothing
-            const timerStart = Util.timer();
-
-            const output: OpOutput = {
-                name: "Nop",
-                partition,
-
-                startTime: Util.timestamp(),
-                endTime: Util.timestamp(),
-                executionMs: Util.timer(timerStart),
-
-                details: null,
-            }
-
-            return output;
+            return partition;
         }
 }
 
@@ -65,11 +34,11 @@ export namespace Nop {
 export namespace SwapRecords {
     export const twoRandomInt =
         (high: number) => {
-            const first = Random.generateRandomIntTo(high);
+            const first = Util.randUint32Limit(high);
             let second: number;
 
             do {
-                second = Random.generateRandomIntTo(high);
+                second = Util.randUint32Limit(high);
             } while (second === first)
 
             return [first, second];
@@ -77,11 +46,7 @@ export namespace SwapRecords {
 
     export const execute: OpFunction =
         (partition) => {
-            const timerStart = Util.timer();
-            const startTime = Util.timestamp();
-
-            const groups = partition.groups;
-            const numOfGroups = groups.length;
+            const numOfGroups = Partition.size(partition);
 
             if (numOfGroups < 2) {
                 // Can't swap anything if we only have less than 2 groups
@@ -90,51 +55,23 @@ export namespace SwapRecords {
 
             // Pick the target groups
             const targetGroupIndices = twoRandomInt(numOfGroups);
-            const targetGroups = targetGroupIndices.map(i => groups[i]);
+            const targetGroup1 = Partition.get(partition)(targetGroupIndices[0]);
+            const targetGroup2 = Partition.get(partition)(targetGroupIndices[1]);
 
-            // Pick random records from the two, swap
-            const poppedRecords = targetGroups.map(Group.popRandomRecord);
-            const newTargetGroups =
-                poppedRecords
-                    .map(x => x.group)
-                    .map(
-                    (group, i) => {
-                        return Group.insertRecord(group)(poppedRecords[1 - i].popped);
-                    }
-                    );
+            // Pick random records from the two
+            const r1Index = Util.randUint32Limit(targetGroup1.length);
+            const r2Index = Util.randUint32Limit(targetGroup2.length);
 
-            // Replace modified target groups in new copy
-            const newGroups = Util.copyArray(groups);
-            targetGroupIndices.forEach(
-                (targetGroupIndex, i) => {
-                    newGroups[targetGroupIndex] = newTargetGroups[i];
-                }
-            )
+            const r1 = SourceRecordSet.get(targetGroup1)(r1Index);
+            const r2 = SourceRecordSet.get(targetGroup2)(r2Index);
 
-            // Create new partition
-            const newPartition = Partition.attachGroupsToPartition(partition)(newGroups);
+            // Swap records
+            SourceRecordSet.set(targetGroup1)(r1Index)(r2);
+            SourceRecordSet.set(targetGroup2)(r2Index)(r1);
 
-            const output: OpOutput = {
-                name: "SwapRecords",
-                partition: newPartition,
 
-                startTime,
-                endTime: Util.timestamp(),
-                executionMs: Util.timer(timerStart),
 
-                details: {
-                    swapA: {
-                        group: poppedRecords[0].group.name,
-                        record: poppedRecords[0].popped,
-                    },
-                    swapB: {
-                        group: poppedRecords[1].group.name,
-                        record: poppedRecords[1].popped,
-                    }
-                }
-            }
-
-            return output;
+            return partition;
         }
 }
 
@@ -153,5 +90,14 @@ export const defaultOpDistribution: ReadonlyArray<OpProbability> = [
         probability: 0.1
     },
 ]
+
+export const randomOpGenerator =
+    (opProbs: ReadonlyArray<OpProbability>) => {
+        const probabilities = opProbs.map(x => x.probability);
+        const operations = opProbs.map(x => x.operation);
+
+        const getRandomIndex = Util.randUint32DistGenerator(probabilities);
+        return () => operations[getRandomIndex()];
+    }
 
 export const pickRandomAnnealOperation = randomOpGenerator(defaultOpDistribution);
