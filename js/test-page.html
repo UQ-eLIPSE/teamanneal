@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    
+    <script src="./node_modules/promise-polyfill/promise.min.js"></script>
+    <script src="./node_modules/file-saver/FileSaver.min.js"></script>
+    <script src="./node_modules/papaparse/papaparse.min.js"></script>
+
+    <script src="./node_modules/requirejs/require.js"></script>
+    <script>
+        requirejs.config({
+            baseUrl: "./build",
+            deps: ["test-page"]
+        });
+    </script>
+</head>
+
+<body>
+    <h1>teamanneal.js</h1>
+    <ul>
+        <li>Source Records (*.csv): <input type="file" id="csvFileInput" accept=".csv"></li>
+        <li>Config (*.json): <input type="file" id="configFileInput" accept=".json"></li>
+    </ul>
+    <p>
+        <button id="performAnneal">Perform Anneal</button>
+        <button id="performAnnealSingleThread">Perform Anneal (single thread)</button>
+        <button id="killThreads">Kill Threads</button>
+    </p>
+    <hr>
+    <h3>Notes</h3>
+    <ul>
+        <li style="color: red;">Messages and errors are not presented to UI; please monitor console during execution</li>
+        <li style="color: darkblue;">Code designed for use with browsers IE11+, Chrome, Firefox (should be okay with Safari 8+)</li>
+        <li>Local execution under file: URI only appears to work in Firefox; please use http: URI scheme otherwise</li>
+        <li>Not all features in original TeamAnneal constraints file supported (name formats, only last level used, etc.)</li>
+    </ul>
+</body>
+
+</html>

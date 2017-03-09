@@ -35,6 +35,7 @@
 
     "include": [
         "./src/index.ts",
+        "./src/test-page.ts",
         "./src/thread.ts"
     ]
 }
