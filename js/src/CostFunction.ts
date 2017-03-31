@@ -121,6 +121,11 @@ export namespace Similarity {
 
                             const range = ColumnDesc.getRange(columnDesc);
 
+                            if (range === 0) {
+                                // Constraint met if range = 0
+                                return 0;
+                            }
+
                             // Get record values (numbers); drop any NaN values
                             const recordValues = records
                                 .map(record => record[columnIndex])
@@ -177,6 +182,11 @@ export namespace Similarity {
                             }
 
                             const range = ColumnDesc.getRange(columnDesc);
+
+                            if (range === 0) {
+                                // Constraint not met if range = 0
+                                return cost;
+                            }
 
                             // Get record values (numbers); drop any NaN values
                             const recordValues = records
