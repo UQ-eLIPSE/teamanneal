@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+
+        "outDir": "./build",
+
+        "sourceMap": true,
+
+        "alwaysStrict": true,
+
+        "forceConsistentCasingInFileNames": true,
+
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+
+        "strictNullChecks": true,
+
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+
+
+        "allowUnreachableCode": false
+    },
+
+    "include": [
+        "./src/**/*.ts"
+    ],
+
+    "exclude": [
+        "./src/__tests__/*.ts"
+    ]
+}
