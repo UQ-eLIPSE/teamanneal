@@ -3,8 +3,12 @@
 
 <head>
     <meta charset="utf-8">
-    
+
+    <link rel="stylesheet" href="https://fonts.uqstatic.net/Roboto/webfont.css">
+    <link rel="stylesheet" href="./static/stylesheet.css">
+
     <script src="./node_modules/promise-polyfill/promise.min.js"></script>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="./node_modules/file-saver/FileSaver.min.js"></script>
     <script src="./node_modules/papaparse/papaparse.min.js"></script>
 
@@ -18,24 +22,201 @@
 </head>
 
 <body>
-    <h1>teamanneal.js</h1>
-    <ul>
-        <li>Source Records (*.csv): <input type="file" id="csvFileInput" accept=".csv"></li>
-        <li>Config (*.json): <input type="file" id="configFileInput" accept=".json"></li>
-    </ul>
-    <p>
-        <button id="performAnneal">Perform Anneal</button>
-        <button id="performAnnealSingleThread">Perform Anneal (single thread)</button>
-        <button id="killThreads">Kill Threads</button>
-    </p>
-    <hr>
-    <h3>Notes</h3>
-    <ul>
-        <li style="color: red;">Messages and errors are not presented to UI; please monitor console during execution</li>
-        <li style="color: darkblue;">Code designed for use with browsers IE11+, Chrome, Firefox (should be okay with Safari 8+)</li>
-        <li>Local execution under file: URI only appears to work in Firefox; please use http: URI scheme otherwise</li>
-        <li>Not all features in original TeamAnneal constraints file supported (name formats, only last level used, etc.)</li>
-    </ul>
+    <div id="header">
+        <h1>
+            <a id="uq-logo" href="#">The University of Queensland</a>
+        </h1>
+        <h2>
+            TeamAnneal
+        </h2>
+    </div>
+    <div id="content">
+        <div id="spreadsheet" class="hidden">
+
+        </div>
+        <div id="wizard-container" class="splash">
+            <div id="wizard">
+                <div id="welcome" style="text-align: center;">
+                    <h1>Team sorting. Sorted.</h1>
+                    <p>
+                        TeamAnneal is a tool that optimises team allocations<br>using constraints you provide.
+                        <a class="more" href="https://www.elipse.uq.edu.au/team-anneal-team-formation" target="_blank">Find out more.</a>
+                    </p>
+                    <p>
+                        <button class="button" data-button-id="get-started">Get Started</button>
+                        <!--<button class="button secondary">Advanced</button>-->
+                    </p>
+                </div>
+                <div id="load-csv">
+                    <h1>Select records file</h1>
+                    <p>
+                        Select a <b>CSV</b> file containing records of persons along with any attributes you would like to
+                        apply constraints to.
+                        <a class="more" href="#">Need help?</a>
+                    </p>
+                    <!--<p>
+                        You will be able to preview how TeamAnneal processes your file at the next step.
+                    </p>
+                    <p>
+
+                    </p>-->
+                    <!--<p>
+                        <div class="help-section" tabindex="0">
+                            <h3 class="help-title">Where do I get this file?</h3>
+                            <div class="help-text">
+                                <p>
+                                    A class list can be downloaded from SI-net. To do this, select <b>Class Lists</b> from
+                                    the top tabs, then select your course and click <b>Download</b>.
+                                </p>
+                                <p>
+                                    You can also create your own spreadsheet containing the records you would like to use, and export it to <b>*.csv</b>.
+                                    Consult your spreadsheet program's documentation for more information on exporting to
+                                    formats such as CSV.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="help-section" tabindex="0">
+                            <h3 class="help-title">How should the file be formatted?</h3>
+                            <div class="help-text">
+                                <p>
+                                    The first line of the CSV file <b>must only</b> contain column header strings, and the
+                                    file must be <b>comma-separated</b>.
+                                </p>
+                                <p>
+                                    If you're unsure if your CSV file is formatted correctly, select the file regardless and proceed to the next step. You will
+                                    be able to preview the contents of your file and determine if TeamAnneal processed your
+                                    file correctly.
+                                </p>
+                            </div>
+                        </div>
+                    </p>-->
+                    <div class="bottom-buttons">
+                        <!--<button class="button">Submit File</button>-->
+                        <label>
+                            <input type="file" id="load-csv-file" accept=".csv" style="display: none;">
+                            <span class="button" tabindex="0">Select CSV file...</a>
+                        </label>
+                        <button class="button secondary" data-button-id="back">Back</button>
+                    </div>
+                </div>
+                <div id="double-check-csv">
+                    <h1>Double check data</h1>
+                    <p>
+                        Take a moment to make sure column data types and all records are correct.
+                        <a class="more" href="#">Need help?</a>
+                    </p>
+                    <!--<p>
+                        <div class="help-section" tabindex="0">
+                            <h3 class="help-title">Something's wrong with the data...</h3>
+                            <div class="help-text">
+                                <p>
+                                    If what you see is incorrect, TeamAnneal was unable properly parse your CSV file. Generally this means that your CSV file
+                                    contains data which is invalid or the file is not appropriately formatted.
+                                </p>
+                                <p>
+                                    Correct the issue in your CSV file and return to the previous step to resubmit your CSV file. If the issue persists, please
+                                    contact us.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="help-section" tabindex="0">
+                            <h3 class="help-title">The type of the column is incorrect...</h3>
+                            <div class="help-text">
+                                <p>
+                                    The contents of each column is used to detect the data type; if the data type is incorrect (for example "string" for a column
+                                    of numbers) then it is likely that there are some records with a different data type.
+                                </p>
+                                <p>
+                                    You will need to correct these to the appropriate data type before attempting to submit them for use with TeamAnneal.
+                                </p>
+                            </div>
+                        </div>
+                    </p>-->
+                    <div class="bottom-buttons">
+                        <button class="button" data-button-id="next">Continue</button>
+                        <button class="button secondary" data-button-id="back">Back</button>
+                    </div>
+                </div>
+                <div id="set-partition">
+                    <h1>Set partition column</h1>
+                    <p>
+                        If you need teams to be formed only within groups of records, set a partition column.
+                    </p>
+                    <p>
+                        TeamAnneal will use unique values in the selected column to automatically split records and perform team allocations within
+                        each partition.
+                    </p>
+                    <p>
+                        For example, you may have students in assigned project types - teams may need to be comprised of those in the same project.
+                        In this situation, you would set the project column as the partition column.
+                    </p>
+                    <p>
+                        <select id="partition-columns">
+                            <option disabled selected>Select a partition column</option>
+                        </select>
+                    </p>
+                    <div class="bottom-buttons">
+                        <button class="button" data-button-id="next">Set Column</button>
+                        <button class="button gold" data-button-id="skip">Don't Set Column</button>
+                        <button class="button secondary" data-button-id="back">Back</button>
+                    </div>
+                </div>
+                <div id="configure-output-teams">
+                    <h1>Configure output teams</h1>
+                    <p>
+                        (Currently limited to one "level" of teams)
+                    </p>
+                    <p>
+                        Column heading: <input type="text" id="team-column-header" placeholder="e.g. 'Team'" value="Team" required>
+                    </p>
+                    <p>
+                        Team name format: <input type="text" id="team-name-format" placeholder="e.g. 'Team %1'" value="Team %1" required>
+                    </p>
+                    <div style="display: flex; flex-direction: row; align-items: center;">
+                        <p>
+                            Team size:
+                        </p>
+                        <div style="text-align: center; flex-grow: 0; margin: 0 0.5em;">
+                            <label>
+                                <input type="text" pattern="[0-9]*" id="team-size-min" value="3" required style="text-align: center; width: 1.5em;"><br>
+                                min
+                            </label>
+                        </div>
+                        <div style="text-align: center; flex-grow: 0; margin: 0 0.5em;">
+                            <label>
+                                <input type="text" pattern="[0-9]*" id="team-size-ideal" value="4" size="2" required style="text-align: center; width: 1.5em;"><br>                            
+                                ideal
+                            </label>
+                        </div>
+                        <div style="text-align: center; flex-grow: 0; margin: 0 0.5em;">
+                            <label>
+                                <input type="text" pattern="[0-9]*" id="team-size-max" value="5" size="2" required style="text-align: center; width: 1.5em;"><br>
+                                max
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bottom-buttons">
+                        <button class="button" data-button-id="next">Continue</button>
+                        <button class="button secondary" data-button-id="back">Back</button>
+                    </div>
+                </div>
+                <div id="build-constraints">
+                    <h1>Build constraints</h1>
+                    <p>
+                        Use the editor to add, edit or remove constraints.
+                        <a class="more" href="#">Need help?</a>
+                    </p>
+                    <div class="bottom-buttons">
+                        <button class="button" data-button-id="next">Continue</button>
+                        <button class="button secondary" data-button-id="back">Back</button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
