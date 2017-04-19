@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test_server",
+    "test_server": "jest --config=test/server.jest.config.json",
     "build": "tsc"
   },
   "author": "eLIPSE",
