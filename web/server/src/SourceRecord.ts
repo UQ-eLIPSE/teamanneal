@@ -49,19 +49,28 @@ export const initFrom =
                         }
                     }
 
-                    return Util.throwErr(new Error(`SourceRecord: Unexpected value ${val}`));
+                    return Util.throwErr(new Error(`SourceRecord: Unexpected value "${val}"`));
                 });
             }
 
 export const get =
     (record: Record) =>
         (columnIndex: number) => {
+            if (columnIndex < 0 || columnIndex >= record.length) {
+                return Util.throwErr(new Error("SourceRecord: Out-of-bounds access"));
+            }
+
             return record[columnIndex];
         }
 
 export const set =
     (record: Record) =>
-        (columnIndex: number) =>
-            (value: Value) => {
+        (columnIndex: number) => {
+            if (columnIndex < 0 || columnIndex >= record.length) {
+                return Util.throwErr(new Error("SourceRecord: Out-of-bounds access"));
+            }
+
+            return (value: Value) => {
                 return record[columnIndex] = value;
             }
+        }
