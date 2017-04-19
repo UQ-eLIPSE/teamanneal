@@ -5,7 +5,7 @@ describe("`init`", () => {
     test("returns a ColumnDesc object (array; length = __size)", () => {
         const initObj = ColumnDesc.init();
         expect(initObj).toBeInstanceOf(Array);
-        expect(initObj.length).toBe(ColumnDesc.__size);
+        expect(initObj).toHaveLength(ColumnDesc.__size);
     });
 });
 
