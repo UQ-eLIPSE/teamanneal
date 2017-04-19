@@ -3,6 +3,7 @@
  * 
  * Represents a set of SourceRecords.
  */
+import * as Util from "./Util";
 import * as StringMap from "./StringMap";
 import * as ColumnInfo from "./ColumnInfo";
 import * as SourceRecord from "./SourceRecord";
@@ -28,19 +29,32 @@ export const initFrom =
 export const get =
     (set: SourceRecordSet) =>
         (i: number) => {
+            if (i < 0 || i >= set.length) {
+                return Util.throwErr(new Error("SourceRecordSet: Out-of-bounds access"));
+            }
             return set[i];
         }
 
 export const set =
     (set: SourceRecordSet) =>
-        (i: number) =>
-            (record: SourceRecord.Record) => {
+        (i: number) => {
+            if (i < 0 || i >= set.length) {
+                return Util.throwErr(new Error("SourceRecordSet: Out-of-bounds access"));
+            }
+
+            return (record: SourceRecord.Record) => {
                 return set[i] = record;
             }
+        }
 
 export const push =
     (set: SourceRecordSet) =>
         (record: SourceRecord.Record) => {
+            // Pushes should be idempotent
+            if (set.indexOf(record) > -1) {
+                return set;
+            }
+
             set.push(record);
             return set;
         }
