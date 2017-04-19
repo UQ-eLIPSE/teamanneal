@@ -1,5 +1,9 @@
 {
     "rootDir": "../server",
+
+    "globals": {
+        "__TS_CONFIG__": "<rootDir>/tsconfig.json"
+    },
     
     "transform": {
         ".(ts|tsx)": "<rootDir>/../node_modules/ts-jest/preprocessor.js"
@@ -14,6 +18,6 @@
 
     "testResultsProcessor": "<rootDir>/../node_modules/ts-jest/coverageprocessor.js",
     "collectCoverage": true,
-
+    
     "verbose": false
 }
