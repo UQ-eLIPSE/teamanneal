@@ -54,13 +54,13 @@ export const initFrom =
 
                             ColumnDesc.setTypeString(columnDesc);
                             ++numberOfColumnTypesDetected;
-                            break;
+                            continue;
                         }
 
                         if (type === "number") {
                             ColumnDesc.setTypeNumeric(columnDesc);
                             ++numberOfColumnTypesDetected;
-                            break;
+                            continue;
                         }
 
                         Util.throwErr(new Error(`ColumnInfo: Unexpected raw value "${value}"`));
