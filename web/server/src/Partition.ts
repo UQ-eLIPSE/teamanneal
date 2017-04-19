@@ -13,8 +13,8 @@ export interface Partition extends Array<SourceRecordSet.SourceRecordSet> { };
 
 
 export const init =
-    (): Partition => {
-        return [];
+    (size: number): Partition => {
+        return Util.initArrayFunc(_ => [])(size);
     }
 
 export const initWith =
@@ -24,7 +24,7 @@ export const initWith =
                 (maxSize: number) => {
                     const numberOfGroups = calculateNumberOfGroups(SourceRecordSet.size(set))(minSize)(idealSize)(maxSize)(false);
 
-                    const partition: Partition = Util.initArrayFunc(_ => [])(numberOfGroups);
+                    const partition: Partition = init(numberOfGroups);
 
                     set.forEach((record, i) => {
                         (get(partition)(i % numberOfGroups) as SourceRecordSet.SourceRecordSet).push(record);
@@ -36,15 +36,24 @@ export const initWith =
 export const get =
     (partition: Partition) =>
         (i: number) => {
+            if (i < 0 || i >= partition.length) {
+                return Util.throwErr(new Error("Partition: Out-of-bounds access"));
+            }
+
             return partition[i];
         }
 
 export const set =
     (partition: Partition) =>
-        (i: number) =>
-            (set: SourceRecordSet.SourceRecordSet) => {
+        (i: number) => {
+            if (i < 0 || i >= partition.length) {
+                return Util.throwErr(new Error("Partition: Out-of-bounds access"));
+            }
+
+            return (set: SourceRecordSet.SourceRecordSet) => {
                 return partition[i] = set;
             }
+        }
 
 export const size =
     (partition: Partition) => {
