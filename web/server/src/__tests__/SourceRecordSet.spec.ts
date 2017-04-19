@@ -97,19 +97,6 @@ describe("getters/setters", () => {
         // Accessing something in a blank set is out of bounds
         expect(() => SourceRecordSet.set(sourceRecordSet)(0)(record)).toThrowError();
     });
-
-
-
-
-
-    test("`set`/`get`", () => {
-        const record1: SourceRecord.Record = []; // Mock record
-        const record2: SourceRecord.Record = []; // Mock record
-
-        SourceRecordSet.push(sourceRecordSet)(record1);
-        SourceRecordSet.push(sourceRecordSet)(record2);
-
-    });
 });
 
 describe("`push`", () => {
