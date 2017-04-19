@@ -11,5 +11,7 @@
     ],
 
     "testResultsProcessor": "<rootDir>/../node_modules/ts-jest/coverageprocessor.js",
-    "collectCoverage": true
+    "collectCoverage": true,
+
+    "verbose": false
 }

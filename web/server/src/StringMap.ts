@@ -8,9 +8,11 @@ import * as Util from "./Util";
 export type StringPointer = number;
 type __KV = StringPointer | string;
 
-export interface StringMap extends Map<__KV, __KV | undefined> {
+export interface StringMap extends Map<__KV, __KV> {
 }
 
+// Ensures monotonically increasing pointers globally
+let _pointer: number = 0;
 
 
 export const init =
@@ -32,7 +34,7 @@ export const add =
             }
 
             // Create new StringMap record
-            const newPointer: StringPointer = size(map);
+            const newPointer = generateNewPointer();
 
             // We set the string as a key and value and 
             // return the pointer
@@ -63,16 +65,14 @@ export const removeAt =
                 return Util.throwErr(new Error("StringMap: Null pointer dereference"));
             }
 
-            // Erase via. `undefined` rather than .remove()
-            // because size() is used for pointers
-            map.set(str, undefined);
-            map.set(pointer, undefined);
+            map.delete(str);
+            map.delete(pointer);
 
             return map;
         }
 
 /**
- * Returns the number of strings held in map, including removed strings.
+ * Returns the number of strings held in map.
  */
 export const size =
     (map: StringMap) => {
@@ -121,8 +121,17 @@ const _find =
             return map.get(str) as (StringPointer | undefined);
         }
 
+const isPointer =
+    (value: any): value is StringPointer => typeof value === "number";
+
+const isString =
+    (value: any): value is string => typeof value === "string";
+
 const isValidPointer =
-    (pointer: StringPointer | undefined): pointer is StringPointer => typeof pointer === "number";
+    (pointer: StringPointer | undefined): pointer is StringPointer => isPointer(pointer);
 
 const isValidString =
-    (str: string | undefined): str is string => typeof str === "string";
+    (str: string | undefined): str is string => isString(str);
+
+const generateNewPointer =
+    (): StringPointer => _pointer++;
