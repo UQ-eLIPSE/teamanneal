@@ -259,7 +259,7 @@ export const timer = (() => {
     const timeFunc = typeof performance !== "undefined" ?
         () => performance.now() :
         (() => {
-            console.log("Using `Date.now()` for timer");
+            // console.log("Using `Date.now()` for timer");
             return () => Date.now();
         })();
 
