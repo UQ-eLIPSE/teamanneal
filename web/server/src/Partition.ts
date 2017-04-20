@@ -27,7 +27,12 @@ export const initWith =
                     const partition: Partition = init(numberOfGroups);
 
                     set.forEach((record, i) => {
-                        (get(partition)(i % numberOfGroups) as SourceRecordSet.SourceRecordSet).push(record);
+                        // Get the set that is already inside the partition
+                        // (from init()) and push the records from the
+                        // initialisation set into the partition sets
+                        // in a circular fashion
+                        const setInPartition = get(partition)(i % numberOfGroups);
+                        SourceRecordSet.push(setInPartition)(record);
                     });
 
                     return partition;
