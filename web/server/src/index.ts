@@ -21,13 +21,12 @@ log("info")("Logger set up");
 
 log("info")("Initialising Express application");
 const app = Application.init();
-
-log("info")("Enabling body-parser on Express app");
 Application.enableBodyParser(app);
+Application.listenOn(app)(8080);
+log("info")("Application listening on port 8080");
 
-
-log("info")("Initialising router for /api");
-Router.initApiRoutes(app);
+log("info")("Initialising all routes, under /api");
+Router.initAllRoutes(app);
 
 
 

@@ -22,3 +22,10 @@ export const enableBodyParser =
 
         return app;
     }
+
+
+export const listenOn =
+    (app: express.Express) => 
+        (port: number) => {
+            return app.listen(port);
+        }
