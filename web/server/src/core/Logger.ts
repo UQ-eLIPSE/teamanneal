@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as winston from "winston";
 import "winston-daily-rotate-file";
 
@@ -56,9 +56,7 @@ export const enableLogFile =
             // Create folder if directory does not exist
             // NOTE: This is synchronous; this is okay as we should only be 
             //       calling this once when logging is initialised
-            if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath);
-            }
+            fs.ensureDirSync(dirPath);
 
             logger.add(winston.transports.File, {
                 filename: `${dirPath}/winston.log`,
@@ -73,9 +71,7 @@ export const enableLogFileDailyRotate =
             // Create folder if directory does not exist
             // NOTE: This is synchronous; this is okay as we should only be 
             //       calling this once when logging is initialised
-            if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath);
-            }
+            fs.ensureDirSync(dirPath);
 
             logger.add(winston.transports.DailyRotateFile, {
                 filename: `${dirPath}/winston-`,
