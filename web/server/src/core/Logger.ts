@@ -2,7 +2,7 @@ import * as fs from "fs-extra";
 import * as winston from "winston";
 import "winston-daily-rotate-file";
 
-type WinstonLogger = winston.Winston | winston.LoggerInstance;
+type WinstonLogger = winston.LoggerInstance;
 type LogLevelsNPM = "error" | "warn" | "info" | "verbose" | "debug" | "silly";
 
 interface PartialLogFunction {
@@ -10,6 +10,9 @@ interface PartialLogFunction {
     (msg: string, meta: any, callback: winston.LogCallback): winston.LoggerInstance;
     (msg: string, ...meta: any[]): winston.LoggerInstance;
 }
+
+// The global logging instance
+const __globalLogger = new winston.Logger();
 
 /**
  * Initialises a new logger.
@@ -24,7 +27,7 @@ export const init =
  */
 export const getGlobal =
     () => {
-        return winston;
+        return __globalLogger;
     }
 
 /**
@@ -46,7 +49,9 @@ export const setLevel =
 
 export const enableLogConsole =
     (logger: WinstonLogger) => {
-        logger.add(winston.transports.Console);
+        logger.add(winston.transports.Console, {
+            timestamp: true,    // Enable timestamping in the console
+        });
         return logger;
     }
 
