@@ -1,7 +1,7 @@
 import * as express from "express";
 
 // Signature of exported function must not be altered for all routers
-module.exports = (parentRouter: express.Router) => {
+module.exports = () => {
     const router = express.Router();
 
     router.route("/")
@@ -13,9 +13,6 @@ module.exports = (parentRouter: express.Router) => {
 
 
 
-
-    // Attach under /anneal
-    parentRouter.use("/anneal", router);
 
     return router;
 }

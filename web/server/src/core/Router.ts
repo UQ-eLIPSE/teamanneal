@@ -19,27 +19,32 @@ export const init =
         }
 
 /**
- * Initialises all API routes on the supplied Express application at "/api".
+ * Initialises all routes on the supplied Express application at `root`.
  */
 export const initAllRoutes =
-    (app: express.Express) => {
-        // Set up API routes
-        const router = init(app)("/api");
+    (app: express.Express) =>
+        (root: string) => {
+            // Set up routes
+            const router = init(app)(root);
 
-        // Go through all routes
-        fs.readdirSync(`${__dirname}/../routes`).forEach((file) => {
-            // Only accept files that end with ".js"
-            if (file.indexOf(".js") !== file.length - 3) {
-                return;
-            }
+            // Go through all routes
+            fs.readdirSync(`${__dirname}/../routes`).forEach((file) => {
+                // Only accept files that end with ".js"
+                if (file.indexOf(".js") !== file.length - 3) {
+                    return;
+                }
 
-            // Grab the subrouter config
-            const subrouter = require(`${__dirname}/../routes/${file}`);
+                const subrouterName = file.substring(0, file.length - 3);   // Remove ".js" at end of `file`
 
-            // Pass in parent router (`router`) into the subrouter config
-            log("info")(`Setting up router: ${file}`);
-            subrouter(router);
-        });
+                // Generate subrouter
+                log("info")(`Fetching router "${subrouterName}"`);
+                const subrouterGenerator = require(`${__dirname}/../routes/${file}`);
+                const subrouter = subrouterGenerator();
 
-        return router;
-    }
+                // Attach under /<file name>
+                log("info")(`Attaching router "${subrouterName}" to "${root}/${subrouterName}"`)
+                router.use(`/${subrouterName}`, subrouter);
+            });
+
+            return router;
+        }
