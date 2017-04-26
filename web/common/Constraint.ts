@@ -128,6 +128,12 @@ export interface Countable extends Base {
 export interface Similarity extends Base {
     readonly type: "similarity",
 
+    /** Record element filter description */
+    readonly filter: {
+        /** Record column index to check similarity over */
+        readonly column: number,
+    },
+
     /** Similarity description */
     readonly condition: {
         /**
