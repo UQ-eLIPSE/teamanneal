@@ -2,8 +2,8 @@ import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 
 import * as express from "express";
-import * as SourceData from "../anneal/SourceData";
-import * as Constraint from "../anneal/Constraint";
+import * as SourceData from "../data/SourceData";
+import * as Constraint from "../data/Constraint";
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
