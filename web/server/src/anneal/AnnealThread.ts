@@ -3,7 +3,7 @@
  * 
  * 
  */
-import * as Constraint from "./Constraint";
+import * as Constraint from "./_Constraint";
 import * as Partition from "./Partition";
 import * as Anneal from "./Anneal";
 import * as Util from "./Util";
