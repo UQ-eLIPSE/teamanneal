@@ -72,8 +72,8 @@ export enum CountableFieldOperator {
 
 
 
-export const __getter = <T>(i: number) => (c: Constraint): T => (c as any)[i];
-export const __setter = <T>(i: number) => (c: Constraint) => (val: T): T => (c as any)[i] = val;
+const __getter = <T>(i: number) => (c: Constraint): T => (c as any)[i];
+const __setter = <T>(i: number) => (c: Constraint) => (val: T): T => (c as any)[i] = val;
 
 export const getLevel = __getter<number>(0);
 export const getWeight = __getter<Weight>(1);

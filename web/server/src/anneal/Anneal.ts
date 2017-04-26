@@ -278,8 +278,8 @@ export interface AnnealIterationResult extends ReadonlyArray<Partition.Partition
 
 }
 
-export const __getter = <T>(i: number) => (r: AnnealIterationResult): T => (r as any)[i];
-export const __setter = <T>(i: number) => (r: AnnealIterationResult) => (val: T): T => (r as any)[i] = val;
+const __getter = <T>(i: number) => (r: AnnealIterationResult): T => (r as any)[i];
+// const __setter = <T>(i: number) => (r: AnnealIterationResult) => (val: T): T => (r as any)[i] = val;
 
 export const getPartition = __getter<Partition.Partition>(0);
 export const getCost = __getter<number>(1);

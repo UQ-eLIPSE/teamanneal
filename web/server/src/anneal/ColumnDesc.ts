@@ -32,8 +32,8 @@ const __seed: ColumnDesc = Util.initArray(NaN)(__size) as any;
 
 
 
-export const __getter = <T>(i: number) => (d: ColumnDesc): T => (d as any)[i];
-export const __setter = <T>(i: number) => (d: ColumnDesc) => (val: T): T => (d as any)[i] = val;
+const __getter = <T>(i: number) => (d: ColumnDesc): T => (d as any)[i];
+const __setter = <T>(i: number) => (d: ColumnDesc) => (val: T): T => (d as any)[i] = val;
 
 export const getName = __getter<StringMap.StringPointer>(0);
 export const getType = __getter<number>(1);

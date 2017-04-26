@@ -22,8 +22,7 @@ export interface AnnealRoundResult extends ReadonlyArray<Partition.Partition | n
 
 
 
-export const __getter = <T>(i: number) => (r: AnnealRoundResult): T => (r as any)[i];
-export const __setter = <T>(i: number) => (r: AnnealRoundResult) => (val: T): T => (r as any)[i] = val;
+const __getter = <T>(i: number) => (r: AnnealRoundResult): T => (r as any)[i];
 
 export const getPartition = __getter<Partition.Partition>(0);
 export const getCost = __getter<number>(1);
