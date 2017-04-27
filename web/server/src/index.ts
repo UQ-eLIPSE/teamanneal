@@ -29,7 +29,10 @@ log("info")("Logger set up");
 // Init the server
 log("info")("Initialising Express application");
 const app = Application.init();
-Application.enableBodyParser(app);
+
+// Enable body parser with 1MB body limit
+Application.enableBodyParser(app)("1mb");
+
 Application.listenOn(app)(8080);
 log("info")("Application listening on port 8080");
 

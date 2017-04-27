@@ -14,18 +14,22 @@ export const init =
  * Express application.
  */
 export const enableBodyParser =
-    (app: express.Express) => {
-        app.use(bodyParser.urlencoded({  // Standard form POST
-            extended: true,
-        }));
-        app.use(bodyParser.json());      // JSON
+    (app: express.Express) =>
+        (bodySizeMax: string | number) => {
+            app.use(bodyParser.urlencoded({ // Standard form POST
+                limit: bodySizeMax,
+                extended: true,
+            }));
+            app.use(bodyParser.json({       // JSON
+                limit: bodySizeMax,
+            }));
 
-        return app;
-    }
+            return app;
+        }
 
 
 export const listenOn =
-    (app: express.Express) => 
+    (app: express.Express) =>
         (port: number) => {
             return app.listen(port);
         }
