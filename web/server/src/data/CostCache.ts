@@ -13,8 +13,17 @@ export interface CostCache {
  */
 const __costCache = new WeakMap<AnnealNode.AnnealNode, CostCache>();
 
-export const get = __costCache.get;
-export const remove = __costCache.delete;
+export function get(node: AnnealNode.AnnealNode) {
+    return __costCache.get(node);
+}
+
+export function remove(node: AnnealNode.AnnealNode) {
+    return __costCache.delete(node);
+}
+
+export function has(node: AnnealNode.AnnealNode) {
+    return __costCache.has(node);
+}
 
 /**
  * Initialises a new CostCache object.
@@ -35,7 +44,7 @@ export function init(cost: number) {
  */
 export function insert(node: AnnealNode.AnnealNode, cost: CostCache) {
     // Prevent double insertions
-    if (__costCache.has(node)) {
+    if (has(node)) {
         throw new Error("Node already has value in cost cache");
     }
 
