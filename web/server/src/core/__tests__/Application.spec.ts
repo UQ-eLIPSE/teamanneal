@@ -18,11 +18,8 @@ describe("`enableBodyParser`", () => {
         app = Application.init();
     });
 
-    // TODO: Currently being skipped due to unknown odd behaviour with test
-    //       framework and Express - `app` doesn't seem to be a proper 
-    //       instance of Express?
-    test.skip("enables body parsers (url-encoded, json)", () => {
-        Application.enableBodyParser(app);
+    test("enables body parsers (url-encoded, json)", () => {
+        Application.enableBodyParser(app, "1mb");
 
         const routers = app._router.stack as any[];
 
@@ -41,11 +38,8 @@ describe("`enableBodyParser`", () => {
         expect(hasJsonParser).toBe(true);
     });
 
-    // TODO: Currently being skipped due to unknown odd behaviour with test
-    //       framework and Express - `app` doesn't seem to be a proper 
-    //       instance of Express?
-    test.skip("returns the same application instance back", () => {
-        const result = Application.enableBodyParser(app);
+    test("returns the same application instance back", () => {
+        const result = Application.enableBodyParser(app, "1mb");
         expect(result).toBe(app);
     });
 });
@@ -60,7 +54,7 @@ describe("`listenOn`", () => {
 
     test("sets server up to listen at specified port", () => {
         const port: number = 23875;
-        server = Application.listenOn(app)(port);
+        server = Application.listenOn(app, port);
 
         expect(server.address().port).toBe(port);
     });
