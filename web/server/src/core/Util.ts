@@ -210,6 +210,24 @@ export const initArrayRange =
         return array;
     }
 
+/**
+ * Returns shallow copy of array, shuffled randomly.
+ */
+export function shuffleArray<T>(items: ReadonlyArray<T>) {
+    // Shallow copy
+    const arr = items.slice();
+
+    // In place shuffle the copied array
+    // Based on http://stackoverflow.com/a/12646864
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j = (Math.random() * (i + 1)) >>> 0;
+        let temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
+    return arr;
+}
 
 
 /// Numeric arrays
