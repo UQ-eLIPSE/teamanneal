@@ -1,4 +1,5 @@
 import * as SourceData from "../../../common/SourceData";
+import * as SourceDataColumn from "../../../common/SourceDataColumn";
 import { ValueMessageReturn } from "../../../common/ValueMessageReturn";
 
 /**
@@ -26,7 +27,7 @@ export function checkValidity(sourceData: SourceData.Desc): ValueMessageReturn<b
 /**
  * Checks that only one column is flagged as an identifier.
  */
-export function checkColumnsOnlyOneId(columns: SourceData.ColumnDescArray) {
+export function checkColumnsOnlyOneId(columns: SourceDataColumn.ColumnDescArray) {
     const idCount = columns.reduce(
         (count, column) => (column.isId) ? ++count : count,
         0
