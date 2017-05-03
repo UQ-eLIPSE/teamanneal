@@ -4,7 +4,6 @@ import * as Logger from "../core/Logger";
 
 import * as express from "express";
 import * as Data_SourceData from "../data/SourceData";
-import * as Data_Constraint from "../data/Constraint";
 
 import * as Util from "../anneal/Util";
 import * as Anneal from "../anneal/Anneal";
@@ -15,6 +14,10 @@ import * as ColumnDesc from "../anneal/ColumnDesc";
 import * as ColumnInfo from "../anneal/ColumnInfo";
 import * as CostFunction from "../anneal/CostFunction";
 
+// Middleware
+import * as SourceDataCheckValidity from "../middleware/SourceDataCheckValidity";
+import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
+
 const globalLogger = Logger.getGlobal();
 const log = Logger.log(globalLogger);
 
@@ -23,45 +26,22 @@ module.exports = () => {
     const router = express.Router();
 
     router.route("/")
-        .post(PostDataAnnealHandler);
+        .post(
+        // Validation middleware
+        // TODO: More input validation
+        SourceDataCheckValidity.generate(req => req.body.sourceData),
+        ConstraintCheckValidity.generate(req => req.body.constraints),
+
+        // Run anneal
+        anneal
+        );
 
     return router;
 };
 
-const PostDataAnnealHandler: express.RequestHandler =
+const anneal: express.RequestHandler =
     (req, res, _next) => {
-        /** Returns HTTP400 response (Bad request) with specified message */
-        const res400 = (message: string | undefined) =>
-            res.status(HTTPResponseCode.CLIENT_ERROR.BAD_REQUEST)
-                .json({
-                    message,
-                });
-
-
         const data: ToServerAnnealRequest.Root = req.body;
-
-        // Check `sourceData`
-        const sourceDataValid = Data_SourceData.checkValidity(data.sourceData);
-
-        if (!sourceDataValid.value) {
-            return res400(sourceDataValid.message);
-        }
-
-        // Check `constraints`
-        for (let i = 0; i < data.constraints.length; ++i) {
-            const constraint = data.constraints[i];
-
-            const constraintValid = Data_Constraint.checkValidity(constraint);
-
-            if (!constraintValid.value) {
-                return res400(`Constraint at index ${i}: ${constraintValid.message}`);
-            }
-        }
-
-        // TODO: More input validation
-
-
-
 
         // Anneal
         // TODO: This is somewhat hacked together from old client-side code
@@ -71,8 +51,6 @@ const PostDataAnnealHandler: express.RequestHandler =
         // NOTE: Old client-side code being used - only one strata/level support
         // NOTE: No applicabilityConditions/"of-size" support
         // NOTE: Only single search value support
-
-
 
         // Prepare
         // Convert source data to one with partitioned records
