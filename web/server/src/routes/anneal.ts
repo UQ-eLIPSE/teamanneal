@@ -4,19 +4,16 @@ import * as Logger from "../core/Logger";
 import * as Util from "../core/Util";
 
 import * as express from "express";
-import * as Data_SourceData from "../data/SourceData";
-
-import * as Anneal from "../anneal/Anneal";
-import * as Partition from "../anneal/Partition";
-import * as StringMap from "../anneal/StringMap";
-import * as Constraint from "../anneal/Constraint";
-import * as ColumnDesc from "../anneal/ColumnDesc";
-import * as ColumnInfo from "../anneal/ColumnInfo";
-import * as CostFunction from "../anneal/CostFunction";
 
 // Middleware
 import * as SourceDataCheckValidity from "../middleware/SourceDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
+
+// Data manipulation and structures
+import * as SourceData from "../data/SourceData";
+import * as AnnealNode from "../data/AnnealNode";
+import * as GroupDistribution from "../data/GroupDistribution";
+import * as ColumnInfo from "../data/ColumnInfo";
 
 const globalLogger = Logger.getGlobal();
 const log = Logger.log(globalLogger);
@@ -43,289 +40,123 @@ const anneal: express.RequestHandler =
     (req, res, _next) => {
         const data: ToServerAnnealRequest.Root = req.body;
 
-        // Anneal
-        // TODO: This is somewhat hacked together from old client-side code
-        //       and other things to get a prototype up.
-        //       Seriously needs work before it gets any further!
-        //
-        // NOTE: Old client-side code being used - only one strata/level support
-        // NOTE: No applicabilityConditions/"of-size" support
-        // NOTE: Only single search value support
+        // Convert sourceData description to that which uses partitioned record
+        // arrays, if records are not already partitioned
+        const sourceData = SourceData.convertToPartitionedRecordArrayDesc(data.sourceData)
+        const partitions = sourceData.records;
 
-        // Prepare
-        // Convert source data to one with partitioned records
-        const newSourceData = Data_SourceData.convertToPartitionedRecordArrayDesc(data.sourceData);
-
-        /** Array<0 = number, 1 = string> */
-        const columnTypes = newSourceData.columns.map(c => c.type);
-
-        // NOTE: One strata support only
-        const strata = data.strata[0];
-        const minSize = strata.size.min;
-        const idealSize = strata.size.ideal;
-        const maxSize = strata.size.max;
-
-        // String map
-        const stringMap = StringMap.init();
-        const addToStringMap = StringMap.add(stringMap);
-        const fetchFromStringMap = StringMap.get(stringMap);
-
-        // Partitions
-        const partitions: Partition.Partition[] = newSourceData.records.map(
-            (recordSet) => {
-                const numberOfGroups = Partition.calculateNumberOfGroups(recordSet.length)(minSize)(idealSize)(maxSize)(false);
-                const newPartition: Partition.Partition = Util.initArrayFunc(_ => [])(numberOfGroups);
-
-                recordSet.forEach(
-                    (record, i) => {
-                        // Translate records to just numbers (strings become pointers)
-                        const translatedRecord = record.map(
-                            (recordElement, i) => {
-                                const type = columnTypes[i];
-
-                                // Number
-                                if (type === 0) {
-                                    return recordElement as number;
-                                }
-
-                                // String
-                                if (type === 1) {
-                                    return addToStringMap(recordElement as string);
-                                }
-
-                                throw new Error(`Type not given for ${i}th column`);
-                            }
-                        );
-
-                        // Push new record into new partition in round-robin fashion
-                        newPartition[i % numberOfGroups].push(translatedRecord);
-                    }
-                );
-
-                return newPartition;
-            }
-        );
-
-        // Column info
-        const columnInfo: ColumnInfo.ColumnInfo = newSourceData.columns.map(
-            (column, i) => {
-                const labelPointer = addToStringMap(column.label);
-                const type = column.type;
-
-                const columnDesc: ColumnDesc.ColumnDesc = ColumnDesc.init();
-
-                // Set name
-                ColumnDesc.setName(columnDesc)(labelPointer);
-
-                // Set type, range, string distinct
-                switch (type) {
-                    case 0: {   // number 
-                        ColumnDesc.setTypeNumeric(columnDesc);
-
-                        // Set range
-                        let columnMin = Infinity;
-                        let columnMax = -Infinity;
-
-                        partitions.forEach(
-                            (partition) => partition.forEach(
-                                (recordSet) => recordSet.forEach(
-                                    (record) => {
-                                        const value = record[i];
-                                        if (value < columnMin) {
-                                            columnMin = value;
-                                        }
-
-                                        if (value > columnMax) {
-                                            columnMax = value;
-                                        }
-                                    }
-                                )
-                            )
-                        );
-
-                        ColumnDesc.setRangeMin(columnDesc)(columnMin);
-                        ColumnDesc.setRangeMax(columnDesc)(columnMax);
-
-                        break;
-                    }
-                    case 1: {   // string
-                        ColumnDesc.setTypeString(columnDesc);
-
-                        // Set distinct
-                        let distinctPointerSet = new Set<number>();
-
-                        partitions.forEach(
-                            (partition) => partition.forEach(
-                                (recordSet) => recordSet.forEach(
-                                    (record) => {
-                                        const value = record[i];
-                                        distinctPointerSet.add(value);
-                                    }
-                                )
-                            )
-                        );
-
-                        ColumnDesc.setStringDistinct(columnDesc)(distinctPointerSet.size);
-
-                        break;
-                    }
-                    default: {
-                        throw new Error(`Unrecognised column type ${type}`);
-                    }
-                }
-
-                return columnDesc;
-            }
-        );
-
-        // Constraints
-        const constraints = data.constraints.map(
-            (constraint) => {
-                const c = Constraint.init();    // Constraint object to return
-                const setWeight = Constraint.setWeight(c);  //
-
-                // Set strata (aka. level)
-                Constraint.setLevel(c)(constraint.strata);
-
-                // Set weight
-                // NOTE: The set value relies on the structure of
-                //       Constraint.Weight enum
-                const weight = constraint.weight;
-                if (weight >= 1000) {
-                    setWeight(0);
-                } else if (weight >= 50) {
-                    setWeight(1);
-                } else if (weight >= 10) {
-                    setWeight(2);
-                } else if (weight >= 2) {
-                    setWeight(3);
-                } else {
-                    throw new Error(`Can't accept weight: ${weight}`);
-                }
-
-                // Set column index
-                Constraint.setColumnIndex(c)(constraint.filter.column);
-
-                // Set operator (similar to what we now have as condition function)
-                // NOTE: The set value relies on the structure of
-                //       Constraint.Operator
-                const conditionFunction = constraint.condition.function;
-                const setOperator = Constraint.setOperator(c);
-                switch (conditionFunction) {
-                    case "eq": { setOperator(0); break; }
-                    case "neq": { setOperator(1); break; }
-                    case "gt":
-                    case "gte": { setOperator(2); break; }
-                    case "lt":
-                    case "lte": { setOperator(3); break; }
-
-                    case "high": { setOperator(4); break; }
-                    case "low": { setOperator(5); break; }
-
-                    case "similar": { setOperator(6); break; }
-                    case "different": { setOperator(7); break; }
-                    default: { throw new Error(`Can't accept condition function ${conditionFunction}`); }
-                }
-
-                // TODO:
-                // Set of size
-
-                if (constraint.type === "countable" || constraint.type === "limit") {
-                    // Set field operator
-                    // NOTE: The set value relies on the structure of
-                    //       Constraint.CountableFieldOperator
-                    const filterFunction = constraint.filter.function;
-                    const setFieldOperator = Constraint.setFieldOperator(c);
-                    switch (filterFunction) {
-                        case "eq": { setFieldOperator(0); break; }
-                        case "neq": { setFieldOperator(1); break; }
-                        case "lte": { setFieldOperator(2); break; }
-                        case "lt": { setFieldOperator(3); break; }
-                        case "gte": { setFieldOperator(4); break; }
-                        case "gt": { setFieldOperator(5); break; }
-                        default: { throw new Error(`Can't accept filter function ${filterFunction}`); }
-                    }
-
-                    // Set field value (now known as filter search values)
-                    const filterValue = constraint.filter.searchValues[0];
-                    Constraint.setFieldValue(c)(
-                        typeof filterValue === "string" ?
-                            addToStringMap(filterValue) :
-                            filterValue
-                    );
-
-                    if (constraint.type === "countable") {
-                        // Set count (now known as condition value)
-                        Constraint.setCount(c)(constraint.condition.value);
-                    }
-                }
-
-                return c;
-            }
-        );
-
-
-        const anneal =
-            (columnInfo: ColumnInfo.ColumnInfo) =>
-                (constraints: Constraint.Constraint[]) =>
-                    (partitions: Partition.Partition[]) => {
-                        // Run
-                        return new Promise<Anneal.AnnealIterationResult[]>((resolve, _reject) => {
-                            const results: Anneal.AnnealIterationResult[] = [];
-
-                            // Execute over partitions
-                            let job: number = 0;
-                            const totalJobs = partitions.length;
-
-                            const appliedRecordSetCostFunctions = CostFunction.generateAppliedRecordSetCostFunctions(columnInfo!)(constraints);
-
-                            for (let partition of partitions) {
-                                log("info")(`Annealing ${++job}/${totalJobs}`);
-
-                                const result = Anneal.run(appliedRecordSetCostFunctions)(partition);
-
-                                results.push(result);
-                            }
-
-                            resolve(results);
-                        });
-                    };
+        // An array of all records in the data set
+        const allRecords = Util.concatArrays(partitions);
 
 
 
-        // Map over each partition
-        return (async () => {
-            const results = await anneal(columnInfo)(constraints)(partitions);
+        /// =========================
+        /// Gather column information
+        /// =========================
 
-            // Remap strings back in
-            const groups = results.map(
-                (result) => Anneal.getPartition(result).map(
-                    (group) => group.map(
-                        (record) => record.map(
-                            (recordElement, i) => {
-                                const type = columnTypes[i];
+        const columnInfos = sourceData.columns.map((column, i) => {
+            return ColumnInfo.initFromColumnIndex(allRecords, i, column);
+        });
 
-                                // Number
-                                if (type === 0) {
-                                    return recordElement;
-                                }
 
-                                // String
-                                if (type === 1) {
-                                    return fetchFromStringMap(recordElement);
-                                }
 
-                                throw new Error(`Type not given for ${i}th column`);
-                            }
-                        )
-                    )
-                )
-            )
+        /// =====================
+        /// Parallelisable anneal
+        /// =====================
 
-            return res
-                .status(HTTPResponseCode.SUCCESS.OK)
-                .json({
-                    groups,
-                });
-        })();
+        // Operate per partition (isolated data sets - can be parallelised)
+        const output = partitions.map((partition, i) => {
+            log("info")(`Annealing partition ${i + 1}`);
+
+            /// ================================
+            /// Structuring the data into a tree
+            /// ================================
+
+            // Convert all records into AnnealNodes
+            // Records are leaves for our AnnealNode tree
+            const leaves = partition.map(AnnealNode.init);
+
+            // Shuffle all leaves now
+            // This only needs to be done once - there is no advantage in
+            // shuffling nodes higher up in the tree
+            let nodes = Util.shuffleArray(leaves);
+
+            // Go over each stratum
+            const strata = data.strata;
+
+            // Hold references to each node created per stratum
+            const strataNodes: ReadonlyArray<AnnealNode.AnnealNode>[] = [];
+
+            strata.forEach((stratum) => {
+                // Calculate number of groups to form
+                const numberOfGroups = GroupDistribution.calculateNumberOfGroups(nodes.length, stratum.size.min, stratum.size.ideal, stratum.size.max, false);
+
+                // Splice into groups
+                const groups = GroupDistribution.sliceIntoGroups(numberOfGroups, nodes);
+
+                // Create new nodes for this stratum from new groups above
+                const thisStratumNodes = groups.map(AnnealNode.createNodeFromChildrenArray);
+
+                // Build up arrays of AnnealNode that are represented at each
+                // stratum
+                strataNodes.push(thisStratumNodes);
+
+                // Build up AnnealNode tree by updating `nodes` to refer to the
+                // array of nodes from this stratum; this is reused on next loop
+                nodes = thisStratumNodes;
+            });
+
+            // Create root node
+            const rootNode = AnnealNode.createNodeFromChildrenArray(nodes);
+
+
+
+            /// =================
+            /// Calculating costs
+            /// =================
+
+            // TODO:
+            // * Separate out constraints per stratum
+            //
+            // --- FIRST ROUND COST CALC ---
+            //
+            // * For each stratum (bottom up),
+            //      * For each node of that stratum,
+            //          * This node's cost = sum of all costs of immediate
+            //            children
+            //          * Find all **leaves** that are connected to that node
+            //          * Calculate costs per constraint for that node
+            //          * Add cost to node's existing cost
+            //          * Update node cost via. CostCache
+            //
+            // * Calculate total cost = sum of costs of root node's immediate
+            //                          children
+            //
+            // --- FURTHER ROUND COST CALC (after swap, move, etc.) ---
+            //
+            // (At this point the cost caches would be invalidated for affected
+            // nodes only)
+            // (Maybe we could keep track of which nodes had costs invalidated
+            // to make the below loop shorter?)
+            // 
+            // * For each stratum (bottom up)
+            //      * For each node with **invalidated** cost cache,
+            //          * This node's cost = sum of all costs of immediate
+            //            children
+            //          * Find all **leaves** that are connected to that node
+            //          * Calculate costs per constraint for that node
+            //          * Add cost to node's existing cost
+            //          * Update node cost via. CostCache
+            //
+            // * Calculate total cost = sum of costs of root node's immediate
+            //                          children
+
+            return true;
+        });
+
+        return res
+            .status(HTTPResponseCode.SUCCESS.OK)
+            .json({
+                output,
+            });
     };
