@@ -1,4 +1,4 @@
-import * as SourceData from "./SourceData";
+import * as Record from "./Record";
 
 export type Desc =
     Base & (
@@ -68,7 +68,7 @@ export interface Limit extends Base {
          * e.g. the record element value needs to be greater than *[value]* to
          *      be counted
          */
-        readonly searchValues: ReadonlyArray<SourceData.RecordElement>,
+        readonly searchValues: ReadonlyArray<Record.RecordElement>,
     },
 
     /** Limit description */
@@ -105,7 +105,7 @@ export interface Countable extends Base {
          * e.g. the record element value needs to be greater than *[value]* to
          *      be counted
          */
-        readonly searchValues: ReadonlyArray<SourceData.RecordElement>,
+        readonly searchValues: ReadonlyArray<Record.RecordElement>,
     },
 
     /** Count condition description */

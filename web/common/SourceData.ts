@@ -1,9 +1,6 @@
-/** Element value in a record */
-export type RecordElement = number | string;
-/** A record is an array of values (elements) */
-export type Record = ReadonlyArray<RecordElement>;
+import * as Record from "./Record";
 
-export type RecordArray = ReadonlyArray<Record>;
+export type RecordArray = ReadonlyArray<Record.Record>;
 export type PartitionedRecordArray = ReadonlyArray<RecordArray>;
 
 export type ColumnDescArray = ReadonlyArray<ColumnDesc>;
