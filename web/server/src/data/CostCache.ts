@@ -8,10 +8,34 @@ export interface CostCache {
     readonly cost: number,
 }
 
+interface CostCacheUnsafe {
+    /** Total calculated cost for this node, incl. children */
+    cost: number,
+}
+
 /**
  * WeakMap as a cache for AnnealNode -> Cost.
  */
 const __costCache = new WeakMap<AnnealNode.AnnealNode, CostCache>();
+
+/** 
+ * This is a reference prototype so that some JavaScript engines can better optimise property
+ * lookups against all CostCache objects.
+ * 
+ * This seems to be particularly true of V8 (Chrome/Node.js).
+ */
+const __rootPrototype = Object.create(null);
+
+/**
+ * Initialises a new CostCache object.
+ */
+export function init(cost: number) {
+    const costCacheObj: CostCacheUnsafe = Object.create(__rootPrototype);
+
+    costCacheObj.cost = cost;
+
+    return costCacheObj as CostCache;
+}
 
 export function get(node: AnnealNode.AnnealNode) {
     return __costCache.get(node);
@@ -23,17 +47,6 @@ export function remove(node: AnnealNode.AnnealNode) {
 
 export function has(node: AnnealNode.AnnealNode) {
     return __costCache.has(node);
-}
-
-/**
- * Initialises a new CostCache object.
- */
-export function init(cost: number) {
-    const costCacheObj: CostCache = {
-        cost,
-    };
-
-    return costCacheObj;
 }
 
 /**
