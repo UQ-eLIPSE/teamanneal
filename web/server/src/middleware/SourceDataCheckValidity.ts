@@ -14,7 +14,7 @@ export function generate(dataExtractFn: DataExtractionFunction) {
         const sourceDataValid = Data_SourceData.checkValidity(sourceData);
 
         if (!sourceDataValid.value) {
-            res.status(HTTPResponseCode.CLIENT_ERROR.BAD_REQUEST)
+            return res.status(HTTPResponseCode.CLIENT_ERROR.BAD_REQUEST)
                 .json({
                     message: sourceDataValid.message,
                 });
