@@ -215,7 +215,7 @@ export const initArrayRange =
  */
 export function shuffleArray<T>(items: ReadonlyArray<T>) {
     // Shallow copy
-    const arr = items.slice();
+    const arr = shallowCopyArray(items);
 
     // In place shuffle the copied array
     // Based on http://stackoverflow.com/a/12646864
@@ -224,6 +224,19 @@ export function shuffleArray<T>(items: ReadonlyArray<T>) {
         let temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
+    }
+
+    return arr;
+}
+
+/**
+ * Shallow copies an array.
+ */
+export function shallowCopyArray<T>(items: ReadonlyArray<T>) {
+    const arr: T[] = [];
+
+    for (let i = 0; i < items.length; ++i) {
+        arr[i] = items[i];
     }
 
     return arr;
