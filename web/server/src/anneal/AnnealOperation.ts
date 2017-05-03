@@ -4,9 +4,9 @@
  * 
  */
 import * as Partition from "./Partition";
-import * as Util from "./Util";
 import * as SourceRecordSet from "./SourceRecordSet";
 
+import * as Util from "../core/Util"; 
 
 
 

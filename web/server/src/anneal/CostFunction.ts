@@ -9,8 +9,8 @@ import * as Constraint from "./Constraint";
 import * as ColumnInfo from "./ColumnInfo";
 import * as ColumnDesc from "./ColumnDesc";
 import * as TestFunction from "./TestFunction";
-import * as Util from "./Util";
 
+import * as Util from "../core/Util"; 
 
 
 

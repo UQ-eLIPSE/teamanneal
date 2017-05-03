@@ -4,11 +4,11 @@
  * 
  */
 import * as Partition from "./Partition";
-import * as Util from "./Util";
 import * as AnnealOperation from "./AnnealOperation";
 import * as CostFunction from "./CostFunction";
 import * as SourceRecordSet from "./SourceRecordSet";
 
+import * as Util from "../core/Util"; 
 
 
 export interface AnnealRoundResult extends ReadonlyArray<Partition.Partition | number> {

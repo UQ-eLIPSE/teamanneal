@@ -3,7 +3,7 @@
  * 
  * Stores strings and permits lookups through pointer values.
  */
-import * as Util from "./Util";
+import * as Util from "../core/Util"; 
 
 export type StringPointer = number;
 type __KV = StringPointer | string;

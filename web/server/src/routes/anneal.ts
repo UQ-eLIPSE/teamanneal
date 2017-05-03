@@ -1,11 +1,11 @@
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as Logger from "../core/Logger";
+import * as Util from "../core/Util";
 
 import * as express from "express";
 import * as Data_SourceData from "../data/SourceData";
 
-import * as Util from "../anneal/Util";
 import * as Anneal from "../anneal/Anneal";
 import * as Partition from "../anneal/Partition";
 import * as StringMap from "../anneal/StringMap";

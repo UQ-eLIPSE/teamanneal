@@ -7,7 +7,8 @@ import * as SourceRecord from "./SourceRecord";
 import * as SourceRecordSet from "./SourceRecordSet";
 import * as StringMap from "./StringMap";
 import * as ColumnDesc from "./ColumnDesc";
-import * as Util from "./Util";
+
+import * as Util from "../core/Util"; 
 
 
 

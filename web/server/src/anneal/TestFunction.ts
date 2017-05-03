@@ -6,7 +6,8 @@
 import * as SourceRecord from "./SourceRecord";
 import * as SourceRecordSet from "./SourceRecordSet";
 import * as Constraint from "./Constraint";
-import * as Util from "./Util";
+
+import * as Util from "../core/Util"; 
 
 
 export type RecordValueTestFunction =

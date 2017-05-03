@@ -5,10 +5,10 @@
  */
 import * as SourceRecordSet from "./SourceRecordSet";
 import * as Partition from "./Partition";
-import * as Util from "./Util";
 import * as AnnealRound from "./AnnealRound";
 import * as CostFunction from "./CostFunction";
 
+import * as Util from "../core/Util";
 
 
 

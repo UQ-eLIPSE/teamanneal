@@ -3,10 +3,11 @@
  * 
  * Represents a set of SourceRecords.
  */
-import * as Util from "./Util";
 import * as StringMap from "./StringMap";
 import * as ColumnInfo from "./ColumnInfo";
 import * as SourceRecord from "./SourceRecord";
+
+import * as Util from "../core/Util"; 
 
 
 

@@ -4,7 +4,7 @@
  * Represents a set of groups ("SourceRecordSet.Set").
  */
 import * as SourceRecordSet from "./SourceRecordSet";
-import * as Util from "./Util";
+import * as Util from "../core/Util";
 
 export interface Partition extends Array<SourceRecordSet.SourceRecordSet> { };
 

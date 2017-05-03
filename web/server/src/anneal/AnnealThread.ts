@@ -6,10 +6,10 @@
 import * as Constraint from "./Constraint";
 import * as Partition from "./Partition";
 import * as Anneal from "./Anneal";
-import * as Util from "./Util";
 import * as CostFunction from "./CostFunction";
 import * as ColumnInfo from "./ColumnInfo";
 
+import * as Util from "../core/Util"; 
 
 
 

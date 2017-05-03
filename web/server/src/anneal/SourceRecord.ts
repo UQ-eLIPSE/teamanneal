@@ -3,10 +3,11 @@
  * 
  * Represents records in the source data (e.g. class list)
  */
-import * as Util from "./Util";
 import * as StringMap from "./StringMap";
 // import * as ColumnInfo from "./ColumnInfo";      <---- Doing this will result in circular reference
 import * as ColumnDesc from "./ColumnDesc";
+
+import * as Util from "../core/Util"; 
 
 
 // Equivalent type to ColumnInfo.ColumnInfo
