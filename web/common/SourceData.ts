@@ -1,9 +1,8 @@
 import * as Record from "./Record";
+import * as SourceDataColumn from "./SourceDataColumn";
 
 export type RecordArray = ReadonlyArray<Record.Record>;
 export type PartitionedRecordArray = ReadonlyArray<RecordArray>;
-
-export type ColumnDescArray = ReadonlyArray<ColumnDesc>;
 
 export interface NonPartitioned {
     /** Flat array of records */
@@ -23,22 +22,9 @@ export interface Partitioned {
     /** Indicates records are already split for parallel processing */
     readonly isPartitioned: true,
 }
-
-export interface ColumnDesc {
-    /** Column heading text */
-    readonly label: string,
-    /** 0 = number, 1 = string */
-    readonly type: number,
-    /**
-     * Identifies if column contains unique identifiers;
-     * only one "true" value permissible in a source data set
-     */
-    readonly isId: boolean,
-}
-
 export interface DescBase {
     /** Describes all columns */
-    readonly columns: ColumnDescArray,
+    readonly columns: SourceDataColumn.ColumnDescArray,
 }
 
 export type Desc = DescBase & (
