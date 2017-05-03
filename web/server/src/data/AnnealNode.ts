@@ -394,3 +394,17 @@ export function forEachSibling(node: AnnealNode, callback: AnnealNodeLoopCallbac
 
     return forEachChild(parent, callback);
 }
+
+/**
+ * Determines if a given node is a descendant of given parent.
+ */
+export function isDescendantOf(parent: AnnealNode, node: AnnealNode) {
+    // Look up repeatedly until node.parent === parent
+    while (node.parent) {
+        if (node.parent === parent) {
+            return true;
+        }
+    }
+
+    return false;
+}
