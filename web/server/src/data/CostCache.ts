@@ -68,13 +68,18 @@ export function insert(node: AnnealNode.AnnealNode, cost: CostCache) {
 
 /**
  * Invalidates cost cache for given node and all nodes up to the root.
+ * 
+ * @returns Array of nodes with invalidated costs.
  */
 export function invalidate(node: AnnealNode.AnnealNode) {
     let currentNode: AnnealNode.AnnealNode | undefined = node;
 
+    const nodesWithInvalidatedCosts: AnnealNode.AnnealNode[] = [];
+
     do {
         remove(currentNode);
+        nodesWithInvalidatedCosts.push(currentNode);
     } while (currentNode = currentNode.parent); // Go up the tree
 
-    return;
+    return nodesWithInvalidatedCosts;
 }
