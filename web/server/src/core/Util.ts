@@ -243,6 +243,19 @@ export function shallowCopyArray<T>(items: ReadonlyArray<T>) {
 }
 
 
+/**
+ * Concatentates arrays.
+ */
+export function concatArrays<T>(items: ReadonlyArray<ReadonlyArray<T>>) {
+    const arr: T[] = [];
+
+    for (let i = 0; i < items.length; ++i) {
+        arr.push.apply(arr, items[i]);
+    }
+
+    return arr;
+}
+
 /// Numeric arrays
 
 /**
@@ -314,3 +327,22 @@ export const throwErr =
     (error: Error) => {
         throw error;
     }
+
+
+
+
+/// Objects
+
+export function zipObjects<U extends object, V extends object>(o1: U, o2: V): U & V {
+    const target: any = {};
+
+    for (let k1 in o1) {
+        target[k1] = o1[k1];
+    }
+
+    for (let k2 in o2) {
+        target[k2] = o2[k2];
+    }
+
+    return target;
+}
