@@ -9,23 +9,35 @@ const __generator = new MersenneTwister();
 
 
 
-export function random() {
-    return __generator.random();
+export function init() {
+    const generator = new MersenneTwister();
+    setRandomSeed(generator);
+    return generator;
 }
 
-export function randomLong() {
-    return __generator.random_long();
+export function random(generator: MersenneTwister = __generator) {
+    return generator.random();
 }
 
-export function randomUint32() {
-    return __generator.random_int();
+export function randomLong(generator: MersenneTwister = __generator) {
+    return generator.random_long();
 }
 
-export function setGlobalSeed(number: number) {
-    return __generator.init_seed(number);
+export function randomUint32(generator: MersenneTwister = __generator) {
+    return generator.random_int();
 }
 
-export function setGlobalRandomSeed() {
+
+
+export function getStateVector(generator: MersenneTwister) {
+    return generator.mt;
+}
+
+export function setSeed(generator: MersenneTwister, number: number) {
+    return generator.init_seed(number);
+}
+
+export function setRandomSeed(generator: MersenneTwister) {
     // Use highest available entropy to set randomness
     // Fills in one uint32 number into `__uint32`
     crypto.getRandomValues(__uint32);
@@ -33,15 +45,29 @@ export function setGlobalRandomSeed() {
     // Get the random uint32 number out from the 0th index, use as seed
     const seed = __uint32[0];
 
-    return setGlobalSeed(seed);
+    return setSeed(generator, seed);
 }
 
-export function setGlobalStateVector(vector: number[]) {
-    return __generator.init_by_array(vector, vector.length);
+export function setStateVector(generator: MersenneTwister, vector: ReadonlyArray<number>) {
+    return generator.init_by_array(vector, vector.length);
+}
+
+
+
+export function setGlobalSeed(number: number) {
+    return setSeed(__generator, number);
+}
+
+export function setGlobalRandomSeed() {
+    return setRandomSeed(__generator);
+}
+
+export function setGlobalStateVector(vector: ReadonlyArray<number>) {
+    return setStateVector(__generator, vector);
 }
 
 export function getGlobalStateVector() {
-    return __generator.mt;
+    return getStateVector(__generator);
 }
 
 // Initialised to random seed
