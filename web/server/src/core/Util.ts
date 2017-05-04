@@ -1,3 +1,5 @@
+import * as Random from "../data/Random";
+
 /*
  * Util
  * 
@@ -9,61 +11,12 @@
 /**
  * Generates random uint32.
  */
-export const randUint32 =
-    (() => {
-        if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-            // Reusing array for getRandomValues across executions
-            const uint32Arr = new Uint32Array(1);
-
-            return () => {
-                // Fill random 32 bits
-                crypto.getRandomValues(uint32Arr);
-                return uint32Arr[0];
-            };
-        } else {
-            return () => {
-                // Fallback using Math.random()
-                return (Math.random() * 0xFFFFFFFF) >>> 0;
-            };
-        }
-    })();
+export const randUint32 = Random.randomUint32;
 
 /**
  * Generates random float64.
  */
-export const randFloat64 =
-    (() => {
-        if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-            // Reusing array for getRandomValues across executions
-            const uint32Arr = new Uint32Array(2);
-
-            return () => {
-                let result: number;
-
-                do {
-                    // Fill random 64 bits
-                    crypto.getRandomValues(uint32Arr);
-
-                    // [0, 1) in IEEE754/double has 52 bits (13 nibbles) in fraction
-                    // so we need to create an int that fits within that range then
-                    // divide by 52 bits to get a float
-                    //
-                    // Based on http://stackoverflow.com/questions/13694626/generating-random-numbers-0-to-1-with-crypto-generatevalues#comment18805210_13694869
-                    const bottom = uint32Arr[0] & 0xFFFFF;  // 20 bits
-                    const top = uint32Arr[1] * 0x100000;    // 32 bits, shifted left by 20 bits
-
-                    result = (top + bottom) / 0xFFFFFFFFFFFFF;
-                } while (result | 0); // top + bottom can saturate 52 bits, so we need to check if it's 1
-
-                return result;
-            };
-        } else {
-            return () => {
-                // Fallback using Math.random()
-                return Math.random();
-            };
-        }
-    })();
+export const randFloat64 = Random.randomLong;
 
 /**
  * Generates random uint32 in range [0, n).
@@ -220,7 +173,7 @@ export function shuffleArray<T>(items: ReadonlyArray<T>) {
     // In place shuffle the copied array
     // Based on http://stackoverflow.com/a/12646864
     for (let i = arr.length - 1; i > 0; i--) {
-        let j = (Math.random() * (i + 1)) >>> 0;
+        let j = (Random.random() * (i + 1)) >>> 0;
         let temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;

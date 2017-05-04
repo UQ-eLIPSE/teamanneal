@@ -1,3 +1,5 @@
+import * as Random from "./Random";
+
 /**
  * An abstract node that represents the location of a node (a partition, group,
  * student, etc.) in various strata for TeamAnneal.
@@ -141,7 +143,7 @@ function setAsChildrenOf(parent: AnnealNode, nodeArray: AnnealNode[]) {
  * Picks a random child under the given parent node.
  */
 export function pickRandomChild(parent: AnnealNode) {
-    const childIndex = (Math.random() * parent.childrenSize) >>> 0;
+    const childIndex = (Random.random() * parent.childrenSize) >>> 0;
     let childNode = parent.child;
 
     if (childNode) {
@@ -183,7 +185,7 @@ export function pickRandomSibling(node: AnnealNode) {
         return undefined;
     }
 
-    const offset = ((Math.random() * (parent.childrenSize - 1)) >>> 0) + 1;
+    const offset = ((Random.random() * (parent.childrenSize - 1)) >>> 0) + 1;
     let siblingNode = node;
 
     for (let i = 0; i < offset; ++i) {
