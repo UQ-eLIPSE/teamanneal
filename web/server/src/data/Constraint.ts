@@ -83,7 +83,7 @@ export function isWeightValid(constraint: Constraint.Desc) {
 export function isTypeValid(constraint: Constraint.Desc) {
     // Only return true if it is a valid type value
     switch (constraint.type) {
-        case "countable":
+        case "count":
         case "limit":
         case "similarity":
             return true;
@@ -93,7 +93,7 @@ export function isTypeValid(constraint: Constraint.Desc) {
 }
 
 export function isApplicabilityConditionsArray(constraint: Constraint.Desc) {
-    return Array.isArray(constraint.applicabilityConditions);
+    return Array.isArray(constraint.applicability);
 }
 
 export function isFilterFunctionValid(constraint: Constraint.Desc) {
@@ -122,7 +122,7 @@ export function isFilterSearchValuesNonEmpty(constraint: Constraint.Desc) {
         return true;
     }
 
-    return constraint.filter.searchValues.length !== 0;
+    return constraint.filter.values.length !== 0;
 }
 
 export function isFilterFunctionValidForSearchValues(constraint: Constraint.Desc) {
@@ -132,7 +132,7 @@ export function isFilterFunctionValidForSearchValues(constraint: Constraint.Desc
     }
 
     // Only "eq" and "neq" are permissible for multiple search values
-    if (constraint.filter.searchValues.length > 1 &&
+    if (constraint.filter.values.length > 1 &&
         !(constraint.filter.function === "eq" || constraint.filter.function === "neq")) {
         return false;
     }

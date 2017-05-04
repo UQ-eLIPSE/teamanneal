@@ -3,47 +3,47 @@
         "columns": [
             {
                 "label": "StudentID",
-                "type": 0,
+                "type": "number",
                 "isId": true
             },
             {
                 "label": "Last Name",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "First Name",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "Email",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "Project group",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "Discipline",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "Coord/Shaper",
-                "type": 0,
+                "type": "number",
                 "isId": false
             },
             {
                 "label": "Gender",
-                "type": 1,
+                "type": "string",
                 "isId": false
             },
             {
                 "label": "ESL",
-                "type": 1,
+                "type": "string",
                 "isId": false
             }
         ],
@@ -13192,11 +13192,11 @@
         {
             "strata": 0,
             "weight": 1000,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 6,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     1
                 ]
             },
@@ -13209,11 +13209,11 @@
         {
             "strata": 0,
             "weight": 50,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 5,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     "Software"
                 ]
             },
@@ -13226,11 +13226,11 @@
         {
             "strata": 0,
             "weight": 50,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 5,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     "Electrical"
                 ]
             },
@@ -13243,11 +13243,11 @@
         {
             "strata": 0,
             "weight": 50,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 5,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     "Mechanical"
                 ]
             },
@@ -13260,11 +13260,11 @@
         {
             "strata": 0,
             "weight": 50,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 5,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     "Mechatronic"
                 ]
             },
@@ -13281,7 +13281,7 @@
             "filter": {
                 "column": 8,
                 "function": "neq",
-                "searchValues": [
+                "values": [
                     "English"
                 ]
             },
@@ -13293,11 +13293,11 @@
         {
             "strata": 0,
             "weight": 1000,
-            "type": "countable",
+            "type": "count",
             "filter": {
                 "column": 7,
                 "function": "eq",
-                "searchValues": [
+                "values": [
                     "Female"
                 ]
             },

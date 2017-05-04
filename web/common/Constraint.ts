@@ -3,9 +3,14 @@ import * as Record from "./Record";
 export type Desc =
     Base & (
         Limit |
-        Countable |
+        Count |
         Similarity
     );
+
+export type FunctionValue =
+    ComparisonFunction |
+    LimitFunction |
+    SimilarityFunction;
 
 export type ComparisonFunction = "eq" | "neq" | "lt" | "lte" | "gt" | "gte";
 export type LimitFunction = "low" | "high";
@@ -42,7 +47,7 @@ export interface Base {
      * This constraint will only be considered if the applicability filters are
      * all met, or if there are no conditions imposed
      */
-    readonly applicabilityConditions: ReadonlyArray<ApplicabilityCondition>,
+    readonly applicability: ReadonlyArray<ApplicabilityCondition>,
 }
 
 export interface Limit extends Base {
@@ -68,7 +73,7 @@ export interface Limit extends Base {
          * e.g. the record element value needs to be greater than *[value]* to
          *      be counted
          */
-        readonly searchValues: ReadonlyArray<Record.RecordElement>,
+        readonly values: ReadonlyArray<Record.RecordElement>,
     },
 
     /** Limit description */
@@ -82,8 +87,8 @@ export interface Limit extends Base {
     },
 }
 
-export interface Countable extends Base {
-    readonly type: "countable",
+export interface Count extends Base {
+    readonly type: "count",
 
     /** Record element filter description */
     readonly filter: {
@@ -105,7 +110,7 @@ export interface Countable extends Base {
          * e.g. the record element value needs to be greater than *[value]* to
          *      be counted
          */
-        readonly searchValues: ReadonlyArray<Record.RecordElement>,
+        readonly values: ReadonlyArray<Record.RecordElement>,
     },
 
     /** Count condition description */
