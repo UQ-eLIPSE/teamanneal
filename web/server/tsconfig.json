@@ -26,7 +26,8 @@
     },
 
     "include": [
-        "./src/**/*.ts"
+        "./src/index.ts",
+        "./src/routes/**/*.ts"
     ],
 
     "exclude": [
