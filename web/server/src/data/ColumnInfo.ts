@@ -7,31 +7,34 @@ import * as Util from "../core/Util";
  * An object which contains information about the column from the full set of 
  * records.
  */
-export type ColumnInfo = SourceDataColumn.ColumnDesc &
-    (ColumnInfoNumber | ColumnInfoString);
+export type ColumnInfo =
+    ColumnInfoNumber |
+    ColumnInfoString;
 
-interface __ColumnInfo {
-    // Type values must be the same as those in SourceDataColumn
-    readonly type: SourceDataColumn.ColumnType,
+interface ColumnInfoNumber extends SourceDataColumn.ColumnDesc, ColumnInfoNumberDetails {
+    readonly type: "number",
 }
 
-interface ColumnInfoNumber extends __ColumnInfo {
-    readonly type: "number",
+interface ColumnInfoString extends SourceDataColumn.ColumnDesc, ColumnInfoStringDetails {
+    readonly type: "string",
+}
 
+
+interface ColumnInfoNumberDetails {
     /** Minimum numeric value contained in column */
     readonly min: number,
 
     /** Maximum numeric value contained in column */
     readonly max: number,
+
+    /** Range of numeric values contained in column */
+    readonly range: number,
 }
 
-interface ColumnInfoString extends __ColumnInfo {
-    readonly type: "string",
-
+interface ColumnInfoStringDetails {
     /** Number of distinct strings contained in column */
     readonly distinct: number,
 }
-
 
 
 
@@ -48,7 +51,12 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
             let min: number = Number.POSITIVE_INFINITY;
             let max: number = Number.NEGATIVE_INFINITY;
 
-            recordElements.forEach((val: number) => {
+            recordElements.forEach((val) => {
+                // Skip non-numbers
+                if (typeof val !== "number") {
+                    return;
+                }
+
                 if (val < min) {
                     min = val;
                 }
@@ -58,28 +66,29 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
                 }
             });
 
-            const info: ColumnInfoNumber = {
-                type: "number",
+            const info: ColumnInfoNumberDetails = {
                 min,
                 max,
+                range: max - min,
             }
 
-            return Util.zipObjects(column, info);
+            return Util.zipObjects(column, info) as ColumnInfoNumber;
         }
 
         case "string": {
-            const stringSet = new Set<string>();
+            // NOTE: This takes ALL value types (string, number, null) into
+            // consideration when calculating distinct values
+            const recordElementSet = new Set<Record.RecordElement>();
 
-            recordElements.forEach((val: string) => {
-                stringSet.add(val);
+            recordElements.forEach((val) => {
+                recordElementSet.add(val);
             });
 
-            const info: ColumnInfoString = {
-                type: "string",
-                distinct: stringSet.size,
+            const info: ColumnInfoStringDetails = {
+                distinct: recordElementSet.size,
             }
 
-            return Util.zipObjects(column, info);
+            return Util.zipObjects(column, info) as ColumnInfoString;
         }
     }
 
