@@ -14,6 +14,10 @@ import * as SourceData from "../data/SourceData";
 import * as AnnealNode from "../data/AnnealNode";
 import * as GroupDistribution from "../data/GroupDistribution";
 import * as ColumnInfo from "../data/ColumnInfo";
+import * as CostCache from "../data/CostCache";
+
+// Anneal-related
+import * as ProcessedConstraint from "../anneal/ProcessedConstraint";
 
 const globalLogger = Logger.getGlobal();
 const log = Logger.log(globalLogger);
@@ -111,9 +115,39 @@ const anneal: express.RequestHandler =
 
 
 
-            /// =================
-            /// Calculating costs
-            /// =================
+            /// =======================
+            /// Configuring constraints
+            /// =======================
+
+            const constraints = data.constraints;
+
+            const processedConstraints = constraints.map(ProcessedConstraint.init);
+
+            const strataConstraints = strata.map((_stratum, stratumIndex) => {
+                const stratumConstraints: ProcessedConstraint.ProcessedConstraint[] = [];
+
+                processedConstraints.forEach((appliedConstraint) => {
+                    if (appliedConstraint.constraint.strata === stratumIndex) {
+                        stratumConstraints.push(appliedConstraint);
+                    }
+                });
+
+                return stratumConstraints;
+            });
+
+
+
+            /// =======================
+            /// Initialising leaf costs
+            /// =======================
+
+            // Leaves don't incur costs because constraints only apply on groups
+            // of records (as in, they're for strata, excl. leaves themselves)
+            const leafCost = CostCache.init(0);
+            leaves.forEach(leaf => CostCache.insert(leaf, leafCost));
+
+
+
 
             // TODO:
             // * Separate out constraints per stratum
