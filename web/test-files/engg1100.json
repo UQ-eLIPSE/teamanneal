@@ -13204,7 +13204,7 @@
                 "function": "gte",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13221,7 +13221,7 @@
                 "function": "gte",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13238,7 +13238,7 @@
                 "function": "gte",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13255,7 +13255,7 @@
                 "function": "gte",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13272,7 +13272,7 @@
                 "function": "gte",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13288,7 +13288,7 @@
             "condition": {
                 "function": "low"
             },
-            "applicabilityConditions": []
+            "applicability": []
         },
         {
             "strata": 0,
@@ -13305,7 +13305,7 @@
                 "function": "neq",
                 "value": 1
             },
-            "applicabilityConditions": []
+            "applicability": []
         }
     ],
     "config": {
