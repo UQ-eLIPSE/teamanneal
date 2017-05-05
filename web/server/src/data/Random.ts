@@ -1,4 +1,3 @@
-/// <reference path="../typings/mersenne-twister.d.ts" />
 import * as MersenneTwister from "mersenne-twister";
 import * as crypto from "crypto";
 
