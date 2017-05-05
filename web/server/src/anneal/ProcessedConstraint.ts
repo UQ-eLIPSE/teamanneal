@@ -28,7 +28,7 @@ export interface ProcessedConstraint {
 }
 
 export type FilterFunction = (node: AnnealNode.AnnealNode, leaves: ReadonlyArray<AnnealNode.AnnealNode>) => ReadonlyArray<AnnealNode.AnnealNode>;
-export type CostFunction = (node: AnnealNode.AnnealNode, filteredLeaves: ReadonlyArray<AnnealNode.AnnealNode>, columnInfos: ColumnInfo.ColumnInfo[]) => number;
+export type CostFunction = (node: AnnealNode.AnnealNode, filteredLeaves: ReadonlyArray<AnnealNode.AnnealNode>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>) => number;
 export type ApplicabilityFunction = (node: AnnealNode.AnnealNode) => boolean;
 
 
@@ -260,6 +260,9 @@ function generateGroupSizeApplicabilityFunction(condition: Constraint.Applicabil
 
     const applicabilityFunction: ApplicabilityFunction = (node) => {
         // When cost = 0 the applicability condition is met
+        //
+        // TODO: This should be changed to not implicitly calculate boolean
+        // outcome from cost values
         return sizeCompareCostFn(targetValue, node.childrenSize) === 0;
     }
 
