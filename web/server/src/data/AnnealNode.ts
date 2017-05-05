@@ -8,11 +8,17 @@ import * as Random from "./Random";
  * siblings.
  */
 export interface AnnealNode extends __AnnealNode {
+    /** Node identification number */
+    readonly id: number,
+
     /** Actual bit of data that this abstract node refers to */
     readonly data: object,
 }
 
 interface AnnealNodeUnsafe extends __AnnealNode {
+    /** Node identification number */
+    id: number,
+
     /** Actual bit of data that this abstract node refers to */
     data: object,
 }
@@ -30,6 +36,10 @@ interface __AnnealNode {
     /** The previous sibling */
     prev: AnnealNode,
 }
+
+interface AnnealNodeState extends __AnnealNode { }
+
+interface AnnealNodeStateStore extends Map<number, AnnealNodeState> { }
 
 /**
  * Callback function for "forEach" functions.
@@ -49,11 +59,17 @@ type AnnealNodeLoopCallback = (node: AnnealNode, index?: number) => void;
 const __rootPrototype = Object.create(null);
 
 /**
+ * Global ID counter for AnnealNode objects.
+ */
+let __id: number = 0;
+
+/**
  * Initialises a new AnnealNode object.
  */
 export function init(data: object) {
     const node: AnnealNodeUnsafe = Object.create(__rootPrototype);
 
+    node.id = __id++;
     node.data = data;
     node.parent = undefined;
     node.child = undefined;
@@ -409,4 +425,63 @@ export function isDescendantOf(parent: AnnealNode, node: AnnealNode) {
     } while ((node = node.parent!) !== undefined);
 
     return false;
+}
+
+function extractState(node: AnnealNode) {
+    const state: AnnealNodeState = {
+        parent: node.parent,
+        child: node.child,
+        childrenSize: node.childrenSize,
+
+        next: node.next,
+        prev: node.prev,
+    }
+
+    return state;
+}
+
+function applyState(node: AnnealNode, state: AnnealNodeState) {
+    node.parent = state.parent;
+    node.child = state.child;
+    node.childrenSize = state.childrenSize;
+
+    node.next = state.next;
+    node.prev = state.prev;
+
+    return node;
+}
+
+function saveStateToStore(store: AnnealNodeStateStore, node: AnnealNode) {
+    store.set(node.id, extractState(node));
+
+    forEachChild(node, (child) => {
+        saveStateToStore(store, child);
+    });
+}
+
+function applyStateFromStore(store: AnnealNodeStateStore, node: AnnealNode) {
+    const state = store.get(node.id);
+
+    if (state === undefined) {
+        throw new Error(`Cannot restore state to node ID ${node.id}`);
+    }
+
+    applyState(node, state);
+
+    forEachChild(node, (child) => {
+        applyStateFromStore(store, child);
+    });
+}
+
+export function exportState(node: AnnealNode) {
+    // Create new store and fill it with the current state
+    const stateStore = new Map<number, AnnealNodeState>();
+
+    saveStateToStore(stateStore, node);
+
+    return stateStore;
+}
+
+export function importState(node: AnnealNode, store: AnnealNodeStateStore) {
+    return applyStateFromStore(store, node);
 }
