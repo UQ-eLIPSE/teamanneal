@@ -16,7 +16,7 @@ interface CostCacheUnsafe {
 /**
  * WeakMap as a cache for AnnealNode -> Cost.
  */
-const __costCache = new WeakMap<AnnealNode.AnnealNode, CostCache>();
+let __costCache: WeakMap<AnnealNode.AnnealNode, CostCache> = new WeakMap();
 
 /** 
  * This is a reference prototype so that some JavaScript engines can better optimise property
@@ -82,4 +82,13 @@ export function invalidate(node: AnnealNode.AnnealNode) {
     } while (currentNode = currentNode.parent); // Go up the tree
 
     return nodesWithInvalidatedCosts;
+}
+
+/**
+ * Invalidates all costs cached.
+ */
+export function invalidateAll() {
+    // There is no "clear" method on WeakMaps, you simply instantiate a new
+    // WeakMap object instead
+    __costCache = new WeakMap();   
 }
