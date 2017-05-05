@@ -402,11 +402,11 @@ export function forEachSibling(node: AnnealNode, callback: AnnealNodeLoopCallbac
  */
 export function isDescendantOf(parent: AnnealNode, node: AnnealNode) {
     // Look up repeatedly until node.parent === parent
-    while (node.parent) {
+    do {
         if (node.parent === parent) {
             return true;
         }
-    }
+    } while ((node = node.parent!) !== undefined);
 
     return false;
 }
