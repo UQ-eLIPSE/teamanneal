@@ -40,8 +40,10 @@ export function calculateNewTemperature(temp: number) {
     return temp * stepTemperatureScaling;
 }
 
-export function isBasicStopConditionMet(cost: number, temp: number) {
-    // Stop when cost is 0 (perfect compliance with constraints) or when the
-    // temperature is low enough there is no point in going further
-    return (cost === 0 || temp < temperatureTolerance);
+export function isTemperatureExhausted(temp: number) {
+    return temp < temperatureTolerance;
+}
+
+export function isResultPerfect(cost: number) {
+    return cost === 0;
 }
