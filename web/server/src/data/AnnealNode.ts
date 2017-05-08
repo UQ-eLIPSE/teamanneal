@@ -51,8 +51,8 @@ interface AnnealNodeStateStore extends Map<number, AnnealNodeState> { }
 type AnnealNodeLoopCallback = (node: AnnealNode, index?: number) => void;
 
 /** 
- * This is a reference prototype so that some JavaScript engines can better optimise property
- * lookups against all AnnealNodes.
+ * This is a reference prototype so that some JavaScript engines can better
+ * optimise property lookups against all AnnealNodes.
  * 
  * This seems to be particularly true of V8 (Chrome/Node.js).
  */

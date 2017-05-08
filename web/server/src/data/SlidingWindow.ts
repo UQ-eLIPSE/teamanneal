@@ -11,8 +11,8 @@ interface SlidingWindowUnsafe<T> {
 }
 
 /** 
- * This is a reference prototype so that some JavaScript engines can better optimise property
- * lookups against all AnnealNodes.
+ * This is a reference prototype so that some JavaScript engines can better
+ * optimise property lookups against all SlidingWindows.
  * 
  * This seems to be particularly true of V8 (Chrome/Node.js).
  */

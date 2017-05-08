@@ -19,8 +19,8 @@ interface CostCacheUnsafe {
 let __costCache: WeakMap<AnnealNode.AnnealNode, CostCache> = new WeakMap();
 
 /** 
- * This is a reference prototype so that some JavaScript engines can better optimise property
- * lookups against all CostCache objects.
+ * This is a reference prototype so that some JavaScript engines can better
+ * optimise property lookups against all CostCache objects.
  * 
  * This seems to be particularly true of V8 (Chrome/Node.js).
  */
