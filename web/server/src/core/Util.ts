@@ -21,19 +21,9 @@ export const randFloat64 = Random.randomLong;
 /**
  * Generates random uint32 in range [0, n).
  */
-export const randUint32Limit =
-    (n: number) => {
-        // Limit must be uint32
-        const limit = uint32(n);
-
-        // Special case: x % 0 = NaN
-        if (limit === 0) {
-            return 0;
-        }
-
-        // Pick a random integer by doing a modulo
-        return randUint32() % limit;
-    }
+export function randUint32Limit(n: number) {
+    return uint32(randFloat64() * n);
+}
 
 /**
  * Creates a function that will generate a random uint32 for a given distribution array.
@@ -238,7 +228,40 @@ export const stdDev =
         return Math.sqrt(sumOfSquareDiffs / (size - 1));
     }
 
+/**
+ * Randomly picks one element from given array.
+ */
+export function randPickElement<T>(arr: ReadonlyArray<T>) {
+    const length = arr.length;
 
+    if (length === 0) {
+        throw new Error("Cannot pick element from array that is empty");
+    }
+
+    const index = randUint32Limit(length);
+
+    return arr[index];
+}
+
+/**
+ * Randomly picks two elements from given array.
+ */
+export function randPickTwoElements<T>(arr: ReadonlyArray<T>) {
+    const length = arr.length;
+
+    if (length < 2) {
+        throw new Error("Cannot pick two from array with less than two elements");
+    }
+
+    // `a` is selected at random;
+    // `b` is selected by running by a random offset in a circular fashion up to
+    // but not leading back to `a`
+    const a = randUint32Limit(length);
+    const offsetToB = randUint32Limit(length - 1) + 1;  // Minimum offset is 1
+    const b = (a + offsetToB) % length;
+
+    return [arr[a], arr[b]];
+}
 
 
 /// Time
