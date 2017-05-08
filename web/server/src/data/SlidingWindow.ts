@@ -1,3 +1,5 @@
+import * as Util from "../core/Util";
+
 export interface SlidingWindow<T> {
     readonly data: ReadonlyArray<T>,
     readonly size: number,
@@ -18,12 +20,18 @@ interface SlidingWindowUnsafe<T> {
  */
 const __rootPrototype = Object.create(null);
 
-export function init<T>(size: number) {
+export function init<T>(size: number, value?: T) {
     const sw: SlidingWindowUnsafe<T> = Object.create(__rootPrototype);
 
-    sw.data = new Array<T>(size);
     sw.size = size;
-    sw.filled = 0;
+
+    if (value === undefined) {
+        sw.data = new Array<T>(size);
+        sw.filled = 0;
+    } else {
+        sw.data = Util.initArray(value)(size);
+        sw.filled = size;
+    }
 
     return sw as SlidingWindow<T>;
 }
