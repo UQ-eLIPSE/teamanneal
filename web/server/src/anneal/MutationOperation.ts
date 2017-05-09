@@ -51,7 +51,7 @@ export namespace SwapChildrenBetweenStratumNodes {
             }
 
             // Swap children between (A,B)
-            log("verbose")(`Swapping nodes ${childA.id} and ${childB.id}`);
+            log("debug")(`Swapping nodes ${childA.id} and ${childB.id}`);
             AnnealNode.swapNodes(childA, childB);
 
             return stratumNodes;

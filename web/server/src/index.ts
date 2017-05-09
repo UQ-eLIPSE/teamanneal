@@ -18,7 +18,7 @@ const log = Logger.log(globalLogger);
 
 
 // Set up logs
-Logger.setLevel(globalLogger)("silly");   // Log everything for now
+Logger.setLevel(globalLogger)("info");
 Logger.enableLogConsole(globalLogger);
 Logger.enableLogFileDailyRotate(globalLogger)(`${__dirname}/../logs`);
 
