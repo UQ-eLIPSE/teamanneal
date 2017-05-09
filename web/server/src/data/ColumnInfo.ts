@@ -96,7 +96,7 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
     throw new Error("Unrecognised column type");
 }
 
-export function fromSourceData(sourceData: SourceData.DescBase & SourceData.Partitioned) {
+export function initManyFromSourceData(sourceData: SourceData.DescBase & SourceData.Partitioned) {
     const partitions = sourceData.records;
 
     // An array of all records in the data set

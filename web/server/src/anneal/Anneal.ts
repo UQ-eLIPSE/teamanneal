@@ -26,7 +26,7 @@ const log = Logger.log(globalLogger);
 
 export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
     // Generate column information objects
-    const columnInfos = ColumnInfo.fromSourceData(sourceData);
+    const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
 
     // Operate per partition (isolated data sets - can be parallelised)
     log("info")(`Starting anneal`);
