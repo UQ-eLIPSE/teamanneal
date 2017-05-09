@@ -173,9 +173,11 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
                         UphillTracker.incrementReject(uphillTracker);
                     }
                 }
+
+                // Update temperature
+                T = Iteration.calculateNewTemperature(T);
+
             }
-
-
 
             // Restore previous state if cost before this set of iterations
             // was better
@@ -190,8 +192,6 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
 
 
 
-        // Update temperature
-        T = Iteration.calculateNewTemperature(T);
 
         // Tweak iteration scalar depending on uphill probability
         const uphillAcceptanceProbability = UphillTracker.getAcceptanceProbability(uphillTracker);
