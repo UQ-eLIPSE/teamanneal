@@ -104,61 +104,86 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     let itScalar = defaultStepIterationScalar;
 
     while (true) {
-
-
         // Run iterations as determined by `itScalar` and number of
         // records (leaves)
         const numberOfIterations = itScalar * leaves.length;
 
-        for (let j = 0; j < numberOfIterations; ++j) {
-            log("debug")(`Iteration ${j}`);
 
-            // Take tree state snapshot now
-            const stateSnapshot = AnnealNode.exportState(rootNode);
 
-            // Go through strata, bottom up
-            strataNodes.forEach((nodes) => {
-                // Perform random op
-                const operation = MutationOperation.randPick();
-                operation(nodes);
-            });
 
-            // Invalidate cost cache, reinit leaves
-            // TODO: Leverage the fact that we have cached costs to reduce
-            // the number of cost recalculations
-            CostCache.invalidateAll();
-            leaves.forEach(leaf => CostCache.insert(leaf, 0));
 
-            // Calculate total cost
-            strataConstraints.forEach((constraints, k) => {
-                // Calculate costs for strata nodes
-                CostCompute.computeAndCacheStratumCost(leaves, constraints, columnInfos, strataNodes[k]);
-            });
 
-            const newCost = CostCompute.sumChildrenCost(rootNode);
-            const deltaCost = Iteration.calculateCostDifference($, newCost);
 
-            // Determine if this iteration is accepted
-            const iterationAccepted = Iteration.isNewCostAcceptable(T, $, newCost);
+        /// ====================================================================
+        /// anneal_inner_loop
+        /// ====================================================================
+        {
+            // Keep track of cost and state before we started running iterations
+            const previousCost = $;
+            const previousState = AnnealNode.exportState(rootNode);
 
-            if (iterationAccepted) {
-                // Update cost
-                $ = newCost;
-            } else {
-                // Restore previous state
-                AnnealNode.importState(rootNode, stateSnapshot);
-            }
+            // Reset uphill accept/reject
+            UphillTracker.resetAcceptReject(uphillTracker);
 
-            // Update uphill tracker
-            if (deltaCost > 0) {
+            // Iterate!
+            for (let j = 0; j < numberOfIterations; ++j) {
+                log("debug")(`Iteration ${j}`);
+
+                // Take tree state snapshot now
+                const stateSnapshot = AnnealNode.exportState(rootNode);
+
+                // Go through strata, bottom up
+                strataNodes.forEach((nodes) => {
+                    // Perform random op
+                    const operation = MutationOperation.randPick();
+                    operation(nodes);
+                });
+
+                // Invalidate cost cache, reinit leaves
+                // TODO: Leverage the fact that we have cached costs to reduce
+                // the number of cost recalculations
+                CostCache.invalidateAll();
+                leaves.forEach(leaf => CostCache.insert(leaf, 0));
+
+                // Calculate total cost
+                strataConstraints.forEach((constraints, k) => {
+                    // Calculate costs for strata nodes
+                    CostCompute.computeAndCacheStratumCost(leaves, constraints, columnInfos, strataNodes[k]);
+                });
+
+                const newCost = CostCompute.sumChildrenCost(rootNode);
+                const deltaCost = Iteration.calculateCostDifference($, newCost);
+
+                // Determine if this iteration is accepted
+                const iterationAccepted = Iteration.isNewCostAcceptable(T, $, newCost);
+
                 if (iterationAccepted) {
-                    UphillTracker.incrementAccept(uphillTracker);
+                    // Update cost
+                    $ = newCost;
                 } else {
-                    UphillTracker.incrementReject(uphillTracker);
+                    // Restore previous state
+                    AnnealNode.importState(rootNode, stateSnapshot);
+                }
+
+                // Update uphill tracker
+                if (deltaCost > 0) {
+                    if (iterationAccepted) {
+                        UphillTracker.incrementAccept(uphillTracker);
+                    } else {
+                        UphillTracker.incrementReject(uphillTracker);
+                    }
                 }
             }
-        }
 
+
+
+            // Restore previous state if cost before this set of iterations
+            // was better
+            if (previousCost < $) {
+                $ = previousCost;
+                AnnealNode.importState(rootNode, previousState);
+            }
+        }
 
 
 
@@ -193,12 +218,6 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
         if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
             break;
         }
-
-
-
-
-        // NOTE: DEBUG: Force break after one cycle
-        break;
     }
 
     return convertNodeToArray(rootNode, strata.length);

@@ -68,3 +68,12 @@ export function updateProbabilityHistory(uphillTracker: UphillTracker) {
 
     return getProbabilityHistoryAverage(ut);
 }
+
+export function resetAcceptReject(uphillTracker: UphillTracker) {
+    const ut = uphillTracker as UphillTrackerUnsafe;
+
+    ut.accepted = 0;
+    ut.rejected = 0;
+
+    return ut as UphillTracker;
+}
