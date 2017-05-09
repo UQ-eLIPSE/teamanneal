@@ -88,3 +88,33 @@ describe("`invalidate`", () => {
         expect(CostCache.get(s2d)).toBeDefined();
     });
 });
+
+describe("`invalidateAll`", () => {
+    test("invalidates all costs", () => {
+        // Assigning to `_` for convenience and readability
+        const _ = (children) => AnnealNode.createNodeFromChildrenArray(children, undefined);
+
+        // Construct nodes
+        const n1 = _([]);
+        const n2 = _([]);
+        const n3 = _([]);
+
+        // Assign arbitrary cost object to all nodes
+        const allNodes = [n1, n2, n3];
+        allNodes.forEach((node) => {
+            CostCache.insert(node, 0);
+        });
+
+        // These should be valid at this point in time
+        expect(CostCache.get(n1)).toBeDefined();
+        expect(CostCache.get(n2)).toBeDefined();
+        expect(CostCache.get(n3)).toBeDefined();
+
+        CostCache.invalidateAll();
+
+        // Should no longer be in cache
+        expect(CostCache.get(n1)).toBeUndefined();
+        expect(CostCache.get(n2)).toBeUndefined();
+        expect(CostCache.get(n3)).toBeUndefined();
+    });
+});
