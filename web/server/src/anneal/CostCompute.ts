@@ -42,7 +42,7 @@ export function computeCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constr
 export function computeAndCacheCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, node: AnnealNode.AnnealNode) {
     const cost = computeCost(leaves, constraints, columnInfos, node);
 
-    CostCache.insert(node, CostCache.init(cost));
+    CostCache.insert(node, cost);
 
     return cost;
 }
@@ -51,19 +51,19 @@ export function sumChildrenCost(node: AnnealNode.AnnealNode) {
     let cost = 0;
 
     AnnealNode.forEachChild(node, (child) => {
-        const costCache = CostCache.get(child);
+        const costValue = CostCache.get(child);
 
         // Error if cost cache object not found
-        if (costCache === undefined) {
+        if (costValue === undefined) {
             throw new Error("Expected cost cache object for node; object not found");
         }
 
-        cost += costCache.cost;
+        cost += costValue;
     });
 
     return cost;
 }
 
-export function computeAndCacheStrataCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, nodes: ReadonlyArray<AnnealNode.AnnealNode>) {
+export function computeAndCacheStratumCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, nodes: ReadonlyArray<AnnealNode.AnnealNode>) {
     return nodes.map(node => computeAndCacheCost(leaves, constraints, columnInfos, node));
 }

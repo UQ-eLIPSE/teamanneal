@@ -1,5 +1,6 @@
 import * as Record from "../../../common/Record";
 import * as SourceDataColumn from "../../../common/SourceDataColumn";
+import * as SourceData from "../../../common/SourceData";
 
 import * as Util from "../core/Util";
 
@@ -40,7 +41,7 @@ interface ColumnInfoStringDetails {
 
 
 
-export function initFromColumnIndex(records: ReadonlyArray<Record.Record>, index: number, column: SourceDataColumn.ColumnDesc) {
+export function initFromColumnIndex(records: Record.RecordSet, index: number, column: SourceDataColumn.ColumnDesc) {
     const recordElements = records.map(record => record[index]);
     return init(recordElements, column);
 }
@@ -93,4 +94,15 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
     }
 
     throw new Error("Unrecognised column type");
+}
+
+export function fromSourceData(sourceData: SourceData.DescBase & SourceData.Partitioned) {
+    const partitions = sourceData.records;
+
+    // An array of all records in the data set
+    const allRecords = Util.concatArrays(partitions);
+
+    return sourceData.columns.map((column, i) => {
+        return initFromColumnIndex(allRecords, i, column);
+    });
 }

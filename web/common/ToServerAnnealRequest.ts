@@ -1,6 +1,6 @@
 import * as Constraint from "./Constraint";
 import * as SourceData from "./SourceData";
-import * as Strata from "./Strata";
+import * as Stratum from "./Stratum";
 
 export interface ConfigDesc {
     /**
@@ -31,7 +31,7 @@ export interface Root {
      * 
      * This used to be called "levels" but renamed to make it less confusing
      */
-    readonly strata: ReadonlyArray<Strata.Desc>,
+    readonly strata: ReadonlyArray<Stratum.Desc>,
     /**
      * Describes constraints
      */

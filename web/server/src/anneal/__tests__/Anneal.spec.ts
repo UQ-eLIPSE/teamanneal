@@ -1,4 +1,7 @@
+import * as Anneal from "../Anneal";
 
-describe.skip("", () => {
-    test("", () => { });
+describe("", () => {
+    test("", () => {
+        Anneal;
+    });
 });

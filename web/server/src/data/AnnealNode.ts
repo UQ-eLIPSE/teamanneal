@@ -12,7 +12,7 @@ export interface AnnealNode extends __AnnealNode {
     readonly id: number,
 
     /** Actual bit of data that this abstract node refers to */
-    readonly data: object,
+    readonly data: object | undefined,
 }
 
 interface AnnealNodeUnsafe extends __AnnealNode {
@@ -20,7 +20,7 @@ interface AnnealNodeUnsafe extends __AnnealNode {
     id: number,
 
     /** Actual bit of data that this abstract node refers to */
-    data: object,
+    data: object | undefined,
 }
 
 interface __AnnealNode {
@@ -66,7 +66,7 @@ let __id: number = 0;
 /**
  * Initialises a new AnnealNode object.
  */
-export function init(data: object) {
+export function init(data: object | undefined) {
     const node: AnnealNodeUnsafe = Object.create(__rootPrototype);
 
     node.id = __id++;
@@ -108,9 +108,9 @@ export function hasSiblings(node: AnnealNode) {
  * Creates a new AnnealNode with given array as children.
  * The data object pointed to by the AnnealNode is the array object itself.
  */
-export function createNodeFromChildrenArray(nodeArray: AnnealNode[]) {
+export function createNodeFromChildrenArray(nodeArray: ReadonlyArray<AnnealNode>, data: object | undefined) {
     // Create a new AnnealNode, using the input array as the "data" object
-    const parentNode = init(nodeArray);
+    const parentNode = init(data);
 
     // Set all nodes as siblings of each other
     setAsSiblings(nodeArray);
@@ -124,7 +124,7 @@ export function createNodeFromChildrenArray(nodeArray: AnnealNode[]) {
 /**
  * Sets all nodes in array as siblings of each other.
  */
-function setAsSiblings(nodeArray: AnnealNode[]) {
+function setAsSiblings(nodeArray: ReadonlyArray<AnnealNode>) {
     const nodeArrayLength = nodeArray.length;
 
     // Pre-applied next/prev index calculation functions
@@ -144,7 +144,7 @@ function setAsSiblings(nodeArray: AnnealNode[]) {
 /**
  * Sets all nodes in array as the only children of `parent`.
  */
-function setAsChildrenOf(parent: AnnealNode, nodeArray: AnnealNode[]) {
+function setAsChildrenOf(parent: AnnealNode, nodeArray: ReadonlyArray<AnnealNode>) {
     // Set child.parent reference
     nodeArray.forEach(node => node.parent = parent);
 
