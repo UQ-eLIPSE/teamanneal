@@ -2,16 +2,6 @@ import * as CostCache from "../CostCache";
 
 import * as AnnealNode from "../AnnealNode";
 
-describe("`init`", () => {
-    test("returns a CostCache object", () => {
-        const cost = 349085493;
-        const costCacheObj = CostCache.init(cost);
-
-        expect(costCacheObj).toBeDefined();
-        expect(costCacheObj.cost).toBe(cost);
-    });
-});
-
 describe("`insert`", () => {
     let node: AnnealNode.AnnealNode;
 
@@ -20,30 +10,23 @@ describe("`insert`", () => {
     })
 
     test("inserts a CostCache object", () => {
-        const cost = 238974;
-        const insertedCostCacheObj = CostCache.init(cost);
+        const inputCost = 238974;
 
-        CostCache.insert(node, insertedCostCacheObj);
+        CostCache.insert(node, inputCost);
 
-        const costCacheObj = CostCache.get(node);
+        const returnedCost = CostCache.get(node);
 
-        expect(costCacheObj).toBeDefined();
-        expect(costCacheObj).toBe(insertedCostCacheObj);
-        expect(costCacheObj.cost).toBe(cost);
+        expect(returnedCost).toBe(inputCost);
     });
 
     test("cannot insert a CostCache object against a node more than once", () => {
-        const cost = 3487654;
-        const insertedCostCacheObj = CostCache.init(cost);
+        const inputCost = 3487654;
 
         // First time
-        CostCache.insert(node, insertedCostCacheObj);
+        CostCache.insert(node, inputCost);
 
-        // Second time (with same object)
-        expect(() => CostCache.insert(node, insertedCostCacheObj)).toThrowError();
-
-        // Second time (with different cost cache object)
-        expect(() => CostCache.insert(node, CostCache.init(0))).toThrowError();
+        // Second time (with any number)
+        expect(() => CostCache.insert(node, 459873)).toThrowError();
     });
 });
 
@@ -55,7 +38,7 @@ describe("`remove`", () => {
     })
 
     test("removes a CostCache object", () => {
-        CostCache.insert(node, CostCache.init(0));
+        CostCache.insert(node, 0);
         expect(CostCache.has(node)).toBe(true);
 
         CostCache.remove(node);
@@ -71,7 +54,7 @@ describe("`invalidate`", () => {
         //     S2a  S2b         S2c  S2d
 
         // Assigning to `_` for convenience and readability
-        const _ = AnnealNode.createNodeFromChildrenArray;
+        const _ = (children) => AnnealNode.createNodeFromChildrenArray(children, undefined);
 
         // Construct nodes
         const s2a = _([]);
@@ -87,7 +70,7 @@ describe("`invalidate`", () => {
         // Assign arbitrary cost object to all nodes
         const allNodes = [root, s1a, s1b, s2a, s2b, s2c, s2d];
         allNodes.forEach((node) => {
-            CostCache.insert(node, CostCache.init(0));
+            CostCache.insert(node, 0);
         });
 
         // Invalidate from S2c -> S1b -> Root

@@ -45,7 +45,7 @@ describe("`hasSiblings`", () => {
     test("should be `true` for nodes with siblings", () => {
         const objs = [{}, {}].map(AnnealNode.init);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray(objs);
+        const rootNode = AnnealNode.createNodeFromChildrenArray(objs, undefined);
         const firstChild = rootNode.child;
 
         expect(AnnealNode.hasSiblings(firstChild)).toBe(true);
@@ -56,15 +56,14 @@ describe("`createNodeFromChildrenArray`", () => {
     test("creates a new root node with supplied nodes assigned as children", () => {
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray(children);
+        const rootNodeData = {};
+        const rootNode = AnnealNode.createNodeFromChildrenArray(children, rootNodeData);
 
         expect(rootNode).toBeDefined();
+        expect(rootNode.data).toBe(rootNodeData);
 
         // There are three children
         expect(rootNode.childrenSize).toBe(3);
-
-        // `data` is the array itself
-        expect(rootNode.data).toBe(children);
 
         const child1 = rootNode.child;
         const child2 = child1.next;
@@ -88,11 +87,12 @@ describe("`createNodeFromChildrenArray`", () => {
     test("creates empty root node when array is blank", () => {
         const children: AnnealNode.AnnealNode[] = [];
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray(children);
+        const rootNodeData = {};
+        const rootNode = AnnealNode.createNodeFromChildrenArray(children, rootNodeData);
 
         expect(rootNode).toBeDefined();
         expect(rootNode.childrenSize).toBe(0);
-        expect(rootNode.data).toBe(children);
+        expect(rootNode.data).toBe(rootNodeData);
 
         expect(rootNode.child).toBeUndefined();
     });
