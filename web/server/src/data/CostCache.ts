@@ -1,41 +1,42 @@
 import * as AnnealNode from "./AnnealNode";
 
-/**
- * Object that holds cached cost information for some AnnealNode.
- */
-export interface CostCache {
-    /** Total calculated cost for this node, incl. children */
-    readonly cost: number,
-}
+// /**
+//  * Object that holds cached cost information for some AnnealNode.
+//  */
+// export interface CostCache {
+//     /** Total calculated cost for this node, incl. children */
+//     readonly cost: number,
+// }
 
-interface CostCacheUnsafe {
-    /** Total calculated cost for this node, incl. children */
-    cost: number,
-}
+// interface CostCacheUnsafe {
+//     /** Total calculated cost for this node, incl. children */
+//     cost: number,
+// }
 
 /**
  * WeakMap as a cache for AnnealNode -> Cost.
  */
-let __costCache: WeakMap<AnnealNode.AnnealNode, CostCache> = new WeakMap();
+// let __costCache: WeakMap<AnnealNode.AnnealNode, CostCache> = new WeakMap();
+let __costCache: WeakMap<AnnealNode.AnnealNode, number> = new WeakMap();
 
-/** 
- * This is a reference prototype so that some JavaScript engines can better
- * optimise property lookups against all CostCache objects.
- * 
- * This seems to be particularly true of V8 (Chrome/Node.js).
- */
-const __rootPrototype = Object.create(null);
+// /** 
+//  * This is a reference prototype so that some JavaScript engines can better
+//  * optimise property lookups against all CostCache objects.
+//  * 
+//  * This seems to be particularly true of V8 (Chrome/Node.js).
+//  */
+// const __rootPrototype = Object.create(null);
 
-/**
- * Initialises a new CostCache object.
- */
-export function init(cost: number) {
-    const costCacheObj: CostCacheUnsafe = Object.create(__rootPrototype);
+// /**
+//  * Initialises a new CostCache object.
+//  */
+// export function init(cost: number) {
+//     const costCacheObj: CostCacheUnsafe = Object.create(__rootPrototype);
 
-    costCacheObj.cost = cost;
+//     costCacheObj.cost = cost;
 
-    return costCacheObj as CostCache;
-}
+//     return costCacheObj as CostCache;
+// }
 
 export function get(node: AnnealNode.AnnealNode) {
     return __costCache.get(node);
@@ -55,7 +56,8 @@ export function has(node: AnnealNode.AnnealNode) {
  * Insertions where the given node already has a cached cost value are not
  * permitted and will throw an error.
  */
-export function insert(node: AnnealNode.AnnealNode, cost: CostCache) {
+// export function insert(node: AnnealNode.AnnealNode, cost: CostCache) {
+export function insert(node: AnnealNode.AnnealNode, cost: number) {
     // Prevent double insertions
     if (has(node)) {
         throw new Error("Node already has value in cost cache");
@@ -90,5 +92,5 @@ export function invalidate(node: AnnealNode.AnnealNode) {
 export function invalidateAll() {
     // There is no "clear" method on WeakMaps, you simply instantiate a new
     // WeakMap object instead
-    __costCache = new WeakMap();   
+    __costCache = new WeakMap();
 }
