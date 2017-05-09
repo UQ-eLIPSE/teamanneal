@@ -1,291 +1,330 @@
-/*
- * Anneal
- * 
- * 
- */
-import * as SourceRecordSet from "./SourceRecordSet";
-import * as Partition from "./Partition";
-import * as AnnealRound from "./AnnealRound";
-import * as CostFunction from "./CostFunction";
-
+import * as Logger from "../core/Logger";
 import * as Util from "../core/Util";
 
+// Interfaces
+import * as SourceData from "../../../common/SourceData";
+import * as Strata from "../../../common/Strata";
+import * as Constraint from "../../../common/Constraint";
+
+// Data manipulation and structures
+import * as AnnealNode from "../data/AnnealNode";
+import * as GroupDistribution from "../data/GroupDistribution";
+import * as ColumnInfo from "../data/ColumnInfo";
+import * as CostCache from "../data/CostCache";
+
+// Anneal-related
+import * as ProcessedConstraint from "./ProcessedConstraint";
+import * as CostCompute from "./CostCompute";
+import * as MutationOperation from "./MutationOperation";
+import * as Iteration from "./Iteration";
+import * as UphillTracker from "./UphillTracker";
+import * as TemperatureDerivation from "./TemperatureDerivation";
+
+const globalLogger = Logger.getGlobal();
+const log = Logger.log(globalLogger);
+
+export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned, strata: ReadonlyArray<Strata.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
+    const partitions = sourceData.records;
+
+    // An array of all records in the data set
+    const allRecords = Util.concatArrays(partitions);
+
+    /// =========================
+    /// Gather column information
+    /// =========================
+
+    const columnInfos = sourceData.columns.map((column, i) => {
+        return ColumnInfo.initFromColumnIndex(allRecords, i, column);
+    });
+
+
+
+    /// =====================
+    /// Parallelisable anneal
+    /// =====================
+
+    // Operate per partition (isolated data sets - can be parallelised)
+    log("info")(`Starting anneal`);
+    const output = partitions.map((partition, i) => {
+        log("info")(`Annealing partition ${i + 1}`);
+
+        /// ================================
+        /// Structuring the data into a tree
+        /// ================================
+
+        // Convert all records into AnnealNodes
+        // Records are leaves for our AnnealNode tree
+        const leaves = partition.map(AnnealNode.init);
+
+        // Shuffle all leaves now
+        // This only needs to be done once - there is no advantage in
+        // shuffling nodes higher up in the tree
+        let nodes = Util.shuffleArray(leaves);
+
+        // Hold references to each node created per stratum
+        const strataNodes: ReadonlyArray<AnnealNode.AnnealNode>[] = [];
+
+        // Go over each stratum
+        strata.forEach((stratum) => {
+            // Calculate number of groups to form
+            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(nodes.length, stratum.size.min, stratum.size.ideal, stratum.size.max, false);
+
+            // Splice into groups
+            const groups = GroupDistribution.sliceIntoGroups(numberOfGroups, nodes);
+
+            // Create new nodes for this stratum from new groups above
+            const thisStratumNodes = groups.map(AnnealNode.createNodeFromChildrenArray);
+
+            // Build up arrays of AnnealNode that are represented at each
+            // stratum
+            strataNodes.push(thisStratumNodes);
+
+            // Build up AnnealNode tree by updating `nodes` to refer to the
+            // array of nodes from this stratum; this is reused on next loop
+            nodes = thisStratumNodes;
+        });
+
+        // Create root node
+        const rootNode = AnnealNode.createNodeFromChildrenArray(nodes);
+
+
+
+        /// =======================
+        /// Configuring constraints
+        /// =======================
+
+        const processedConstraints = constraints.map(ProcessedConstraint.init);
+
+        const strataConstraints = strata.map((_stratum, stratumIndex) => {
+            const stratumConstraints: ProcessedConstraint.ProcessedConstraint[] = [];
+
+            processedConstraints.forEach((appliedConstraint) => {
+                if (appliedConstraint.constraint.strata === stratumIndex) {
+                    stratumConstraints.push(appliedConstraint);
+                }
+            });
+
+            return stratumConstraints;
+        });
 
 
 
 
-export const temperatureTolerance: number = 1e-50;
-
-export const defaultTestTemperatureAttempts: number = 200;
-export const defaultStepIterationScalar: number = 4;
-export const defaultStepTemperatureScaling = 0.98;
-
-export const defaultAvgUphillProbabilityThreshold: number = 0.0025;
-export const defaultAvgProbabilityWindowSize: number = 8;
 
 
 
 
+        /// =====
+        /// Costs
+        /// =====
 
-export const calculateNewTemperature =
-    (currTemp: number) => defaultStepTemperatureScaling * currTemp;
+        // Constant 0 cost object for leaves
+        const leafCost = CostCache.init(0);
 
-export const guessStartingTemperature =
-    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
-        (partition: Partition.Partition) =>
-            (testAttempts: number) => {
-                // Try out attempts and keep track of costs
-                const performRound = () => AnnealRound.newAnnealRound(appliedRecordSetCostFunctions)(partition)(0)(0);
 
-                const costs = Util.blankArray(testAttempts).map(
-                    () => {
-                        // Only consider costs which are non-zero
-                        let costDiff: number;
 
-                        do {
-                            costDiff = AnnealRound.getCostDiff(performRound());
-                        } while (costDiff === 0);
 
-                        return costDiff;
-                    }
-                );
 
-                // TODO: Extract the parameters to (n)th percentile
-                //       and the probability threshold
 
-                // Use cost at 90th percentile
-                const cost90thPc = costs.sort()[Util.int32(testAttempts * 0.9)];
 
-                // Cost should be permitted at 70% probability??
-                return -cost90thPc / Math.log(0.7);
+
+
+        /// =======================
+        /// Calculating temperature
+        /// =======================
+
+        log("info")("Calculating temperature...");
+
+        const tempDerSamples = 200;
+
+        // Temperature derivation object
+        const tempDer = TemperatureDerivation.init(tempDerSamples);
+
+        // Preserve the initial state
+        const startState = AnnealNode.exportState(rootNode);
+
+        // Running cost for temperature derivation process
+        let tempDerCurrentCost: number | undefined = undefined;
+
+        while (!TemperatureDerivation.isReadyForDerivation(tempDer)) {
+            // NOTE: We do not care about resetting state on every loop;
+            // this is the same for the original TeamAnneal code as it
+            // continuously runs moves without regard for restoring the
+            // previous/original state
+
+            // Invalidate cost cache, reinit leaves
+            CostCache.invalidateAll();
+            leaves.forEach(leaf => CostCache.insert(leaf, leafCost));
+
+            // Go through strata, bottom up
+            for (let j = 0; j < strata.length; ++j) {
+                const nodes = strataNodes[j];
+                const constraints = strataConstraints[j];
+
+                // Perform random op
+                const operation = MutationOperation.randPick();
+                operation(nodes);
+
+                CostCompute.computeAndCacheStrataCost(leaves, constraints, columnInfos, nodes);
             }
 
-export const performIterations =
-    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
-        (startPartition: Partition.Partition) =>
-            (startCost: number) =>
-                (startTemp: number) =>
-                    (iterations: number) => {
-                        // Copying variables for mutable use and shortening names 
-                        let p = startPartition;     // partition
-                        let $ = startCost;          // cost
-                        let T = startTemp;          // temperature
+            // Calculate cost
+            const newCost = CostCompute.sumChildrenCost(rootNode);
 
-                        // Create function for performing round
-                        const performRound = AnnealRound.newAnnealRound(appliedRecordSetCostFunctions);
+            // Assign cost at start
+            if (tempDerCurrentCost === undefined) {
+                tempDerCurrentCost = newCost;
+            }
 
-                        // Run iterations
-                        return Util.blankArray(iterations).map(() => {
-                            // Perform round
-                            const roundResult = performRound(p)($)(T);
+            // Only accumulate uphill cost differences to the temperature
+            // derivation object
+            const costDiff = Iteration.calculateCostDifference(tempDerCurrentCost, newCost);
 
-                            // If accepted, update state
-                            const accepted = AnnealRound.isAccepted(roundResult);
-                            if (accepted) {
-                                p = AnnealRound.getPartition(roundResult);
-                                $ = AnnealRound.getCost(roundResult);
-                            }
-
-                            // Always decrease temperature with every iteration
-                            T = calculateNewTemperature(T);
-
-                            const costDiff = AnnealRound.getCostDiff(roundResult);
-
-                            const output: AnnealIterationResult = [
-                                p,
-                                $,
-                                costDiff,
-                                Util.boolToInt(accepted),
-                                T,
-                            ];
-
-                            return output;
-                        });
-                    }
-
-export const getLastAcceptedFromIterations =
-    (iterationResults: AnnealIterationResult[]) => {
-        let i = iterationResults.length - 1;
-
-        if (i < 0) {
-            throw new Error("Anneal: Iteration results must be non-empty");
-        }
-
-        let result: AnnealIterationResult | undefined;
-
-        while (i--) {
-            result = iterationResults[i];
-
-            // Return last accepted in iteration result set
-            if (isAccepted(result)) {
-                return result;
+            if (costDiff > 0) {
+                TemperatureDerivation.pushCostDelta(tempDer, costDiff);
             }
         }
 
-        // If none accepted, we get the first in the iteration
-        return result!;
-    }
-
-export const run =
-    (appliedRecordSetCostFunctions: CostFunction.AppliedRecordSetCostFunction[]) =>
-        (startPartition: Partition.Partition): AnnealIterationResult => {
-            // Copying variables and shortening names
-            const f = appliedRecordSetCostFunctions;// pre-applied record set cost functions
-            let p = startPartition;                 // partition
-            const numRecords =                      // number of records in partition
-                p.reduce((acc, recordSet) => acc + SourceRecordSet.size(recordSet), 0);
-            let $ = 0;                              // cost
-            let T =                                 // temperature
-                guessStartingTemperature(f)(p)(defaultTestTemperatureAttempts);
-
-            let numOfAcceptedUphill: number = 0;
-            let numOfUphill: number = 0;
-            const uphillAcceptanceProbabilityWindow: number[] =
-                Util.initArray(1)(defaultAvgProbabilityWindowSize);
-
-            let bestResult: AnnealIterationResult | undefined;
-            let itScalar: number = defaultStepIterationScalar;  // iteration number scalar for next round
-
-            // Set up helper functions
-
-            /**
-             * @return {boolean} Whether the input result was considered "best" (lowest cost) so far
-             */
-            const updateBestResult =
-                (result: AnnealIterationResult) => {
-                    // If best result does not exist or this result is better; update
-                    if (!bestResult || getCost(result) < getCost(bestResult)) {
-                        bestResult = result;
-                        return true;
-                    }
-
-                    return false;
-                }
-
-            const updateUphillAcceptanceProbabilityWindow =
-                (p: number) => {
-                    uphillAcceptanceProbabilityWindow.shift();
-                    uphillAcceptanceProbabilityWindow.push(p);
-                }
-
-            const getAvgWindowUphillAcceptanceProbability =
-                () => Util.avg(uphillAcceptanceProbabilityWindow);
-
-            /**
-             * @return {number[]} [number of accepted uphill rounds, number of total uphill rounds]
-             */
-            const updateUphillAcceptanceStats =
-                (iterationResults: AnnealIterationResult[]) => {
-                    iterationResults.forEach(
-                        (iterationResult) => {
-                            // Only consider uphill
-                            if (getCostDiff(iterationResult) <= 0) {
-                                return;
-                            }
-
-                            // Accumulate accepted/total uphill figures
-                            if (isAccepted(iterationResult)) {
-                                ++numOfAcceptedUphill;
-                            }
-
-                            ++numOfUphill;
-                        }
-                    );
-
-                    // Also update the window while we're here
-                    updateUphillAcceptanceProbabilityWindow(getUphillAcceptanceRate());
-
-                    // return [numOfAcceptedUphill, numOfUphill];
-                }
-
-            const getUphillAcceptanceRate =
-                () => {
-                    // No data => DIV/0 = Infinity :(
-                    if (numOfUphill === 0) {
-                        return 1;
-                    }
-
-                    return numOfAcceptedUphill / numOfUphill;
-                }
+        const startTemp = TemperatureDerivation.deriveTemperature(tempDer);
 
 
-            // Curry the iteration function with constant constraints
-            const iterate = performIterations(f);
+        /// ====================
+        /// Loop over iterations
+        /// ====================
 
-            // Main annealing iteration loop
-            while (true) {
-                // Run iterations
-                const iterationResults = iterate(p)($)(T)(numRecords * itScalar);
-                
-                // We get the last accepted result from the iteration run
-                const endResult = getLastAcceptedFromIterations(iterationResults);
+        log("info")("Iterating...");
 
-                // Determine if end result was best so far; update state accordingly
-                const endResultWasBest = updateBestResult(endResult);
+        const defaultStepIterationScalar: number = 4;
+        const defaultAvgUphillProbabilityThreshold: number = 0.0025;
 
-                if (endResultWasBest) {
-                    p = getPartition(endResult);
-                    $ = getCost(endResult);
-                }
+        // Reset state, invalidate cost cache, reinit leaves
+        AnnealNode.importState(rootNode, startState);
+        CostCache.invalidateAll();
+        leaves.forEach(leaf => CostCache.insert(leaf, leafCost));
 
-                // Update temperature from iterations
-                T = getTemperature(endResult);
+        let $ = Number.POSITIVE_INFINITY;   // cost
+        let T = startTemp;                  // temperature
 
-                // If we're already at cost or temp = 0 then stop
-                if ($ === 0 || T < temperatureTolerance) {
-                    return bestResult!;
-                }
+        let itScalar = defaultStepIterationScalar;
 
-                // Update uphill acceptance info
-                updateUphillAcceptanceStats(iterationResults);
-
-                // Stop if we're very unlikely to get anywhere uphill in future
-                const avgUphillProbability = getAvgWindowUphillAcceptanceProbability();
-
-                if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
-                    return bestResult!;
-                }
-
-                // Set iteration scalar depending on uphill acceptance rate
-                const uphillAcceptanceRate = getUphillAcceptanceRate();
+        const uphillTracker = UphillTracker.init();
 
 
-                // TODO: Acceptance thresholds/scalars should be
-                //       extracted into own variables
-                if (uphillAcceptanceRate > 0.7 || uphillAcceptanceRate < 0.2) {
-                    itScalar = 4;
-                } else if (uphillAcceptanceRate > 0.6 || uphillAcceptanceRate < 0.3) {
-                    itScalar = 8;
+
+
+
+
+
+        let COUNTER = 0;
+
+        while (true) {
+
+
+
+
+
+
+
+            // Run iterations as determined by `itScalar` and number of
+            // records (leaves)
+            const numberOfIterations = itScalar * leaves.length;
+
+            for (let j = 0; j < numberOfIterations; ++j) {
+                log("debug")(`Iteration ${j}`);
+
+                // Take tree state snapshot now
+                const stateSnapshot = AnnealNode.exportState(rootNode);
+
+                // Go through strata, bottom up
+                strataNodes.forEach((nodes) => {
+                    // Perform random op
+                    const operation = MutationOperation.randPick();
+                    operation(nodes);
+                });
+
+                // Invalidate cost cache, reinit leaves
+                // TODO: Leverage the fact that we have cached costs to reduce
+                // the number of cost recalculations
+                CostCache.invalidateAll();
+                leaves.forEach(leaf => CostCache.insert(leaf, leafCost));
+
+                // Calculate total cost
+                strataConstraints.forEach((constraints) => {
+                    // Calculate costs for strata nodes
+                    CostCompute.computeAndCacheStrataCost(leaves, constraints, columnInfos, nodes);
+                });
+                const newCost = CostCompute.sumChildrenCost(rootNode);
+                const deltaCost = Iteration.calculateCostDifference($, newCost);
+
+                // Determine if this iteration is accepted
+                const iterationAccepted = Iteration.isNewCostAcceptable(T, $, newCost);
+
+                if (iterationAccepted) {
+                    // Update cost
+                    $ = newCost;
                 } else {
-                    itScalar = 32;
+                    // Restore previous state
+                    AnnealNode.importState(rootNode, stateSnapshot);
+                }
+
+                // Update uphill tracker
+                if (deltaCost > 0) {
+                    if (iterationAccepted) {
+                        UphillTracker.incrementAccept(uphillTracker);
+                    } else {
+                        UphillTracker.incrementReject(uphillTracker);
+                    }
                 }
             }
 
+
+
+
+
+
+
+            // Update temperature
+            T = Iteration.calculateNewTemperature(T);
+
+            // Tweak iteration scalar depending on uphill probability
+            const uphillAcceptanceProbability = UphillTracker.getAcceptanceProbability(uphillTracker);
+
+            if (uphillAcceptanceProbability > 0.7 || uphillAcceptanceProbability < 0.2) {
+                itScalar = 4;
+            } else if (uphillAcceptanceProbability > 0.6 || uphillAcceptanceProbability < 0.3) {
+                itScalar = 8;
+            } else {
+                itScalar = 32;
+            }
+
+
+
+
+
+
+            // Stop conditions
+
+            if (Iteration.isResultPerfect($)) { break; }
+            if (Iteration.isTemperatureExhausted(T)) { break; }
+
+            const avgUphillProbability = UphillTracker.updateProbabilityHistory(uphillTracker);
+            if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
+                break;
+            }
+
+
+
+
+            if (++COUNTER % 1000 === 0) {
+                log("info")(`Counter = ${COUNTER}`);
+            }
         }
 
+        // TODO: Actually output something
+        return true;
+    });
 
+    log("info")(`Finished anneal`);
 
-
-
-
-
-export interface AnnealIterationResult extends ReadonlyArray<Partition.Partition | number> {
-    /** partition */        0: Partition.Partition,
-    /** cost */             1: number,
-    /** costDiff */         2: number,
-    /** accepted */         3: number,
-    /** temperature */      4: number,
-
+    return output;
 }
-
-const __getter = <T>(i: number) => (r: AnnealIterationResult): T => (r as any)[i];
-// const __setter = <T>(i: number) => (r: AnnealIterationResult) => (val: T): T => (r as any)[i] = val;
-
-export const getPartition = __getter<Partition.Partition>(0);
-export const getCost = __getter<number>(1);
-export const getCostDiff = __getter<number>(2);
-export const getAccepted = __getter<number>(3);
-export const getTemperature = __getter<number>(4);
-
-export const isAccepted =
-    (result: AnnealIterationResult) => Util.intToBool(getAccepted(result));
