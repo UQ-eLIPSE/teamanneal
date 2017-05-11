@@ -17,7 +17,7 @@ export function computeCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constr
         if (applicabilityFunctions.length > 0) {
             // Constraint applies if only ALL applicability conditions are
             // met
-            const applicability = constraint.applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
+            const applicability = applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
 
             // Skip this constraint if not applicable
             if (!applicability) {
