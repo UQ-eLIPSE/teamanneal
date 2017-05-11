@@ -61,12 +61,12 @@ export namespace SwapChildrenBetweenStratumNodes {
 export const defaultOpDistribution: ReadonlyArray<OpProbability> = [
     {
         operation: SwapChildrenBetweenStratumNodes.execute,
-        probability: 0.9
+        probability: 1.0
     },
-    {
-        operation: Nop.execute,
-        probability: 0.1
-    },
+    // {
+    //     operation: Nop.execute,
+    //     probability: 0.0
+    // },
 ]
 
 export const randomOpGenerator =
