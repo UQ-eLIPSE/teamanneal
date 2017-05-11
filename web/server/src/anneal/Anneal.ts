@@ -20,6 +20,7 @@ import * as MutationOperation from "./MutationOperation";
 import * as Iteration from "./Iteration";
 import * as UphillTracker from "./UphillTracker";
 import * as TemperatureDerivation from "./TemperatureDerivation";
+import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
 const globalLogger = Logger.getGlobal();
 const log = Logger.log(globalLogger);
@@ -219,6 +220,17 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
             break;
         }
     }
+
+    // Output constraint satisfaction
+    const satisfaction = strataNodes.map(stratumNodes => {
+        return stratumNodes.map(node => {
+            return processedConstraints.map(processedConstraint => {
+                return ConstraintSatisfaction.calculateSatisfaction(columnInfos, processedConstraint, node, leaves)
+            });
+        });
+    });
+
+    log("info")(`Satisfaction`, satisfaction);
 
     return convertNodeToArray(rootNode, strata.length);
 }

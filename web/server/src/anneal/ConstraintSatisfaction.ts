@@ -12,8 +12,6 @@ import * as Util from "../core/Util";
 
 export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, allLeaves: ReadonlyArray<AnnealNode.AnnealNode>) {
     // Run applicability check (only if there are such conditions)
-    // If constraint does not apply to current node, then return "undefined"
-    // This covers the "of-size"
     const applicabilityFunctions = processedConstraint.applicabilityFunctions;
 
     if (applicabilityFunctions.length > 0) {
@@ -60,7 +58,7 @@ export namespace Count {
 }
 
 export namespace Limit {
-    export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, leavesUnderNode: ReadonlyArray<AnnealNode.AnnealNode>) {
+    export function calculateSatisfaction(_columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, leavesUnderNode: ReadonlyArray<AnnealNode.AnnealNode>) {
         // If there are no elements in group, then we say it has met constraint
         if (leavesUnderNode.length === 0) {
             return 1;
