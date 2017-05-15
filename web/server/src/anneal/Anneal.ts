@@ -230,7 +230,8 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
         });
     });
 
-    log("info")(`Satisfaction`, satisfaction);
+    log("info")(`Satisfaction
+${JSON.stringify(satisfaction, null, "  ")}`);
 
     return convertNodeToArray(rootNode, strata.length);
 }

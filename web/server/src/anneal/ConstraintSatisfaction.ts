@@ -9,14 +9,18 @@ import * as ProcessedConstraint from "../anneal/ProcessedConstraint";
 import * as Util from "../core/Util";
 
 
-
+/**
+ * @param columnInfos Array of column info objects in column order
+ * @param processedConstraint Object of constraint to check node against
+ * @param node The stratum node being checked (not root node)
+ * @param allLeaves All leaves regardless of whether they're under the node
+ */
 export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, allLeaves: ReadonlyArray<AnnealNode.AnnealNode>) {
     // Run applicability check (only if there are such conditions)
     const applicabilityFunctions = processedConstraint.applicabilityFunctions;
 
     if (applicabilityFunctions.length > 0) {
-        // Constraint applies if only ALL applicability conditions are
-        // met
+        // Constraint applies if only ALL applicability conditions are met
         const applicability = applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
 
         // If not applicable, we return "undefined" to indicate no test was
