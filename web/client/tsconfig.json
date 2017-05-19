@@ -1,0 +1,45 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "dom",
+            "es2015"
+        ],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "isolatedModules": false,
+
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+
+        "alwaysStrict": true,
+
+        "forceConsistentCasingInFileNames": true,
+
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+
+        "strictNullChecks": true,
+
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+
+
+        "allowUnreachableCode": false
+    },
+
+    "include": [
+        "./src/vue-shims.d.ts", // Makes *.vue files work with TS imports
+
+        "./src/index.ts",
+
+        "./src/**/*.vue"
+    ],
+
+    "exclude": [
+        "./src/**/__tests__/*.ts"
+    ]
+}
