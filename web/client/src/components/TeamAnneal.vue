@@ -125,16 +125,16 @@ option {
     box-shadow: rgba(90, 70, 40, 0.3) 0 0.2rem 0.5rem;
 }
 
-.button[disabled] {
+.button:disabled {
     border-color: #888 !important;
     background: #aaa !important;
     color: #888 !important;
     cursor: not-allowed !important;
 }
 
-.button[disabled]:hover,
-.button[disabled]:focus,
-.button[disabled]:active {
+.button:disabled:hover,
+.button:disabled:focus,
+.button:disabled:active {
     background: #b2b2b2;
     box-shadow: rgba(55, 55, 55, 0.3) 0 0.2rem 0.5rem;
 }

@@ -35,17 +35,6 @@ export default class ReviewRecords extends Vue {
 
 <style scoped>
 #wizard {
-    background: #f2f2f2;
-    border: 1px solid rgba(100, 100, 100, 0.3);
-    width: 60vw;
-    min-width: 40rem;
-    max-width: 55rem;
-    max-height: 50vh;
-    overflow-y: auto;
-    box-shadow: rgba(0, 0, 0, 0.3) 0 1rem 2rem;
-    font-weight: 300;
-    transition: all 250ms ease-out;
-    pointer-events: all;
     padding: 1rem 2rem;
 }
 

@@ -1,13 +1,13 @@
 <template>
     <div id="wizard">
-        <h1>Select the ID column</h1>
+        <h1>Select ID column</h1>
         <p>
             TeamAnneal needs to know which column identifies each unique record in your data.
             <a class="more" href="#">Need help?</a>
         </p>
         <p>
             <select v-model="idColumnIndex">
-                <option disabled value="-1">Please select ID column</option>
+                <option disabled value="-1">Please select the ID column</option>
                 <option v-for="option in possibleIdColumns" :value="option.value">{{ option.text }}</option>
             </select>
         </p>
@@ -88,17 +88,6 @@ export default class SelectIdColumn extends Vue {
 
 <style scoped>
 #wizard {
-    background: #f2f2f2;
-    border: 1px solid rgba(100, 100, 100, 0.3);
-    width: 60vw;
-    min-width: 40rem;
-    max-width: 55rem;
-    max-height: 50vh;
-    overflow-y: auto;
-    box-shadow: rgba(0, 0, 0, 0.3) 0 1rem 2rem;
-    font-weight: 300;
-    transition: all 250ms ease-out;
-    pointer-events: all;
     padding: 1rem 2rem;
 }
 
