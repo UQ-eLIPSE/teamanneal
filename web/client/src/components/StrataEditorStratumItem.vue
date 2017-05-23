@@ -1,9 +1,9 @@
 <template>
     <div>
-        <DynamicWidthInputField :val="p_label" @change="onLabelValueChange" /> should have
-        <DynamicWidthInputField :val="''+p_ideal" @change="onIdealValueChange" /> {{ childUnitText }}s, with min
-        <DynamicWidthInputField :val="''+p_min" @change="onMinValueChange" /> and max
-        <DynamicWidthInputField :val="''+p_max" @change="onMaxValueChange" />
+        <DynamicWidthInputField class="input" :val="p_label" @change="onLabelValueChange" /> should have
+        <DynamicWidthInputField class="input" :val="''+p_ideal" @change="onIdealValueChange" /> {{ childUnitText }}s, with min
+        <DynamicWidthInputField class="input" :val="''+p_min" @change="onMinValueChange" /> and max
+        <DynamicWidthInputField class="input" :val="''+p_max" @change="onMaxValueChange" />
         <button @click="emitDelete">Delete</button>
         <button @click="emitSwapUp">Up</button>
         <button @click="emitSwapDown">Down</button>
@@ -110,13 +110,11 @@ export default class StrataEditorStratumItem extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-input {
+.input {
     background: none;
 
     border: 0;
     border-bottom: 0.1em dashed;
-
-    box-sizing: content-box;
 
     color: #49075E;
 }
