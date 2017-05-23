@@ -1,4 +1,5 @@
 import * as Stratum from "./Stratum";
+import * as Constraint from "./Constraint";
 
 export interface ConstraintsConfig {
     idColumnIndex: number,
@@ -12,4 +13,6 @@ export interface ConstraintsConfig {
      * uses bottom-up order.
      */
     strata: Stratum.Stratum[],
+
+    constraints: Constraint.Constraint[],
 }

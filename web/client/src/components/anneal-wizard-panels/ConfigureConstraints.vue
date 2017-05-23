@@ -6,7 +6,7 @@
             <a class="more" href="#">Need help?</a>
         </p>
         <p>
-            [Constraints editor]
+            <ConstraintsEditor />
         </p>
         <div class="bottom-buttons">
             <button class="button" @click="goToAnneal">Continue</button>
@@ -20,7 +20,13 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-@Component
+import ConstraintsEditor from "../ConstraintsEditor.vue";
+
+@Component({
+    components: {
+        ConstraintsEditor,
+    },
+})
 export default class ConfigureConstraints extends Vue {
 
     goBack() {

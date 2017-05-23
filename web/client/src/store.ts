@@ -4,6 +4,7 @@ import Vuex from "vuex";
 import * as TeamAnnealState from "./data/TeamAnnealState";
 import * as ColumnInfo from "./data/ColumnInfo";
 import * as Stratum from "./data/Stratum";
+import * as Constraint from "./data/Constraint";
 
 Vue.use(Vuex);
 
@@ -39,6 +40,7 @@ const store = new Vuex.Store({
         initialiseConstraintsConfig(state) {
             state.constraintsConfig = {
                 strata: [],
+                constraints: [],
             };
         },
 
@@ -94,7 +96,36 @@ const store = new Vuex.Store({
 
             strata.splice(index + 1, 1, b);
             strata.splice(index, 1, a);
-        }
+        },
+
+        updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
+            const constraints = state.constraintsConfig.constraints!;
+            const updatedConstraint = constraintUpdate.constraint;
+
+            const index = constraints.findIndex(constraint => constraint._id === updatedConstraint._id);
+
+            if (index < 0) {
+                return;
+            }
+
+            Vue.set(constraints, index, updatedConstraint);
+        },
+
+        insertConstraintsConfigConstraint(state, constraint: Constraint.Constraint) {
+            state.constraintsConfig.constraints!.push(constraint);
+        },
+
+        deleteConstraintsConfigConstraintOf(state, _id: number) {
+            const constraints = state.constraintsConfig.constraints!;
+
+            const index = constraints.findIndex(constraint => constraint._id === _id);
+
+            if (index < 0) {
+                return;
+            }
+
+            Vue.delete(constraints, index);
+        },
     },
 });
 

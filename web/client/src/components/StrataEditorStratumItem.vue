@@ -117,5 +117,7 @@ export default class StrataEditorStratumItem extends Vue {
     border-bottom: 0.1em dashed;
 
     color: #49075E;
+
+    cursor: pointer;
 }
 </style>
