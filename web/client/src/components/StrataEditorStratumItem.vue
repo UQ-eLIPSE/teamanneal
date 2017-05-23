@@ -118,22 +118,4 @@ export default class StrataEditorStratumItem extends Vue {
 
     color: #49075E;
 }
-
-
-#tree {
-    background: rgba(0, 0, 0, 0.05);
-
-    width: 100%;
-    height: auto;
-
-    max-height: 20rem;
-    overflow-y: auto;
-
-    list-style: none;
-}
-
-#action-buttons button {
-    padding: 0.1rem 0.3rem;
-    text-transform: none;
-}
 </style>
