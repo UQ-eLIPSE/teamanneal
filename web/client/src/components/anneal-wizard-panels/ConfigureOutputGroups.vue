@@ -6,7 +6,7 @@
             <a class="more" href="#">Need help?</a>
         </p>
         <p>
-            [tree] [+ Add subgroup]
+            <StrataEditor />
         </p>
         <div class="bottom-buttons">
             <button class="button" @click="goToConfigureConstraints">Continue</button>
@@ -20,7 +20,13 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-@Component
+import StrataEditor from "../StrataEditor.vue";
+
+@Component({
+    components: {
+        StrataEditor,
+    }
+})
 export default class ConfigureOutputGroups extends Vue {
 
     goBack() {

@@ -3,7 +3,7 @@ import Vuex from "vuex";
 
 import * as TeamAnnealState from "./data/TeamAnnealState";
 import * as ColumnInfo from "./data/ColumnInfo";
-
+import * as Stratum from "./data/Stratum";
 
 Vue.use(Vuex);
 
@@ -37,7 +37,9 @@ const store = new Vuex.Store({
 
         // Incremental constraints configuration build
         initialiseConstraintsConfig(state) {
-            state.constraintsConfig = {};
+            state.constraintsConfig = {
+                strata: [],
+            };
         },
 
         updateConstraintsConfigIdColumnIndex(state, i: number) {
@@ -51,6 +53,48 @@ const store = new Vuex.Store({
         deleteConstraintsConfigPartitionColumnIndex(state) {
             Vue.delete(state.constraintsConfig, "partitionColumnIndex");
         },
+
+        updateConstraintsConfigStrata(state, stratumUpdate: Stratum.Update) {
+            Vue.set(state.constraintsConfig.strata!, stratumUpdate.index, stratumUpdate.stratum);
+        },
+
+        insertConstraintsConfigStrata(state, stratum: Stratum.Stratum) {
+            state.constraintsConfig.strata!.push(stratum);
+        },
+
+        deleteConstraintsConfigStrataAt(state, index: number) {
+            Vue.delete(state.constraintsConfig.strata!, index);
+        },
+
+        swapUpConstraintsConfigStrataAt(state, index: number) {
+            // Can't swap with previous item
+            if (index === 0) {
+                return;
+            }
+
+            const strata = state.constraintsConfig.strata!;
+
+            const a = strata[index - 1];
+            const b = strata[index];
+
+            strata.splice(index - 1, 1, b);
+            strata.splice(index, 1, a);
+        },
+
+        swapDownConstraintsConfigStrataAt(state, index: number) {
+            const strata = state.constraintsConfig.strata!;
+
+            // Can't swap with next item
+            if (index === strata.length - 1) {
+                return;
+            }
+
+            const a = strata[index + 1];
+            const b = strata[index];
+
+            strata.splice(index + 1, 1, b);
+            strata.splice(index, 1, a);
+        }
     },
 });
 

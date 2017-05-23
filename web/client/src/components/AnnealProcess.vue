@@ -39,7 +39,7 @@ export default class AnnealProcess extends Vue {
 
     width: 20rem;
 
-    color: #fff;
+    color: #49075e;
     background: rgb(230, 230, 230);
 
     box-shadow: inset -1rem 0 1rem rgba(0, 0, 0, 0.1);
