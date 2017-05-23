@@ -42,7 +42,6 @@ export default class DynamicWidthInputField extends Vue {
 
         // Pass value back up via. `change` event
         this.$emit("change", value);
-        console.log(`emitted ${value}`);
     }
 
     @Lifecycle mounted() {
@@ -57,5 +56,18 @@ export default class DynamicWidthInputField extends Vue {
 input {
     padding: 0 0.2em;
     min-width: 1px;
+
+    box-sizing: content-box;
+}
+
+::-ms-clear {
+    display: none;
+}
+
+::-webkit-search-decoration,
+::-webkit-search-cancel-button,
+::-webkit-search-results-button,
+::-webkit-search-results-decoration {
+    display: none;
 }
 </style>
