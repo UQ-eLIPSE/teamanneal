@@ -26,7 +26,7 @@ import * as Stratum from "../data/Stratum";
 export default class StrataEditorStratumItem extends Vue {
     // Props
     @Prop index = p(Number);
-    @Prop stratum = p(Object);
+    @Prop stratum: Stratum.Stratum = p(Object) as any;
     @Prop childUnit = p(String);
 
     // Private data
@@ -93,7 +93,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     transferPropsToData() {
-        const stratum: Stratum.Stratum = this.stratum as any;
+        const stratum = this.stratum;
 
         this.p_label = stratum.label;
         this.p_min = stratum.size.min;

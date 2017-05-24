@@ -44,6 +44,11 @@ export default class DynamicWidthInputField extends Vue {
         this.$emit("change", value);
     }
 
+    @Watch("val")
+    onValChange() {
+        this.inputValue = this.val!;
+    }
+
     @Lifecycle mounted() {
         this.inputValue = this.val!;
     }
