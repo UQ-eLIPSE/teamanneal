@@ -8,7 +8,7 @@
                 TeamAnneal
             </h2>
         </div>
-        <div id="content" :class="{ 'bg-blur': contentBgBlur }">
+        <div id="content">
             <router-view />
         </div>
     </div>
@@ -21,9 +21,6 @@ import { Vue, Component } from "av-ts";
 
 @Component
 export default class TeamAnneal extends Vue {
-    contentBgBlur: boolean = false;
-
-
 }
 </script>
 
@@ -229,27 +226,5 @@ a.more:active {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-}
-
-#content::before {
-    content: "";
-
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-
-    background: rgba(0, 0, 0, 0.7);
-
-    opacity: 0.7;
-
-    transition: all 250ms ease-out;
-
-    pointer-events: none;
-}
-
-#content.bg-blur::before {
-    opacity: 1;
 }
 </style>
