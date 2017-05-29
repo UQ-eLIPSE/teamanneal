@@ -11,6 +11,7 @@
                 <option v-for="option in possibleIdColumns" :value="option.value">{{ option.text }}</option>
             </select>
         </p>
+        <p class="error" v-if="possibleIdColumns.length === 0">Your records file has no detected ID column to choose from. Please ensure that your records file has a column with one unique ID value per record.</p>
         <div class="bottom-buttons">
             <button class="button" @click="goToSelectPartitionColumn" :disabled="idColumnIndex === '-1'">Continue</button>
             <button class="button secondary" @click="goBack">Back</button>
@@ -25,10 +26,6 @@ import { Vue, Component } from "av-ts";
 
 import * as SourceFile from "../../data/SourceFile";
 import * as ConstraintsConfig from "../../data/ConstraintsConfig";
-
-// TODO: If only one possible ID column then immediately proceed by
-// replacing current location with next
-
 
 @Component()
 export default class SelectIdColumn extends Vue {
@@ -52,12 +49,25 @@ export default class SelectIdColumn extends Vue {
         return config;
     }
 
+    /**
+     * An array for the <select /> menu of all the possible ID columns to choose 
+     * from.
+     */
     get possibleIdColumns() {
+        const allRawData = this.fileInStore.data;
         const columnInfo = this.fileInStore.columnInfo || [];
 
-        // TODO: Filter only those with column values unique
+        // No data to even process
+        if (allRawData === undefined) { return []; }
 
-        return columnInfo.map((info, i) => ({ text: info.label, value: i }));
+        // The total number of records is equal to the full raw data array
+        // length minus the header (1 row)
+        const numberOfRecords = allRawData.length - 1;
+
+        // Filter only those with column values unique
+        return columnInfo
+            .filter(info => info.valueSet.size === numberOfRecords)
+            .map(info => ({ text: info.label, value: columnInfo.indexOf(info) }));
     }
 
 
@@ -117,5 +127,9 @@ export default class SelectIdColumn extends Vue {
 
 #wizard .bottom-buttons :last-child {
     margin-right: auto;
+}
+
+.error {
+    color: red;
 }
 </style>
