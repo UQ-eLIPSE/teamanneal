@@ -13,7 +13,6 @@
             </label>
             <button class="button" @click="goToReviewRecords" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
             <button class="button gold" @click="clearFile" v-if="isFileSetInStore">Clear file</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -28,10 +27,6 @@ import * as ColumnInfo from "../../data/ColumnInfo";
 
 @Component
 export default class ProvideRecordsFile extends Vue {
-    goBack() {
-        this.$router.back();
-    }
-
     goToReviewRecords() {
         this.$router.push({
             path: "review-records",
@@ -137,13 +132,6 @@ export default class ProvideRecordsFile extends Vue {
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
 }
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
-}
-
-
-
 
 #load-file {
     display: none;

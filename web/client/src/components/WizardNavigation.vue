@@ -15,12 +15,14 @@ import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
 
+type WNE = WizardNavigationEntry.WizardNavigationEntry;
+
 @Component
 export default class WizardNavigation extends Vue {
     // Props
-    @Prop entries: ReadonlyArray<Readonly<WizardNavigationEntry.WizardNavigationEntry>> = p(Array) as any;
+    @Prop entries: ReadonlyArray<Readonly<WNE>> = p(Array) as any;
 
-    goTo(entry: WizardNavigationEntry.WizardNavigationEntry) {
+    goTo(entry: WNE) {
         console.log(`Going to: ${entry.path}`);
 
         this.$router.push({
@@ -30,7 +32,7 @@ export default class WizardNavigation extends Vue {
 
 
 
-    isEntryActive(entry: WizardNavigationEntry.WizardNavigationEntry) {
+    isEntryActive(entry: WNE) {
         return this.currentRouterFullPath === entry.path;
     }
 

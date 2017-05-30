@@ -1,7 +1,7 @@
 <template>
     <div id="wizard-container">
         <div id="wizard-sidebar">
-            <button @click="exitAnnealProcess">Exit</button>
+            <button class="button secondary exit-button" @click="exitAnnealProcess">◀ Exit</button>
             <WizardNavigation class="wizard-navigation" :entries="processWizardEntries" />
         </div>
         <div id="wizard-content">
@@ -142,5 +142,10 @@ export default class AnnealProcess extends Vue {
     bottom: 0;
 
     font-weight: 300;
+}
+
+.exit-button {
+    margin: 1em;
+    padding: 0.6em 1em;
 }
 </style>

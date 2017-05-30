@@ -10,7 +10,6 @@
         </p>
         <div class="bottom-buttons">
             <button class="button" @click="goToAnneal">Continue</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -28,11 +27,6 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
     },
 })
 export default class ConfigureConstraints extends Vue {
-
-    goBack() {
-        this.$router.back();
-    }
-
     goToAnneal() {
         this.$router.push({
             path: "confirm-anneal",
@@ -70,9 +64,5 @@ export default class ConfigureConstraints extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 </style>

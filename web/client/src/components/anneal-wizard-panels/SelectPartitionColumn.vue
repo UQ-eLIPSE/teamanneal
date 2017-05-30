@@ -17,7 +17,6 @@
         <div class="bottom-buttons">
             <button class="button" @click="setPartitionColumn" :disabled="partitionColumnIndex === '-1'">Set partition column</button>
             <button class="button gold" @click="skipPartitioning">Don't partition</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -32,10 +31,6 @@ import * as ConstraintsConfig from "../../data/ConstraintsConfig";
 
 @Component
 export default class SelectPartitionColumn extends Vue {
-    goBack() {
-        this.$router.back();
-    }
-
     setPartitionColumn() {
         this.goToConfigureOutputGroups();
     }
@@ -66,12 +61,6 @@ export default class SelectPartitionColumn extends Vue {
         const columnInfo = this.fileInStore.columnInfo || [];
         return columnInfo.map((info, i) => ({ text: info.label, value: i }));
     }
-
-
-
-
-
-
 
     get partitionColumnIndex(): string {
         // NOTE: Returns string as <select> doesn't do numbers
@@ -120,9 +109,5 @@ export default class SelectPartitionColumn extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 </style>

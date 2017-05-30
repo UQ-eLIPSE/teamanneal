@@ -10,7 +10,6 @@
         </p>
         <div class="bottom-buttons">
             <button class="button" @click="goToConfigureConstraints">Continue</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -28,11 +27,6 @@ import StrataEditor from "../StrataEditor.vue";
     }
 })
 export default class ConfigureOutputGroups extends Vue {
-
-    goBack() {
-        this.$router.back();
-    }
-
     goToConfigureConstraints() {
         this.$router.push({
             path: "configure-constraints",
@@ -70,9 +64,5 @@ export default class ConfigureOutputGroups extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 </style>

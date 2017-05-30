@@ -7,7 +7,6 @@
         </p>
         <div class="bottom-buttons">
             <button class="button" @click="goToSelectIdColumn">Continue</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -19,10 +18,6 @@ import { Vue, Component } from "av-ts";
 
 @Component
 export default class ReviewRecords extends Vue {
-    goBack() {
-        this.$router.back();
-    }
-
     goToSelectIdColumn() {
         this.$router.push({
             path: "select-id-column",
@@ -60,10 +55,6 @@ export default class ReviewRecords extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 
 .overflow-ellipsis {
