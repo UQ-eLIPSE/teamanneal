@@ -9,7 +9,7 @@
             <StrataEditor />
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="goToConfigureConstraints">Continue</button>
+            <button class="button" @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
 </template>
@@ -27,9 +27,9 @@ import StrataEditor from "../StrataEditor.vue";
     }
 })
 export default class ConfigureOutputGroups extends Vue {
-    goToConfigureConstraints() {
-        this.$router.push({
-            path: "configure-constraints",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 }

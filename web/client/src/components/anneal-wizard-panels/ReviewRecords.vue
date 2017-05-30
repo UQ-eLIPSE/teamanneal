@@ -6,7 +6,7 @@
             <a class="more" href="#">Need help?</a>
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="goToSelectIdColumn">Continue</button>
+            <button class="button" @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
 </template>
@@ -18,9 +18,9 @@ import { Vue, Component } from "av-ts";
 
 @Component
 export default class ReviewRecords extends Vue {
-    goToSelectIdColumn() {
-        this.$router.push({
-            path: "select-id-column",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 }

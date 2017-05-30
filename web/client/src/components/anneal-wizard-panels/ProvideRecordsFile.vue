@@ -11,7 +11,7 @@
                 <input type="file" id="load-file" accept=".csv" @change="onFileInputChanged($event)">
                 <button class="button" @click.stop.prevent="openFilePicker">Select CSV file...</button>
             </label>
-            <button class="button" @click="goToReviewRecords" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
+            <button class="button" @click="emitWizardNavNext" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
             <button class="button gold" @click="clearFile" v-if="isFileSetInStore">Clear file</button>
         </div>
     </div>
@@ -27,9 +27,9 @@ import * as ColumnInfo from "../../data/ColumnInfo";
 
 @Component
 export default class ProvideRecordsFile extends Vue {
-    goToReviewRecords() {
-        this.$router.push({
-            path: "review-records",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 
@@ -97,7 +97,7 @@ export default class ProvideRecordsFile extends Vue {
 
 
 
-        this.goToReviewRecords();
+        this.emitWizardNavNext();
     }
 }
 </script>

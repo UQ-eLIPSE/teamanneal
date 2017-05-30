@@ -9,7 +9,7 @@
             <ConstraintsEditor />
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="goToAnneal">Continue</button>
+            <button class="button" @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
 </template>
@@ -27,9 +27,9 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
     },
 })
 export default class ConfigureConstraints extends Vue {
-    goToAnneal() {
-        this.$router.push({
-            path: "confirm-anneal",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 }

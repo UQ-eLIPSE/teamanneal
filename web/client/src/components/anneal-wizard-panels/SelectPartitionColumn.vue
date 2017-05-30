@@ -32,18 +32,18 @@ import * as ConstraintsConfig from "../../data/ConstraintsConfig";
 @Component
 export default class SelectPartitionColumn extends Vue {
     setPartitionColumn() {
-        this.goToConfigureOutputGroups();
+        this.emitWizardNavNext();
     }
 
     skipPartitioning() {
         // Delete partition column index
         this.$store.commit("deleteConstraintsConfigPartitionColumnIndex");
-        this.goToConfigureOutputGroups();
+        this.emitWizardNavNext();
     }
 
-    goToConfigureOutputGroups() {
-        this.$router.push({
-            path: "configure-output-groups",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 

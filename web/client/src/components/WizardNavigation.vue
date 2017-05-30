@@ -21,19 +21,39 @@ type WNE = WizardNavigationEntry.WizardNavigationEntry;
 export default class WizardNavigation extends Vue {
     // Props
     @Prop entries: ReadonlyArray<Readonly<WNE>> = p(Array) as any;
+    @Prop bus: Vue = p(Object) as any;
 
     goTo(entry: WNE) {
-        console.log(`Going to: ${entry.path}`);
-
         this.$router.push({
             path: entry.path,
         });
     }
 
+    goNext() {
+        // Find the "next" function
+        const activeEntry = this.activeEntry;
+
+        if (activeEntry === undefined) {
+            return;
+        }
+
+        if (activeEntry.next === undefined) {
+            return;
+        }
+
+        // Execute the next function to get the next entry to move to
+        this.goTo(activeEntry.next(this.$store.state));
+    }
+
+
 
 
     isEntryActive(entry: WNE) {
         return this.currentRouterFullPath === entry.path;
+    }
+
+    get activeEntry() {
+        return this.entries.find(this.isEntryActive.bind(this));
     }
 
     get currentRouterFullPath() {
@@ -43,6 +63,15 @@ export default class WizardNavigation extends Vue {
 
 
 
+    onWizardNavigation(data: any) {
+        switch (data.event) {
+            case "next": return this.goNext();
+        }
+
+        throw new Error("Unknown wizard navigation event");
+    }
+
+
 
     @Lifecycle created() {
         // Watch the store for any changes
@@ -50,6 +79,10 @@ export default class WizardNavigation extends Vue {
             // Go through all steps and execute update functions
             console.log(state);
         });
+
+        // Pick up any "wizardNavigation" events that come through from the
+        // parent-supplied bus
+        this.bus.$on("wizardNavigation", this.onWizardNavigation.bind(this));
     }
 
 

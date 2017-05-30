@@ -13,7 +13,7 @@
         </p>
         <p class="error" v-if="possibleIdColumns.length === 0">Your records file has no detected ID column to choose from. Please ensure that your records file has a column with one unique ID value per record.</p>
         <div class="bottom-buttons">
-            <button class="button" @click="goToSelectPartitionColumn" :disabled="idColumnIndex === '-1'">Continue</button>
+            <button class="button" @click="emitWizardNavNext" :disabled="idColumnIndex === '-1'">Continue</button>
         </div>
     </div>
 </template>
@@ -28,9 +28,9 @@ import * as ConstraintsConfig from "../../data/ConstraintsConfig";
 
 @Component()
 export default class SelectIdColumn extends Vue {
-    goToSelectPartitionColumn() {
-        this.$router.push({
-            path: "select-partition-column",
+    emitWizardNavNext() {
+        this.$emit("wizardNavigation", {
+            event: "next",
         });
     }
 

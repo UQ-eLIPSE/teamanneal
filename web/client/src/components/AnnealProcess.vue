@@ -2,10 +2,10 @@
     <div id="wizard-container">
         <div id="wizard-sidebar">
             <button class="button secondary exit-button" @click="exitAnnealProcess">◀ Exit</button>
-            <WizardNavigation class="wizard-navigation" :entries="processWizardEntries" />
+            <WizardNavigation class="wizard-navigation" :bus="wizardNavigationBus" :entries="processWizardEntries" />
         </div>
         <div id="wizard-content">
-            <router-view class="wizard-subcomponent" />
+            <router-view class="wizard-subcomponent" @wizardNavigation="onWizardNavigation" />
         </div>
     </div>
 </template>
@@ -90,11 +90,16 @@ const wizardEntries: ReadonlyArray<Readonly<WNE>> = [
 })
 export default class AnnealProcess extends Vue {
     processWizardEntries = wizardEntries;
+    wizardNavigationBus = new Vue();
 
     exitAnnealProcess() {
         this.$router.push({
             path: "/",
         });
+    }
+
+    onWizardNavigation(data: any) {
+        this.wizardNavigationBus.$emit("wizardNavigation", data);
     }
 }
 </script>
