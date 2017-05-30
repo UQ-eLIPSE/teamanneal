@@ -1,6 +1,9 @@
 <template>
     <div id="wizard-container">
-        <div id="wizard-sidebar">[step-by-step navigatable sidebar]</div>
+        <div id="wizard-sidebar">
+            <button @click="exitAnnealProcess">Exit</button>
+            <WizardNavigation class="wizard-navigation" :entries="processWizardEntries" />
+        </div>
         <div id="wizard-content">
             <router-view class="wizard-subcomponent" />
         </div>
@@ -12,9 +15,87 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-@Component
-export default class AnnealProcess extends Vue {
+import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
 
+import WizardNavigation from "./WizardNavigation.vue";
+
+
+type WNE = WizardNavigationEntry.WizardNavigationEntry;
+
+
+
+let step1: WNE,
+    step2: WNE,
+    step3: WNE,
+    step4: WNE,
+    step5: WNE,
+    step6: WNE;
+
+const wizardEntries: ReadonlyArray<Readonly<WNE>> = [
+    step1 = {
+        label: "Select records file",
+        path: "/anneal/provide-records-file",
+        disabled: () => false,
+
+        next: () => step2,
+        nextDisabled: () => false,
+    },
+    step2 = {
+        label: "Double check data",
+        path: "/anneal/review-records",
+        disabled: () => false,
+
+        next: () => step3,
+        nextDisabled: () => false,
+    },
+    step3 = {
+        label: "Select ID column",
+        path: "/anneal/select-id-column",
+        disabled: () => false,
+
+        next: () => step4,
+        nextDisabled: () => false,
+    },
+    step4 = {
+        label: "Select partition column",
+        path: "/anneal/select-partition-column",
+        disabled: () => false,
+
+        next: () => step5,
+        nextDisabled: () => false,
+    },
+    step5 = {
+        label: "Configure output groups",
+        path: "/anneal/configure-output-groups",
+        disabled: () => false,
+
+        next: () => step6,
+        nextDisabled: () => false,
+    },
+    step6 = {
+        label: "Configure constraints",
+        path: "/anneal/configure-constraints",
+        disabled: () => false,
+    },
+];
+
+
+
+
+
+@Component({
+    components: {
+        WizardNavigation,
+    }
+})
+export default class AnnealProcess extends Vue {
+    processWizardEntries = wizardEntries;
+
+    exitAnnealProcess() {
+        this.$router.push({
+            path: "/",
+        });
+    }
 }
 </script>
 
