@@ -8,7 +8,7 @@
             </p>
         </div>
         <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="$store.state.sourceFile.data" />
+            <SpreadsheetView class="viewer" :rows="$store.state.sourceFile.data" :stickyHeader="true" />
         </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
