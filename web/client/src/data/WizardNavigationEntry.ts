@@ -1,6 +1,6 @@
 export interface WizardNavigationEntry {
     /** Label to appear in wizard step list */
-    label: string,
+    label: string | ((state?: any) => string),
     /** vue-router compatible global-level route path */
     path: string,
     /**

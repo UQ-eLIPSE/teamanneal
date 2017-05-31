@@ -19,7 +19,13 @@ export let
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     provideRecordsFile = {
-        label: "Select records file",
+        label: (state: TAState) => {
+            if (TeamAnnealState.hasSourceFileData(state)) {
+                return `${state.sourceFile!.name}`;
+            } else {
+                return "Select records file";
+            }
+        },
         path: "/anneal/provide-records-file",
 
         next: () => reviewRecords,
