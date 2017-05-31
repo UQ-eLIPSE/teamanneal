@@ -2,6 +2,10 @@ import Vue from "vue";
 import Vuex from "vuex";
 import VueRouter from "vue-router";
 
+// Data
+import * as WizardNavigationEntry from "./data/WizardNavigationEntry";
+import * as AnnealProcessWizardEntries from "./data/AnnealProcessWizardEntries";
+
 // Subcomponents
 import Welcome from "./components/Welcome.vue";
 import AnnealProcess from "./components/AnnealProcess.vue";
@@ -34,31 +38,44 @@ export default (store: Vuex.Store<any>) => {
                     {
                         path: "provide-records-file",
                         component: Anneal_ProvideRecordsFile,
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.provideRecordsFile,
+                        },
                     },
                     {
                         path: "review-records",
                         component: Anneal_ReviewRecords,
-                        meta: { annealDataRequired: true, },
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.reviewRecords,
+                        },
                     },
                     {
                         path: "select-id-column",
                         component: Anneal_SelectIdColumn,
-                        meta: { annealDataRequired: true, },
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.selectIdColumn,
+                        },
                     },
                     {
                         path: "select-partition-column",
                         component: Anneal_SelectPartitionColumn,
-                        meta: { annealDataRequired: true, },
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.selectPartitionColumn,
+                        },
                     },
                     {
                         path: "configure-output-groups",
                         component: Anneal_ConfigureOutputGroups,
-                        meta: { annealDataRequired: true, },
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.configureOutputGroups,
+                        },
                     },
                     {
                         path: "configure-constraints",
                         component: Anneal_ConfigureConstraints,
-                        meta: { annealDataRequired: true, },
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.configureConstraints,
+                        },
                     }
                 ]
             },
@@ -66,17 +83,34 @@ export default (store: Vuex.Store<any>) => {
     });
 
     router.beforeEach((to, _from, next) => {
-        if (to.meta.annealDataRequired) {
-            console.log(`Route ${to.path} will check for anneal data`);
+        // If this is part of a wizard, check whether it is disabled
+        if (to.meta && to.meta.wizardEntry) {
+            const wizardEntry: WizardNavigationEntry.WizardNavigationEntry = to.meta.wizardEntry;
 
-            console.log(store.state.constraintsConfig);
+            // Get the disabled checking function
+            const isDisabledFn = wizardEntry.disabled;
 
-            // return next({
-            //     path: "/",
-            // });
+            // If the function does not exist we assume that it is always not
+            // disabled
+            const isDisabled =
+                isDisabledFn === undefined ?
+                    false :
+                    isDisabledFn(store.state);
+
+            // If route is disabled, return to root
+            if (isDisabled) {
+                return next({
+                    path: "/",
+                });
+            }
         }
 
         return next();
+    });
+
+    router.afterEach((to, _from) => {
+        // Update current router path in store
+        store.commit("updateRouterFullPath", to.fullPath);
     });
 
     return router;

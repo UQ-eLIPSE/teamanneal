@@ -17,7 +17,6 @@
         <div class="bottom-buttons">
             <button class="button" @click="setPartitionColumn" :disabled="partitionColumnIndex === '-1'">Set partition column</button>
             <button class="button gold" @click="skipPartitioning">Don't partition</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -29,27 +28,48 @@ import { Vue, Component } from "av-ts";
 
 import * as SourceFile from "../../data/SourceFile";
 import * as ConstraintsConfig from "../../data/ConstraintsConfig";
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
+const thisWizardStep = AnnealProcessWizardEntries.selectPartitionColumn;
 
 @Component
 export default class SelectPartitionColumn extends Vue {
-    goBack() {
-        this.$router.back();
+    emitWizardNavNext() {
+        // Don't go if next is disabled
+        if (this.isWizardNavNextDisabled) {
+            return;
+        }
+
+        this.$emit("wizardNavigation", {
+            event: "next",
+        });
+    }
+
+    get isWizardNavNextDisabled() {
+        const state = this.$store.state;
+
+        // Check if we have a next step defined
+        if (thisWizardStep.next === undefined) { return false; }
+
+        // Get the next step
+        const next = thisWizardStep.next(state);
+
+        // Get the disabled check function or say it is not disabled if the
+        // function does not exist
+        if (next.disabled === undefined) { return false; }
+        const disabled = next.disabled(state);
+
+        return disabled;
     }
 
     setPartitionColumn() {
-        this.goToConfigureOutputGroups();
+        this.emitWizardNavNext();
     }
 
     skipPartitioning() {
         // Delete partition column index
         this.$store.commit("deleteConstraintsConfigPartitionColumnIndex");
-        this.goToConfigureOutputGroups();
-    }
-
-    goToConfigureOutputGroups() {
-        this.$router.push({
-            path: "configure-output-groups",
-        });
+        this.emitWizardNavNext();
     }
 
     get fileInStore() {
@@ -66,12 +86,6 @@ export default class SelectPartitionColumn extends Vue {
         const columnInfo = this.fileInStore.columnInfo || [];
         return columnInfo.map((info, i) => ({ text: info.label, value: i }));
     }
-
-
-
-
-
-
 
     get partitionColumnIndex(): string {
         // NOTE: Returns string as <select> doesn't do numbers
@@ -120,9 +134,5 @@ export default class SelectPartitionColumn extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 </style>

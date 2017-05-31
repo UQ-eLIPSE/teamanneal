@@ -11,9 +11,8 @@
                 <input type="file" id="load-file" accept=".csv" @change="onFileInputChanged($event)">
                 <button class="button" @click.stop.prevent="openFilePicker">Select CSV file...</button>
             </label>
-            <button class="button" @click="goToReviewRecords" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
+            <button class="button" @click="emitWizardNavNext" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
             <button class="button gold" @click="clearFile" v-if="isFileSetInStore">Clear file</button>
-            <button class="button secondary" @click="goBack">Back</button>
         </div>
     </div>
 </template>
@@ -25,17 +24,38 @@ import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
 
 import * as ColumnInfo from "../../data/ColumnInfo";
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
+const thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
 @Component
 export default class ProvideRecordsFile extends Vue {
-    goBack() {
-        this.$router.back();
+    emitWizardNavNext() {
+        // Don't go if next is disabled
+        if (this.isWizardNavNextDisabled) {
+            return;
+        }
+
+        this.$emit("wizardNavigation", {
+            event: "next",
+        });
     }
 
-    goToReviewRecords() {
-        this.$router.push({
-            path: "review-records",
-        });
+    get isWizardNavNextDisabled() {
+        const state = this.$store.state;
+
+        // Check if we have a next step defined
+        if (thisWizardStep.next === undefined) { return false; }
+
+        // Get the next step
+        const next = thisWizardStep.next(state);
+
+        // Get the disabled check function or say it is not disabled if the
+        // function does not exist
+        if (next.disabled === undefined) { return false; }
+        const disabled = next.disabled(state);
+
+        return disabled;
     }
 
     clearFile() {
@@ -102,7 +122,7 @@ export default class ProvideRecordsFile extends Vue {
 
 
 
-        this.goToReviewRecords();
+        this.emitWizardNavNext();
     }
 }
 </script>
@@ -137,13 +157,6 @@ export default class ProvideRecordsFile extends Vue {
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
 }
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
-}
-
-
-
 
 #load-file {
     display: none;

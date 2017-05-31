@@ -1,8 +1,11 @@
 <template>
     <div id="wizard-container">
-        <div id="wizard-sidebar">[step-by-step navigatable sidebar]</div>
+        <div id="wizard-sidebar">
+            <button class="button secondary exit-button" @click="exitAnnealProcess">◀ Exit</button>
+            <WizardNavigation class="wizard-navigation" :bus="wizardNavigationBus" :entries="processWizardEntries" />
+        </div>
         <div id="wizard-content">
-            <router-view class="wizard-subcomponent" />
+            <router-view class="wizard-subcomponent" @wizardNavigation="onWizardNavigation" />
         </div>
     </div>
 </template>
@@ -12,9 +15,29 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-@Component
-export default class AnnealProcess extends Vue {
+import * as AnnealProcessWizardEntries from "../data/AnnealProcessWizardEntries";
 
+import WizardNavigation from "./WizardNavigation.vue";
+
+
+@Component({
+    components: {
+        WizardNavigation,
+    }
+})
+export default class AnnealProcess extends Vue {
+    processWizardEntries = AnnealProcessWizardEntries.entries;
+    wizardNavigationBus = new Vue();
+
+    exitAnnealProcess() {
+        this.$router.push({
+            path: "/",
+        });
+    }
+
+    onWizardNavigation(data: any) {
+        this.wizardNavigationBus.$emit("wizardNavigation", data);
+    }
 }
 </script>
 
@@ -61,5 +84,10 @@ export default class AnnealProcess extends Vue {
     bottom: 0;
 
     font-weight: 300;
+}
+
+.exit-button {
+    margin: 1em;
+    padding: 0.6em 1em;
 }
 </style>

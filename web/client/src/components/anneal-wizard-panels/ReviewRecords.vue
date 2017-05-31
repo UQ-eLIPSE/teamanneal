@@ -6,8 +6,7 @@
             <a class="more" href="#">Need help?</a>
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="goToSelectIdColumn">Continue</button>
-            <button class="button secondary" @click="goBack">Back</button>
+            <button class="button" @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
 </template>
@@ -17,16 +16,38 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
+const thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
+
 @Component
 export default class ReviewRecords extends Vue {
-    goBack() {
-        this.$router.back();
+    emitWizardNavNext() {
+        // Don't go if next is disabled
+        if (this.isWizardNavNextDisabled) {
+            return;
+        }
+
+        this.$emit("wizardNavigation", {
+            event: "next",
+        });
     }
 
-    goToSelectIdColumn() {
-        this.$router.push({
-            path: "select-id-column",
-        });
+    get isWizardNavNextDisabled() {
+        const state = this.$store.state;
+
+        // Check if we have a next step defined
+        if (thisWizardStep.next === undefined) { return false; }
+
+        // Get the next step
+        const next = thisWizardStep.next(state);
+
+        // Get the disabled check function or say it is not disabled if the
+        // function does not exist
+        if (next.disabled === undefined) { return false; }
+        const disabled = next.disabled(state);
+
+        return disabled;
     }
 }
 </script>
@@ -60,10 +81,6 @@ export default class ReviewRecords extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
-}
-
-#wizard .bottom-buttons :last-child {
-    margin-right: auto;
 }
 
 .overflow-ellipsis {

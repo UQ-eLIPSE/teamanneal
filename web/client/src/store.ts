@@ -9,6 +9,13 @@ import * as Constraint from "./data/Constraint";
 Vue.use(Vuex);
 
 const state: TeamAnnealState.TeamAnnealState = {
+    /**
+     * Stores a copy of the vue-router's full route path
+     * 
+     * This is updated by the router on "afterEach".
+     */
+    routerFullPath: "",
+
     sourceFile: {},
     constraintsConfig: {},
 };
@@ -17,6 +24,13 @@ const store = new Vuex.Store({
     strict: true,
     state,
     mutations: {
+        /// Router
+        updateRouterFullPath(state, path: string) {
+            state.routerFullPath = path;
+        },
+
+
+
         /// Source file (the current open working file)
         initialiseSourceFile(state) {
             state.sourceFile = {};
