@@ -1,8 +1,8 @@
 <template>
     <div id="spreadsheet">
         <table>
-            <tr v-for="row in $store.state.csvFileData.allRows">
-                <td v-for="cell in row" :class="{num: typeof cell === 'number'}">
+            <tr v-for="row in rows">
+                <td v-for="cell in row">
                     {{ cell }}
                 </td>
             </tr>
@@ -13,11 +13,12 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 @Component
 export default class SpreadsheetView extends Vue {
-
+    // Props
+    @Prop rows: ReadonlyArray<string | number> = p(Array) as any;
 }
 </script>
 
@@ -25,19 +26,18 @@ export default class SpreadsheetView extends Vue {
 
 <style scoped>
 #spreadsheet {
-    position: absolute;
+    /*position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
-    right: 0;
-
+    right: 0;*/
     overflow: scroll;
 
-    background: #fff;
+    /*background: #fff;
 
     opacity: 1;
 
-    transition: all 250ms ease-out;
+    transition: all 250ms ease-out;*/
 }
 
 #spreadsheet table {

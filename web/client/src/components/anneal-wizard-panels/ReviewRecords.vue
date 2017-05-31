@@ -1,10 +1,15 @@
 <template>
     <div id="wizard">
-        <h1 class="overflow-ellipsis">Double check data</h1>
-        <p>
-            Take a moment to make sure column data types and all records are correct.
-            <a class="more" href="#">Need help?</a>
-        </p>
+        <div class="desc-text">
+            <h1>Double check data</h1>
+            <p>
+                Take a moment to make sure column data types and all records are correct.
+                <a class="more" href="#">Need help?</a>
+            </p>
+        </div>
+        <div class="spreadsheet">
+            <SpreadsheetView class="viewer" :rows="$store.state.sourceFile.data" />
+        </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
         </div>
@@ -18,9 +23,15 @@ import { Vue, Component } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import SpreadsheetView from "../SpreadsheetView.vue";
+
 const thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
 
-@Component
+@Component({
+    components: {
+        SpreadsheetView,
+    },
+})
 export default class ReviewRecords extends Vue {
     emitWizardNavNext() {
         // Don't go if next is disabled
@@ -56,7 +67,8 @@ export default class ReviewRecords extends Vue {
 
 <style scoped>
 #wizard {
-    padding: 1rem 2rem;
+    display: flex;
+    flex-direction: column;
 }
 
 #wizard h1 {
@@ -72,20 +84,41 @@ export default class ReviewRecords extends Vue {
 
 #wizard .bottom-buttons {
     background: rgba(0, 0, 0, 0.05);
-    margin: 0 -2rem -1rem;
+    /*margin: 0 -2rem -1rem;*/
     padding: 1rem 2rem;
 
     display: flex;
     flex-direction: row-reverse;
+
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
 }
 
-.overflow-ellipsis {
-    white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.desc-text {
+    padding: 1rem 2rem;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.spreadsheet {
+    background: #fff;
+
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    position: relative;
+}
+
+.spreadsheet .viewer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 </style>
