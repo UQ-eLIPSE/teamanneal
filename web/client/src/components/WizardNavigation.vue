@@ -1,8 +1,9 @@
 <template>
     <div>
         <ul>
-            <li v-for="entry in entries" :class="{ 'active': isEntryActive(entry), 'disabled': false, }">
-                <a href="#" @click.prevent="goTo(entry)">{{ entry.label }}</a>
+            <li v-for="entry in entries" :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
+                <span v-if="isEntryDisabled(entry)">{{ entry.label }}</span>
+                <a v-else href="#" @click.prevent="goTo(entry)">{{ entry.label }}</a>
             </li>
         </ul>
     </div>
@@ -52,6 +53,15 @@ export default class WizardNavigation extends Vue {
         return this.currentRouterFullPath === entry.path;
     }
 
+    isEntryDisabled(entry: WNE) {
+        // Get the disabled checking function
+        const isDisabled = entry.disabled;
+
+        // If the function does not exist we assume that it is always not
+        // disabled
+        return isDisabled === undefined ? false : isDisabled(this.$store.state);
+    }
+
     get activeEntry() {
         return this.entries.find(this.isEntryActive.bind(this));
     }
@@ -74,12 +84,6 @@ export default class WizardNavigation extends Vue {
 
 
     @Lifecycle created() {
-        // Watch the store for any changes
-        this.$store.watch(_ => _, state => {
-            // Go through all steps and execute update functions
-            console.log(state);
-        });
-
         // Pick up any "wizardNavigation" events that come through from the
         // parent-supplied bus
         this.bus.$on("wizardNavigation", this.onWizardNavigation.bind(this));
@@ -119,11 +123,8 @@ li.active {
 }
 
 li.disabled {
-    color: #000;
-}
-
-li.disabled a {
-    cursor: none;
+    color: rgba(0, 0, 0, 0.3);
+    font-style: italic;
 }
 </style>
 
