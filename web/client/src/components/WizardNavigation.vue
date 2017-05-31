@@ -24,12 +24,18 @@ export default class WizardNavigation extends Vue {
     @Prop entries: ReadonlyArray<Readonly<WNE>> = p(Array) as any;
     @Prop bus: Vue = p(Object) as any;
 
+    /**
+     * Commands vue-router to move to the given entry's path
+     */
     goTo(entry: WNE) {
         this.$router.push({
             path: entry.path,
         });
     }
 
+    /**
+     * Goes to the next step from the current active step, where defined
+     */
     goNext() {
         // Find the "next" function
         const activeEntry = this.activeEntry;
@@ -72,7 +78,9 @@ export default class WizardNavigation extends Vue {
 
 
 
-
+    /**
+     * Processes incoming "wizardNavigation" events
+     */
     onWizardNavigation(data: any) {
         switch (data.event) {
             case "next": return this.goNext();
@@ -88,8 +96,6 @@ export default class WizardNavigation extends Vue {
         // parent-supplied bus
         this.bus.$on("wizardNavigation", this.onWizardNavigation.bind(this));
     }
-
-
 }
 </script>
 
