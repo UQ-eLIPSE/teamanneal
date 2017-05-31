@@ -2,8 +2,8 @@
     <div>
         <ul>
             <li v-for="entry in entries" :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
-                <span v-if="isEntryDisabled(entry)">{{ entry.label }}</span>
-                <a v-else href="#" @click.prevent="goTo(entry)">{{ entry.label }}</a>
+                <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}</span>
+                <a v-else href="#" @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}</a>
             </li>
         </ul>
     </div>
@@ -66,6 +66,20 @@ export default class WizardNavigation extends Vue {
         // If the function does not exist we assume that it is always not
         // disabled
         return isDisabled === undefined ? false : isDisabled(this.$store.state);
+    }
+
+    getEntryLabel(entry: WNE) {
+        const label = entry.label;
+
+        if (typeof label === "string") {
+            return label;
+        }
+
+        if (typeof label === "function") {
+            return label(this.$store.state);
+        }
+
+        throw new Error("Unknown entry label type")
     }
 
     get activeEntry() {
