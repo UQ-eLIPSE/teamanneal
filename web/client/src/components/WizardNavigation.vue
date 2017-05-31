@@ -71,15 +71,17 @@ export default class WizardNavigation extends Vue {
     getEntryLabel(entry: WNE) {
         const label = entry.label;
 
+        // If `label` is a string, then just return the entry label as is
         if (typeof label === "string") {
             return label;
         }
 
+        // If `label` is a function, then execute with the current state
         if (typeof label === "function") {
             return label(this.$store.state);
         }
 
-        throw new Error("Unknown entry label type")
+        throw new Error("Unknown entry label type");
     }
 
     get activeEntry() {
