@@ -6,6 +6,10 @@
                 Take a moment to make sure column data types and all records are correct.
                 <a class="more" href="#">Need help?</a>
             </p>
+            <p>
+                <button class="button change-column" @click="toggleChangeColumn">Change column data types</button>
+            </p>
+            <div class="column-data-type-editor"></div>
         </div>
         <div class="spreadsheet">
             <SpreadsheetView class="viewer" :rows="$store.state.sourceFile.data" :stickyHeader="true" />
@@ -59,6 +63,10 @@ export default class ReviewRecords extends Vue {
         const disabled = next.disabled(state);
 
         return disabled;
+    }
+
+    toggleChangeColumn() {
+        alert("Not implemented");
     }
 }
 </script>
@@ -120,5 +128,19 @@ export default class ReviewRecords extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+.change-column {
+    background: #3a7dda;
+    padding: 0.3em 0.6em;
+
+    color: #fff;
+    font-size: 0.8em;
+}
+
+.change-column:hover,
+.change-column:focus,
+.change-column:active {
+    background: #175ab7;
 }
 </style>
