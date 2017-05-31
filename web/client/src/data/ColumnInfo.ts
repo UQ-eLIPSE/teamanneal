@@ -1,22 +1,31 @@
+/**
+ * Describes the information of one column.
+ */
 export type ColumnInfo = ColumnInfoBase & (
     ColumnInfoNumber |
     ColumnInfoString
 )
 
 interface ColumnInfoBase {
+    /** The name or heading of the column */
     label: string,
 }
 
 interface ColumnInfoNumber {
     type: "number",
+    /** Contains the set of unique values present in the column */
     valueSet: Set<number | null>,
+    /** Range = max - min */
     range: number,
+    /** The minimum numeric value in the column */
     min: number,
+    /** The maximum numeric value in the column */
     max: number,
 }
 
 interface ColumnInfoString {
     type: "string",
+    /** Contains the set of unique values present in the column */
     valueSet: Set<string>,
 }
 
