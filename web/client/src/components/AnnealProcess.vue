@@ -15,100 +15,9 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
-import * as TeamAnnealState from "../data/TeamAnnealState";
+import * as AnnealProcessWizardEntries from "../data/AnnealProcessWizardEntries";
 
 import WizardNavigation from "./WizardNavigation.vue";
-
-
-type WNE = WizardNavigationEntry.WizardNavigationEntry;
-type TAState = Partial<TeamAnnealState.TeamAnnealState>;
-
-
-let step1: WNE,
-    step2: WNE,
-    step3: WNE,
-    step4: WNE,
-    step5: WNE,
-    step6: WNE;
-
-const wizardEntries: ReadonlyArray<Readonly<WNE>> = [
-    step1 = {
-        label: "Select records file",
-        path: "/anneal/provide-records-file",
-        next: () => step2,
-        nextDisabled: () => false,
-    },
-    step2 = {
-        label: "Double check data",
-        path: "/anneal/review-records",
-        disabled: (state: TAState) => {
-            // Disabled when there is no source file data
-            return !(
-                TeamAnnealState.hasSourceFileData(state)
-            )
-        },
-
-        next: () => step3,
-        nextDisabled: () => false,
-    },
-    step3 = {
-        label: "Select ID column",
-        path: "/anneal/select-id-column",
-        disabled: (state: TAState) => {
-            // Disabled when there is no source file data
-            return !(
-                TeamAnnealState.hasSourceFileData(state)
-            )
-        },
-
-        next: () => step4,
-        nextDisabled: () => false,
-    },
-    step4 = {
-        label: "Select partition column",
-        path: "/anneal/select-partition-column",
-        disabled: (state: TAState) => {
-            // Disabled when there is no ID column selected (a number above -1)
-            return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state)
-            );
-        },
-
-        next: () => step5,
-        nextDisabled: () => false,
-    },
-    step5 = {
-        label: "Configure output groups",
-        path: "/anneal/configure-output-groups",
-        disabled: (state: TAState) => {
-            // Disabled when there is no ID column selected (a number above -1)
-            return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state)
-            );
-        },
-
-        next: () => step6,
-        nextDisabled: () => false,
-    },
-    step6 = {
-        label: "Configure constraints",
-        path: "/anneal/configure-constraints",
-        disabled: (state: TAState) => {
-            // Disabled when there are no strata (output groups)
-            return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state)
-            );
-        },
-    },
-];
-
-
-
 
 
 @Component({
@@ -117,7 +26,7 @@ const wizardEntries: ReadonlyArray<Readonly<WNE>> = [
     }
 })
 export default class AnnealProcess extends Vue {
-    processWizardEntries = wizardEntries;
+    processWizardEntries = AnnealProcessWizardEntries.entries;
     wizardNavigationBus = new Vue();
 
     exitAnnealProcess() {

@@ -4,6 +4,5 @@ export interface WizardNavigationEntry {
     disabled?: (state?: any) => boolean,
 
     next?: (state?: any) => WizardNavigationEntry,
-    nextDisabled?: (state?: any) => boolean,
 }
 
