@@ -6,13 +6,10 @@
                 Take a moment to make sure column data types and all records are correct.
                 <a class="more" href="#">Need help?</a>
             </p>
-            <p>
-                <button class="button change-column" @click="toggleChangeColumn">Change column data types</button>
-            </p>
             <div class="column-data-type-editor"></div>
         </div>
         <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :stickyHeader="true" />
+            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="true" />
         </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
@@ -84,10 +81,6 @@ export default class ReviewRecords extends Vue {
         }
 
         return [columnInfo.map(x => x.label), ...cookedData];
-    }
-
-    toggleChangeColumn() {
-        alert("Not implemented");
     }
 }
 </script>
