@@ -12,7 +12,7 @@
             <div class="column-data-type-editor"></div>
         </div>
         <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="$store.state.sourceFile.data" :stickyHeader="true" />
+            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :stickyHeader="true" />
         </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
@@ -25,6 +25,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as SourceFile from "../../data/SourceFile";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import SpreadsheetView from "../SpreadsheetView.vue";
@@ -63,6 +64,26 @@ export default class ReviewRecords extends Vue {
         const disabled = next.disabled(state);
 
         return disabled;
+    }
+
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get columnInfo() {
+        return this.fileInStore.columnInfo;
+    }
+
+    get cookedDataWithHeader() {
+        const columnInfo = this.columnInfo;
+        const cookedData = this.fileInStore.cookedData;
+
+        if (columnInfo === undefined || cookedData === undefined) {
+            return [];
+        }
+
+        return [columnInfo.map(x => x.label), ...cookedData];
     }
 
     toggleChangeColumn() {

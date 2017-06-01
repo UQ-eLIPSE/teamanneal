@@ -40,8 +40,12 @@ const store = new Vuex.Store({
             Vue.set(state.sourceFile, "name", name);
         },
 
-        updateSourceFileData(state, data: (string | number)[][]) {
-            Vue.set(state.sourceFile, "data", data);
+        updateSourceFileRawData(state, data: ReadonlyArray<ReadonlyArray<string | number>>) {
+            Vue.set(state.sourceFile, "rawData", data);
+        },
+
+        updateSourceFileCookedData(state, data: ReadonlyArray<ReadonlyArray<string | number | null>>) {
+            Vue.set(state.sourceFile, "cookedData", data);
         },
 
         updateSourceFileColumnInfo(state, columnInfo: ColumnInfo.ColumnInfo[]) {

@@ -32,7 +32,7 @@ interface ColumnInfoString {
 
 
 
-export function fromRawData(rawData: (string | number)[][]) {
+export function fromRawData(rawData: ReadonlyArray<ReadonlyArray<string | number>>) {
     // TODO: Check for header-ness/stringiness
     const headers = rawData[0] as string[];
     const columns = headers.length;

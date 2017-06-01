@@ -11,8 +11,8 @@ export interface TeamAnnealState {
 export function hasSourceFileData(state: Partial<TeamAnnealState>) {
     return (
         state.sourceFile &&
-        state.sourceFile.data &&
-        state.sourceFile.data.length > 0
+        state.sourceFile.rawData &&
+        state.sourceFile.rawData.length > 0
     );
 }
 

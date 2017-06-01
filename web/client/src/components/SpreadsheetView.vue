@@ -2,7 +2,7 @@
     <div id="spreadsheet">
         <table>
             <tr v-for="(row, i) in rows" :class="{ 'header': i === 0, }">
-                <td v-for="cell in row">{{ cell }}</td>
+                <td v-for="cell in row" :class="{ 'null': cell === null, 'nan': Number.isNaN(cell) }">{{ cell }}</td>
             </tr>
         </table>
     </div>
@@ -81,5 +81,27 @@ th.highlight {
 .header {
     background: green;
     color: #fff;
+}
+
+.nan {
+    background: #fee;
+    color: #f00;
+}
+
+.nan::before {
+    content: "Not a number";
+    font-style: italic;
+    font-size: 0.5em;
+}
+
+.null {
+    background: #eef;
+    color: #00f;
+}
+
+.null::before {
+    content: "No value";
+    font-style: italic;
+    font-size: 0.7em;
 }
 </style>
