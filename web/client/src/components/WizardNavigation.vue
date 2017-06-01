@@ -135,6 +135,7 @@ li {
 li a {
     color: inherit;
     text-decoration: none;
+    word-break: break-word;
 }
 
 li.active {
