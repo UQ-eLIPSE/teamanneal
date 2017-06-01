@@ -9,6 +9,8 @@ export type ColumnInfo = ColumnInfoBase & (
 interface ColumnInfoBase {
     /** The name or heading of the column */
     label: string,
+    /** Index of the column */
+    index: number,
 }
 
 interface ColumnInfoNumber {
@@ -29,8 +31,12 @@ interface ColumnInfoString {
     valueSet: Set<string>,
 }
 
+export interface ReplaceUpdate {
+    oldColumnInfo: ColumnInfo,
+    newColumnInfo: ColumnInfo,
+}
 
-export function createColumnInfoNumber(label: string, valueSet: Set<number>) {
+export function createColumnInfoNumber(label: string, index: number, valueSet: Set<number>) {
     // Calculate range, min, max
     const array: number[] = [];
     valueSet.forEach(value => {
@@ -54,6 +60,7 @@ export function createColumnInfoNumber(label: string, valueSet: Set<number>) {
 
     const columnInfo: ColumnInfo = {
         type: "number",
+        index,
         label,
         valueSet,
         min,
@@ -64,9 +71,10 @@ export function createColumnInfoNumber(label: string, valueSet: Set<number>) {
     return columnInfo;
 }
 
-export function createColumnInfoString(label: string, valueSet: Set<string>) {
+export function createColumnInfoString(label: string, index: number, valueSet: Set<string>) {
     const columnInfo: ColumnInfo = {
         type: "string",
+        index,
         label,
         valueSet,
     };
@@ -126,9 +134,9 @@ export function fromRawData(headers: ReadonlyArray<string>, rawData: ReadonlyArr
                 // Remove blank string from set if present
                 valueSet.delete("");
 
-                return createColumnInfoNumber(headers[colIndex], valueSet as Set<number>);
+                return createColumnInfoNumber(headers[colIndex], colIndex, valueSet as Set<number>);
             } else {
-                return createColumnInfoString(headers[colIndex], valueSet as Set<string>);
+                return createColumnInfoString(headers[colIndex], colIndex, valueSet as Set<string>);
             }
         });
 

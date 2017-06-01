@@ -52,6 +52,15 @@ const store = new Vuex.Store({
             Vue.set(state.sourceFile, "columnInfo", columnInfo);
         },
 
+        replaceSourceFileColumnInfo(state, replaceUpdate: ColumnInfo.ReplaceUpdate) {
+            const oldInfo = replaceUpdate.oldColumnInfo;
+            const newInfo = replaceUpdate.newColumnInfo;
+
+            const columnInfo = state.sourceFile.columnInfo!;
+
+            columnInfo.splice(oldInfo.index, 1, newInfo);
+        },
+
 
 
         // Incremental constraints configuration build

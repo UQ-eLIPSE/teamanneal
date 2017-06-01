@@ -11,7 +11,7 @@
                         <template v-if="!!getColumnInfo(j)">
                             <span class="cell-content">{{ getColumnLabel(j) }}</span>
                             <br>
-                            <select class="column-type" :value="getColumnType(j)">
+                            <select class="column-type" :value="getColumnType(j)" @change="emitColumnTypeChange(getColumnInfo(j), $event)">
                                 <option>string</option>
                                 <option>number</option>
                             </select>
@@ -25,7 +25,15 @@
                     </th>
     
                     <!-- Normal cell -->
-                    <td v-else class="cell-content" :class="{ 'null': cell === null, 'nan': Number.isNaN(cell) }">{{cell}}</td>
+                    <template v-else>
+    
+                        <!-- Don't display any content for NaN cells -->
+                        <td v-if="Number.isNaN(cell)" class="cell-content nan"></td>
+    
+                        <!-- Normal cell content -->
+                        <td v-else class="cell-content" :class="{ 'null': cell === null, }">{{cell}}</td>
+    
+                    </template>
     
                 </template>
             </tr>
@@ -79,7 +87,19 @@ export default class SpreadsheetView extends Vue {
         return columnInfo.type;
     }
 
+    emitColumnTypeChange(columnInfo: ColumnInfo.ColumnInfo, event: Event) {
+        const $el = event.target as HTMLSelectElement;
+        const newColumnType: string = $el.value;
 
+        // If no change, then nothing to do
+        if (columnInfo.type === newColumnType) { return; }
+
+        // If the column type changed, then pass event up
+        this.$emit("columnTypeChange", {
+            columnInfo,
+            newColumnType,
+        });
+    }
 
     @Lifecycle mounted() {
         if (this.stickyHeader) {
@@ -150,7 +170,7 @@ th select.column-type {
 .nan::before {
     content: "Not a number";
     font-style: italic;
-    font-size: 0.5em;
+    font-size: 0.7em;
 }
 
 .null {

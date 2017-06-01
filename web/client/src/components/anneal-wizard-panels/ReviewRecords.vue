@@ -9,7 +9,7 @@
             <div class="column-data-type-editor"></div>
         </div>
         <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="false" />
+            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="false" @columnTypeChange="onColumnTypeChange" />
         </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
@@ -23,6 +23,8 @@
 import { Vue, Component } from "av-ts";
 
 import * as SourceFile from "../../data/SourceFile";
+import * as ColumnInfo from "../../data/ColumnInfo";
+import * as CookedData from "../../data/CookedData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import SpreadsheetView from "../SpreadsheetView.vue";
@@ -81,6 +83,45 @@ export default class ReviewRecords extends Vue {
         }
 
         return [columnInfo.map(x => x.label), ...cookedData];
+    }
+
+    onColumnTypeChange(data: any) {
+        const oldColumnInfo: ColumnInfo.ColumnInfo = data.columnInfo;
+        const newColumnType: string = data.newColumnType;
+
+        const colIndex = oldColumnInfo.index;
+        const colLabel = oldColumnInfo.label;
+        const rawData = this.fileInStore.rawData!;
+
+        // Get the column values again and generate new column info objects
+        const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
+
+        let newColumnInfo: ColumnInfo.ColumnInfo;
+        switch (newColumnType) {
+            case "number": {
+                newColumnInfo = ColumnInfo.createColumnInfoNumber(colLabel, colIndex, valueSet as Set<number>);
+                break;
+            }
+
+            case "string": {
+                newColumnInfo = ColumnInfo.createColumnInfoString(colLabel, colIndex, valueSet as Set<string>);
+                break;
+            }
+
+            default:
+                throw new Error("Unknown column type");
+        }
+
+        // Update store column info
+        const columnInfoReplaceUpdate: ColumnInfo.ReplaceUpdate = { oldColumnInfo, newColumnInfo, };
+        this.$store.commit("replaceSourceFileColumnInfo", columnInfoReplaceUpdate);
+
+        // Recook the data with new columns in the store
+        const columnInfoArray = this.columnInfo!;
+        const cookedData = CookedData.cook(columnInfoArray, rawData, true);
+
+        // Serve freshly cooked data to the stale store
+        this.$store.commit("updateSourceFileCookedData", cookedData);
     }
 }
 </script>
