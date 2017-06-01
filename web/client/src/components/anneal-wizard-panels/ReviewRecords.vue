@@ -9,7 +9,7 @@
             <div class="column-data-type-editor"></div>
         </div>
         <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="true" />
+            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="false" />
         </div>
         <div class="bottom-buttons">
             <button class="button" @click="emitWizardNavNext">Continue</button>
