@@ -112,7 +112,9 @@ export default class ProvideRecordsFile extends Vue {
 
 
         // Compute column info
-        const columnInfo = ColumnInfo.fromRawData(fileData);
+        // TODO: Check for header-ness/stringiness
+        const headers = fileData[0] as string[];
+        const columnInfo = ColumnInfo.fromRawData(headers, fileData, true);
 
 
         // Shorthand for this.$store.commit
