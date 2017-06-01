@@ -74,11 +74,11 @@ export default class SelectIdColumn extends Vue {
      * from.
      */
     get possibleIdColumns() {
-        const allRawData = this.fileInStore.data;
+        const allRawData = this.fileInStore.rawData;
         const columnInfo = this.fileInStore.columnInfo || [];
 
         // No data to even process
-        if (allRawData === undefined) { return []; }
+        if (allRawData === undefined || allRawData.length === 0) { return []; }
 
         // The total number of records is equal to the full raw data array
         // length minus the header (1 row)

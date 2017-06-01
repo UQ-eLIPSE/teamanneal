@@ -23,7 +23,10 @@
 import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
 
+import * as SourceFile from "../../data/SourceFile";
 import * as ColumnInfo from "../../data/ColumnInfo";
+import * as CookedData from "../../data/CookedData";
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 const thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
@@ -69,11 +72,12 @@ export default class ProvideRecordsFile extends Vue {
     }
 
     get isFileSetInStore() {
-        return !!this.fileInStore.data;
+        return TeamAnnealState.hasSourceFileData(this.$store.state);
     }
 
     get fileInStore() {
-        return this.$store.state.sourceFile;
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
     }
 
     async onFileInputChanged($event: Event) {
@@ -88,7 +92,7 @@ export default class ProvideRecordsFile extends Vue {
                 header: false,          // Don't try to convert into objects, preserve as val[][] type
                 complete: resolve,
                 error: reject,
-                worker: false,          // TODO: Bug with papaparse worker + webpack; disabled for now
+                worker: false,          // DO NOT use web workers, as there is a problem with Webpack, papaparse and workers
             });
         });
         console.log("Parse complete");
@@ -103,22 +107,28 @@ export default class ProvideRecordsFile extends Vue {
 
 
         const fileName = file.name;
-        const fileData = parseResult.data;
+        const fileData: ReadonlyArray<ReadonlyArray<string | number>> = parseResult.data;
 
 
 
         // Compute column info
-        const columnInfo = ColumnInfo.fromRawData(fileData);
+        // TODO: Check for header-ness/stringiness
+        const headers = fileData[0] as string[];
+        const columnInfo = ColumnInfo.fromRawData(headers, fileData, true);
 
+
+        // Shorthand for this.$store.commit
+        const c = this.$store.commit;
 
         // Set CSV file data in store
-        this.$store.commit("initialiseSourceFile");
-        this.$store.commit("updateSourceFileName", fileName);
-        this.$store.commit("updateSourceFileData", fileData);
-        this.$store.commit("updateSourceFileColumnInfo", columnInfo);
+        c("initialiseSourceFile");
+        c("updateSourceFileName", fileName);
+        c("updateSourceFileRawData", fileData);
+        c("updateSourceFileCookedData", CookedData.cook(columnInfo, fileData, true));
+        c("updateSourceFileColumnInfo", columnInfo);
 
         // Wipe existing constraints
-        this.$store.commit("initialiseConstraintsConfig");
+        c("initialiseConstraintsConfig");
 
 
 

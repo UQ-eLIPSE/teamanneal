@@ -9,12 +9,14 @@ export type ColumnInfo = ColumnInfoBase & (
 interface ColumnInfoBase {
     /** The name or heading of the column */
     label: string,
+    /** Index of the column */
+    index: number,
 }
 
 interface ColumnInfoNumber {
     type: "number",
     /** Contains the set of unique values present in the column */
-    valueSet: Set<number | null>,
+    valueSet: Set<number>,
     /** Range = max - min */
     range: number,
     /** The minimum numeric value in the column */
@@ -29,104 +31,114 @@ interface ColumnInfoString {
     valueSet: Set<string>,
 }
 
+export interface ReplaceUpdate {
+    oldColumnInfo: ColumnInfo,
+    newColumnInfo: ColumnInfo,
+}
 
+export function createColumnInfoNumber(label: string, index: number, valueSet: Set<number>) {
+    // Calculate range, min, max
+    const array: number[] = [];
+    valueSet.forEach(value => {
+        // If value is NaN, we can't use that for the range calculation, so we ignore them
+        if (value === null || Number.isNaN(value)) { return; }
 
+        array.push(value);
+    });
 
-export function fromRawData(rawData: (string | number)[][]) {
-    // TODO: Check for header-ness/stringiness
-    const headers = rawData[0] as string[];
-    const columns = headers.length;
-
-    // Prepare partial column info objects which are expanded in the loop below
-    const partialColumnInfos: Partial<ColumnInfo>[] = headers.map(label => ({ label, valueSet: new Set() }));
-
-    // We start from i=1 as the 0th row is the header
-    for (let rowIndex = 1; rowIndex < rawData.length; ++rowIndex) {
-        const row = rawData[rowIndex];
-
-        for (let colIndex = 0; colIndex < columns; ++colIndex) {
-            const value = row[colIndex];
-            const columnInfo = partialColumnInfos[colIndex];
-
-            // Add value to set now
-            const set: Set<string | number | null> = columnInfo.valueSet!;
-            set.add(value);
-
-            // Check that type hasn't already been set
-            if (columnInfo.type !== undefined) {
-                // Go to next column
-                continue;
-            }
-
-            if (typeof value === "string" && value.length > 0) {
-                columnInfo.type = "string";
-            }
-        }
+    // We need something to actually work with to calculate the min, max, range
+    if (array.length === 0) {
+        throw new Error("No information about numeric column was able to be generated");
     }
 
-    // Check over all column info and expand as necessary
-    const outputColumnInfos: ColumnInfo[] = partialColumnInfos.map(
-        (_columnInfo) => {
-            // Type check values if not already set
-            if (_columnInfo.type === undefined) {
-                // Start off by assuming it's a number
-                let isNumber = true;
+    // Sort the array so we can read out the min, max
+    array.sort();
 
-                const set: Set<string | number | null> = _columnInfo.valueSet!;
+    const min = array[0];
+    const max = array[array.length - 1];
+    const range = max - min;
 
-                set.forEach((value) => {
-                    if (typeof value === "string") {
-                        if (value.length === 0) {
-                            // Ignore blank strings
-                            return;
-                        }
+    const columnInfo: ColumnInfo = {
+        type: "number",
+        index,
+        label,
+        valueSet,
+        min,
+        max,
+        range,
+    };
 
-                        // If a string is present then we can no longer say that
-                        // the column is a number
-                        isNumber = false;
+    return columnInfo;
+}
+
+export function createColumnInfoString(label: string, index: number, valueSet: Set<string>) {
+    const columnInfo: ColumnInfo = {
+        type: "string",
+        index,
+        label,
+        valueSet,
+    };
+
+    return columnInfo;
+}
+
+export function extractColumnValues(rawData: ReadonlyArray<ReadonlyArray<string | number>>, columnIndex: number, ignoreFirstRow: boolean) {
+    // Map out one set for each column in which to store their unique values
+    const valueSet = new Set<string | number>();
+
+    // Go through all data rows and store the value into the set
+    // If `ignoreFirstRow` we start from index 1
+    for (let rowIndex = (ignoreFirstRow ? 1 : 0); rowIndex < rawData.length; ++rowIndex) {
+        const row = rawData[rowIndex];
+
+        const value: string | number | undefined = row[columnIndex];
+
+        // Ignore undefined values (actually missing data) in column
+        if (value === undefined) { continue; }
+
+        valueSet.add(value);
+    }
+
+    return valueSet;
+}
+
+export function fromRawData(headers: ReadonlyArray<string>, rawData: ReadonlyArray<ReadonlyArray<string | number>>, ignoreFirstRow: boolean) {
+    // Map out the values in each column
+    const columnValueSets = headers.map((_, i) => extractColumnValues(rawData, i, ignoreFirstRow));
+
+    // Go through all sets and determine their type
+    const outputColumnInfos: ReadonlyArray<ColumnInfo> =
+        columnValueSets.map((valueSet: Set<string | number>, colIndex) => {
+            // Start off by assuming the column is numeric
+            let isNumber = true;
+
+            valueSet.forEach((value) => {
+                // If already not a number, then short circuit for-each
+                if (!isNumber) { return; }
+
+                // If the value is a string, we need to check if it'll change
+                // the column type
+                if (typeof value === "string") {
+                    if (value.length === 0) {
+                        // Ignore blank strings
+                        return;
                     }
-                });
 
-                if (isNumber) {
-                    _columnInfo.type = "number";
-
-                    // Remove blank string from set
-                    set.delete("");
-                } else {
-                    _columnInfo.type = "string";
+                    // If a string is present then we can no longer say that
+                    // the column is a number
+                    isNumber = false;
                 }
+            });
+
+            if (isNumber) {
+                // Remove blank string from set if present
+                valueSet.delete("");
+
+                return createColumnInfoNumber(headers[colIndex], colIndex, valueSet as Set<number>);
+            } else {
+                return createColumnInfoString(headers[colIndex], colIndex, valueSet as Set<string>);
             }
-
-            switch (_columnInfo.type) {
-                case "number": {
-                    // Calculate range, min, max
-                    const array: (number | null)[] = [];
-                    _columnInfo.valueSet!.forEach(value => array.push(value));
-
-                    array.sort();
-
-                    const min = array[0]!;
-                    const max = array[array.length - 1]!;
-                    const range = max - min;
-
-                    _columnInfo.min = min;
-                    _columnInfo.max = max;
-                    _columnInfo.range = range;
-
-                    break;
-                }
-                case "string": {
-                    // Currently doesn't do anything
-                    break;
-                }
-
-                default: throw new Error("Unknown column type");
-            }
-
-            // At this point the partial column info object should be complete
-            return _columnInfo as ColumnInfo;
-        }
-    );
+        });
 
     return outputColumnInfos;
 }
