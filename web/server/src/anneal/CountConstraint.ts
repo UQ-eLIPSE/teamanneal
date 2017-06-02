@@ -76,18 +76,24 @@ export class CountConstraint extends AbstractConstraint {
             }
         });
 
-        // Run condition cost function 
-        return CountConstraint.computeConditionCost(constraintDef.condition.function, constraintDef.condition.value, count);
+        // Run condition satisfaction function 
+        const isConditionSatisfied = CountConstraint.computeConditionSatisfaction(constraintDef.condition.function, constraintDef.condition.value, count);
+
+        if (isConditionSatisfied) {
+            return 0;   // Cost is 0 when satisfied
+        } else {
+            return 1;   // Cost is max when not satisfied
+        }
     }
 
-    private static computeConditionCost(fn: string, reference: number, count: number) {
+    private static computeConditionSatisfaction(fn: string, reference: number, count: number) {
         switch (fn) {
-            case "eq": return count === reference ? 1 : 0;
-            case "neq": return count !== reference ? 1 : 0;
-            case "lt": return count < reference ? 1 : 0;
-            case "lte": return count <= reference ? 1 : 0;
-            case "gt": return count > reference ? 1 : 0;
-            case "gte": return count >= reference ? 1 : 0;
+            case "eq": return count === reference;
+            case "neq": return count !== reference;
+            case "lt": return count < reference;
+            case "lte": return count <= reference;
+            case "gt": return count > reference;
+            case "gte": return count >= reference;
         }
 
         throw new Error("Unknown count constraint condition function");
