@@ -1,42 +1,30 @@
-import * as Constraint from "../../../common/Constraint";
-import * as Record from "../../../common/Record";
-
 import * as AnnealNode from "../data/AnnealNode";
-import * as ColumnInfo from "../data/ColumnInfo";
 
-import * as ProcessedConstraint from "../anneal/ProcessedConstraint";
+import { AbstractConstraint } from "./AbstractConstraint";
+import { CountConstraint } from "./CountConstraint";
+import { LimitConstraint } from "./LimitConstraint";
+import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
+import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
 
 import * as Util from "../core/Util";
 
 
 /**
- * @param columnInfos Array of column info objects in column order
- * @param processedConstraint Object of constraint to check node against
+ * @param constraint 
  * @param node The stratum node being checked (not root node)
  * @param allLeaves All leaves regardless of whether they're under the node
  */
-export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, allLeaves: ReadonlyArray<AnnealNode.AnnealNode>) {
-    // Run applicability check (only if there are such conditions)
-    const applicabilityFunctions = processedConstraint.applicabilityFunctions;
+export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealNode.AnnealNode) {
+    // Get all record pointers under node
+    const recordPointers = AnnealNode.getRecordPointers(node);
 
-    if (applicabilityFunctions.length > 0) {
-        // Constraint applies if only ALL applicability conditions are met
-        const applicability = applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
+    // If not applicable, return undefined
+    constraint.isApplicableTo(recordPointers);
 
-        // If not applicable, we return "undefined" to indicate no test was
-        // performed
-        if (!applicability) {
-            return undefined;
-        }
-    }
-
-    // Get leaves under this node
-    const leavesUnderNode = allLeaves.filter(leaf => AnnealNode.isDescendantOf(node, leaf));
-
-    switch (processedConstraint.constraint.type) {
-        case "count": return Count.calculateSatisfaction(columnInfos, processedConstraint, node, leavesUnderNode);
-        case "limit": return Limit.calculateSatisfaction(columnInfos, processedConstraint, node, leavesUnderNode);
-        case "similarity": return Similarity.calculateSatisfaction(columnInfos, processedConstraint, node, leavesUnderNode);
+    switch (constraint.constraintDef.type) {
+        case "count": return Count.calculateSatisfaction(constraint as CountConstraint, recordPointers);
+        case "limit": return Limit.calculateSatisfaction(constraint as LimitConstraint, recordPointers);
+        case "similarity": return Similarity.calculateSatisfaction(constraint as SimilarityNumericConstraint | SimilarityStringConstraint, recordPointers);
     }
 
     throw new Error("Unrecognised constraint type");
@@ -44,50 +32,45 @@ export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.Colu
 
 
 export namespace Count {
-    export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, leavesUnderNode: ReadonlyArray<AnnealNode.AnnealNode>) {
-        // Run filter on group leaves under node
-        const filteredLeaves = processedConstraint.filterFunction(node, leavesUnderNode);
-
+    export function calculateSatisfaction(constraint: CountConstraint, recordPointers: Set<number>) {
         // Calculate cost
-        const cost = processedConstraint.costFunction(node, filteredLeaves, columnInfos);
+        const cost = constraint.calculateUnweightedCost(recordPointers);
 
         // Satisfaction is exact - if the constraint is met, cost is 0, and we
         // return 1 for the satisfaction value
         if (cost === 0) {
-            return 1;
+            return 1;   // 100% satisfied
         } else {
-            return 0;
+            return 0;   // 0% satisfied
         }
     }
 }
 
 export namespace Limit {
-    export function calculateSatisfaction(_columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, leavesUnderNode: ReadonlyArray<AnnealNode.AnnealNode>) {
+    export function calculateSatisfaction(constraint: LimitConstraint, recordPointers: Set<number>) {
+        const groupSize = recordPointers.size;
+
         // If there are no elements in group, then we say it has met constraint
-        if (leavesUnderNode.length === 0) {
-            return 1;
+        if (groupSize === 0) {
+            return 1;   // 100% satisfied
         }
 
         // Calculate proportion of the group leaves is covered by filtered
         // leaves
-        const filteredLeaves = processedConstraint.filterFunction(node, leavesUnderNode);
-
-        const filteredLeavesProportion = filteredLeaves.length / leavesUnderNode.length;
-
+        const filterSatisfiedCount = constraint.countFilterSatisfyingRecords(recordPointers);
+        const proportion = filterSatisfiedCount / groupSize;
 
         // Use original constraint to determine what to do
-        const constraint = processedConstraint.constraint as (Constraint.Base & Constraint.Limit);
-
-        switch (constraint.condition.function) {
+        switch (constraint.constraintDef.condition.function) {
             case "low": {
                 // Satisfaction is negatively proportional (lower proportion =
                 // higher satisfaction)
-                return 1 - filteredLeavesProportion;
+                return 1 - proportion;
             }
 
             case "high": {
                 // Satisfaction is proportional
-                return filteredLeavesProportion;
+                return proportion;
             }
         }
 
@@ -96,101 +79,78 @@ export namespace Limit {
 }
 
 export namespace Similarity {
-    export function calculateSatisfaction(columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, processedConstraint: ProcessedConstraint.ProcessedConstraint, node: AnnealNode.AnnealNode, leavesUnderNode: ReadonlyArray<AnnealNode.AnnealNode>) {
-        // Run filter on group leaves under node
-        const filteredLeaves = processedConstraint.filterFunction(node, leavesUnderNode);
+    function calculateNumericSatisfaction(constraint: SimilarityNumericConstraint, recordPointers: Set<number>) {
+        const columnInfo = constraint.columnInfo;
+        const values = constraint.getValues(recordPointers);
 
-        // Use original constraint and column info to determine what to do
-        const constraint = processedConstraint.constraint as (Constraint.Base & Constraint.Similarity);
-        const columnIndex = constraint.filter.column;
-        const columnInfo = columnInfos[columnIndex];
+        if (columnInfo.type !== "number") {
+            throw new Error("Expected numeric column type");
+        }
 
-        switch (constraint.condition.function) {
+        // 100% satisfaction if there are no values or if there is only one
+        // value (in which case we can't tell how "similar" they are)
+        if (values.length <= 1) {
+            return 1;
+        }
+
+        const columnRange = columnInfo.range;
+        const stdDev = Util.stdDev(values);
+
+        switch (constraint.constraintDef.condition.function) {
             case "similar": {
-                switch (columnInfo.type) {
-                    case "string": {
-                        // Calculate cost
-                        const cost = processedConstraint.costFunction(node, filteredLeaves, columnInfos);
-
-                        // Satisfaction is exact
-                        // If ALL strings are equal in group, then we say
-                        // constraint is met, otherwise it isn't
-                        if (cost === 0) {
-                            return 1;
-                        } else {
-                            return 0;
-                        }
-                    }
-
-                    case "number": {
-                        // Use standard deviation of filtered leaves and compare
-                        // to the wider column range
-                        const values = filteredLeaves.map(leaf => (leaf.data as Record.Record)[columnIndex]);
-                        const numericValues: number[] = values.filter(value => typeof value === "number") as any[];
-
-                        const stdDev = Util.stdDev(numericValues);
-
-                        const columnRange = columnInfo.range;
-
-                        // Satisfaction is based on whether the standard
-                        // deviation is under 10% of the general column range.
-                        // Returned satisfaction is binary - if it falls outside
-                        // the 10% range, it is considered "not met".
-                        if (stdDev / columnRange < 0.1) {
-                            return 1;
-                        } else {
-                            return 0;
-                        }
-                    }
-
+                // Satisfaction is based on whether the standard
+                // deviation is under 10% of the general column range.
+                // Returned satisfaction is binary - if it falls outside
+                // the 10% range, it is considered "not met".
+                if (stdDev / columnRange < 0.1) {
+                    return 1;   // 100% satisfaction
+                } else {
+                    return 0;   // 0% satisfaction
                 }
-
-                throw new Error("Unrecognised constraint condition function");
             }
 
             case "different": {
-                switch (columnInfo.type) {
-                    case "string": {
-                        // Calculate cost
-                        const cost = processedConstraint.costFunction(node, filteredLeaves, columnInfos);
-
-                        // Satisfaction is exact
-                        // If ALL strings are different in group, then we say
-                        // constraint is met, otherwise it isn't
-                        if (cost === 0) {
-                            return 1;
-                        } else {
-                            return 0;
-                        }
-                    }
-
-                    case "number": {
-                        // Use standard deviation of filtered leaves and compare
-                        // to the wider column range
-                        const values = filteredLeaves.map(leaf => (leaf.data as Record.Record)[columnIndex]);
-                        const numericValues: number[] = values.filter(value => typeof value === "number") as any[];
-
-                        const stdDev = Util.stdDev(numericValues);
-
-                        const columnRange = columnInfo.range;
-
-                        // Satisfaction is based on whether the standard
-                        // deviation is over 25% of the general column range.
-                        // Returned satisfaction is binary - if it falls outside
-                        // the 25% range, it is considered "not met".
-                        if (stdDev / columnRange > 0.25) {
-                            return 1;
-                        } else {
-                            return 0;
-                        }
-                    }
-
+                // Satisfaction is based on whether the standard
+                // deviation is over 25% of the general column range.
+                // Returned satisfaction is binary - if it falls outside
+                // the 25% range, it is considered "not met".
+                if (stdDev / columnRange > 0.25) {
+                    return 1;   // 100% satisfaction
+                } else {
+                    return 0;   // 0% satisfaction
                 }
-
-                throw new Error("Unrecognised constraint condition function");
             }
         }
 
-        throw new Error("Unrecognised constraint condition function");
+        throw new Error("Unknown condition function");
+    }
+
+    function calculateStringSatisfaction(constraint: SimilarityStringConstraint, recordPointers: Set<number>) {
+        switch (constraint.constraintDef.condition.function) {
+            case "similar":
+            case "different": {
+                // Calculate cost
+                const cost = constraint.calculateUnweightedCost(recordPointers);
+
+                // Satisfaction is exact - it either meets the condition
+                // or not (either fully same or fully different)
+                if (cost === 0) {
+                    return 1;   // 100% satisfied
+                } else {
+                    return 0;   // 0% satisfied
+                }
+            }
+        }
+
+        throw new Error("Unknown condition function");
+    }
+
+    export function calculateSatisfaction(constraint: SimilarityNumericConstraint | SimilarityStringConstraint, recordPointers: Set<number>) {
+        switch (constraint.columnInfo.type) {
+            case "number": return calculateNumericSatisfaction(constraint as SimilarityNumericConstraint, recordPointers);
+            case "string": return calculateStringSatisfaction(constraint as SimilarityStringConstraint, recordPointers);
+        }
+
+        throw new Error("Unknown column type");
     }
 }

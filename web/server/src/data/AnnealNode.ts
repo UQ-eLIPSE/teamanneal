@@ -11,16 +11,16 @@ export interface AnnealNode extends __AnnealNode {
     /** Node identification number */
     readonly id: number,
 
-    /** Actual bit of data that this abstract node refers to */
-    readonly data: object | undefined,
+    /** Pointer to the record data this node represents */
+    readonly pointer: number | undefined,
 }
 
 interface AnnealNodeUnsafe extends __AnnealNode {
     /** Node identification number */
     id: number,
 
-    /** Actual bit of data that this abstract node refers to */
-    data: object | undefined,
+    /** Pointer to the record data this node represents */
+    pointer: number | undefined,
 }
 
 interface __AnnealNode {
@@ -66,11 +66,11 @@ let __id: number = 0;
 /**
  * Initialises a new AnnealNode object.
  */
-export function init(data: object | undefined) {
+export function init() {
     const node: AnnealNodeUnsafe = Object.create(__rootPrototype);
 
     node.id = __id++;
-    node.data = data;
+    node.pointer = undefined;
     node.parent = undefined;
     node.child = undefined;
     node.childrenSize = 0;
@@ -80,6 +80,22 @@ export function init(data: object | undefined) {
     return node as AnnealNode;
 }
 
+/**
+ * Initialises a new AnnealNode object.
+ */
+export function initRecord(pointer: number) {
+    const node: AnnealNodeUnsafe = Object.create(__rootPrototype);
+
+    node.id = __id++;
+    node.pointer = pointer;
+    node.parent = undefined;
+    node.child = undefined;
+    node.childrenSize = 0;
+    node.next = node;
+    node.prev = node;
+
+    return node as AnnealNode;
+}
 /**
  * Calculates the next circular index in an array.
  */
@@ -108,9 +124,9 @@ export function hasSiblings(node: AnnealNode) {
  * Creates a new AnnealNode with given array as children.
  * The data object pointed to by the AnnealNode is the array object itself.
  */
-export function createNodeFromChildrenArray(nodeArray: ReadonlyArray<AnnealNode>, data: object | undefined) {
+export function createNodeFromChildrenArray(nodeArray: ReadonlyArray<AnnealNode>) {
     // Create a new AnnealNode, using the input array as the "data" object
-    const parentNode = init(data);
+    const parentNode = init();
 
     // Set all nodes as siblings of each other
     setAsSiblings(nodeArray);
@@ -425,6 +441,23 @@ export function isDescendantOf(parent: AnnealNode, node: AnnealNode) {
     } while ((node = node.parent!) !== undefined);
 
     return false;
+}
+
+/**
+ * Gets all record pointers that are encoded under given node.
+ */
+export function getRecordPointers(node: AnnealNode, recordPointers: Set<number> = new Set()) {
+    // Include own pointer if pointer defined
+    if (node.pointer !== undefined) {
+        recordPointers.add(node.pointer);
+    }
+
+    forEachChild(node, (child) => {
+        getRecordPointers(child, recordPointers);
+    });
+
+    // Return set of record pointers
+    return recordPointers;
 }
 
 function extractState(node: AnnealNode) {

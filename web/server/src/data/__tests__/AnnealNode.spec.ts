@@ -7,15 +7,15 @@ describe("`init`", () => {
     beforeEach(() => {
         // New object for each initialisation of an AnnealNode
         dataObj = {};
-        initObj = AnnealNode.init(dataObj);
+        initObj = AnnealNode.init();
     });
 
     test("returns something", () => {
         expect(initObj).toBeDefined();
     });
 
-    test("output.data is the given data object", () => {
-        expect(initObj.data).toBe(dataObj);
+    test("output.pointer is `undefined`", () => {
+        expect(initObj.pointer).toBeUndefined();
     });
 
     test("output.parent is `undefined`", () => {
@@ -38,14 +38,14 @@ describe("`init`", () => {
 
 describe("`hasSiblings`", () => {
     test("should be `false` on newly initialised node", () => {
-        const node = AnnealNode.init({});
+        const node = AnnealNode.init();
         expect(AnnealNode.hasSiblings(node)).toBe(false);
     });
 
     test("should be `true` for nodes with siblings", () => {
         const objs = [{}, {}].map(AnnealNode.init);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray(objs, undefined);
+        const rootNode = AnnealNode.createNodeFromChildrenArray(objs);
         const firstChild = rootNode.child;
 
         expect(AnnealNode.hasSiblings(firstChild)).toBe(true);
@@ -56,11 +56,9 @@ describe("`createNodeFromChildrenArray`", () => {
     test("creates a new root node with supplied nodes assigned as children", () => {
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const rootNodeData = {};
-        const rootNode = AnnealNode.createNodeFromChildrenArray(children, rootNodeData);
+        const rootNode = AnnealNode.createNodeFromChildrenArray(children);
 
         expect(rootNode).toBeDefined();
-        expect(rootNode.data).toBe(rootNodeData);
 
         // There are three children
         expect(rootNode.childrenSize).toBe(3);
@@ -87,12 +85,10 @@ describe("`createNodeFromChildrenArray`", () => {
     test("creates empty root node when array is blank", () => {
         const children: AnnealNode.AnnealNode[] = [];
 
-        const rootNodeData = {};
-        const rootNode = AnnealNode.createNodeFromChildrenArray(children, rootNodeData);
+        const rootNode = AnnealNode.createNodeFromChildrenArray(children);
 
         expect(rootNode).toBeDefined();
         expect(rootNode.childrenSize).toBe(0);
-        expect(rootNode.data).toBe(rootNodeData);
 
         expect(rootNode.child).toBeUndefined();
     });
@@ -100,7 +96,7 @@ describe("`createNodeFromChildrenArray`", () => {
 
 describe("`pickRandomChild`", () => {
     test("returns undefined if parent does not have children", () => {
-        const parent = AnnealNode.createNodeFromChildrenArray([], {});
+        const parent = AnnealNode.createNodeFromChildrenArray([]);
         const randomChild = AnnealNode.pickRandomChild(parent);
 
         expect(randomChild).toBeUndefined();
@@ -109,13 +105,13 @@ describe("`pickRandomChild`", () => {
 
 describe("`pickRandomSibling`", () => {
     test("throws if parent is not defined on node", () => {
-        const node = AnnealNode.init(undefined);
+        const node = AnnealNode.init();
         expect(() => AnnealNode.pickRandomSibling(node)).toThrowError();
     });
 
     test("returns undefined if node does not have siblings", () => {
-        const children = [AnnealNode.init(undefined)];
-        const parent = AnnealNode.createNodeFromChildrenArray(children, undefined);
+        const children = [AnnealNode.init()];
+        const parent = AnnealNode.createNodeFromChildrenArray(children);
 
         const randomSibling = AnnealNode.pickRandomSibling(children[0]);
 
@@ -128,8 +124,8 @@ describe("`swapNodes`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
         // Pick two children, one from each parent
         const nodeA = childrenA[1];
@@ -162,8 +158,8 @@ describe("`swapNodes`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
         // Pick two children, one from each parent
         const nodeA = childrenA[0];
@@ -195,7 +191,7 @@ describe("`swapNodes`", () => {
     test("swapping of node under same parent does not do anything", () => {
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const parent = AnnealNode.createNodeFromChildrenArray(children, undefined);
+        const parent = AnnealNode.createNodeFromChildrenArray(children);
 
         // Pick two children under same parent
         const nodeA = children[0];
@@ -225,8 +221,8 @@ describe("`moveNode`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
         // Pick child
         const nodeA = childrenA[1];
@@ -262,8 +258,8 @@ describe("`moveNode`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
         // Pick child
         const nodeA = childrenA[0];
@@ -299,8 +295,8 @@ describe("`moveNode`", () => {
         const childrenA = [{}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
         // Pick child
         const nodeA = childrenA[0];
@@ -334,7 +330,7 @@ describe("`moveNode`", () => {
     test("moving of node under same parent does not do anything", () => {
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const parent = AnnealNode.createNodeFromChildrenArray(children, undefined);
+        const parent = AnnealNode.createNodeFromChildrenArray(children);
 
         const nodeA = children[0];
         const nodeB = children[1];
@@ -362,7 +358,7 @@ describe("`forEachChild`", () => {
     test("actually goes through each child of parent", () => {
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const parent = AnnealNode.createNodeFromChildrenArray(children, undefined);
+        const parent = AnnealNode.createNodeFromChildrenArray(children);
 
         const nodesInParent = [];
 
@@ -373,7 +369,7 @@ describe("`forEachChild`", () => {
     });
 
     test("works as expected on node with no children", () => {
-        const node = AnnealNode.createNodeFromChildrenArray([], undefined);
+        const node = AnnealNode.createNodeFromChildrenArray([]);
 
         const fn = jest.fn();
         AnnealNode.forEachChild(node, fn);
@@ -389,7 +385,7 @@ describe("`forEachSibling`", () => {
 
         const children = [{}, {}, {}].map(AnnealNode.init);
 
-        const parent = AnnealNode.createNodeFromChildrenArray(children, undefined);
+        const parent = AnnealNode.createNodeFromChildrenArray(children);
 
         // Selected node
         const node = children[1];
@@ -422,10 +418,10 @@ describe("`exportState`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB], undefined);
+        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB]);
 
         // Export state
         const exportedState = AnnealNode.exportState(rootNode);
@@ -453,10 +449,10 @@ describe("`exportState`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB], undefined);
+        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB]);
 
         // Export state
         const exportedState = AnnealNode.exportState(rootNode);
@@ -493,10 +489,10 @@ describe("`importState`", () => {
         const childrenA = [{}, {}, {}].map(AnnealNode.init);
         const childrenB = [{}, {}, {}].map(AnnealNode.init);
 
-        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA, undefined);
-        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB, undefined);
+        const parentA = AnnealNode.createNodeFromChildrenArray(childrenA);
+        const parentB = AnnealNode.createNodeFromChildrenArray(childrenB);
 
-        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB], undefined);
+        const rootNode = AnnealNode.createNodeFromChildrenArray([parentA, parentB]);
 
         // Export state
         const exportedState = AnnealNode.exportState(rootNode);
@@ -541,7 +537,7 @@ describe.skip("## Long running tests ##", () => {
     describe("`pickRandomChild`", () => {
         test("picks an actual child in each of 1e6 runs", () => {
             const children = [{}, {}, {}].map(AnnealNode.init);
-            const parent = AnnealNode.createNodeFromChildrenArray(children, {});
+            const parent = AnnealNode.createNodeFromChildrenArray(children);
 
             const set = new Set<AnnealNode.AnnealNode>();
             const numberOfRuns = 1e6;
@@ -566,7 +562,7 @@ describe.skip("## Long running tests ##", () => {
             const targetNode = children[1]; // The node to search siblings for
 
             // Create an artificial parent (unused, but required for function)
-            AnnealNode.createNodeFromChildrenArray(children, {});
+            AnnealNode.createNodeFromChildrenArray(children);
 
             const set = new Set<AnnealNode.AnnealNode>();
             const numberOfRuns = 1e6;

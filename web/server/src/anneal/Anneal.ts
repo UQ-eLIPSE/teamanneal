@@ -14,13 +14,18 @@ import * as ColumnInfo from "../data/ColumnInfo";
 import * as CostCache from "../data/CostCache";
 
 // Anneal-related
-import * as ProcessedConstraint from "./ProcessedConstraint";
 import * as CostCompute from "./CostCompute";
 import * as MutationOperation from "./MutationOperation";
 import * as Iteration from "./Iteration";
 import * as UphillTracker from "./UphillTracker";
 import * as TemperatureDerivation from "./TemperatureDerivation";
 import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
+
+import { AbstractConstraint } from "./AbstractConstraint";
+import { CountConstraint } from "./CountConstraint";
+import { LimitConstraint } from "./LimitConstraint";
+import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
+import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
 
 const globalLogger = Logger.getGlobal();
 const log = Logger.log(globalLogger);
@@ -43,7 +48,7 @@ export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned,
     return output;
 }
 
-function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
+function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strata: ReadonlyArray<Stratum.Desc>, constraintDefs: ReadonlyArray<Constraint.Desc>) {
     /// ================================
     /// Structuring the data into a tree
     /// ================================
@@ -61,14 +66,34 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Configuring constraints
     /// =======================
 
-    const processedConstraints = constraints.map(ProcessedConstraint.init);
+    // Convert each constraint definition into constraint objects
+    const constraints = constraintDefs.map((constraintDef) => {
+        const colIndex = constraintDef.filter.column;
+        const columnInfo = columnInfos[colIndex];
+
+        switch (constraintDef.type) {
+            case "count": return new CountConstraint(partition, columnInfo, constraintDef);
+            case "limit": return new LimitConstraint(partition, columnInfo, constraintDef);
+            case "similarity": {
+                // Check what the column type is
+                switch (columnInfo.type) {
+                    case "number": return new SimilarityNumericConstraint(partition, columnInfo, constraintDef);
+                    case "string": return new SimilarityStringConstraint(partition, columnInfo, constraintDef);
+                }
+
+                throw new Error("Unknown column type");
+            }
+        }
+
+        throw new Error("Unknown constraint type");
+    });
 
     const strataConstraints = strata.map((_stratum, stratumIndex) => {
-        const stratumConstraints: ProcessedConstraint.ProcessedConstraint[] = [];
+        const stratumConstraints: AbstractConstraint[] = [];
 
-        processedConstraints.forEach((appliedConstraint) => {
-            if (appliedConstraint.constraint.strata === stratumIndex) {
-                stratumConstraints.push(appliedConstraint);
+        constraints.forEach((constraint) => {
+            if (constraint.constraintDef.strata === stratumIndex) {
+                stratumConstraints.push(constraint);
             }
         });
 
@@ -81,7 +106,8 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Calculating temperature
     /// =======================
 
-    const startTemp = deriveStartingTemperature(rootNode, leaves, columnInfos, strata, strataNodes, strataConstraints);
+    log("info")("Deriving temperature...");
+    const startTemp = deriveStartingTemperature(rootNode, leaves, strata, strataNodes, strataConstraints);
 
 
 
@@ -149,7 +175,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
                 // Calculate total cost
                 strataConstraints.forEach((constraints, k) => {
                     // Calculate costs for strata nodes
-                    CostCompute.computeAndCacheStratumCost(leaves, constraints, columnInfos, strataNodes[k]);
+                    CostCompute.computeAndCacheStratumCost(constraints, strataNodes[k]);
                 });
 
                 const newCost = CostCompute.sumChildrenCost(rootNode);
@@ -221,19 +247,32 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
         }
     }
 
+
+
     // Output constraint satisfaction
-    const satisfaction = strataNodes.map(stratumNodes => {
-        return stratumNodes.map(node => {
-            return processedConstraints.map(processedConstraint => {
-                return ConstraintSatisfaction.calculateSatisfaction(columnInfos, processedConstraint, node, leaves)
+    const satisfaction =
+        strataNodes.map((stratumNodes, stratumIndex) => {   // For each set of stratum nodes in the whole strata,
+            return stratumNodes.map(node => {               // and for each node in that set,
+                return constraints.map(constraint => {      // go through all constraints
+
+                    // If this constraint does not apply to the stratum, return
+                    // undefined
+                    if (constraint.constraintDef.strata !== stratumIndex) {
+                        return undefined;
+                    }
+
+                    // Return the actual satisfaction value (in range [0,1])
+                    return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
+                });
             });
         });
-    });
 
     log("info")(`Satisfaction
-${JSON.stringify(satisfaction, null, "  ")}`);
+    ${JSON.stringify(satisfaction, null, "  ")}`);
 
-    return convertNodeToArray(rootNode, strata.length);
+    // return convertNodeToArray(rootNode, strata.length);
+
+    return;
 }
 
 /**
@@ -254,7 +293,7 @@ function createTree(leaves: ReadonlyArray<AnnealNode.AnnealNode>, strata: Readon
         const groups = GroupDistribution.sliceIntoGroups(numberOfGroups, nodes);
 
         // Create new nodes for this stratum from new groups above
-        const thisStratumNodes = groups.map((group) => AnnealNode.createNodeFromChildrenArray(group, undefined));
+        const thisStratumNodes = groups.map((group) => AnnealNode.createNodeFromChildrenArray(group));
 
         // Build up arrays of AnnealNode that are represented at each
         // stratum
@@ -266,7 +305,7 @@ function createTree(leaves: ReadonlyArray<AnnealNode.AnnealNode>, strata: Readon
     });
 
     // Create root node
-    const rootNode = AnnealNode.createNodeFromChildrenArray(nodes, undefined);
+    const rootNode = AnnealNode.createNodeFromChildrenArray(nodes);
 
     return {
         strataNodes,    // Array of nodes for each stratum
@@ -277,7 +316,7 @@ function createTree(leaves: ReadonlyArray<AnnealNode.AnnealNode>, strata: Readon
 /**
  * Derives starting temperature.
  */
-function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: ReadonlyArray<AnnealNode.AnnealNode>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strata: ReadonlyArray<Stratum.Desc>, strataNodes: ReadonlyArray<ReadonlyArray<AnnealNode.AnnealNode>>, strataConstraints: ReadonlyArray<ReadonlyArray<ProcessedConstraint.ProcessedConstraint>>) {
+function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: ReadonlyArray<AnnealNode.AnnealNode>, strata: ReadonlyArray<Stratum.Desc>, strataNodes: ReadonlyArray<ReadonlyArray<AnnealNode.AnnealNode>>, strataConstraints: ReadonlyArray<ReadonlyArray<AbstractConstraint>>) {
     const tempDerSamples = 200;
 
     // Preserve the initial state
@@ -308,7 +347,7 @@ function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: Read
             const operation = MutationOperation.randPick();
             operation(nodes);
 
-            CostCompute.computeAndCacheStratumCost(leaves, constraints, columnInfos, nodes);
+            CostCompute.computeAndCacheStratumCost(constraints, nodes);
         }
 
         // Calculate cost
@@ -326,6 +365,9 @@ function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: Read
         if (costDiff > 0) {
             TemperatureDerivation.pushCostDelta(tempDer, costDiff);
         }
+
+        // Update the new current cost, as we don't reset the state
+        tempDerCurrentCost = newCost;
     }
 
     // Derive the starting temperature
@@ -337,25 +379,25 @@ function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: Read
     return startTemp;
 }
 
-/**
- * Converts AnnealNode tree into nested arrays of records for export/output to
- * client.
- */
-function convertNodeToArray(node: AnnealNode.AnnealNode, remainingSubstrata: number) {
-    // TODO: Need to better describe nested arrays of unknown depth
-    const output: any[] = [];
+// /**
+//  * Converts AnnealNode tree into nested arrays of records for export/output to
+//  * client.
+//  */
+// function convertNodeToArray(node: AnnealNode.AnnealNode, remainingSubstrata: number) {
+//     // TODO: Need to better describe nested arrays of unknown depth
+//     const output: any[] = [];
 
-    // If we hit the bottom stratum (the one above the leaves), return array of
-    // children data
-    if (remainingSubstrata === 0) {
-        AnnealNode.forEachChild(node, (child) => {
-            output.push(child.data);
-        });
-    } else {
-        AnnealNode.forEachChild(node, (child) => {
-            output.push(convertNodeToArray(child, remainingSubstrata - 1));
-        });
-    }
+//     // If we hit the bottom stratum (the one above the leaves), return array of
+//     // children data
+//     if (remainingSubstrata === 0) {
+//         AnnealNode.forEachChild(node, (child) => {
+//             output.push(child.data);
+//         });
+//     } else {
+//         AnnealNode.forEachChild(node, (child) => {
+//             output.push(convertNodeToArray(child, remainingSubstrata - 1));
+//         });
+//     }
 
-    return output;
-}
+//     return output;
+// }

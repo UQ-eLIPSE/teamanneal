@@ -1,36 +1,18 @@
-import * as ProcessedConstraint from "./ProcessedConstraint";
+import { AbstractConstraint } from "./AbstractConstraint";
 
 import * as AnnealNode from "../data/AnnealNode";
-import * as ColumnInfo from "../data/ColumnInfo";
+// import * as ColumnInfo from "../data/ColumnInfo";
 import * as CostCache from "../data/CostCache";
 
-export function computeCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, node: AnnealNode.AnnealNode) {
+export function computeCost(constraints: ReadonlyArray<AbstractConstraint>, node: AnnealNode.AnnealNode) {
     const baseCost = sumChildrenCost(node);
+    const recordPointers = AnnealNode.getRecordPointers(node);
 
     // Apply constraints and calculate cost
     let constraintsCost = 0;
 
     constraints.forEach((constraint) => {
-        // Run applicability check (only if there are such conditions)
-        const applicabilityFunctions = constraint.applicabilityFunctions;
-
-        if (applicabilityFunctions.length > 0) {
-            // Constraint applies if only ALL applicability conditions are
-            // met
-            const applicability = applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
-
-            // Skip this constraint if not applicable
-            if (!applicability) {
-                return;
-            }
-        }
-
-        // Filter leaves
-        const filteredLeaves = constraint.filterFunction(node, leaves);
-
-        // Calculate cost
-        const unweightedCost = constraint.costFunction(node, filteredLeaves, columnInfos);
-        const cost = unweightedCost * constraint.constraint.weight;
+        const cost = constraint.calculateWeightedCost(recordPointers);
 
         // Add cost in to total constraint cost
         constraintsCost += cost;
@@ -39,8 +21,8 @@ export function computeCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constr
     return baseCost + constraintsCost;
 }
 
-export function computeAndCacheCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, node: AnnealNode.AnnealNode) {
-    const cost = computeCost(leaves, constraints, columnInfos, node);
+export function computeAndCacheCost(constraints: ReadonlyArray<AbstractConstraint>, node: AnnealNode.AnnealNode) {
+    const cost = computeCost(constraints, node);
 
     CostCache.insert(node, cost);
 
@@ -64,6 +46,6 @@ export function sumChildrenCost(node: AnnealNode.AnnealNode) {
     return cost;
 }
 
-export function computeAndCacheStratumCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, nodes: ReadonlyArray<AnnealNode.AnnealNode>) {
-    return nodes.map(node => computeAndCacheCost(leaves, constraints, columnInfos, node));
+export function computeAndCacheStratumCost(constraints: ReadonlyArray<AbstractConstraint>, nodes: ReadonlyArray<AnnealNode.AnnealNode>) {
+    return nodes.map(node => computeAndCacheCost(constraints, node));
 }
