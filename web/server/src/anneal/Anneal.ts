@@ -272,9 +272,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     log("info")(`Satisfaction
 ${JSON.stringify(satisfaction)}`);
 
-    // return convertNodeToArray(rootNode, strata.length);
-
-    return;
+    return convertNodeToArray(partition, rootNode, strata.length);
 }
 
 /**
@@ -381,25 +379,25 @@ function deriveStartingTemperature(rootNode: AnnealNode.AnnealNode, leaves: Read
     return startTemp;
 }
 
-// /**
-//  * Converts AnnealNode tree into nested arrays of records for export/output to
-//  * client.
-//  */
-// function convertNodeToArray(node: AnnealNode.AnnealNode, remainingSubstrata: number) {
-//     // TODO: Need to better describe nested arrays of unknown depth
-//     const output: any[] = [];
+/**
+ * Converts AnnealNode tree into nested arrays of records for export/output to
+ * client.
+ */
+function convertNodeToArray(partition: Record.RecordSet, node: AnnealNode.AnnealNode, remainingSubstrata: number) {
+    // TODO: Need to better describe nested arrays of unknown depth
+    const output: any[] = [];
 
-//     // If we hit the bottom stratum (the one above the leaves), return array of
-//     // children data
-//     if (remainingSubstrata === 0) {
-//         AnnealNode.forEachChild(node, (child) => {
-//             output.push(child.data);
-//         });
-//     } else {
-//         AnnealNode.forEachChild(node, (child) => {
-//             output.push(convertNodeToArray(child, remainingSubstrata - 1));
-//         });
-//     }
+    // If we hit the bottom stratum (the one above the leaves), return array of
+    // children data
+    if (remainingSubstrata === 0) {
+        AnnealNode.forEachChild(node, (child) => {
+            output.push(partition[child.pointer!]);
+        });
+    } else {
+        AnnealNode.forEachChild(node, (child) => {
+            output.push(convertNodeToArray(partition, child, remainingSubstrata - 1));
+        });
+    }
 
-//     return output;
-// }
+    return output;
+}
