@@ -12,6 +12,7 @@ import * as AnnealNode from "../data/AnnealNode";
 import * as GroupDistribution from "../data/GroupDistribution";
 import * as ColumnInfo from "../data/ColumnInfo";
 import * as CostCache from "../data/CostCache";
+import * as Random from "../data/Random";
 
 // Anneal-related
 import * as CostCompute from "./CostCompute";
@@ -49,6 +50,9 @@ export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned,
 }
 
 function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strata: ReadonlyArray<Stratum.Desc>, constraintDefs: ReadonlyArray<Constraint.Desc>) {
+    // Fix random seed for debugging
+    Random.setGlobalSeed(0xDEADBEEF);
+
     /// ================================
     /// Structuring the data into a tree
     /// ================================
