@@ -55,7 +55,9 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
 
     // Convert all records into AnnealNodes
     // Records are leaves for our AnnealNode tree
-    const leaves = partition.map(AnnealNode.init);
+    const leaves = partition.map((_record, recordPointer) => {
+        return AnnealNode.initRecord(recordPointer);
+    });
 
     // Get root node and nodes for each strata
     const { strataNodes, rootNode } = createTree(leaves, strata);
@@ -268,7 +270,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
         });
 
     log("info")(`Satisfaction
-    ${JSON.stringify(satisfaction, null, "  ")}`);
+${JSON.stringify(satisfaction)}`);
 
     // return convertNodeToArray(rootNode, strata.length);
 

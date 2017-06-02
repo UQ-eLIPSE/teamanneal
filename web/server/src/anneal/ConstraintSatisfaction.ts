@@ -19,7 +19,9 @@ export function calculateSatisfaction(constraint: AbstractConstraint, node: Anne
     const recordPointers = AnnealNode.getRecordPointers(node);
 
     // If not applicable, return undefined
-    constraint.isApplicableTo(recordPointers);
+    if (!constraint.isApplicableTo(recordPointers)) {
+        return undefined;
+    }
 
     switch (constraint.constraintDef.type) {
         case "count": return Count.calculateSatisfaction(constraint as CountConstraint, recordPointers);
