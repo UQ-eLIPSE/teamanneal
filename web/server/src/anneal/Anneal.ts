@@ -199,8 +199,8 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     while (true) {
         // Run iterations per branch as determined by `itScalar` and number of
         // records
-        const numberOfIterationsInOneBranch = branchIterationScalar * numberOfRecords;
-        // const numberOfIterationsInOneBranch = (0.9 * branchIterationScalar * numberOfRecords) >>> 0;
+        // const numberOfIterationsInOneBranch = branchIterationScalar * numberOfRecords;
+        const numberOfIterationsInOneBranch = (0.9 * branchIterationScalar * numberOfRecords) >>> 0;
 
 
 
@@ -231,8 +231,8 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
                 modifiedPointerIndicies;
 
                 // Wipe costs on nodes with modified record pointers
-                CostCompute.wipeAllCost(strata);
-                // CostCompute.wipeCost(strata, modifiedPointerIndicies);
+                // CostCompute.wipeAllCost(strata);
+                CostCompute.wipeCost(strata, modifiedPointerIndicies);
 
                 // Calculate total cost
                 const newCost = CostCompute.computeCost(strata);
@@ -370,8 +370,8 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
         modifiedPointerIndicies;
 
         // Wipe costs on nodes with modified record pointers
-        CostCompute.wipeAllCost(strata);
-        // CostCompute.wipeCost(strata, modifiedPointerIndicies);
+        // CostCompute.wipeAllCost(strata);
+        CostCompute.wipeCost(strata, modifiedPointerIndicies);
 
         // Calculate cost
         const newCost = CostCompute.computeCost(strata);
