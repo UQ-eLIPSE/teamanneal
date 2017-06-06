@@ -136,10 +136,12 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
             }
         } else {
             const prevStratumNodes = strata[stratumIndex - 1].nodes;
+            const numberOfPrevStratumNodes = prevStratumNodes.length;
+
             const numberOfGroups = GroupDistribution.calculateNumberOfGroups(prevStratumNodes.length, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
 
-            const minGroupSize = (numberOfRecords / numberOfGroups) >>> 0;
-            let leftOver = numberOfRecords % numberOfGroups;
+            const minGroupSize = (numberOfPrevStratumNodes / numberOfGroups) >>> 0;
+            let leftOver = numberOfPrevStratumNodes % numberOfGroups;
 
             let offset: number = 0;
 

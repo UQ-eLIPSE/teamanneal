@@ -15,7 +15,7 @@ export class SimilarityStringConstraint extends AbstractConstraint {
      * See "string interning" for more on this practice: https://en.wikipedia.org/wiki/String_interning
      */
     private recordStringPointerArray: Uint32Array;
-    private stringMap: StringMap = new StringMap();
+    private stringMap: StringMap;
 
     private constraintConditionCostFunction: (groupSize: number, distinctSetSize: number) => number;
 
@@ -37,6 +37,8 @@ export class SimilarityStringConstraint extends AbstractConstraint {
 
         const colIndex = constraintDef.filter.column;
 
+        const stringMap = new StringMap();
+
         // Copy out all column string values
         for (let recordIndex = 0; recordIndex < records.length; ++recordIndex) {
             const record = records[recordIndex];
@@ -49,11 +51,12 @@ export class SimilarityStringConstraint extends AbstractConstraint {
 
             // Add string to string map, and save the resulting pointer into the
             // string pointer array
-            recordStringPointerArray[recordIndex] = this.stringMap.add(recordElement);
+            recordStringPointerArray[recordIndex] = stringMap.add(recordElement);
         }
 
         // Store to this object
         this.recordStringPointerArray = recordStringPointerArray;
+        this.stringMap = stringMap;
         this.constraintConditionCostFunction = SimilarityStringConstraint.generateConditionCostFunction(constraintDef.condition.function);
     }
 
