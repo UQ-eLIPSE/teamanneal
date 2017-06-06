@@ -41,7 +41,6 @@
     "es6-promise": "^4.1.0",
     "express": "4.15.2",
     "fs-extra": "2.1.2",
-    "mersenne-twister": "1.1.0",
     "papaparse": "4.3.2",
     "vue": "2.3.3",
     "vue-router": "2.5.3",

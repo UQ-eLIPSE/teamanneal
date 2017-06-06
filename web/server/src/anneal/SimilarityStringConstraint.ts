@@ -17,6 +17,8 @@ export class SimilarityStringConstraint extends AbstractConstraint {
     private recordStringPointerArray: Uint32Array;
     private stringMap: StringMap = new StringMap();
 
+    private constraintConditionCostFunction: (groupSize: number, distinctSetSize: number) => number;
+
     protected init(records: Record.RecordSet) {
         // Initialise record array
         const recordStringPointerArray = new Uint32Array(records.length);
@@ -50,30 +52,33 @@ export class SimilarityStringConstraint extends AbstractConstraint {
             recordStringPointerArray[recordIndex] = this.stringMap.add(recordElement);
         }
 
-        // Store values
+        // Store to this object
         this.recordStringPointerArray = recordStringPointerArray;
+        this.constraintConditionCostFunction = SimilarityStringConstraint.generateConditionCostFunction(constraintDef.condition.function);
     }
 
-    public calculateUnweightedCost(recordPointers: Set<number>) {
-        const groupSize = recordPointers.size;
+    public calculateUnweightedCost(recordPointers: Uint32Array) {
+        const groupSize = recordPointers.length;
+        const recordStringPointerArray = this.recordStringPointerArray;
 
         // Collect up distinct strings (via. string pointers)
         // If pointers are distinct, the strings are distinct
         const set: Set<StringPointer> = new Set();
 
-        recordPointers.forEach((recordPointer) => {
-            set.add(this.recordStringPointerArray[recordPointer]);
-        });
+        for (let i = 0; i < groupSize; ++i) {
+            const recordPointer = recordPointers[i];
+            set.add(recordStringPointerArray[recordPointer]);
+        }
 
         const distinctSetSize = set.size;
 
         // Run condition cost function 
-        return SimilarityStringConstraint.computeConditionCost(this.constraintDef.condition.function, groupSize, distinctSetSize);
+        return this.constraintConditionCostFunction(groupSize, distinctSetSize);
     }
 
-    private static computeConditionCost(fn: string, groupSize: number, distinctSetSize: number) {
+    private static generateConditionCostFunction(fn: string) {
         switch (fn) {
-            case "similar": {
+            case "similar": return (_groupSize: number, distinctSetSize: number) => {
                 // If no values, then free of cost
                 if (distinctSetSize === 0) {
                     return 0;
@@ -81,7 +86,7 @@ export class SimilarityStringConstraint extends AbstractConstraint {
 
                 return distinctSetSize - 1;
             }
-            case "different": return groupSize - distinctSetSize;
+            case "different": return (groupSize: number, distinctSetSize: number) => groupSize - distinctSetSize;
         }
 
         throw new Error("Unknown similarity constraint condition function");

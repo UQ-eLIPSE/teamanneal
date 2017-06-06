@@ -1,14 +1,10 @@
 import * as Util from "../core/Util";
-import * as Logger from "../core/Logger";
 
-import * as AnnealNode from "../data/AnnealNode";
+import { AnnealStratum } from "./AnnealStratum";
 
-
-const globalLogger = Logger.getGlobal();
-const log = Logger.log(globalLogger);
-
-
-export type OpFunction = (stratumNodes: ReadonlyArray<AnnealNode.AnnealNode>) => void;
+// Returns pointers to indices which were modified and will require cost
+// recalculation
+export type OpFunction = (stratum: AnnealStratum) => ReadonlyArray<number>;
 
 export interface OpProbability {
     readonly operation: OpFunction,
@@ -20,41 +16,14 @@ export namespace Nop {
     export const execute: OpFunction =
         () => {
             // Do nothing
-            return;
+            return [];
         }
 }
 
 export namespace SwapChildrenBetweenStratumNodes {
     export const execute: OpFunction =
-        (stratumNodes) => {
-            // NOTE: Remember that leaves (person/student records) are not
-            // passed in as strata!
-
-            // We need at least two stratum nodes 
-            const nodesLength = stratumNodes.length;
-            if (nodesLength < 2) {
-                // Do nothing
-                log("warn")("SwapChildrenBetweenStratumNodes: At least two stratum nodes required for children swap");
-                return;
-            }
-
-            // Pick two stratum nodes, regardless of whether they have a common
-            // parent
-            const [nodeA, nodeB] = Util.randPickTwoElements(stratumNodes);
-
-            // Pick child of each of (A,B) => childA, childB
-            const childA = AnnealNode.pickRandomChild(nodeA);
-            const childB = AnnealNode.pickRandomChild(nodeB);
-
-            if (childA === undefined || childB === undefined) {
-                throw new Error("Either one or both of `childA` or `childB` is undefined");
-            }
-
-            // Swap children between (A,B)
-            log("debug")(`Swapping nodes ${childA.id} and ${childB.id}`);
-            AnnealNode.swapNodes(childA, childB);
-
-            return stratumNodes;
+        (stratum) => {
+            return stratum.randomSwapRecordPointersBetweenNodes();
         }
 }
 

@@ -13,6 +13,9 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
      */
     private recordValueArray: Float64Array;
 
+    private constraintConditionCostFunction: (columnRange: number, values: ReadonlyArray<number>) => number;
+    private columnRange: number;
+
     protected init(records: Record.RecordSet) {
         // Initialise record array
         const recordValueArray = new Float64Array(records.length);
@@ -50,19 +53,15 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
             }
         }
 
-        // Store values
+        // Store to this object
         this.recordValueArray = recordValueArray;
+        this.constraintConditionCostFunction = SimilarityNumericConstraint.generateConditionCostFunction(constraintDef.condition.function);
+        this.columnRange = columnInfo.range;
     }
 
-    public calculateUnweightedCost(recordPointers: Set<number>) {
-        const columnInfo = this.columnInfo;
-
-        if (columnInfo.type !== "number") {
-            throw new Error("Expected numeric column type");
-        }
-
+    public calculateUnweightedCost(recordPointers: Uint32Array) {
         // If the column of values has no range (all same) = free of cost
-        const columnRange = columnInfo.range;
+        const columnRange = this.columnRange;
 
         if (columnRange === 0) {
             return 0;
@@ -77,30 +76,31 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
         }
 
         // Run condition cost function 
-        return SimilarityNumericConstraint.computeConditionCost(this.constraintDef.condition.function, columnRange, values);
+        return this.constraintConditionCostFunction(columnRange, values);
     }
 
-    public getValues(recordPointers: Set<number>) {
+    public getValues(recordPointers: Uint32Array) {
         // Get record values (numbers); drop any NaN values as they represent
         // empty elements
         const values: number[] = [];
 
-        recordPointers.forEach((recordPointer) => {
+        for (let i = 0; i < recordPointers.length; ++i) {
+            const recordPointer = recordPointers[i];
             const value = this.recordValueArray[recordPointer];
 
             // Ignore NaNs
-            if (Number.isNaN(value)) { return; }
+            if (Number.isNaN(value)) { continue; }
 
             values.push(value);
-        });
+        }
 
         return values as ReadonlyArray<number>;
     }
 
-    private static computeConditionCost(fn: string, columnRange: number, values: ReadonlyArray<number>) {
+    private static generateConditionCostFunction(fn: string) {
         switch (fn) {
-            case "similar": return 2 * Util.stdDev(values) / columnRange;
-            case "different": return (columnRange - 2 * Util.stdDev(values)) / columnRange;
+            case "similar": return (columnRange: number, values: ReadonlyArray<number>) => 2 * Util.stdDev(values) / columnRange;
+            case "different": return (columnRange: number, values: ReadonlyArray<number>) => (columnRange - 2 * Util.stdDev(values)) / columnRange;
         }
 
         throw new Error("Unknown similarity constraint condition function");

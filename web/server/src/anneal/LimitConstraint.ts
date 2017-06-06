@@ -13,6 +13,8 @@ export class LimitConstraint extends AbstractConstraint {
      */
     private recordSatisfactionArray: Uint8Array;
 
+    private constraintConditionCostFunction: (setSize: number, count: number) => number;
+
     protected init(records: Record.RecordSet) {
         // Initialise record array
         const recordSatisfactionArray = new Uint8Array(records.length);
@@ -55,39 +57,51 @@ export class LimitConstraint extends AbstractConstraint {
             recordSatisfactionArray[recordIndex] = satisfaction;
         }
 
-        // Store satisfaction
+        // Store to this object
         this.recordSatisfactionArray = recordSatisfactionArray;
+        this.constraintConditionCostFunction = LimitConstraint.generateConditionCostFunction(constraintDef.condition.function);
     }
 
-    public calculateUnweightedCost(recordPointers: Set<number>) {
-        const constraintDef = this.constraintDef;
-
+    public calculateUnweightedCost(recordPointers: Uint32Array) {
         // Count the number of records which satisifed the filter
         const count = this.countFilterSatisfyingRecords(recordPointers);
 
         // Run condition cost function 
-        return LimitConstraint.computeConditionCost(constraintDef.condition.function, recordPointers.size, count);
+        return this.constraintConditionCostFunction(recordPointers.length, count);
     }
 
-    public countFilterSatisfyingRecords(recordPointers: Set<number>) {
+    public countFilterSatisfyingRecords(recordPointers: Uint32Array) {
         let count: number = 0;
-        const recordSatisfactionArray = this.recordSatisfactionArray;
 
         // Count the number of records which satisifed the filter
-        recordPointers.forEach((recordPointer) => {
+        for (let i = 0; i < recordPointers.length; ++i) {
+            const recordPointer = recordPointers[i];
             // Increment count if record satisfies filter
-            if (recordSatisfactionArray[recordPointer] === TRUE) {
+            if (this.recordSatisfactionArray[recordPointer] === TRUE) {
                 ++count;
             }
-        });
+        }
 
         return count;
     }
 
-    private static computeConditionCost(fn: string, setSize: number, count: number) {
+    /** Used to speed up the heavily repeated (x ** 1.5) calculations */
+    private static pow_1_5_cache: { [key: number]: number | undefined } = {};
+
+    private static pow_1_5(x: number) {
+        const result = LimitConstraint.pow_1_5_cache[x];
+
+        if (result === undefined) {
+            return (LimitConstraint.pow_1_5_cache[x] = Math.pow(x, 1.5));
+        }
+
+        return result;
+    }
+
+    private static generateConditionCostFunction(fn: string) {
         switch (fn) {
-            case "low": return Math.pow(count, 1.5);
-            case "high": return Math.pow(setSize - count, 1.5);
+            case "low": return (_setSize: number, count: number) => LimitConstraint.pow_1_5(count);
+            case "high": return (setSize: number, count: number) => LimitConstraint.pow_1_5(setSize - count);
         }
 
         throw new Error("Unknown limit constraint condition function");

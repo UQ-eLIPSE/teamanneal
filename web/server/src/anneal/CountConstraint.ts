@@ -13,6 +13,8 @@ export class CountConstraint extends AbstractConstraint {
      */
     private recordSatisfactionArray: Uint8Array;
 
+    private constraintConditionSatisfactionFunction: (count: number) => boolean;
+
     protected init(records: Record.RecordSet) {
         // Initialise record array
         const recordSatisfactionArray = new Uint8Array(records.length);
@@ -55,29 +57,17 @@ export class CountConstraint extends AbstractConstraint {
             recordSatisfactionArray[recordIndex] = satisfaction;
         }
 
-        // Store satisfaction
+        // Store to this object
         this.recordSatisfactionArray = recordSatisfactionArray;
+        this.constraintConditionSatisfactionFunction = CountConstraint.generateConditionSatisfactionFunction(constraintDef.condition.function, constraintDef.condition.value);
     }
 
-    public calculateUnweightedCost(recordPointers: Set<number>) {
-        let count: number = 0;
-        const constraintDef = this.constraintDef;
-        const recordSatisfactionArray = this.recordSatisfactionArray;
-
-        if (constraintDef.type !== "count") {
-            throw new Error("Expected count constraint definition");
-        }
-
+    public calculateUnweightedCost(recordPointers: Uint32Array) {
         // Count the number of records which satisifed the filter
-        recordPointers.forEach((recordPointer) => {
-            // Increment count if record satisfies filter
-            if (recordSatisfactionArray[recordPointer] === TRUE) {
-                ++count;
-            }
-        });
+        const count = this.countFilterSatisfyingRecords(recordPointers);
 
         // Run condition satisfaction function 
-        const isConditionSatisfied = CountConstraint.computeConditionSatisfaction(constraintDef.condition.function, constraintDef.condition.value, count);
+        const isConditionSatisfied = this.constraintConditionSatisfactionFunction(count);
 
         if (isConditionSatisfied) {
             return 0;   // Cost is 0 when satisfied
@@ -86,14 +76,29 @@ export class CountConstraint extends AbstractConstraint {
         }
     }
 
-    private static computeConditionSatisfaction(fn: string, reference: number, count: number) {
+    public countFilterSatisfyingRecords(recordPointers: Uint32Array) {
+        let count: number = 0;
+
+        // Count the number of records which satisifed the filter
+        for (let i = 0; i < recordPointers.length; ++i) {
+            const recordPointer = recordPointers[i];
+            // Increment count if record satisfies filter
+            if (this.recordSatisfactionArray[recordPointer] === TRUE) {
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
+    private static generateConditionSatisfactionFunction(fn: string, reference: number) {
         switch (fn) {
-            case "eq": return count === reference;
-            case "neq": return count !== reference;
-            case "lt": return count < reference;
-            case "lte": return count <= reference;
-            case "gt": return count > reference;
-            case "gte": return count >= reference;
+            case "eq": return (count: number) => count === reference;
+            case "neq": return (count: number) => count !== reference;
+            case "lt": return (count: number) => count < reference;
+            case "lte": return (count: number) => count <= reference;
+            case "gt": return (count: number) => count > reference;
+            case "gte": return (count: number) => count >= reference;
         }
 
         throw new Error("Unknown count constraint condition function");

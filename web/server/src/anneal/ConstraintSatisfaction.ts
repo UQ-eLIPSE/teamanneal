@@ -1,10 +1,12 @@
-import * as AnnealNode from "../data/AnnealNode";
+// import * as AnnealNode from "../data/AnnealNode";
 
 import { AbstractConstraint } from "./AbstractConstraint";
 import { CountConstraint } from "./CountConstraint";
 import { LimitConstraint } from "./LimitConstraint";
 import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
 import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
+
+import { AnnealStratumNode } from "./AnnealStratumNode";
 
 import * as Util from "../core/Util";
 
@@ -14,9 +16,8 @@ import * as Util from "../core/Util";
  * @param node The stratum node being checked (not root node)
  * @param allLeaves All leaves regardless of whether they're under the node
  */
-export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealNode.AnnealNode) {
-    // Get all record pointers under node
-    const recordPointers = AnnealNode.getRecordPointers(node);
+export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealStratumNode) {
+    const recordPointers = node.getRecordPointers();
 
     // If not applicable, return undefined
     if (!constraint.isApplicableTo(recordPointers)) {
@@ -34,7 +35,7 @@ export function calculateSatisfaction(constraint: AbstractConstraint, node: Anne
 
 
 export namespace Count {
-    export function calculateSatisfaction(constraint: CountConstraint, recordPointers: Set<number>) {
+    export function calculateSatisfaction(constraint: CountConstraint, recordPointers: Uint32Array) {
         // Calculate cost
         const cost = constraint.calculateUnweightedCost(recordPointers);
 
@@ -49,8 +50,8 @@ export namespace Count {
 }
 
 export namespace Limit {
-    export function calculateSatisfaction(constraint: LimitConstraint, recordPointers: Set<number>) {
-        const groupSize = recordPointers.size;
+    export function calculateSatisfaction(constraint: LimitConstraint, recordPointers: Uint32Array) {
+        const groupSize = recordPointers.length;
 
         // If there are no elements in group, then we say it has met constraint
         if (groupSize === 0) {
@@ -81,7 +82,7 @@ export namespace Limit {
 }
 
 export namespace Similarity {
-    function calculateNumericSatisfaction(constraint: SimilarityNumericConstraint, recordPointers: Set<number>) {
+    function calculateNumericSatisfaction(constraint: SimilarityNumericConstraint, recordPointers: Uint32Array) {
         const columnInfo = constraint.columnInfo;
         const values = constraint.getValues(recordPointers);
 
@@ -127,7 +128,7 @@ export namespace Similarity {
         throw new Error("Unknown condition function");
     }
 
-    function calculateStringSatisfaction(constraint: SimilarityStringConstraint, recordPointers: Set<number>) {
+    function calculateStringSatisfaction(constraint: SimilarityStringConstraint, recordPointers: Uint32Array) {
         switch (constraint.constraintDef.condition.function) {
             case "similar":
             case "different": {
@@ -147,7 +148,7 @@ export namespace Similarity {
         throw new Error("Unknown condition function");
     }
 
-    export function calculateSatisfaction(constraint: SimilarityNumericConstraint | SimilarityStringConstraint, recordPointers: Set<number>) {
+    export function calculateSatisfaction(constraint: SimilarityNumericConstraint | SimilarityStringConstraint, recordPointers: Uint32Array) {
         switch (constraint.columnInfo.type) {
             case "number": return calculateNumericSatisfaction(constraint as SimilarityNumericConstraint, recordPointers);
             case "string": return calculateStringSatisfaction(constraint as SimilarityStringConstraint, recordPointers);

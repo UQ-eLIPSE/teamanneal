@@ -20,7 +20,7 @@ export abstract class AbstractConstraint {
     }
 
     /** Calculates the cost of a set of records against this constraint */
-    public calculateWeightedCost(recordPointers: Set<number>) {
+    public calculateWeightedCost(recordPointers: Uint32Array) {
         // If not applicable, cost is 0
         if (!this.isApplicableTo(recordPointers)) {
             return 0;
@@ -29,35 +29,43 @@ export abstract class AbstractConstraint {
         return this.calculateUnweightedCost(recordPointers) * this.constraintDef.weight;
     }
 
-    public isApplicableTo(recordPointers: Set<number>) {
+    public static applicabilityCheck(applicabilityCondition: Constraint.ApplicabilityCondition, recordPointers: Uint32Array) {
+        switch (applicabilityCondition.type) {
+            case "group-size": {
+                const groupSize = recordPointers.length;
+                const referenceSize = applicabilityCondition.value;
+
+                switch (applicabilityCondition.function) {
+                    case "eq": return groupSize === referenceSize;
+                    case "neq": return groupSize !== referenceSize;
+                    case "lt": return groupSize < referenceSize;
+                    case "lte": return groupSize <= referenceSize;
+                    case "gt": return groupSize > referenceSize;
+                    case "gte": return groupSize >= referenceSize;
+                }
+
+                throw new Error("Unknown applicability condition function");
+            }
+        }
+
+        throw new Error("Unknown applicability condition type");
+    }
+
+    public isApplicableTo(recordPointers: Uint32Array) {
         const applicabilityConditions = this.constraintDef.applicability;
 
         if (applicabilityConditions.length > 0) {
-            // Constraint applies if only ALL applicability conditions are met
-            const applicability = applicabilityConditions.every((applicabilityCondition) => {
-                switch (applicabilityCondition.type) {
-                    case "group-size": {
-                        const groupSize = recordPointers.size;
-                        const referenceSize = applicabilityCondition.value;
+            // Constraint applies if only ALL applicability conditions are met,
+            // so if any of them are inapplicable, we immediately return false.
+            for (let i = 0; i < applicabilityConditions.length; ++i) {
+                let applicabilityCondition = applicabilityConditions[i];
 
-                        switch (applicabilityCondition.function) {
-                            case "eq": return groupSize === referenceSize;
-                            case "neq": return groupSize !== referenceSize;
-                            case "lt": return groupSize < referenceSize;
-                            case "lte": return groupSize <= referenceSize;
-                            case "gt": return groupSize > referenceSize;
-                            case "gte": return groupSize >= referenceSize;
-                        }
+                const applicable = AbstractConstraint.applicabilityCheck(applicabilityCondition, recordPointers);
 
-                        throw new Error("Unknown applicability condition function");
-                    }
+                // If any inapplicable, then the whole thing is inapplicable
+                if (!applicable) {
+                    return false;
                 }
-
-                throw new Error("Unknown applicability condition type");
-            });
-
-            if (!applicability) {
-                return false;
             }
         }
 
@@ -66,5 +74,5 @@ export abstract class AbstractConstraint {
 
     protected abstract init(records: Record.RecordSet): void;
 
-    public abstract calculateUnweightedCost(recordPointers: Set<number>): number;
+    public abstract calculateUnweightedCost(recordPointers: Uint32Array): number;
 }
