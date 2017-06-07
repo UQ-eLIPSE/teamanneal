@@ -1,38 +1,6 @@
 import * as Util from "../core/Util";
 
 /**
- * Slices array of items into specified number of groups.
- * No shuffling is provided.
- */
-export function sliceIntoGroups<T>(numberOfGroups: number, items: ReadonlyArray<T>) {
-    const groups: ReadonlyArray<T>[] = [];
-    const minGroupSize = Util.uint32(items.length / numberOfGroups);
-    let leftOver = items.length % numberOfGroups;
-
-    let start: number = 0;
-    let end: number;
-
-    for (let i = 0; i < numberOfGroups; ++i) {
-        // Set `end` to encompass the minimum group size
-        end = start + minGroupSize;
-
-        // If there are left overs, add one in to this group
-        if (leftOver > 0) {
-            ++end;
-            --leftOver;
-        }
-
-        // Push slice of items into `groups`
-        groups.push(items.slice(start, end));
-
-        // Update `start` of next round
-        start = end;
-    }
-
-    return groups;
-}
-
-/**
  * Calculates the number of groups that should be formed.
  * 
  * Extracted from original TeamAnneal, AllTeamData::number_of_teams.
