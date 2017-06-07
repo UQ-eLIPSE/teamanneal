@@ -61,11 +61,13 @@ export function avg(slidingWindow: SlidingWindow<number>) {
         return 0;
     }
 
+    // This is a special average that only considers the entries which are
+    // filled; DO NOT USE normal averaging functions!
     let sum = 0;
     const arr = slidingWindow.data;
 
     for (let i = 0; i < arrayLength; ++i) {
-        sum += arr[i];
+        sum = sum + arr[i];
     }
 
     return sum / arrayLength;

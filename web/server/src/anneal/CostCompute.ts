@@ -1,69 +1,85 @@
-import * as ProcessedConstraint from "./ProcessedConstraint";
+import { AbstractConstraint } from "./AbstractConstraint";
+import { AnnealStratum } from "./AnnealStratum";
 
-import * as AnnealNode from "../data/AnnealNode";
-import * as ColumnInfo from "../data/ColumnInfo";
-import * as CostCache from "../data/CostCache";
+export function computeCost(strata: ReadonlyArray<AnnealStratum>) {
+    let cost: number = 0;
 
-export function computeCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, node: AnnealNode.AnnealNode) {
-    const baseCost = sumChildrenCost(node);
+    for (let i = 0; i < strata.length; ++i) {
+        const stratum = strata[i];
+        const stratumCost = computeCostStratum(stratum);
+        cost = cost + stratumCost;
+    }
 
-    // Apply constraints and calculate cost
-    let constraintsCost = 0;
+    return cost;
+}
 
-    constraints.forEach((constraint) => {
-        // Run applicability check (only if there are such conditions)
-        const applicabilityFunctions = constraint.applicabilityFunctions;
+function computeCostStratum(stratum: AnnealStratum) {
+    const nodes = stratum.nodes;
+    const constraints = stratum.constraints;
 
-        if (applicabilityFunctions.length > 0) {
-            // Constraint applies if only ALL applicability conditions are
-            // met
-            const applicability = applicabilityFunctions.every(applicabilityFn => applicabilityFn(node));
+    let cost: number = 0;
 
-            // Skip this constraint if not applicable
-            if (!applicability) {
-                return;
+    for (let i = 0; i < nodes.length; ++i) {
+        const node = nodes[i];
+        const cachedCost = node.getCost();
+
+        // Used cache cost where available
+        if (cachedCost !== undefined) {
+            cost = cost + cachedCost;
+        } else {
+            cost = cost + node.setCost(
+                computeCostRecords(constraints, nodes[i].getRecordPointers())
+            );
+        }
+    }
+
+    return cost;
+}
+
+function computeCostRecords(constraints: ReadonlyArray<AbstractConstraint>, recordPointers: Uint32Array) {
+    let cost: number = 0;
+
+    for (let i = 0; i < constraints.length; ++i) {
+        cost = cost + constraints[i].calculateWeightedCost(recordPointers);
+    }
+
+    return cost;
+}
+
+export function wipeAllCost(strata: ReadonlyArray<AnnealStratum>) {
+    for (let i = 0; i < strata.length; ++i) {
+        const nodes = strata[i].nodes;
+        for (let j = 0; j < nodes.length; ++j) {
+            nodes[j].wipeCost();
+        }
+    }
+}
+
+export function wipeCost(strata: ReadonlyArray<AnnealStratum>, recordPointerIndicies: ReadonlyArray<number>) {
+    for (let i = 0; i < strata.length; ++i) {
+        wipeCostStratum(strata[i], recordPointerIndicies);
+    }
+}
+
+function wipeCostStratum(stratum: AnnealStratum, recordPointerIndicies: ReadonlyArray<number>) {
+    const nodes = stratum.nodes;
+
+    // Go through each index to wipe
+    for (let i = 0; i < recordPointerIndicies.length; ++i) {
+        const recordPointerIndex = recordPointerIndicies[i];
+
+        // Go through each node
+        for (let j = 0; j < nodes.length; ++j) {
+            const node = nodes[j];
+
+            if (node.isIndexInRange(recordPointerIndex)) {
+                node.wipeCost();
+
+                // A record pointer index will not be straddling across multiple
+                // nodes; we can safely move on to the next record pointer index
+                // to wipe
+                break;
             }
         }
-
-        // Filter leaves
-        const filteredLeaves = constraint.filterFunction(node, leaves);
-
-        // Calculate cost
-        const unweightedCost = constraint.costFunction(node, filteredLeaves, columnInfos);
-        const cost = unweightedCost * constraint.constraint.weight;
-
-        // Add cost in to total constraint cost
-        constraintsCost += cost;
-    });
-
-    return baseCost + constraintsCost;
-}
-
-export function computeAndCacheCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, node: AnnealNode.AnnealNode) {
-    const cost = computeCost(leaves, constraints, columnInfos, node);
-
-    CostCache.insert(node, cost);
-
-    return cost;
-}
-
-export function sumChildrenCost(node: AnnealNode.AnnealNode) {
-    let cost = 0;
-
-    AnnealNode.forEachChild(node, (child) => {
-        const costValue = CostCache.get(child);
-
-        // Error if cost cache object not found
-        if (costValue === undefined) {
-            throw new Error("Expected cost cache object for node; object not found");
-        }
-
-        cost += costValue;
-    });
-
-    return cost;
-}
-
-export function computeAndCacheStratumCost(leaves: ReadonlyArray<AnnealNode.AnnealNode>, constraints: ReadonlyArray<ProcessedConstraint.ProcessedConstraint>, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, nodes: ReadonlyArray<AnnealNode.AnnealNode>) {
-    return nodes.map(node => computeAndCacheCost(leaves, constraints, columnInfos, node));
+    }
 }
