@@ -338,8 +338,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     log("info")(`Satisfaction
 ${JSON.stringify(satisfaction)}`);
 
-    // return convertNodeToArray(partition, rootNode, strataDefs.length);
-    return;
+    return convertStrataToArray(strata, partition);
 }
 
 /**
@@ -406,4 +405,106 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
     CostCompute.wipeAllCost(strata);
 
     return startTemp;
+}
+
+
+
+
+/**
+ * Creates nested arrays that represent the strata structure
+ * 
+ * e.g.:
+ * 
+ *      [                            // All top level nodes
+ *          [                        // Stratum 1 node
+ *              [                    // Stratum 0 node
+ *                  [record data],
+ *                  [record data],
+ *                  [record data],
+ *                  [record data]
+ *              ],
+ *              [                    // Stratum 0 node
+ *                  [record data],
+ *                  [record data],
+ *                  [record data],
+ *                  [record data]
+ *              ]
+ *          ],
+ *          ...
+ *      ]
+ */
+function convertStrataToArray(strata: ReadonlyArray<AnnealStratum>, records: Record.RecordSet) {
+    // TODO: Need to better describe nested arrays of unknown depth
+    type UnknownDepthNestedArray = any[];
+
+    const numberOfStrata = strata.length;
+
+    // Nothing to process if there aren't strata
+    if (numberOfStrata < 1) {
+        return [];
+    }
+
+    // Map out the lowest stratum first
+    const lowestStratumArray = strata[0].nodes.map(
+        (node) => {
+            const recordDataArray: Record.Record[] = [];
+
+            node.getRecordPointers().forEach((recordPointer) => {
+                const recordData = records[recordPointer];
+                recordDataArray.push(recordData);
+            });
+
+            return recordDataArray;
+        }
+    );
+
+    // We now go up strata one by one and nest the previous stratum's nodes
+    let previousStratumArray: UnknownDepthNestedArray = lowestStratumArray;
+
+    for (let i = 1; i < numberOfStrata; ++i) {
+        const previousStratumNodes = strata[i - 1].nodes;
+        const thisStratumNodes = strata[i].nodes;
+
+        const currentStratumArray: UnknownDepthNestedArray = [];
+
+        // Go through each of this stratum's nodes, and bundle up previous 
+        // stratum nodes
+        let previousStratumNodeIndex = 0;
+
+        for (let j = 0; j < thisStratumNodes.length; ++j) {
+            const thisStratumNode = thisStratumNodes[j];
+            const thisStratumNodeDataArray: UnknownDepthNestedArray = [];
+
+            while (true) {
+                const previousStratumNode: AnnealStratumNode | undefined = previousStratumNodes[previousStratumNodeIndex];
+
+                // If we get `undefined`, we have hit the end; or
+                // if we hit substratum nodes which are no longer within
+                // this stratum node's range, we move on to the next node
+                if ((previousStratumNode === undefined) || !thisStratumNode.isNodeInRange(previousStratumNode)) {
+                    break;
+                }
+
+                // If the previous stratum node being pointed to falls under
+                // the current stratum node, we push in the array that is held
+                // in `previousStratumArray`
+                thisStratumNodeDataArray.push(previousStratumArray[previousStratumNodeIndex]);
+
+                // Move on to the next substratum node
+                ++previousStratumNodeIndex;
+            }
+
+            // Push in this stratum node's array of substrata data arrays
+            currentStratumArray.push(thisStratumNodeDataArray);
+        }
+
+        // We have now finished with all of this stratum's nodes;
+        // prepare for next stratum iteration
+        previousStratumArray = currentStratumArray;
+    }
+
+    // The output is the array last set by the top stratum:
+    //      `previousStratumArray` points to the `currentStratumArray` at the
+    //      end of the last iteration
+    return previousStratumArray;
 }

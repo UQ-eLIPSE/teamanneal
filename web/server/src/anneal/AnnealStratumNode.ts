@@ -84,4 +84,32 @@ export class AnnealStratumNode {
     public isIndexInRange(i: number) {
         return (i >= this.offset) && (i < (this.offset + this.size));
     }
+
+    /** 
+     * Determines whether a given node covers a subset of record pointers that
+     * the current node instance covers.
+     * 
+     * For example, if you have:
+     * 
+     *      [----- S1A -----] [----- S1B -----]     Stratum1
+     *      [S0A] [S0B] [S0C] [S0D] [S0E] [S0F]     Stratum0
+     *       0,1,  2,3,  4,5,  6,7,  8,9, 10,11     Record pointers
+     * 
+     * then:
+     * 
+     *      S1A.isNodeInRange(S0C) = true
+     *      S1B.isNodeInRange(S0A) = false
+     */
+    public isNodeInRange(node: AnnealStratumNode) {
+        // Check that the offset and size falls within the current instance's
+        // boundary
+
+        // Subsets must not start before of this' offset
+        if (node.offset < this.offset) { return false; }
+
+        // Subsets must fall completely within this' boundary
+        if ((node.offset + node.size) > (this.offset + this.size)) { return false; }
+
+        return true;
+    }
 }
