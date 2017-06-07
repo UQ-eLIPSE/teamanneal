@@ -1,6 +1,6 @@
 import * as CostCompute from "../CostCompute";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         CostCompute;
     });

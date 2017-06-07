@@ -1,6 +1,6 @@
 import * as SimilarityStringConstraint from "../SimilarityStringConstraint";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         SimilarityStringConstraint;
     });

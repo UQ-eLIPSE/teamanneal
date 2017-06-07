@@ -1,6 +1,6 @@
 import * as CountConstraint from "../CountConstraint";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         CountConstraint;
     });

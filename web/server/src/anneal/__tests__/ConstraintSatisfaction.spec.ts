@@ -1,6 +1,6 @@
 import * as ConstraintSatisfaction from "../ConstraintSatisfaction";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         ConstraintSatisfaction;
     });
