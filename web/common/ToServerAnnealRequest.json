@@ -1,0 +1,280 @@
+{
+    "sourceData": {
+        "columns": [
+            {
+                "label": "StudentID",
+                "type": "number",
+                "isId": true
+            },
+            {
+                "label": "Last Name",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "First Name",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "Email",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "Project group",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "Discipline",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "Coord/Shaper",
+                "type": "number",
+                "isId": false
+            },
+            {
+                "label": "Gender",
+                "type": "string",
+                "isId": false
+            },
+            {
+                "label": "ESL",
+                "type": "string",
+                "isId": false
+            }
+        ],
+        "records": [
+            [
+                [
+                    40000010,
+                    "Christiansen",
+                    "Libbie",
+                    "s4000001@student.uq.edu.au",
+                    "P01",
+                    null,
+                    null,
+                    "Male",
+                    "English"
+                ],
+                [
+                    40000380,
+                    "Welch",
+                    "Eusebio",
+                    "s4000038@student.uq.edu.au",
+                    "P01",
+                    "Mechatronic",
+                    1,
+                    "Male",
+                    "English"
+                ],
+                [
+                    40000600,
+                    "Rowe",
+                    "Marcelo",
+                    "s4000060@student.uq.edu.au",
+                    "P01",
+                    "Mechatronic",
+                    0,
+                    "Female",
+                    "English"
+                ],
+                [
+                    40000960,
+                    "Gerhold",
+                    "Dashawn",
+                    "s4000096@student.uq.edu.au",
+                    "P01",
+                    "Mechanical",
+                    0,
+                    "Male",
+                    "English"
+                ]
+            ],
+            [
+                [
+                    40001650,
+                    "Bahringer",
+                    "Jameson",
+                    "s4000165@student.uq.edu.au",
+                    "P02",
+                    "Software",
+                    0,
+                    "Male",
+                    "English"
+                ],
+                [
+                    40001550,
+                    "Ruecker",
+                    "Adolph",
+                    "s4000155@student.uq.edu.au",
+                    "P02",
+                    null,
+                    null,
+                    "Male",
+                    "Other"
+                ],
+                [
+                    40001190,
+                    "Kovacek",
+                    "Mack",
+                    "s4000119@student.uq.edu.au",
+                    "P02",
+                    null,
+                    null,
+                    null,
+                    "Other"
+                ],
+                [
+                    40001590,
+                    "Grimes",
+                    "Vance",
+                    "s4000159@student.uq.edu.au",
+                    "P02",
+                    "Electrical",
+                    0,
+                    "Female",
+                    "English"
+                ]
+            ]
+        ],
+        "isPartitioned": true
+    },
+    "strata": [
+        {
+            "label": "Team",
+            "size": {
+                "min": 5,
+                "ideal": 6,
+                "max": 7
+            }
+        }
+    ],
+    "constraints": [
+        {
+            "strata": 0,
+            "weight": 100,
+            "type": "count",
+            "filter": {
+                "column": 6,
+                "function": "eq",
+                "values": [
+                    1
+                ]
+            },
+            "condition": {
+                "function": "gte",
+                "value": 1
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 50,
+            "type": "count",
+            "filter": {
+                "column": 5,
+                "function": "eq",
+                "values": [
+                    "Software"
+                ]
+            },
+            "condition": {
+                "function": "gte",
+                "value": 1
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 50,
+            "type": "count",
+            "filter": {
+                "column": 5,
+                "function": "eq",
+                "values": [
+                    "Electrical"
+                ]
+            },
+            "condition": {
+                "function": "gte",
+                "value": 1
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 50,
+            "type": "count",
+            "filter": {
+                "column": 5,
+                "function": "eq",
+                "values": [
+                    "Mechanical"
+                ]
+            },
+            "condition": {
+                "function": "gte",
+                "value": 1
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 50,
+            "type": "count",
+            "filter": {
+                "column": 5,
+                "function": "eq",
+                "values": [
+                    "Mechatronic"
+                ]
+            },
+            "condition": {
+                "function": "gte",
+                "value": 1
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 100,
+            "type": "limit",
+            "filter": {
+                "column": 8,
+                "function": "neq",
+                "values": [
+                    "English"
+                ]
+            },
+            "condition": {
+                "function": "low"
+            },
+            "applicability": []
+        },
+        {
+            "strata": 0,
+            "weight": 100,
+            "type": "count",
+            "filter": {
+                "column": 7,
+                "function": "eq",
+                "values": [
+                    "Female"
+                ]
+            },
+            "condition": {
+                "function": "neq",
+                "value": 1
+            },
+            "applicability": []
+        }
+    ],
+    "config": {
+        "iterations": 200,
+        "returnAllData": true
+    }
+}

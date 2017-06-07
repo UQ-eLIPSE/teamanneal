@@ -1,15 +1,7 @@
 {
     "compilerOptions": {
-        "target": "es5",
-        "module": "umd",
-        "lib": [
-            "dom",
-            "es5",
-            "es2015.promise",
-            "es2015.collection"
-        ],
-        
-        "rootDir": "./src",
+        "target": "es6",
+        "module": "commonjs",
 
         "outDir": "./build",
 
@@ -30,12 +22,16 @@
         "noFallthroughCasesInSwitch": true,
 
 
-        "allowUnreachableCode": true
+        "allowUnreachableCode": false
     },
 
     "include": [
+        "./typings/**/*.d.ts",
         "./src/index.ts",
-        "./src/test-page.ts",
-        "./src/thread.ts"
+        "./src/routes/**/*.ts"
+    ],
+
+    "exclude": [
+        "./src/**/__tests__/*.ts"
     ]
 }

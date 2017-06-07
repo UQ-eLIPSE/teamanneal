@@ -24,6 +24,13 @@ export type AppliedRecordSetCostFunction =
     (records: SourceRecordSet.SourceRecordSet) => number;
 
 
+export type SatisfactionTestFunction =
+    (columnInfo: ColumnInfo.ColumnInfo) =>
+        (constraint: Constraint.Constraint) =>
+            (records: SourceRecordSet.SourceRecordSet) => number;
+
+
+
 
 export const mapWeightToCost =
     (weight: Constraint.Weight) => {
@@ -114,6 +121,11 @@ export namespace Similarity {
 
                             const range = ColumnDesc.getRange(columnDesc);
 
+                            if (range === 0) {
+                                // Constraint met if range = 0
+                                return 0;
+                            }
+
                             // Get record values (numbers); drop any NaN values
                             const recordValues = records
                                 .map(record => record[columnIndex])
@@ -171,6 +183,11 @@ export namespace Similarity {
 
                             const range = ColumnDesc.getRange(columnDesc);
 
+                            if (range === 0) {
+                                // Constraint not met if range = 0
+                                return cost;
+                            }
+
                             // Get record values (numbers); drop any NaN values
                             const recordValues = records
                                 .map(record => record[columnIndex])
@@ -218,30 +235,7 @@ export const generateAppliedRecordSetCostFunctions =
         (constraints: Constraint.Constraint[]): AppliedRecordSetCostFunction[] => {
             return constraints.map(
                 (constraint) => {
-                    const operator = Constraint.getOperator(constraint);
-                    const columnIndex = Constraint.getColumnIndex(constraint);
-
-                    // Work out record test function by type
-                    let recordTestFunc: TestFunction.RecordTestFunction;
-
-                    if (Constraint.isCountable(constraint)) {
-                        const targetValue = Constraint.getFieldValue(constraint);
-                        const fieldOperator = Constraint.getFieldOperator(constraint);
-
-                        // Get the record value test function
-                        const recordValueTestFunc = TestFunction.mapFieldOperatorToRecordValueTestFunction(fieldOperator);
-                        recordTestFunc = TestFunction.testRecord(recordValueTestFunc)(targetValue)(columnIndex);
-
-                    } else if (Constraint.isSimilarity(constraint)) {
-                        // recordTestFunc is ignored for similarity constraints
-                        recordTestFunc = _ => true;
-
-                    } else {
-                        return Util.throwErr(new Error(`CostFunction: Unexpected constraint type`));
-                    }
-
-                    // Get the cost function for the "operator"; apply record test func
-                    const costFunction = mapOperatorToCostFunction(operator)(recordTestFunc);
+                    const costFunction = getUnappliedCostFunction(constraint);
 
                     // Return the cost function for a set of records
                     return costFunction(columnInfo)(constraint);
@@ -257,4 +251,212 @@ export const getCostUsingAppliedRecordSetCostFunctions =
                 },
                 0
             );
+        }
+
+export const getRecordTestFunction =
+    (constraint: Constraint.Constraint): TestFunction.RecordTestFunction => {
+        // Work out record test function by type
+
+        if (Constraint.isCountable(constraint)) {
+            const columnIndex = Constraint.getColumnIndex(constraint);
+            const targetValue = Constraint.getFieldValue(constraint);
+            const fieldOperator = Constraint.getFieldOperator(constraint);
+
+            // Get the record value test function
+            const recordValueTestFunc = TestFunction.mapFieldOperatorToRecordValueTestFunction(fieldOperator);
+            return TestFunction.testRecord(recordValueTestFunc)(targetValue)(columnIndex);
+        }
+
+        if (Constraint.isSimilarity(constraint)) {
+            // recordTestFunc is ignored for similarity constraints
+            return _ => true;
+        }
+
+        return Util.throwErr(new Error(`CostFunction: Unexpected constraint type`));
+    }
+
+export const getUnappliedCostFunction =
+    (constraint: Constraint.Constraint) => {
+        const operator = Constraint.getOperator(constraint);
+        const recordTestFunc = getRecordTestFunction(constraint);
+
+        // Get the cost function for the "operator"; apply record test func
+        return mapOperatorToCostFunction(operator)(recordTestFunc);
+    }
+
+/**
+ * Maps a given operator to an appropriate satisfaction test function.
+ * 
+ * Satisfaction tests give a score between [0, 1] that indicate the level of
+ * satisfaction of a given constraint over a set of records.
+ * 
+ * @param operator
+ */
+export const mapOperatorToSatisfactionTest =
+    (operator: Constraint.Operator): SatisfactionTestFunction => {
+        switch (operator) {
+            case 0:     // "exactly"
+            case 1:     // "not exactly"
+            case 2:     // "at least"
+            case 3:     // "at most"
+                return (columnInfo) =>
+                    (constraint) =>
+                        (records) => {
+                            // Run function, check cost
+                            const costFunction = getUnappliedCostFunction(constraint);
+                            const cost = costFunction(columnInfo)(constraint)(records);
+
+                            if (cost === 0) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+
+
+            case 4:     // "as many as possible"
+                return (_columnInfo) =>
+                    (constraint) =>
+                        (records) => {
+                            // Get the inner record test function, and
+                            // check how many records in record set
+                            // satisfy condition
+                            const testFunc = getRecordTestFunction(constraint);
+                            const count = TestFunction.countTestsOverRecords(records)(testFunc);
+                            const numOfRecords = records.length;
+
+                            if (numOfRecords > 0) {
+                                return count / records.length;
+                            } else {
+                                return 1;
+                            }
+                        }
+
+
+            case 5:     // "as few as possible"
+                return (_columnInfo) =>
+                    (constraint) =>
+                        (records) => {
+                            // Get the inner record test function, and
+                            // check how many records in record set
+                            // satisfy condition
+                            const testFunc = getRecordTestFunction(constraint);
+                            const count = TestFunction.countTestsOverRecords(records)(testFunc);
+                            const numOfRecords = records.length;
+
+                            if (numOfRecords > 0) {
+                                return 1 - (count / records.length);
+                            } else {
+                                return 1;
+                            }
+                        }
+
+
+            case 6:     // "as similar as possible"
+                return (columnInfo) =>
+                    (constraint) => {
+                        const columnIndex = Constraint.getColumnIndex(constraint);
+                        const columnDesc = ColumnInfo.get(columnInfo)(columnIndex);
+
+                        if (ColumnDesc.isNumeric(columnDesc)) {
+                            return (records) => {
+                                if (!records.length) {
+                                    return 1;   // No diversity to check
+                                }
+
+                                const range = ColumnDesc.getRange(columnDesc);
+
+                                // Get record values (numbers); drop any NaN values
+                                const recordValues = records
+                                    .map(record => record[columnIndex])
+                                    .filter(val => !Util.isNaN(val));
+
+                                if (range === 0) {
+                                    return 1;   // Constraint met
+                                } else if (Util.stdDev(recordValues) / range < 0.1) {
+                                    return 1;   // We'll consier the constraint met
+                                } else {
+                                    return 0;
+                                }
+                            };
+                        }
+
+                        if (ColumnDesc.isString(columnDesc)) {
+                            return (records) => {
+                                // Run function, check cost
+                                const costFunction = getUnappliedCostFunction(constraint);
+                                const cost = costFunction(columnInfo)(constraint)(records);
+
+                                if (cost === 0) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            };
+                        }
+
+                        return Util.throwErr(new Error(`CostFunction: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
+                    }
+
+            case 7:     // "as different as possible"
+                return (columnInfo) =>
+                    (constraint) => {
+                        const columnIndex = Constraint.getColumnIndex(constraint);
+                        const columnDesc = ColumnInfo.get(columnInfo)(columnIndex);
+
+                        if (ColumnDesc.isNumeric(columnDesc)) {
+                            return (records) => {
+                                if (!records.length) {
+                                    return 1;   // No diversity to check
+                                }
+
+                                const range = ColumnDesc.getRange(columnDesc);
+
+                                // Get record values (numbers); drop any NaN values
+                                const recordValues = records
+                                    .map(record => record[columnIndex])
+                                    .filter(val => !Util.isNaN(val));
+
+                                if (range === 0) {
+                                    return 0;   // Constraint **not** met
+                                } else if (Util.stdDev(recordValues) / range > 0.25) {
+                                    return 1;   // Consider constraint met
+                                } else {
+                                    return 0;
+                                }
+                            };
+                        }
+
+                        if (ColumnDesc.isString(columnDesc)) {
+                            return (records) => {
+                                // Run function, check cost
+                                const costFunction = getUnappliedCostFunction(constraint);
+                                const cost = costFunction(columnInfo)(constraint)(records);
+
+                                if (cost === 0) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            };
+                        }
+
+                        return Util.throwErr(new Error(`CostFunction: Unexpected column description type "${ColumnDesc.getType(columnDesc)}"`));
+                    }
+        }
+
+        return Util.throwErr(new Error(`CostFunction: Unexpected constraint operator "${operator}"`))
+    }
+
+export const generateAppliedRecordSetSatisfactionTests =
+    (columnInfo: ColumnInfo.ColumnInfo) =>
+        (constraints: Constraint.Constraint[]): AppliedRecordSetCostFunction[] => {
+            return constraints.map(
+                (constraint) => {
+                    const operator = Constraint.getOperator(constraint);
+                    const satisfactionTest = mapOperatorToSatisfactionTest(operator);
+
+                    // Return the satisfaction test for a set of records
+                    return satisfactionTest(columnInfo)(constraint);
+                });
         }
