@@ -3,22 +3,14 @@ import * as Util from "../../core/Util";
 import * as Random from "../Random";
 
 describe("`init`", () => {
-    test("returns a generator object", () => {
-        const generator = Random.init();
+    test("initialises a new generator", () => {
+        const oldGenerator = Random.getGenerator();
 
-        expect(generator).toBeDefined();
-        expect(generator).toBeInstanceOf(Object);
-    });
+        Random.init();
 
-    test("produces generators with different seeds", () => {
-        const generator1 = Random.init();
-        const generator2 = Random.init();
+        const newGenerator = Random.getGenerator();
 
-        const stateVector1 = Random.getState(generator1).vector;
-        const stateVector2 = Random.getState(generator2).vector;
-
-        // We should not be getting a full array match
-        expect(stateVector1).not.toEqual(stateVector2);
+        expect(newGenerator).not.toBe(oldGenerator);
     });
 });
 
@@ -27,13 +19,22 @@ describe("`setGlobalSeed`", () => {
         // We have to Array#slice() the state vectors as the array **object**
         // is being returned and will be mutated as part of the global generator
         Random.setGlobalSeed(0);
-        const stateVector1 = Random.getGlobalState().vector;
+        const stateVector1 = Random.getGenerator().mt.slice();
 
         Random.setGlobalSeed(1);
-        const stateVector2 = Random.getGlobalState().vector;
+        const stateVector2 = Random.getGenerator().mt.slice();
 
         // We should not be getting a full array match
-        expect(stateVector1).not.toEqual(stateVector2);
+        const length = stateVector1.length;
+        let numberOfSames: number = 0;
+
+        for (let i = 0; i < stateVector1.length; ++i) {
+            if (stateVector1[i] === stateVector2[i]) {
+                ++numberOfSames;
+            }
+        }
+
+        expect(numberOfSames).not.toBe(length);
     });
 });
 
@@ -42,72 +43,22 @@ describe("`setGlobalRandomSeed`", () => {
         // We have to Array#slice() the state vectors as the array **object**
         // is being returned and will be mutated as part of the global generator
         Random.setGlobalRandomSeed();
-        const stateVector1 = Random.getGlobalState().vector;
+        const stateVector1 = Random.getGenerator().mt.slice();
 
         Random.setGlobalRandomSeed();
-        const stateVector2 = Random.getGlobalState().vector;
+        const stateVector2 = Random.getGenerator().mt.slice();
 
         // We should not be getting a full array match
-        expect(stateVector1).not.toEqual(stateVector2);
-    });
-});
+        const length = stateVector1.length;
+        let numberOfSames: number = 0;
 
-describe("`get/setGlobalState`", () => {
-    test("permits replayable random()", () => {
-        // Set to random seed
-        Random.setGlobalRandomSeed();
+        for (let i = 0; i < stateVector1.length; ++i) {
+            if (stateVector1[i] === stateVector2[i]) {
+                ++numberOfSames;
+            }
+        }
 
-        // State captured and random numbers generated
-        const state = Random.getGlobalState();
-        const randNumArr1 = Util.initArrayFunc(_ => Random.random())(100);
-
-        // Reset state and hopefully get same random numbers
-        Random.setGlobalState(state);
-        const randNumArr2 = Util.initArrayFunc(_ => Random.random())(100);
-
-        // We should be getting a full array match
-        expect(randNumArr1).toEqual(randNumArr2);
-    });
-
-    test("permits replayable randomLong()", () => {
-        // Set to random seed
-        Random.setGlobalRandomSeed();
-
-        // State captured and random numbers generated
-        const state = Random.getGlobalState();
-        const randNumArr1 = Util.initArrayFunc(_ => Random.randomLong())(100);
-
-        // Reset state and hopefully get same random numbers
-        Random.setGlobalState(state);
-        const randNumArr2 = Util.initArrayFunc(_ => Random.randomLong())(100);
-
-        // We should be getting a full array match
-        expect(randNumArr1).toEqual(randNumArr2);
-    });
-
-    test("permits replayable randomUint32()", () => {
-        // Set to random seed
-        Random.setGlobalRandomSeed();
-
-        // State captured and random numbers generated
-        const state = Random.getGlobalState();
-        const randNumArr1 = Util.initArrayFunc(_ => Random.randomUint32())(100);
-
-        // Reset state and hopefully get same random numbers
-        Random.setGlobalState(state);
-        const randNumArr2 = Util.initArrayFunc(_ => Random.randomUint32())(100);
-
-        // We should be getting a full array match
-        expect(randNumArr1).toEqual(randNumArr2);
-    });
-
-    test("invalid state vector length throws error", () => {
-        const state = {
-            vector: Util.initArray(0)(623),     // Bad vector length
-            index: 0,
-        };
-
-        expect(() => Random.setGlobalState(state)).toThrowError();
+        expect(numberOfSames).not.toBe(length);
     });
 });
 

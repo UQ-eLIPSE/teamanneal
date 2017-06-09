@@ -1,6 +1,6 @@
 import * as AbstractConstraint from "../AbstractConstraint";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         AbstractConstraint;
     });
