@@ -1,15 +1,19 @@
 export class AnnealStratumNode {
-    private workingSetView: Uint32Array;
+    private readonly workingSetView: Uint32Array;
+    private readonly cost: Float64Array;
 
     private offset: number; // In uint32 units (not bytes)
     private size: number;   // In uint32 units (not bytes)
 
-    private cost: number | undefined = undefined;
 
     constructor(buffer: ArrayBuffer, offset: number, size: number) {
         // Create an array buffer view specifically for this node
         // The offset is multiplied by 4 because there are 4 bytes per uint32
         this.workingSetView = new Uint32Array(buffer, offset * 4, size);
+
+        // Using Float64Array to store cost value for performance reasons
+        this.cost = new Float64Array(1);
+        this.wipeCost();
 
         this.offset = offset;
         this.size = size;
@@ -28,15 +32,19 @@ export class AnnealStratumNode {
     }
 
     public getCost() {
-        return this.cost;
+        return this.cost[0];
     }
 
     public setCost(cost: number) {
-        return this.cost = cost;
+        return this.cost[0] = cost;
+    }
+
+    public isCostSet() {
+        return !Number.isNaN(this.cost[0]);
     }
 
     public wipeCost() {
-        return this.cost = undefined;
+        return this.cost[0] = Number.NaN;
     }
 
     /**
