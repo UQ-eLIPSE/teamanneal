@@ -3,7 +3,7 @@
         <div id="tree">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataStructureEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
                 </li>
             </ul>
         </div>
@@ -18,16 +18,16 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
+import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
 import * as Stratum from "../data/Stratum";
 
 @Component({
     components: {
-        StrataEditorStratumItem,
+        StrataStructureEditorStratumItem,
     },
 })
-export default class StrataEditor extends Vue {
+export default class StrataStructureEditor extends Vue {
     get strata() {
         return this.$store.state.constraintsConfig.strata!;
     }
@@ -72,21 +72,17 @@ export default class StrataEditor extends Vue {
 
     width: 100%;
     height: auto;
-
-    /*max-height: 10em;
-    overflow-y: auto;*/
-    font-size: 1.5em;
 }
 
 #tree ul {
     margin: 0;
     padding: 0;
-    min-height: 5em;
     list-style: none;
 }
 
 #tree li {
     padding: 0.5em;
+    text-align: center;
 }
 
 #action-buttons button {

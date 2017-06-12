@@ -84,24 +84,47 @@ const store = new Vuex.Store({
         },
 
         updateConstraintsConfigStrata(state, stratumUpdate: Stratum.Update) {
-            Vue.set(state.constraintsConfig.strata!, stratumUpdate.index, stratumUpdate.stratum);
+            const strata = state.constraintsConfig.strata!;
+            const newStratum = stratumUpdate.stratum;
+
+            const index = strata.findIndex(stratum => stratum._id === newStratum._id);
+
+            if (index < 0) {
+                return;
+            }
+
+            Vue.set(strata, index, newStratum);
         },
 
         insertConstraintsConfigStrata(state, stratum: Stratum.Stratum) {
             state.constraintsConfig.strata!.push(stratum);
         },
 
-        deleteConstraintsConfigStrataAt(state, index: number) {
-            Vue.delete(state.constraintsConfig.strata!, index);
+        deleteConstraintsConfigStrataOf(state, _id: number) {
+            const strata = state.constraintsConfig.strata!;
+
+            const index = strata.findIndex(stratum => stratum._id === _id);
+
+            if (index < 0) {
+                return;
+            }
+
+            Vue.delete(strata, index);
         },
 
-        swapUpConstraintsConfigStrataAt(state, index: number) {
+        swapUpConstraintsConfigStrataOf(state, _id: number) {
+            const strata = state.constraintsConfig.strata!;
+
+            const index = strata.findIndex(stratum => stratum._id === _id);
+
+            if (index < 0) {
+                return;
+            }
+
             // Can't swap with previous item
             if (index === 0) {
                 return;
             }
-
-            const strata = state.constraintsConfig.strata!;
 
             const a = strata[index - 1];
             const b = strata[index];
@@ -110,8 +133,19 @@ const store = new Vuex.Store({
             strata.splice(index, 1, a);
         },
 
-        swapDownConstraintsConfigStrataAt(state, index: number) {
+        swapDownConstraintsConfigStrataOf(state, _id: number) {
             const strata = state.constraintsConfig.strata!;
+
+            const index = strata.findIndex(stratum => stratum._id === _id);
+
+            if (index < 0) {
+                return;
+            }
+
+            // Can't swap with previous item
+            if (index === 0) {
+                return;
+            }
 
             // Can't swap with next item
             if (index === strata.length - 1) {

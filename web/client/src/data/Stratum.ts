@@ -5,7 +5,5 @@ export interface Stratum extends Stratum.Desc {
 }
 
 export interface Update {
-    index: number,
     stratum: Stratum,
 }
-

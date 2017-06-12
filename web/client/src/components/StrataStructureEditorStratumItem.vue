@@ -1,12 +1,17 @@
 <template>
     <div>
-        <DynamicWidthInputField class="input" :val="p_label" @change="onLabelValueChange" /> should have
-        <DynamicWidthInputField class="input" :val="''+p_ideal" @change="onIdealValueChange" /> {{ childUnitText }}s, with min
-        <DynamicWidthInputField class="input" :val="''+p_min" @change="onMinValueChange" /> and max
-        <DynamicWidthInputField class="input" :val="''+p_max" @change="onMaxValueChange" />
-        <button @click="emitDelete">Delete</button>
-        <button @click="emitSwapUp">Up</button>
-        <button @click="emitSwapDown">Down</button>
+        <div>
+            <span class="input-wrapper">
+                <DynamicWidthInputField class="input" :val="p_label" @change="onLabelValueChange" />
+            </span>
+            <button @click="emitDelete">Delete</button>
+            <button @click="emitSwapUp">Up</button>
+            <button @click="emitSwapDown">Down</button>
+        </div>
+        <div class="subgroup-nesting-explanatory-text">
+            One
+            <b>{{ p_label }}</b> will contain many {{ pluralChildUnitText }}
+        </div>
     </div>
 </template>
 
@@ -23,34 +28,16 @@ import * as Stratum from "../data/Stratum";
         DynamicWidthInputField,
     },
 })
-export default class StrataEditorStratumItem extends Vue {
+export default class StrataStructureEditorStratumItem extends Vue {
     // Props
     @Prop stratum: Stratum.Stratum = p(Object) as any;
     @Prop childUnit = p(String);
 
     // Private data
     p_label: string = "";
-    p_min: number = 0;
-    p_ideal: number = 0;
-    p_max: number = 0;
 
     onLabelValueChange(newValue: string) {
         this.p_label = newValue;
-        this.emitChange();
-    }
-
-    onMinValueChange(newValue: string) {
-        this.p_min = +newValue || 0;        // Convert to number
-        this.emitChange();
-    }
-
-    onIdealValueChange(newValue: string) {
-        this.p_ideal = +newValue || 0;      // Convert to number
-        this.emitChange();
-    }
-
-    onMaxValueChange(newValue: string) {
-        this.p_max = +newValue || 0;        // Convert to number
         this.emitChange();
     }
 
@@ -58,17 +45,18 @@ export default class StrataEditorStratumItem extends Vue {
         return this.childUnit || "<unit>";
     }
 
-    emitChange() {
-        const thisStratum: Stratum.Stratum = this.stratum as any;
+    get pluralChildUnitText() {
+        if (this.childUnitText === "person") {
+            return "people";
+        }
+        return this.childUnitText + "s";
+    }
 
+    emitChange() {
         const stratum: Stratum.Stratum = {
-            _id: thisStratum._id,
+            _id: this.stratum._id,
             label: this.p_label,
-            size: {
-                min: this.p_min,
-                ideal: this.p_ideal,
-                max: this.p_max,
-            },
+            size: this.stratum.size,
         }
 
         const stratumUpdate: Stratum.Update = {
@@ -94,9 +82,6 @@ export default class StrataEditorStratumItem extends Vue {
         const stratum = this.stratum;
 
         this.p_label = stratum.label;
-        this.p_min = stratum.size.min;
-        this.p_ideal = stratum.size.ideal;
-        this.p_max = stratum.size.max;
     }
 
     @Lifecycle created() {
@@ -114,8 +99,24 @@ export default class StrataEditorStratumItem extends Vue {
     border: 0;
     border-bottom: 0.1em dashed;
 
-    color: #49075E;
+    color: #fff;
 
     cursor: pointer;
+}
+
+.input-wrapper {
+    display: inline-block;
+    background: #49075E;
+    padding: 0.3em 0.5em;
+    border-radius: 0.3em;
+
+    font-size: 1.5em;
+}
+
+.subgroup-nesting-explanatory-text {
+    font-size: 0.8em;
+    font-style: italic;
+
+    color: rgba(0, 0, 0, 0.8);
 }
 </style>
