@@ -66,14 +66,18 @@ export class SimilarityStringConstraint extends AbstractConstraint {
 
         // Collect up distinct strings (via. string pointers)
         // If pointers are distinct, the strings are distinct
-        const set: Set<StringPointer> = new Set();
+        const set: StringPointer[] = [];
 
         for (let i = 0; i < groupSize; ++i) {
             const recordPointer = recordPointers[i];
-            set.add(recordStringPointerArray[recordPointer]);
+            const stringPointer = recordStringPointerArray[recordPointer];
+
+            if (set.indexOf(stringPointer) === -1) {
+                set.push(stringPointer);
+            }
         }
 
-        const distinctSetSize = set.size;
+        const distinctSetSize = set.length;
 
         // Run condition cost function 
         return this.constraintConditionCostFunction(groupSize, distinctSetSize);
