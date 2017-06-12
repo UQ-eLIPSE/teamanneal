@@ -11,6 +11,7 @@ export let
     reviewRecords: WNE,
     selectIdColumn: WNE,
     selectPartitionColumn: WNE,
+    designGroupStructure: WNE,
     configureOutputGroups: WNE,
     configureConstraints: WNE;
 
@@ -57,6 +58,19 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectPartitionColumn = {
         label: "Select partition column",
         path: "/anneal/select-partition-column",
+        disabled: (state: TAState) => {
+            // Disabled when there is no ID column selected (a number above -1)
+            return !(
+                TeamAnnealState.hasSourceFileData(state) &&
+                TeamAnnealState.hasValidIdColumnIndex(state)
+            );
+        },
+
+        next: () => designGroupStructure,
+    },
+    designGroupStructure = {
+        label: "Design group structure",
+        path: "/anneal/design-group-structure",
         disabled: (state: TAState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(

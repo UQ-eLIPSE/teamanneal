@@ -14,6 +14,7 @@ import Anneal_ProvideRecordsFile from "./components/anneal-wizard-panels/Provide
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
 import Anneal_SelectIdColumn from "./components/anneal-wizard-panels/SelectIdColumn.vue";
 import Anneal_SelectPartitionColumn from "./components/anneal-wizard-panels/SelectPartitionColumn.vue";
+import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/DesignGroupStructure.vue";
 import Anneal_ConfigureOutputGroups from "./components/anneal-wizard-panels/ConfigureOutputGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
 
@@ -61,6 +62,13 @@ export default (store: Vuex.Store<any>) => {
                         component: Anneal_SelectPartitionColumn,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.selectPartitionColumn,
+                        },
+                    },
+                    {
+                        path: "design-group-structure",
+                        component: Anneal_DesignGroupStructure,
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.designGroupStructure,
                         },
                     },
                     {

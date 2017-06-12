@@ -25,7 +25,6 @@ import * as Stratum from "../data/Stratum";
 })
 export default class StrataEditorStratumItem extends Vue {
     // Props
-    @Prop index = p(Number);
     @Prop stratum: Stratum.Stratum = p(Object) as any;
     @Prop childUnit = p(String);
 
@@ -73,7 +72,6 @@ export default class StrataEditorStratumItem extends Vue {
         }
 
         const stratumUpdate: Stratum.Update = {
-            index: this.index!,
             stratum,
         }
 
@@ -81,15 +79,15 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     emitDelete() {
-        this.$emit("delete", this.index!);
+        this.$emit("delete", this.stratum);
     }
 
     emitSwapUp() {
-        this.$emit("swapUp", this.index!);
+        this.$emit("swapUp", this.stratum);
     }
 
     emitSwapDown() {
-        this.$emit("swapDown", this.index!);
+        this.$emit("swapDown", this.stratum);
     }
 
     transferPropsToData() {

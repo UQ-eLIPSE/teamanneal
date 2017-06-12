@@ -3,7 +3,7 @@
         <div id="tree">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :index="i" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
                 </li>
             </ul>
         </div>
@@ -36,16 +36,16 @@ export default class StrataEditor extends Vue {
         this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
 
-    onStratumItemDelete(i: number) {
-        this.$store.commit("deleteConstraintsConfigStrataAt", i);
+    onStratumItemDelete(stratum: Stratum.Stratum) {
+        this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
     }
 
-    onStratumItemSwapUp(i: number) {
-        this.$store.commit("swapUpConstraintsConfigStrataAt", i);
+    onStratumItemSwapUp(stratum: Stratum.Stratum) {
+        this.$store.commit("swapUpConstraintsConfigStrataOf", stratum._id);
     }
 
-    onStratumItemSwapDown(i: number) {
-        this.$store.commit("swapDownConstraintsConfigStrataAt", i);
+    onStratumItemSwapDown(stratum: Stratum.Stratum) {
+        this.$store.commit("swapDownConstraintsConfigStrataOf", stratum._id);
     }
 
     addNewStratum() {
