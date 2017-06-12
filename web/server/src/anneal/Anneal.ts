@@ -20,6 +20,7 @@ import * as UphillTracker from "./UphillTracker";
 import * as TemperatureDerivation from "./TemperatureDerivation";
 import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
+import { AbstractConstraint } from "./AbstractConstraint";
 import { CountConstraint } from "./CountConstraint";
 import { LimitConstraint } from "./LimitConstraint";
 import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
@@ -59,38 +60,16 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// ============================================
 
     // A linear array store that holds pointers to records in the partition
-    const numberOfRecords = partition.length;
-    const recordPointers = new AnnealRecordPointerArray(numberOfRecords);
-
-    // Give records a shuffle before we start
-    recordPointers.shuffle();
+    log("info")("Creating record pointers...");
+    const recordPointers = createAnnealRecordPointerArray(partition.length);
 
 
     /// =======================
     /// Configuring constraints
     /// =======================
 
-    // Convert each constraint definition into constraint objects
-    const constraints = constraintDefs.map((constraintDef) => {
-        const colIndex = constraintDef.filter.column;
-        const columnInfo = columnInfos[colIndex];
-
-        switch (constraintDef.type) {
-            case "count": return new CountConstraint(partition, columnInfo, constraintDef);
-            case "limit": return new LimitConstraint(partition, columnInfo, constraintDef);
-            case "similarity": {
-                // Check what the column type is
-                switch (columnInfo.type) {
-                    case "number": return new SimilarityNumericConstraint(partition, columnInfo, constraintDef);
-                    case "string": return new SimilarityStringConstraint(partition, columnInfo, constraintDef);
-                }
-
-                throw new Error("Unknown column type");
-            }
-        }
-
-        throw new Error("Unknown constraint type");
-    });
+    log("info")("Creating constraint obj...");
+    const constraints = createConstraintObjects(partition, columnInfos, constraintDefs);
 
 
 
@@ -98,75 +77,8 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Constructing strata
     /// ===================
 
-    // Go through each stratum and create nodes that refer to views on record
-    // pointers in the record store
-    const strata: AnnealStratum[] = [];
-
-    for (let stratumIndex = 0; stratumIndex < strataDefs.length; ++stratumIndex) {
-        const stratumDef = strataDefs[stratumIndex];
-
-        // For the lowest stratum, we take records directly from the store,
-        // otherwise we take the previous stratum we generated and directly init
-        // a node from that
-        const nodes: AnnealStratumNode[] = [];
-
-        if (stratumIndex === 0) {
-            const buffer = recordPointers.workingSet.buffer;
-            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(numberOfRecords, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
-
-            const minGroupSize = (numberOfRecords / numberOfGroups) >>> 0;
-            let leftOver = numberOfRecords % numberOfGroups;
-
-            let offset: number = 0;
-
-            for (let i = 0; i < numberOfGroups; ++i) {
-                let groupSize = minGroupSize;
-
-                // If there are left overs, add one in to this group
-                if (leftOver > 0) {
-                    ++groupSize;
-                    --leftOver;
-                }
-
-                // Init new node
-                nodes.push(new AnnealStratumNode(buffer, offset, groupSize));
-
-                // Update `offset` of next round
-                offset = offset + groupSize;
-            }
-        } else {
-            const prevStratumNodes = strata[stratumIndex - 1].nodes;
-            const numberOfPrevStratumNodes = prevStratumNodes.length;
-
-            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(prevStratumNodes.length, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
-
-            const minGroupSize = (numberOfPrevStratumNodes / numberOfGroups) >>> 0;
-            let leftOver = numberOfPrevStratumNodes % numberOfGroups;
-
-            let offset: number = 0;
-
-            for (let i = 0; i < numberOfGroups; ++i) {
-                let groupSize = minGroupSize;
-
-                // If there are left overs, add one in to this group
-                if (leftOver > 0) {
-                    ++groupSize;
-                    --leftOver;
-                }
-
-                // Init new node
-                nodes.push(AnnealStratumNode.initFromChildren(prevStratumNodes.slice(offset, offset + groupSize)));
-
-                // Update `offset` of next round
-                offset = offset + groupSize;
-            }
-        }
-
-
-        const stratumConstraints = constraints.filter(constraint => constraint.constraintDef.strata === stratumIndex);
-
-        strata.push(new AnnealStratum(nodes, stratumConstraints));
-    }
+    log("info")("Creating strata obj...");
+    const strata = createStrataObjects(recordPointers, constraints, strataDefs);
 
 
 
@@ -184,156 +96,12 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// ====================
 
     log("info")("Iterating...");
-
-    const defaultBranchIterationScalar: number = 4;
-    const defaultAvgUphillProbabilityThreshold: number = 0.0025;
-
-    // Track uphill probabilities
-    const uphillTracker = UphillTracker.init();
-
-    // Running numbers
-    let $ = Number.POSITIVE_INFINITY;   // cost
-    let T = startTemp;                  // temperature
-
-    // Iteration scalar adjusts the number of mutation trials per branch
-    let branchIterationScalar = defaultBranchIterationScalar;
-
-    while (true) {
-        // Run iterations per branch as determined by `itScalar` and number of
-        // records
-        // const numberOfIterationsInOneBranch = branchIterationScalar * numberOfRecords;
-        const numberOfIterationsInOneBranch = (0.9 * branchIterationScalar * numberOfRecords) >>> 0;
-
-
-
-        // Before we enter branch iterations, save cost, state
-        const previousCost = $;
-        recordPointers.saveToStoreA();
-
-
-
-        /// ====================================================================
-        /// anneal_inner_loop (one branch)
-        /// ====================================================================
-        {
-            // Reset uphill accept/reject
-            UphillTracker.resetAcceptReject(uphillTracker);
-
-            // Iterate over one "branch"
-            for (let j = 0; j < numberOfIterationsInOneBranch; ++j) {
-                // Take state snapshot now
-                recordPointers.saveToStoreB();
-
-                // Perform random op
-                //
-                // We only need to mutate the leaf nodes (swap, move, etc.)
-                // This is done via. the immediate parent - which are the lowest
-                // stratum nodes (index = 0)
-                const modifiedPointerIndicies = MutationOperation.randPick()(strata[0]);
-                modifiedPointerIndicies;
-
-                // Wipe costs on nodes with modified record pointers
-                // CostCompute.wipeAllCost(strata);
-                CostCompute.wipeCost(strata, modifiedPointerIndicies);
-
-                // Calculate total cost
-                const newCost = CostCompute.computeCost(strata);
-                // const deltaCost = Iteration.calculateCostDifference($, newCost);
-                // const deltaCost = newCost - $;
-
-                // Determine if this iteration is accepted
-                const iterationAccepted = Iteration.isNewCostAcceptable(T, $, newCost);
-
-                // Update uphill tracker for new costs which are higher
-                // ("uphill") compared to existing cost
-                if (newCost > $) {
-                    if (iterationAccepted) {
-                        UphillTracker.incrementAccept(uphillTracker);
-                    } else {
-                        UphillTracker.incrementReject(uphillTracker);
-                    }
-                }
-
-                if (iterationAccepted) {
-                    // Update cost
-                    $ = newCost;
-                } else {
-                    // Restore previous state
-                    recordPointers.loadFromStoreB();
-
-                    // You must wipe costs when loading from store
-                    CostCompute.wipeCost(strata, modifiedPointerIndicies);
-                }
-            }
-
-            // Update temperature at the end of one branch
-            T = Iteration.calculateNewTemperature(T);
-        }
-
-
-
-        // Restore previous state if cost before this branch was better
-        if (previousCost < $) {
-            $ = previousCost;
-            recordPointers.loadFromStoreA();
-
-            // You must wipe costs when reloading from store
-            CostCompute.wipeAllCost(strata);
-
-            // TODO: Investigate better cost management when reloading from store
-        }
-
-
-
-
-
-
-        // Tweak iteration scalar depending on uphill probability
-        const uphillAcceptanceProbability = UphillTracker.getAcceptanceProbability(uphillTracker);
-
-        if (uphillAcceptanceProbability > 0.7 || uphillAcceptanceProbability < 0.2) {
-            branchIterationScalar = 4;
-        } else if (uphillAcceptanceProbability > 0.6 || uphillAcceptanceProbability < 0.3) {
-            branchIterationScalar = 8;
-        } else {
-            branchIterationScalar = 32;
-        }
-
-
-
-
-
-
-        // Stop conditions
-
-        if (Iteration.isResultPerfect($)) { break; }
-        if (Iteration.isTemperatureExhausted(T)) { break; }
-
-        const avgUphillProbability = UphillTracker.updateProbabilityHistory(uphillTracker);
-        if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
-            break;
-        }
-    }
+    annealOuterLoop(recordPointers, strata, startTemp);
 
 
 
     // Output constraint satisfaction
-    const satisfaction =
-        strata.map((stratum, stratumIndex) => {         // For each stratum,
-            return stratum.nodes.map(node => {          // and for each node in that stratum,
-                return constraints.map(constraint => {  // go through all constraints
-
-                    // If this constraint does not apply to the stratum, return
-                    // undefined
-                    if (constraint.constraintDef.strata !== stratumIndex) {
-                        return undefined;
-                    }
-
-                    // Return the actual satisfaction value (in range [0,1])
-                    return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
-                });
-            });
-        });
+    const satisfaction = generateSatisfactionArray(constraints, strata);
 
     log("info")(`Satisfaction
 ${JSON.stringify(satisfaction)}`);
@@ -507,4 +275,262 @@ function convertStrataToArray(strata: ReadonlyArray<AnnealStratum>, records: Rec
     //      `previousStratumArray` points to the `currentStratumArray` at the
     //      end of the last iteration
     return previousStratumArray;
+}
+
+function createAnnealRecordPointerArray(numberOfRecords: number) {
+    const recordPointers = new AnnealRecordPointerArray(numberOfRecords);
+
+    // Give records a shuffle before we start
+    recordPointers.shuffle();
+
+    return recordPointers;
+}
+
+function createConstraintObjects(records: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, constraintDefs: ReadonlyArray<Constraint.Desc>): ReadonlyArray<AbstractConstraint> {
+    // Convert each constraint definition into constraint objects
+    const constraints =
+        constraintDefs.map((constraintDef) => {
+            const colIndex = constraintDef.filter.column;
+            const columnInfo = columnInfos[colIndex];
+
+            switch (constraintDef.type) {
+                case "count": return new CountConstraint(records, columnInfo, constraintDef);
+                case "limit": return new LimitConstraint(records, columnInfo, constraintDef);
+                case "similarity": {
+                    // Check what the column type is
+                    switch (columnInfo.type) {
+                        case "number": return new SimilarityNumericConstraint(records, columnInfo, constraintDef);
+                        case "string": return new SimilarityStringConstraint(records, columnInfo, constraintDef);
+                    }
+
+                    throw new Error("Unknown column type");
+                }
+            }
+
+            throw new Error("Unknown constraint type");
+        });
+
+    return constraints;
+}
+
+function createStrataObjects(recordPointers: AnnealRecordPointerArray, constraints: ReadonlyArray<AbstractConstraint>, strataDefs: ReadonlyArray<Stratum.Desc>): ReadonlyArray<AnnealStratum> {
+    // Go through each stratum and create nodes that refer to views on record
+    // pointers in the record store
+    const strata: AnnealStratum[] = [];
+    const numberOfRecords = recordPointers.numberOfRecords;
+
+    for (let stratumIndex = 0; stratumIndex < strataDefs.length; ++stratumIndex) {
+        const stratumDef = strataDefs[stratumIndex];
+
+        // For the lowest stratum, we take records directly from the store,
+        // otherwise we take the previous stratum we generated and directly init
+        // a node from that
+        const nodes: AnnealStratumNode[] = [];
+
+        if (stratumIndex === 0) {
+            const buffer = recordPointers.workingSet.buffer;
+            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(numberOfRecords, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
+
+            const minGroupSize = (numberOfRecords / numberOfGroups) >>> 0;
+            let leftOver = numberOfRecords % numberOfGroups;
+
+            let offset: number = 0;
+
+            for (let i = 0; i < numberOfGroups; ++i) {
+                let groupSize = minGroupSize;
+
+                // If there are left overs, add one in to this group
+                if (leftOver > 0) {
+                    ++groupSize;
+                    --leftOver;
+                }
+
+                // Init new node
+                nodes.push(new AnnealStratumNode(buffer, offset, groupSize));
+
+                // Update `offset` of next round
+                offset = offset + groupSize;
+            }
+        } else {
+            const prevStratumNodes = strata[stratumIndex - 1].nodes;
+            const numberOfPrevStratumNodes = prevStratumNodes.length;
+
+            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(prevStratumNodes.length, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
+
+            const minGroupSize = (numberOfPrevStratumNodes / numberOfGroups) >>> 0;
+            let leftOver = numberOfPrevStratumNodes % numberOfGroups;
+
+            let offset: number = 0;
+
+            for (let i = 0; i < numberOfGroups; ++i) {
+                let groupSize = minGroupSize;
+
+                // If there are left overs, add one in to this group
+                if (leftOver > 0) {
+                    ++groupSize;
+                    --leftOver;
+                }
+
+                // Init new node
+                nodes.push(AnnealStratumNode.initFromChildren(prevStratumNodes.slice(offset, offset + groupSize)));
+
+                // Update `offset` of next round
+                offset = offset + groupSize;
+            }
+        }
+
+
+        const stratumConstraints = constraints.filter(constraint => constraint.constraintDef.strata === stratumIndex);
+
+        strata.push(new AnnealStratum(nodes, stratumConstraints));
+    }
+
+    return strata;
+}
+
+function generateSatisfactionArray(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>): ReadonlyArray<ReadonlyArray<ReadonlyArray<number | undefined>>> {
+    const satisfaction =
+        strata.map((stratum, stratumIndex) => {         // For each stratum,
+            return stratum.nodes.map(node => {          // and for each node in that stratum,
+                return constraints.map(constraint => {  // go through all constraints
+
+                    // If this constraint does not apply to the stratum, return
+                    // undefined
+                    if (constraint.constraintDef.strata !== stratumIndex) {
+                        return undefined;
+                    }
+
+                    // Return the actual satisfaction value (in range [0,1])
+                    return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
+                });
+            });
+        });
+
+    return satisfaction;
+}
+
+function annealOuterLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, startTemp: number) {
+    const defaultBranchIterationScalar: number = 4;
+    const defaultAvgUphillProbabilityThreshold: number = 0.0025;
+
+    const numberOfRecords = recordPointers.numberOfRecords;
+
+    // Track uphill probabilities
+    const uphillTracker = UphillTracker.init();
+
+    // Running numbers
+    const trackedParam = {
+        $: Number.POSITIVE_INFINITY,    // cost
+        T: startTemp,                   // temperature
+    }
+
+    // Iteration scalar adjusts the number of mutation trials per branch
+    let branchIterationScalar = defaultBranchIterationScalar;
+
+    while (true) {
+        // Run iterations per branch as determined by `itScalar` and number of
+        // records
+        // This number is multiplied by 0.9 because the original C++ code had
+        // 10% no-ops
+        const numberOfIterationsInOneBranch = (0.9 * branchIterationScalar * numberOfRecords) >>> 0;
+
+        // Before we enter branch iterations, save cost, state
+        const previousCost = trackedParam.$;
+        recordPointers.saveToStoreA();
+
+        // Reset uphill accept/reject
+        UphillTracker.resetAcceptReject(uphillTracker);
+
+
+
+
+        /// ====================================================================
+        /// anneal_inner_loop (one branch)
+        /// ====================================================================
+        annealBranchLoop(recordPointers, strata, uphillTracker, trackedParam, numberOfIterationsInOneBranch);
+
+
+
+
+
+        // Restore previous state if cost before this branch was better
+        if (previousCost < trackedParam.$) {
+            trackedParam.$ = previousCost;
+            recordPointers.loadFromStoreA();
+
+            // You must wipe costs when reloading from store
+            CostCompute.wipeAllCost(strata);
+
+            // TODO: Investigate better cost management when reloading from store
+        }
+
+        // Tweak iteration scalar depending on uphill probability
+        const uphillAcceptanceProbability = UphillTracker.getAcceptanceProbability(uphillTracker);
+
+        if (uphillAcceptanceProbability > 0.7 || uphillAcceptanceProbability < 0.2) {
+            branchIterationScalar = 4;
+        } else if (uphillAcceptanceProbability > 0.6 || uphillAcceptanceProbability < 0.3) {
+            branchIterationScalar = 8;
+        } else {
+            branchIterationScalar = 32;
+        }
+
+        // Stop conditions
+        if (Iteration.isResultPerfect(trackedParam.$)) { break; }
+        if (Iteration.isTemperatureExhausted(trackedParam.T)) { break; }
+
+        const avgUphillProbability = UphillTracker.updateProbabilityHistory(uphillTracker);
+        if (avgUphillProbability < defaultAvgUphillProbabilityThreshold) {
+            break;
+        }
+    }
+}
+
+function annealBranchLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, uphillTracker: UphillTracker.UphillTracker, trackedParam: { $: number, T: number }, numberOfIterations: number) {
+    // Iterate over one "branch"
+    for (let i = 0; i < numberOfIterations; ++i) {
+        // Take state snapshot now
+        recordPointers.saveToStoreB();
+
+        // Perform random op
+        //
+        // We only need to mutate the leaf nodes (swap, move, etc.)
+        // This is done via. the immediate parent - which are the lowest
+        // stratum nodes (index = 0)
+        const modifiedPointerIndicies = MutationOperation.randPick()(strata[0]);
+
+        // Wipe costs on nodes with modified record pointers
+        // CostCompute.wipeAllCost(strata);
+        CostCompute.wipeCost(strata, modifiedPointerIndicies);
+
+        // Calculate total cost
+        const newCost = CostCompute.computeCost(strata);
+
+        // Determine if this iteration is accepted
+        const iterationAccepted = Iteration.isNewCostAcceptable(trackedParam.T, trackedParam.$, newCost);
+
+        // Update uphill tracker for new costs which are higher
+        // ("uphill") compared to existing cost
+        if (newCost > trackedParam.$) {
+            if (iterationAccepted) {
+                UphillTracker.incrementAccept(uphillTracker);
+            } else {
+                UphillTracker.incrementReject(uphillTracker);
+            }
+        }
+
+        if (iterationAccepted) {
+            // Update cost
+            trackedParam.$ = newCost;
+        } else {
+            // Restore previous state
+            recordPointers.loadFromStoreB();
+
+            // You must wipe costs when loading from store
+            CostCompute.wipeCost(strata, modifiedPointerIndicies);
+        }
+    }
+
+    // Update temperature at the end of one branch
+    trackedParam.T = Iteration.calculateNewTemperature(trackedParam.T);
 }
