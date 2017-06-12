@@ -3,12 +3,9 @@
         <div id="tree">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
                 </li>
             </ul>
-        </div>
-        <div id="action-buttons">
-            <button @click="addNewStratum">Add subgroup</button>
         </div>
     </div>
 </template>
@@ -35,32 +32,6 @@ export default class StrataEditor extends Vue {
     onStratumItemChange(stratumUpdate: Stratum.Update) {
         this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
-
-    onStratumItemDelete(stratum: Stratum.Stratum) {
-        this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
-    }
-
-    onStratumItemSwapUp(stratum: Stratum.Stratum) {
-        this.$store.commit("swapUpConstraintsConfigStrataOf", stratum._id);
-    }
-
-    onStratumItemSwapDown(stratum: Stratum.Stratum) {
-        this.$store.commit("swapDownConstraintsConfigStrataOf", stratum._id);
-    }
-
-    addNewStratum() {
-        const stratum: Stratum.Stratum = {
-            _id: performance.now(),
-            label: `Subgroup${this.strata.length + 1}`,
-            size: {
-                min: 1,
-                ideal: 2,
-                max: 3,
-            },
-        }
-
-        this.$store.commit("insertConstraintsConfigStrata", stratum);
-    }
 }
 </script>
 
@@ -81,7 +52,6 @@ export default class StrataEditor extends Vue {
 #tree ul {
     margin: 0;
     padding: 0;
-    min-height: 5em;
     list-style: none;
 }
 

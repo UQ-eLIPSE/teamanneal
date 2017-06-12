@@ -12,7 +12,7 @@ export let
     selectIdColumn: WNE,
     selectPartitionColumn: WNE,
     designGroupStructure: WNE,
-    configureOutputGroups: WNE,
+    configureGroups: WNE,
     configureConstraints: WNE;
 
 /**
@@ -79,16 +79,17 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             );
         },
 
-        next: () => configureOutputGroups,
+        next: () => configureGroups,
     },
-    configureOutputGroups = {
-        label: "Configure output groups",
-        path: "/anneal/configure-output-groups",
+    configureGroups = {
+        label: "Configure groups",
+        path: "/anneal/configure-groups",
         disabled: (state: TAState) => {
-            // Disabled when there is no ID column selected (a number above -1)
+            // Disabled when there are no strata (output groups)
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state)
+                TeamAnnealState.hasValidIdColumnIndex(state) &&
+                TeamAnnealState.hasStrata(state)
             );
         },
 

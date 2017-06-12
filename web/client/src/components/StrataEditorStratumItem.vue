@@ -1,12 +1,9 @@
 <template>
     <div>
-        <DynamicWidthInputField class="input" :val="p_label" @change="onLabelValueChange" /> should have
+        {{ p_label }} should have
         <DynamicWidthInputField class="input" :val="''+p_ideal" @change="onIdealValueChange" /> {{ childUnitText }}s, with min
         <DynamicWidthInputField class="input" :val="''+p_min" @change="onMinValueChange" /> and max
         <DynamicWidthInputField class="input" :val="''+p_max" @change="onMaxValueChange" />
-        <button @click="emitDelete">Delete</button>
-        <button @click="emitSwapUp">Up</button>
-        <button @click="emitSwapDown">Down</button>
     </div>
 </template>
 
@@ -76,18 +73,6 @@ export default class StrataEditorStratumItem extends Vue {
         }
 
         this.$emit("change", stratumUpdate);
-    }
-
-    emitDelete() {
-        this.$emit("delete", this.stratum);
-    }
-
-    emitSwapUp() {
-        this.$emit("swapUp", this.stratum);
-    }
-
-    emitSwapDown() {
-        this.$emit("swapDown", this.stratum);
     }
 
     transferPropsToData() {
