@@ -1,14 +1,16 @@
 <template>
     <div>
-        <div id="tree">
+        <div class="group-structure">
             <ul>
                 <li v-for="(stratum, i) in strata">
                     <StrataStructureEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
                 </li>
+                <li>
+                    <button class="button add-subgroup" @click="addNewStratum">
+                        <span>Add subgroup</span>
+                    </button>
+                </li>
             </ul>
-        </div>
-        <div id="action-buttons">
-            <button @click="addNewStratum">Add subgroup</button>
         </div>
     </div>
 </template>
@@ -67,26 +69,76 @@ export default class StrataStructureEditor extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#tree {
+.group-structure {
     background: rgba(0, 0, 0, 0.05);
 
     width: 100%;
     height: auto;
 }
 
-#tree ul {
+.group-structure ul {
     margin: 0;
-    padding: 0;
+    padding: 1rem;
     list-style: none;
 }
 
-#tree li {
-    padding: 0.5em;
+.group-structure li {
     text-align: center;
 }
 
-#action-buttons button {
-    padding: 0.1rem 0.3rem;
-    text-transform: none;
+.group-structure li+li::before {
+    display: block;
+    content: "";
+
+    margin: 0 auto;
+
+    width: 0.3em;
+    height: 1.5em;
+
+    background: linear-gradient(to top, #49075e, #49075e 70%, transparent);
+}
+
+button.add-subgroup {
+    display: flex;
+    border: 0;
+    margin: 0 auto;
+
+    width: 3em;
+    height: 3em;
+
+    border-radius: 50%;
+
+    justify-content: center;
+    align-items: center;
+
+    position: relative;
+}
+
+button.add-subgroup>span {
+    display: none;
+
+    position: absolute;
+    left: 3.7em;
+    color: #777;
+
+    text-align: left;
+}
+
+button.add-subgroup::before {
+    display: block;
+    content: "+";
+
+    line-height: 0;
+
+    font-size: 3em;
+    font-weight: 100;
+
+    margin-top: -0.05em;
+}
+
+button.add-subgroup:hover>span,
+button.add-subgroup:focus>span,
+button.add-subgroup:active>span {
+    display: block;
 }
 </style>
