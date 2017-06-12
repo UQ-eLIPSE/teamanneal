@@ -3,7 +3,7 @@
         <div class="group-structure">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataStructureEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataStructureEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
                 </li>
                 <li>
                     <button class="button add-subgroup" @click="addNewStratum">
@@ -40,14 +40,6 @@ export default class StrataStructureEditor extends Vue {
 
     onStratumItemDelete(stratum: Stratum.Stratum) {
         this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
-    }
-
-    onStratumItemSwapUp(stratum: Stratum.Stratum) {
-        this.$store.commit("swapUpConstraintsConfigStrataOf", stratum._id);
-    }
-
-    onStratumItemSwapDown(stratum: Stratum.Stratum) {
-        this.$store.commit("swapDownConstraintsConfigStrataOf", stratum._id);
     }
 
     addNewStratum() {
