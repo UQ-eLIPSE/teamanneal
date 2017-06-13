@@ -1,6 +1,6 @@
 <template>
     <select @change="onSelectChange" :style="{ width: elWidth }">
-        <option v-for="(option, i) in list" :value="option" :selected="i === p_selectedIndex">{{ option.text }}</option>
+        <option v-for="(option, i) in list" :value="option" :selected="i === selectedIndex">{{ option.text }}</option>
     </select>
 </template>
 
@@ -9,6 +9,8 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
 
+// The "test elements" below are used to determine the width of the select menu
+// during resize
 const selectTestElement = document.createElement("select");
 const widthTestElement = document.createElement("option");
 
@@ -18,24 +20,29 @@ selectTestElement.appendChild(widthTestElement);
 @Component
 export default class DynamicWidthSelect extends Vue {
     // Props
-    @Prop list = p(Array);
-    @Prop selectedIndex = p(Number);
+    @Prop list = p({ type: Array, required: true, });
+    @Prop selectedIndex: number = p({ type: Number, required: true, default: 0, }) as any;
 
     // Private
-    p_selectedIndex: number = -1;
     elWidth: string = "0px";
 
     onSelectChange() {
         const el = this.$el as HTMLSelectElement;
-        this.p_selectedIndex = el.selectedIndex;
+        const selectedIndex = el.selectedIndex;
+
+        // Rerender the select menu
+        const newOption = this.list![selectedIndex];
+        const text = newOption.text;
+
+        this.updateRenderWidth(text);
+
+        // Pass value back up via. `change` event
+        this.$emit("change", newOption);
     }
 
-    @Watch("p_selectedIndex")
-    onSelectedValueChange(newSelectedIndex: number) {
-        // Extract element and value
+    updateRenderWidth(text: string) {
+        // Extract element
         const el = this.$el as HTMLSelectElement;
-        const newOption = this.list![newSelectedIndex];
-        const text = newOption.text;
 
         // Set up width test element
         const parentNode = el.parentNode!;
@@ -51,25 +58,52 @@ export default class DynamicWidthSelect extends Vue {
 
         // Update element width
         this.elWidth = `${width}px`;
+    }
 
-        // Pass value back up via. `change` event
+    @Watch("list")
+    onListChange() {
+        // Rerender the select menu
+        let newOption = this.list![this.selectedIndex];
+
+        // If the option does not exist, we set the supposed selected index to
+        // 0 and do it again
+        if (newOption === undefined) {
+            newOption = this.list![0];
+        }
+
+        const text = newOption.text;
+
+        this.updateRenderWidth(text);
+
+        // Fire change event again
         this.$emit("change", newOption);
     }
 
     @Lifecycle mounted() {
-        this.p_selectedIndex = this.selectedIndex || 0;
+        // Rerender the select menu
+        let newOption = this.list![this.selectedIndex];
 
-        // IE11 fix for selectedIndex not being reflected on mount
-        const el = this.$el as HTMLSelectElement;
-        setTimeout(() => {
-            // Force selected index after a short while
-            el.selectedIndex = this.p_selectedIndex;
-        }, 0);
+        // If the option does not exist, we set the supposed selected index to
+        // 0 and do it again
+        if (newOption === undefined) {
+            newOption = this.list![0];
+        }
+
+        const text = newOption.text;
+
+        this.updateRenderWidth(text);
+
+        // Fire change event again
+        this.$emit("change", newOption);
     }
 }
 </script>
 
 <!-- ####################################################################### -->
+<!-- 
+    Global styles required because we don't actually generate a DOM element 
+    from within Vue, so it's not tagged and/or scoped
+-->
 <style>
 .__DynamicWidthSelect_TestElement {
     margin: 0;
