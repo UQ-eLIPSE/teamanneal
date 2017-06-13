@@ -144,7 +144,7 @@ export default class StrataEditorStratumItem extends Vue {
                 throw new Error(`Counter "${counter}" not supported`);
             }
 
-            const randomLength = (Math.random() * 20) >>> 0;
+            const randomLength = ((Math.random() * 20) >>> 0) + 1;
             return counterDesc.generator(randomLength)[randomLength - 1];
         }
     }
