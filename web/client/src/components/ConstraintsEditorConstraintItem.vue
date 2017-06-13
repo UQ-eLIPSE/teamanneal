@@ -5,7 +5,8 @@
         <DynamicWidthInputField class="input condition-count" v-if="showConditionCount" :val="''+p_conditionCount" @change="onConditionCountChange" />
         <DynamicWidthSelect class="select filter-column" :list="columnInfoList" :selectedIndex="p_filterColumn" @change="onFilterColumnChange" />
         <DynamicWidthSelect class="select filter-function" v-if="showFilterFunction" :list="filterFunctionList" :selectedIndex="selectedFilterFunctionIndex" @change="onFilterFunctionChange" />
-        <DynamicWidthInputField class="input filter-value" v-if="showFilterValue" :val="''+p_filterValue" @change="onFilterValueChange" />
+        <DynamicWidthInputField class="input filter-value" v-if="showFilterValueAsInput" :val="''+p_filterValue" @change="onFilterValueAsInputChange" />
+        <DynamicWidthSelect class="select filter-value" v-if="showFilterValueAsSelect" :list="filterValueAsSelectList" :selectedIndex="selectedFilterValueAsSelectIndex" @change="onFilterValueAsSelectChange" />
         <button @click="deleteConstraint">Delete</button>
     </div>
 </template>
@@ -88,11 +89,11 @@ const ConditionFunctionList = [
     },
     {
         value: "gt",
-        text: "no fewer than",
+        text: "greater than",
     },
     {
         value: "lt",
-        text: "no more than",
+        text: "fewer than",
     },
     {
         value: "low",
@@ -104,11 +105,11 @@ const ConditionFunctionList = [
     },
     {
         value: "similar",
-        text: "as similar values as possible of",
+        text: "similar values of",
     },
     {
         value: "different",
-        text: "as different values as possible of",
+        text: "different values of",
     },
 ];
 
@@ -287,7 +288,26 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return index;
     }
 
+    get selectedFilterValueAsSelectIndex() {
+        const value = this.p_filterValue;
+        const index = this.filterValueAsSelectList.findIndex(option => option.value === value);
 
+        if (index < 0) {
+            return 0;
+        }
+
+        return index;
+    }
+
+    get filterValueAsSelectList() {
+        const filterColumnIndex = this.p_filterColumn!;
+        return Array.from(this.columnInfo[filterColumnIndex].valueSet as any as ArrayLike<number | string>)
+            .sort()
+            .map(value => ({
+                value,
+                text: value,
+            }));
+    }
 
 
 
@@ -314,10 +334,13 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return true;
     }
 
-    get showFilterValue() {
-        return this.showFilterFunction;
+    get showFilterValueAsInput() {
+        return this.showFilterFunction && this.thisConstraintColumnInfo.type === "number";
     }
 
+    get showFilterValueAsSelect() {
+        return this.showFilterFunction && this.thisConstraintColumnInfo.type === "string";
+    }
 
 
 
@@ -347,11 +370,15 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         this.saveConstraint();
     }
 
-    onFilterValueChange(newFilterValue: string) {
+    onFilterValueAsInputChange(newFilterValue: string) {
         this.p_filterValue = this.sanitiseFilterValue(newFilterValue);
         this.saveConstraint();
     }
 
+    onFilterValueAsSelectChange(option: any) {
+        this.p_filterValue = option.value;
+        this.saveConstraint();
+    }
 
     @Watch("p_filterColumn")
     updateFilterValueOnFilterColumnChange() {
@@ -430,30 +457,4 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     margin: 0.2em 0;
     background: rgba(0, 0, 0, 0.05);
 }
-
-/*
-.cost-weight {
-    color: green;
-}
-
-.condition-function {
-    color: red;
-}
-
-.condition-count {
-    color: red;
-}
-
-.column {
-    color: #49075E;
-}
-
-.filter-function {
-    color: blue;
-}
-
-.filter-value {
-    color: blue;
-}
-*/
 </style>
