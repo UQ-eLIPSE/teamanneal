@@ -3,7 +3,10 @@
         <div id="tree">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataEditorStratumItem :key="stratum._id" @change="onStratumItemChange" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataEditorStratumItem :key="stratum._id"
+                                             :stratum="stratum"
+                                             :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
+                                             @change="onStratumItemChange" />
                 </li>
             </ul>
         </div>
@@ -43,24 +46,19 @@ export default class StrataEditor extends Vue {
 
     width: 100%;
     height: auto;
-
-    /*max-height: 10em;
-    overflow-y: auto;*/
-    font-size: 1.5em;
 }
 
 #tree ul {
     margin: 0;
-    padding: 0;
+    padding: 1rem;
     list-style: none;
 }
 
 #tree li {
-    padding: 0.5em;
+    padding: 0;
 }
 
-#action-buttons button {
-    padding: 0.1rem 0.3rem;
-    text-transform: none;
+#tree li+li {
+    margin-top: 1rem;
 }
 </style>

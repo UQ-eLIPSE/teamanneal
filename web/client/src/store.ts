@@ -111,7 +111,7 @@ const store = new Vuex.Store({
 
             Vue.delete(strata, index);
         },
-        
+
         updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
             const constraints = state.constraintsConfig.constraints!;
             const updatedConstraint = constraintUpdate.constraint;
