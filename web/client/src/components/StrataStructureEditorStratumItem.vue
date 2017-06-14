@@ -136,7 +136,6 @@ button.delete {
     height: 1.5em;
 
     background: transparent;
-    color: darkred;
 
     border-radius: 50%;
 
@@ -160,19 +159,36 @@ button.delete>span {
 
 button.delete::before {
     display: block;
-    content: "X";
+    content: "";
 
-    line-height: 0;
+    width: 1.3em;
+    height: 1.3em;
 
-    font-size: 1.3em;
-    font-weight: 400;
+    /* 
+     * "Trash" by Gregor Cresnar, "Pixel Perfect Collection" 
+     * https://thenounproject.com/grega.cresnar/collection/pixel-perfect/?q=trash&i=976401
+     * License: CC BY 3.0 US
+     */
+    background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjOGIwMDAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 button.delete:hover,
 button.delete:focus,
 button.delete:active {
-    background: darkred;
-    color: #fff;
+    background-color: #8b0000;
+}
+
+button.delete:hover::before,
+button.delete:focus::before,
+button.delete:active::before {
+    /* 
+     * "Trash" by Gregor Cresnar, "Pixel Perfect Collection"
+     * https://thenounproject.com/grega.cresnar/collection/pixel-perfect/?q=trash&i=976401
+     * License: CC BY 3.0 US
+     */
+    background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
 }
 
 button.delete:hover>span,
