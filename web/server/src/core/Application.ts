@@ -28,3 +28,8 @@ export function enableBodyParser(app: express.Express, bodySizeMax: string | num
 export function listenOn(app: express.Express, port: number) {
     return app.listen(port);
 }
+
+
+export function enableStaticFileServing(app: express.Express, path: string, options?: any) {
+    return app.use(express.static(path, options));
+}
