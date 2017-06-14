@@ -6,12 +6,12 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "start": "node ./server/build/server/src/index.js",
+    "start": "node --turbo --ignition ./server/build/server/src/index.js",
     "test": "npm run test_server",
     "test_server": "jest --no-cache --config=test/server.jest.config.json",
     "build": "npm run build_client && npm run build_server",
     "build_client": "cd ./client && webpack --config webpack.config.js",
-    "build_server": "tsc --project ./server"
+    "build_server": "tsc --project ./server && node ./scripts/CopyClientToServer.js"
   },
   "engines": {
     "node": ">=6.9.0"

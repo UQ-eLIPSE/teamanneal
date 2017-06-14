@@ -37,6 +37,11 @@ Application.listenOn(app, 8080);
 log("info")("Application listening on port 8080");
 
 
+// Set up static file delivery
+log("info")(`Initialising static file delivery`);
+Application.enableStaticFileServing(app, `${__dirname}/../../client`);
+
+
 // Set up routes
 log("info")(`Initialising all routes, under "${apiRoot}"`);
 Router.initAllRoutes(app)(apiRoot);
