@@ -74,6 +74,8 @@ export default class AnnealProcess extends Vue {
     position: relative;
 
     background: #f2f2f2;
+
+    overflow-y: auto;
 }
 
 .wizard-subcomponent {
