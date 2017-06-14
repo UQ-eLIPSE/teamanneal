@@ -16,6 +16,12 @@ const state: TeamAnnealState.TeamAnnealState = {
      */
     routerFullPath: "",
 
+    anneal: {
+        input: undefined,
+        output: undefined,
+        outputSatisfaction: undefined,
+    },
+
     sourceFile: {},
     constraintsConfig: {},
 };

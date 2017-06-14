@@ -1,8 +1,18 @@
+import * as Record from "../../../common/Record";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
+type ResultArrayContent = ResultArray | Record.RecordSet;
+export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
+
 export interface TeamAnnealState {
     routerFullPath: string,
+
+    anneal: {
+        input: undefined,                   // TODO: Not yet implemented
+        output: ReadonlyArray<ResultArray> | undefined,
+        outputSatisfaction: undefined,      // TODO: Not yet implemented
+    }
 
     sourceFile: Partial<SourceFile.SourceFile>,
     constraintsConfig: Partial<ConstraintsConfig.ConstraintsConfig>,

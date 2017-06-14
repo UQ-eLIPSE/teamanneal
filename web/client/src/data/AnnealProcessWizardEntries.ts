@@ -13,7 +13,8 @@ export let
     selectPartitionColumn: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
-    configureConstraints: WNE;
+    configureConstraints: WNE,
+    viewResult: WNE;
 
 /**
  * Contains all entries for the anneal process wizard
@@ -106,5 +107,17 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasStrata(state)
             );
         },
+    },
+    viewResult = {
+        label: "View result",
+        path: "/anneal/view-result",
+        // disabled: (state: TAState) => {
+        //     // Disabled when there are no strata (output groups)
+        //     return !(
+        //         TeamAnnealState.hasSourceFileData(state) &&
+        //         TeamAnnealState.hasValidIdColumnIndex(state) &&
+        //         TeamAnnealState.hasStrata(state)
+        //     );
+        // },
     },
 ];
