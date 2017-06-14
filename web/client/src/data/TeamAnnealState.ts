@@ -47,3 +47,18 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
         state.constraintsConfig.strata.length > 0
     );
 }
+
+export function isAnnealRequestInProgress(state: Partial<TeamAnnealState>) {
+    return (
+        state.anneal &&
+        state.anneal.ajaxCancelTokenSource &&
+        !state.anneal.output
+    );
+}
+
+export function isAnnealRequestCreated(state: Partial<TeamAnnealState>) {
+    return (
+        state.anneal &&
+        state.anneal.ajaxCancelTokenSource
+    );
+}
