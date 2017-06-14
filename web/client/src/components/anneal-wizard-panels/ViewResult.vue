@@ -2,7 +2,15 @@
     <div id="wizard">
         <h1>View result</h1>
     
-        <textarea style="width: 100%; font-family: monospace; white-space: pre;">{{ resultValue }}</textarea>
+        <p v-if="isRequestInProgress"
+           style="color: #fff; background: darkred; padding: 0.5em;">
+            Request in progress... (see console)
+        </p>
+        <p>
+            <textarea rows="20"
+                      style="width: 100%; font-family: monospace; white-space: pre; resize: vertical;">{{ resultValue }}</textarea>
+        </p>
+    
     
         <div class="bottom-buttons">
             <button class="button"
@@ -55,8 +63,14 @@ export default class ViewResult extends Vue {
         return disabled;
     }
 
+    get isRequestInProgress() {
+        // TODO: This is extremely rough and is not intended for production
+        // Request is in progress if there is a request token but no result
+        return this.$store.state.anneal.ajaxCancelTokenSource && !this.$store.state.anneal.output;
+    }
+
     get resultValue() {
-        return JSON.stringify(this.$store.state.anneal.output);
+        return JSON.stringify(this.$store.state.anneal.output, null, "  ");
     }
 }
 </script>

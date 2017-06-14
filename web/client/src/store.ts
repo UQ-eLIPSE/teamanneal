@@ -1,10 +1,13 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
+import { AxiosPromise, CancelTokenSource } from "axios";
+
 import * as TeamAnnealState from "./data/TeamAnnealState";
 import * as ColumnInfo from "./data/ColumnInfo";
 import * as Stratum from "./data/Stratum";
 import * as Constraint from "./data/Constraint";
+import * as AnnealAjax from "./data/AnnealAjax";
 
 Vue.use(Vuex);
 
@@ -17,6 +20,9 @@ const state: TeamAnnealState.TeamAnnealState = {
     routerFullPath: "",
 
     anneal: {
+        ajaxRequest: undefined,
+        ajaxCancelTokenSource: undefined,
+
         input: undefined,
         output: undefined,
         outputSatisfaction: undefined,
@@ -146,6 +152,67 @@ const store = new Vuex.Store({
 
             Vue.delete(constraints, index);
         },
+
+
+
+
+        // Anneal AJAX and result
+        initialiseAnnealAjax(state) {
+            state.anneal.ajaxRequest = undefined;
+            state.anneal.ajaxCancelTokenSource = undefined;
+        },
+
+        initialiseAnnealInputOutput(state) {
+            state.anneal.input = undefined;
+            state.anneal.output = undefined;
+            state.anneal.outputSatisfaction = undefined;
+        },
+
+        updateAnnealAjaxRequest(state, request: AxiosPromise) {
+            state.anneal.ajaxRequest = request;
+        },
+
+        updateAnnealAjaxCancelTokenSource(state, cancelTokenSource: CancelTokenSource) {
+            state.anneal.ajaxCancelTokenSource = cancelTokenSource;
+        },
+
+        updateAnnealInput(state, input: any) {
+            state.anneal.input = input;
+        },
+
+        updateAnnealOutput(state, output: TeamAnnealState.AnnealOutput) {
+            state.anneal.output = output;
+        },
+    },
+    actions: {
+        // Anneal AJAX and result
+        newAnnealAjaxRequest(context, data: any) {
+            const $state = context.state;
+
+            // Cancel any existing anneal AJAX request
+            const existingCancelTokenSource = $state.anneal.ajaxCancelTokenSource;
+            AnnealAjax.cancelAnnealAjaxRequest(existingCancelTokenSource);
+
+            // Wipe anneal AJAX data
+            context.commit("initialiseAnnealAjax");
+
+            // Cache the input
+            context.commit("updateAnnealInput", data);
+
+            // Create and cache the AJAX request
+            if (data === undefined) {
+                throw new Error("No input data to send to server");
+            }
+
+            const { request, cancelTokenSource } = AnnealAjax.createAnnealAjaxRequest(data);
+            context.commit("updateAnnealAjaxRequest", request);
+            context.commit("updateAnnealAjaxCancelTokenSource", cancelTokenSource);
+
+            // On AJAX success, we save the output to the state store
+            request.then((response) => {
+                context.commit("updateAnnealOutput", response.data);
+            });
+        }
     },
 });
 

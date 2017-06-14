@@ -2,15 +2,21 @@ import * as Record from "../../../common/Record";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
+import { AxiosPromise, CancelTokenSource } from "axios";
+
 type ResultArrayContent = ResultArray | Record.RecordSet;
-export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
+interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
+export type AnnealOutput = ReadonlyArray<ResultArray>;
 
 export interface TeamAnnealState {
     routerFullPath: string,
 
     anneal: {
-        input: undefined,                   // TODO: Not yet implemented
-        output: ReadonlyArray<ResultArray> | undefined,
+        ajaxRequest: AxiosPromise | undefined,
+        ajaxCancelTokenSource: CancelTokenSource | undefined,
+
+        input: any | undefined,
+        output: AnnealOutput | undefined,
         outputSatisfaction: undefined,      // TODO: Not yet implemented
     }
 
