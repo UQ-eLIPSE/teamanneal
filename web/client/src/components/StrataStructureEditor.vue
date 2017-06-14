@@ -93,7 +93,7 @@ export default class StrataStructureEditor extends Vue {
     width: 0.3em;
     height: 1.5em;
 
-    background: linear-gradient(to top, #49075e, #49075e 70%, transparent);
+    background: linear-gradient(to top, #a6b, #a6b 70%, transparent);
 }
 
 button.add-subgroup {

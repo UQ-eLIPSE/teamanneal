@@ -46,12 +46,19 @@ export default class StrataEditor extends Vue {
 
     width: 100%;
     height: auto;
+
+    padding: 1rem;
 }
 
 #tree ul {
     margin: 0;
-    padding: 1rem;
+    padding: 0;
     list-style: none;
+
+    background-image: linear-gradient(to top, transparent, transparent 1em, #a6b 7em, #a6b);
+    background-position: left 1em top 0;
+    background-repeat: no-repeat;
+    background-size: 0.3em 100%;
 }
 
 #tree li {
@@ -59,6 +66,6 @@ export default class StrataEditor extends Vue {
 }
 
 #tree li+li {
-    margin-top: 1rem;
+    margin-top: 2rem;
 }
 </style>

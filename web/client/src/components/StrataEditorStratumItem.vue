@@ -212,6 +212,8 @@ export default class StrataEditorStratumItem extends Vue {
 
     justify-content: flex-start;
     align-items: flex-start;
+
+    margin-left: 1.5em;
 }
 
 .stratum-config h3 {
