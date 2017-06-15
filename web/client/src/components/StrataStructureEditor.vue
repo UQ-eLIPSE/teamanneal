@@ -3,10 +3,15 @@
         <div class="group-structure">
             <ul>
                 <li v-for="(stratum, i) in strata">
-                    <StrataStructureEditorStratumItem :key="stratum._id" @change="onStratumItemChange" @delete="onStratumItemDelete" @swapUp="onStratumItemSwapUp" @swapDown="onStratumItemSwapDown" :stratum="stratum" :childUnit="strata[i+1] ? strata[i+1].label : 'person'" />
+                    <StrataStructureEditorStratumItem :key="stratum._id"
+                                                      :stratum="stratum"
+                                                      :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
+                                                      @change="onStratumItemChange"
+                                                      @delete="onStratumItemDelete" />
                 </li>
                 <li>
-                    <button class="button add-subgroup" @click="addNewStratum">
+                    <button class="button add-subgroup"
+                            @click="addNewStratum">
                         <span>Add subgroup</span>
                     </button>
                 </li>
@@ -42,14 +47,6 @@ export default class StrataStructureEditor extends Vue {
         this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
     }
 
-    onStratumItemSwapUp(stratum: Stratum.Stratum) {
-        this.$store.commit("swapUpConstraintsConfigStrataOf", stratum._id);
-    }
-
-    onStratumItemSwapDown(stratum: Stratum.Stratum) {
-        this.$store.commit("swapDownConstraintsConfigStrataOf", stratum._id);
-    }
-
     addNewStratum() {
         const stratum: Stratum.Stratum = {
             _id: performance.now(),
@@ -59,6 +56,7 @@ export default class StrataStructureEditor extends Vue {
                 ideal: 2,
                 max: 3,
             },
+            counter: "decimal",
         }
 
         this.$store.commit("insertConstraintsConfigStrata", stratum);
@@ -95,7 +93,7 @@ export default class StrataStructureEditor extends Vue {
     width: 0.3em;
     height: 1.5em;
 
-    background: linear-gradient(to top, #49075e, #49075e 70%, transparent);
+    background: linear-gradient(to top, #a6b, #a6b 70%, transparent);
 }
 
 button.add-subgroup {

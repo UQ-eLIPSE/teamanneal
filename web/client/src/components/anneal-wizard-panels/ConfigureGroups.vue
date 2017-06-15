@@ -1,8 +1,8 @@
 <template>
     <div id="wizard">
-        <h1>Configure output groups</h1>
+        <h1>Configure groups</h1>
         <p>
-            Here you can change how your output groups should look like. You can add, remove, reorder and relabel groups, in addition to configuring their sizes.
+            Here you can configure the sizes of each group and subgroups, and how output groups are labelled after annealing.
             <a class="more" href="#">Need help?</a>
         </p>
         <p>
@@ -23,14 +23,14 @@ import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntri
 
 import StrataEditor from "../StrataEditor.vue";
 
-const thisWizardStep = AnnealProcessWizardEntries.configureOutputGroups;
+const thisWizardStep = AnnealProcessWizardEntries.configureGroups;
 
 @Component({
     components: {
         StrataEditor,
     }
 })
-export default class ConfigureOutputGroups extends Vue {
+export default class ConfigureGroups extends Vue {
     emitWizardNavNext() {
         // Don't go if next is disabled
         if (this.isWizardNavNextDisabled) {
@@ -80,12 +80,17 @@ export default class ConfigureOutputGroups extends Vue {
 }
 
 #wizard .bottom-buttons {
-    background: rgba(0, 0, 0, 0.05);
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    background: #e6e6e6;
     margin: 0 -2rem -1rem;
     padding: 1rem 2rem;
 
     display: flex;
     flex-direction: row-reverse;
+
+    position: sticky;
+    bottom: -1px;
 }
 
 #wizard .bottom-buttons>* {

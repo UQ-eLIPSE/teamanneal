@@ -124,12 +124,17 @@ export default class SelectPartitionColumn extends Vue {
 }
 
 #wizard .bottom-buttons {
-    background: rgba(0, 0, 0, 0.05);
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    background: #e6e6e6;
     margin: 0 -2rem -1rem;
     padding: 1rem 2rem;
 
     display: flex;
     flex-direction: row-reverse;
+
+    position: sticky;
+    bottom: -1px;
 }
 
 #wizard .bottom-buttons>* {

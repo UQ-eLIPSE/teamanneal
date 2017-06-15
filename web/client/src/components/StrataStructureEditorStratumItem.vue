@@ -2,9 +2,12 @@
     <div>
         <div>
             <span class="input-wrapper">
-                <DynamicWidthInputField class="input" :val="p_label" @change="onLabelValueChange" />
+                <DynamicWidthInputField class="input"
+                                        :val="p_label"
+                                        @change="onLabelValueChange" />
             </span>
-            <button class="button delete" @click="emitDelete">
+            <button class="button delete"
+                    @click="emitDelete">
                 <span>Delete</span>
             </button>
         </div>
@@ -57,6 +60,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
             _id: this.stratum._id,
             label: this.p_label,
             size: this.stratum.size,
+            counter: this.stratum.counter,
         }
 
         const stratumUpdate: Stratum.Update = {

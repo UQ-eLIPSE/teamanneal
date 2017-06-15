@@ -146,7 +146,7 @@ export default class ReviewRecords extends Vue {
 }
 
 #wizard .bottom-buttons {
-    background: rgba(0, 0, 0, 0.05);
+    background: #e6e6e6;
     /*margin: 0 -2rem -1rem;*/
     padding: 1rem 2rem;
 

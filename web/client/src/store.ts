@@ -112,53 +112,6 @@ const store = new Vuex.Store({
             Vue.delete(strata, index);
         },
 
-        swapUpConstraintsConfigStrataOf(state, _id: number) {
-            const strata = state.constraintsConfig.strata!;
-
-            const index = strata.findIndex(stratum => stratum._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            // Can't swap with previous item
-            if (index === 0) {
-                return;
-            }
-
-            const a = strata[index - 1];
-            const b = strata[index];
-
-            strata.splice(index - 1, 1, b);
-            strata.splice(index, 1, a);
-        },
-
-        swapDownConstraintsConfigStrataOf(state, _id: number) {
-            const strata = state.constraintsConfig.strata!;
-
-            const index = strata.findIndex(stratum => stratum._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            // Can't swap with previous item
-            if (index === 0) {
-                return;
-            }
-
-            // Can't swap with next item
-            if (index === strata.length - 1) {
-                return;
-            }
-
-            const a = strata[index + 1];
-            const b = strata[index];
-
-            strata.splice(index + 1, 1, b);
-            strata.splice(index, 1, a);
-        },
-
         updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
             const constraints = state.constraintsConfig.constraints!;
             const updatedConstraint = constraintUpdate.constraint;

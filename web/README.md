@@ -36,8 +36,23 @@ Jest configuration files are located under `test`.
 Files that can be used to test anneals can be found under `test-files`.
 
 
-## Source structure
-Source code for the server can be found under `server/src`.
+## Folder structure
+
+* build (created upon build)
+  * client
+  * common
+  * server
+* client
+  * src
+* common
+* scripts
+* server
+  * src
+* test
+* test-files
+
+Source code can be found under the `src` folder of their respective components
+(`server`, `client`).
 
 All tests are located under a `__tests__` folder that sits within the same
 folder that the relevant source codes sits in.
