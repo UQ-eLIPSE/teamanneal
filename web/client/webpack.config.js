@@ -1,7 +1,7 @@
 module.exports = {
     entry: "./src/index.ts",
     output: {
-        path: `${__dirname}/build`,
+        path: `${__dirname}/../build/client/build`,
         filename: "build.js",
         publicPath: "build/"
     },
