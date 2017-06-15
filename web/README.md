@@ -4,6 +4,11 @@ Version of TeamAnneal written in JavaScript for server and client.
 
 
 ## Prerequisites
+### Recommended for best annealing performance
+* Node.js 8.1.0+ (version 8.1.0+) - will become LTS after October 2017
+  * npm 5.0.0+ (this should be included)
+
+### Minimum supported
 * Node.js 6.x LTS (version 6.9.0+)
   * npm 3.10.0+ (this should be included)
 
