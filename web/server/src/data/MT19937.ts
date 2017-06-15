@@ -45,16 +45,16 @@
 
 export class MT19937 {
     /* Period parameters */
-    private static readonly N: number = 624;
-    private static readonly M: number = 397;
-    private static readonly MATRIX_A: number = 0x9908b0df;   /* constant vector a */
-    private static readonly UPPER_MASK: number = 0x80000000; /* most significant w-r bits */
-    private static readonly LOWER_MASK: number = 0x7fffffff; /* least significant r bits */
+    public static readonly N: number = 624;
+    public static readonly M: number = 397;
+    public static readonly MATRIX_A: number = 0x9908b0df;   /* constant vector a */
+    public static readonly UPPER_MASK: number = 0x80000000; /* most significant w-r bits */
+    public static readonly LOWER_MASK: number = 0x7fffffff; /* least significant r bits */
 
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
-    private static readonly mag01: Uint32Array = new Uint32Array([0x0, MT19937.MATRIX_A]);
+    public static readonly mag01: Uint32Array = new Uint32Array([0x0, MT19937.MATRIX_A]);
 
-    private readonly mt: Uint32Array = new Uint32Array(MT19937.N);  /* the array for the state vector  */
+    public readonly mt: Uint32Array = new Uint32Array(MT19937.N);  /* the array for the state vector  */
     private mti: number = MT19937.N + 1;    /* mti==N+1 means mt[N] is not initialized */
 
     /* initializes mt[N] with a seed */

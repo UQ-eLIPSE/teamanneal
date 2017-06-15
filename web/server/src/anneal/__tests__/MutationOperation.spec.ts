@@ -1,6 +1,6 @@
 import * as MutationOperation from "../MutationOperation";
 
-describe.skip("", () => {
+describe("", () => {
     test("", () => {
         MutationOperation;
     });
