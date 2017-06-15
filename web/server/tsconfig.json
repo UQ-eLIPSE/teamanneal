@@ -7,7 +7,7 @@
             "es2015"
         ],
 
-        "outDir": "./build",
+        "outDir": "../build",
 
         "sourceMap": true,
 
