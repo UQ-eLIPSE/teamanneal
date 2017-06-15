@@ -1,5 +1,3 @@
-import * as Util from "../core/Util";
-
 export interface TemperatureDerivation {
     readonly costArray: ReadonlyArray<number>,
     readonly size: number,
@@ -42,7 +40,7 @@ export function deriveTemperature(td: TemperatureDerivation) {
     const size = td.size;
 
     // Use cost at 90th percentile for temperature calculation
-    const cost90thPc = costs.sort()[Util.int32(size * 0.9)];
+    const cost90thPc = costs.sort()[(size * 0.9) >>> 0];
 
     // Cost should be permitted at 70% probability
     return -cost90thPc / Math.log(0.7);

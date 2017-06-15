@@ -1,22 +1,18 @@
-import * as MersenneTwister from "mersenne-twister";
 import * as crypto from "crypto";
-
-import * as Util from "../core/Util";
-
-interface RandomState {
-    readonly vector: ReadonlyArray<number>,
-    readonly index: number,
-}
-
+import { MT19937 } from "./MT19937";
 
 /** The MersenneTwister PRNG object */
-const __generator = new MersenneTwister();
+let __generator: MT19937;
 
+init(); // Initialise now!
 
 export function init() {
-    const generator = new MersenneTwister();
-    setRandomSeed(generator);
-    return generator;
+    setSeed(generateRandomSeed());
+}
+
+export function setSeed(seed: number) {
+    __generator = new MT19937();
+    __generator.init_genrand(seed);
 }
 
 export function generateRandomSeed() {
@@ -25,89 +21,14 @@ export function generateRandomSeed() {
     return crypto.randomBytes(4).readUInt32LE(0);
 }
 
-
-
-export function random(generator: MersenneTwister = __generator) {
-    return generator.random();
+export function random(generator = __generator) {
+    return generator.genrand_real2();
 }
 
-export function randomLong(generator: MersenneTwister = __generator) {
-    return generator.random_long();
+export function randomLong(generator = __generator) {
+    return generator.genrand_res53();
 }
 
-export function randomUint32(generator: MersenneTwister = __generator) {
-    return generator.random_int();
+export function randomUint32(generator = __generator) {
+    return generator.genrand_int32();
 }
-
-
-
-function getStateVector(generator: MersenneTwister) {
-    // Shallow copy required to prevent direct access to .mt array object
-    return Util.shallowCopyArray(generator.mt);
-}
-
-function getStateIndex(generator: MersenneTwister) {
-    return generator.mti;
-}
-
-export function getState(generator: MersenneTwister) {
-    const state: RandomState = {
-        vector: getStateVector(generator),
-        index: getStateIndex(generator),
-    }
-
-    return state;
-}
-
-function setStateVector(generator: MersenneTwister, vector: ReadonlyArray<number>) {
-    // Check length is right
-    if (generator.N !== vector.length) {
-        throw new Error(`Vector must be of length ${generator.N}`);
-    }
-
-    // Vector must be uint32[]
-    vector = vector.map(el => el >>> 0);
-
-    // Deliberately permit changing .mt by annotating `generator` as any
-    return (generator as any).mt = vector;
-}
-
-function setStateIndex(generator: MersenneTwister, index: number) {
-    // Deliberately permit changing .mti by annotating `generator` as any
-    return (generator as any).mti = index;
-}
-
-export function setState(generator: MersenneTwister, state: RandomState) {
-    setStateVector(generator, state.vector);
-    setStateIndex(generator, state.index);
-}
-
-export function setSeed(generator: MersenneTwister, number: number) {
-    return generator.init_seed(number);
-}
-
-export function setRandomSeed(generator: MersenneTwister) {
-    return setSeed(generator, generateRandomSeed());
-}
-
-
-
-
-export function setGlobalSeed(number: number) {
-    return setSeed(__generator, number);
-}
-
-export function setGlobalRandomSeed() {
-    return setRandomSeed(__generator);
-}
-
-export function setGlobalState(state: RandomState) {
-    return setState(__generator, state);
-}
-
-export function getGlobalState() {
-    return getState(__generator);
-}
-
-// Initialised to random seed
-setGlobalRandomSeed();
