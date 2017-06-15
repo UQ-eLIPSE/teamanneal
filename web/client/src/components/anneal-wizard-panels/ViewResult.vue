@@ -65,7 +65,6 @@ export default class ViewResult extends Vue {
     }
 
     get isRequestInProgress() {
-        // TODO: This is extremely rough and is not intended for production
         // Request is in progress if there is a request token but no result
         return this.$store.state.anneal.ajaxCancelTokenSource && !this.$store.state.anneal.output;
     }

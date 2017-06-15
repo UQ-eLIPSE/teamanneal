@@ -13,7 +13,10 @@ export function cancelAnnealAjaxRequest(cancelTokenSource: CancelTokenSource | u
 }
 
 export function createAnnealAjaxRequest(data: any) {
+    // Create a cancellation token
+    // This is used in event of overlapping requests
     const cancelTokenSource = axios.CancelToken.source();
+
     const request = axios.post("/api/anneal", data, {
         cancelToken: cancelTokenSource.token,
     });
@@ -73,49 +76,78 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
 }
 
 export function labelTree(rootNode: ResultArrayNode, strata: ReadonlyArray<Stratum.Stratum>) {
-    return labelNode(rootNode, strata, 0);
+    if (rootNode.children === undefined) {
+        throw new Error("Root node must have children");
+    }
+
+    // Initialise blank arrays in the stratum node collection (one per stratum)
+    const stratumNodeCollection: ResultArrayNode[][] = [];
+    for (let i = 0; i < strata.length; ++i) {
+        stratumNodeCollection.push([]);
+    }
+
+    // Go through tree and associate all nodes with their stratum
+    rootNode.children.forEach(childNode => binNodeIntoCollection(childNode, stratumNodeCollection, strata.length - 1));
+
+    // Label nodes
+    labelNodesInCollection(stratumNodeCollection, strata);
 }
 
-export function labelNode(node: ResultArrayNode, strata: ReadonlyArray<Stratum.Stratum>, depth: number) {
+export function binNodeIntoCollection(node: ResultArrayNode, collection: ReadonlyArray<ResultArrayNode[]>, stratumIndex: number) {
+    // Terminate loop if stratum index is invalid
+    if (stratumIndex < 0) { return; }
+
+    // Check that this is not a record (which does not need to be binned)
+    if (node.content !== undefined) { return; }
+
+    // Pop this node into the stratum collection
+    collection[stratumIndex].push(node);
+
+    // Recurse down
     if (node.children !== undefined) {
-        // Label this if not root (depth = 0)
-        if (depth > 0) {
-            const counter = strata[strata.length - depth].counter;
+        node.children.forEach(childNode => binNodeIntoCollection(childNode, collection, stratumIndex - 1));
+    }
+}
 
-            // TODO: Currently not yet defined
-            const index: number = 0;
+export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode[]>, strata: ReadonlyArray<Stratum.Stratum>) {
+    collection.forEach((nodes, stratumIndex) => {
+        // We currently get the strata in reverse order because the internal
+        // strata object is currently ordered:
+        //      [highest, ..., lowest]
+        // rather than:
+        //      [lowest, ..., highest]
+        // which is what the server receives as input to the anneal endpoint.
+        // 
+        // This is also noted in file: client/data/ConstraintsConfig.ts
+        //
+        // TODO: Fix up the internal strata object order
+        const stratum = strata[strata.length - stratumIndex - 1];
+        // const stratum = strata[stratumIndex];
 
-            // Get counter function
-            let label: string;
-            if (Array.isArray(counter)) {
-                label = counter[index];
-            } else {
-                const listCounters = ListCounter.SupportedListCounters;
-                const counterDesc = listCounters.find(x => x.type === counter);
+        const counter = stratum.counter;
 
-                if (counterDesc === undefined) {
-                    throw new Error(`Counter "${counter}" not supported`);
-                }
+        // Generate array of counters
+        let counterArray: ReadonlyArray<string>;
+        if (Array.isArray(counter)) {
+            counterArray = counter;     // Counter is an arbitrary string array
+        } else {
+            const listCounters = ListCounter.SupportedListCounters;
+            const counterDesc = listCounters.find(x => x.type === counter);
 
-                label = counterDesc.generator(index + 1)[index];
+            if (counterDesc === undefined) {
+                throw new Error(`Counter "${counter}" not supported`);
             }
 
-            node.label = label;
+            counterArray = counterDesc.generator(nodes.length);
         }
 
-        // Recurse into children
-        node.children.forEach((childNode) => {
-            labelNode(childNode, strata, depth + 1);
+        // Apply labels to each node in stratum
+        const counterArrayLength = counterArray.length;
+        const stratumLabel = stratum.label;
+
+        nodes.forEach((node, i) => {
+            const counterValue = counterArray[i % counterArrayLength];
+            node.label = `${stratumLabel} ${counterValue}`;
         });
-
-        return;
-    }
-
-    if (node.content !== undefined) {
-        // Stop - we're at a record which can't be labelled
-        return;
-    }
-
-    // If none of the above conditions are true, then we don't know what this node thing is
-    throw new Error("Unhandled condition; node not recognised");
+    });
 }
