@@ -6,11 +6,10 @@
            style="color: #fff; background: darkred; padding: 0.5em;">
             Request in progress... (see console)
         </p>
-        <p>
-            <textarea rows="20"
-                      style="width: 100%; font-family: monospace; white-space: pre; resize: vertical;">{{ resultValue }}</textarea>
-        </p>
-    
+        <div v-if="rootNodeAvailable">
+            <ResultArrayNodeView v-for="childNode in rootNodeChildren"
+                                 :node="childNode" />
+        </div>
     
         <div class="bottom-buttons">
             <button class="button"
@@ -27,11 +26,13 @@ import { Vue, Component } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import ResultArrayNodeView from "../ResultArrayNodeView.vue";
+
 const thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
 @Component({
     components: {
-
+        ResultArrayNodeView,
     }
 })
 export default class ViewResult extends Vue {
@@ -69,8 +70,12 @@ export default class ViewResult extends Vue {
         return this.$store.state.anneal.ajaxCancelTokenSource && !this.$store.state.anneal.output;
     }
 
-    get resultValue() {
-        return JSON.stringify(this.$store.state.anneal.output, null, "  ");
+    get rootNodeAvailable() {
+        return this.$store.state.anneal.outputTree && this.$store.state.anneal.outputTree.children.length > 0;
+    }
+
+    get rootNodeChildren() {
+        return this.$store.state.anneal.outputTree.children;
     }
 }
 </script>

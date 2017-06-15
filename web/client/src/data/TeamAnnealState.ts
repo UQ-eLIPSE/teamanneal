@@ -2,10 +2,11 @@ import * as Record from "../../../common/Record";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
+import { ResultArrayNode } from "./AnnealAjax";
 import { AxiosPromise, CancelTokenSource } from "axios";
 
 type ResultArrayContent = ResultArray | Record.RecordSet;
-interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
+export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
 export type AnnealOutput = ReadonlyArray<ResultArray>;
 
 export interface TeamAnnealState {
@@ -17,6 +18,7 @@ export interface TeamAnnealState {
 
         input: any | undefined,
         output: AnnealOutput | undefined,
+        outputTree: ResultArrayNode | undefined,
         outputSatisfaction: undefined,      // TODO: Not yet implemented
     }
 

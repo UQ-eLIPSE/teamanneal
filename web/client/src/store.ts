@@ -25,6 +25,7 @@ const state: TeamAnnealState.TeamAnnealState = {
 
         input: undefined,
         output: undefined,
+        outputTree: undefined,
         outputSatisfaction: undefined,
     },
 
@@ -165,6 +166,7 @@ const store = new Vuex.Store({
         initialiseAnnealInputOutput(state) {
             state.anneal.input = undefined;
             state.anneal.output = undefined;
+            state.anneal.outputTree = undefined;
             state.anneal.outputSatisfaction = undefined;
         },
 
@@ -182,6 +184,10 @@ const store = new Vuex.Store({
 
         updateAnnealOutput(state, output: TeamAnnealState.AnnealOutput) {
             state.anneal.output = output;
+        },
+
+        updateAnnealOutputTree(state, node: AnnealAjax.ResultArrayNode) {
+            state.anneal.outputTree = node;
         },
     },
     actions: {
@@ -210,7 +216,15 @@ const store = new Vuex.Store({
 
             // On AJAX success, we save the output to the state store
             request.then((response) => {
-                context.commit("updateAnnealOutput", response.data);
+                // TODO: Make an interface for response data
+                const data: any = response.data;
+                const output = data.output;
+
+                const tree = AnnealAjax.transformOutputIntoTree(output);
+                AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
+
+                context.commit("updateAnnealOutput", output);
+                context.commit("updateAnnealOutputTree", tree);
             });
         }
     },
