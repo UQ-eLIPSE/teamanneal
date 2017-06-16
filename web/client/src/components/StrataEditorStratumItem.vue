@@ -118,7 +118,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get childUnitText() {
-        return this.childUnit || "<unit>";
+        return this.childUnit || "<group>";
     }
 
     get pluralChildUnitText() {

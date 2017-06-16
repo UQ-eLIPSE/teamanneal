@@ -89,7 +89,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state)
+                TeamAnnealState.hasStrata(state) &&
+                TeamAnnealState.isStrataConfigValid(state)
             );
         },
 
@@ -103,7 +104,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state)
+                TeamAnnealState.hasStrata(state) &&
+                TeamAnnealState.isStrataConfigValid(state)
             );
         },
     },

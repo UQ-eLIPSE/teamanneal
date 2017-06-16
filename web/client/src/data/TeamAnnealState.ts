@@ -31,3 +31,31 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
         state.constraintsConfig.strata.length > 0
     );
 }
+
+export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
+    if (state.constraintsConfig === undefined) { return false; }
+
+    const strata = state.constraintsConfig.strata;
+
+    if (strata === undefined) { return false; }
+
+    const strataNameSet = new Set<string>();
+
+    for (let i = 0; i < strata.length; ++i) {
+        const stratum = strata[i];
+
+        // We consider uniqueness regardless of case
+        const label = stratum.label.trim().toLowerCase();
+
+        // Do not permit blank string names
+        if (label.length === 0) { return false; }
+
+        strataNameSet.add(label);
+    }
+
+    // Do not permit non unique strata names
+    if (strataNameSet.size !== strata.length) { return false; }
+
+    // Otherwise we're good to go
+    return true;
+}

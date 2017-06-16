@@ -3,13 +3,21 @@
         <h1>Design group structure</h1>
         <p>
             Add, remove and relabel subgroups to form the group structure you want.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
+        <div v-if="!isStrataConfigValid"
+             class="error-msg">
+            <h3>Group structure is not valid</h3>
+            <p>You have groups with blank or conflicting names. Please correct this before continuing.</p>
+        </div>
         <p>
             <StrataStructureEditor />
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="emitWizardNavNext" :disabled="isWizardNavNextDisabled">Continue</button>
+            <button class="button"
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
@@ -18,6 +26,8 @@
 
 <script lang="ts">
 import { Vue, Component } from "av-ts";
+
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -43,6 +53,9 @@ export default class DesignGroupStructure extends Vue {
     }
 
     get isWizardNavNextDisabled() {
+        // Disable next step if strata is currently invalid
+        if (!this.isStrataConfigValid) { return true; }
+
         const state = this.$store.state;
 
         // Check if we have a next step defined
@@ -57,6 +70,10 @@ export default class DesignGroupStructure extends Vue {
         const disabled = next.disabled(state);
 
         return disabled;
+    }
+
+    get isStrataConfigValid() {
+        return TeamAnnealState.isStrataConfigValid(this.$store.state);
     }
 }
 </script>
@@ -95,5 +112,11 @@ export default class DesignGroupStructure extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
