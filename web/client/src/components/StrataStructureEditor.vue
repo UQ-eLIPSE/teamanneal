@@ -9,7 +9,7 @@
                                                       @change="onStratumItemChange"
                                                       @delete="onStratumItemDelete" />
                 </li>
-                <li>
+                <li v-if="subgroupButtonEnabled">
                     <button class="button add-subgroup"
                             @click="addNewStratum">
                         <span>Add subgroup</span>
@@ -37,6 +37,11 @@ import * as Stratum from "../data/Stratum";
 export default class StrataStructureEditor extends Vue {
     get strata() {
         return this.$store.state.constraintsConfig.strata!;
+    }
+
+    get subgroupButtonEnabled() {
+        // Enable only for no more than 2 strata
+        return this.strata.length < 2;
     }
 
     onStratumItemChange(stratumUpdate: Stratum.Update) {
