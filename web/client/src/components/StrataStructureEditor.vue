@@ -6,6 +6,7 @@
                     <StrataStructureEditorStratumItem :key="stratum._id"
                                                       :stratum="stratum"
                                                       :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
+                                                      :deletable="isStratumDeletable(i)"
                                                       @change="onStratumItemChange"
                                                       @delete="onStratumItemDelete" />
                 </li>
@@ -60,6 +61,11 @@ export default class StrataStructureEditor extends Vue {
         }
 
         this.$store.commit("insertConstraintsConfigStrata", stratum);
+    }
+
+    isStratumDeletable(i: number) {
+        // Only substrata are deletable
+        return i > 0;
     }
 }
 </script>
