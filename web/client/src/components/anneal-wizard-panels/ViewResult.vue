@@ -24,6 +24,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import ResultArrayNodeView from "../ResultArrayNodeView.vue";
@@ -65,8 +66,7 @@ export default class ViewResult extends Vue {
     }
 
     get isRequestInProgress() {
-        // Request is in progress if there is a request token but no result
-        return this.$store.state.anneal.ajaxCancelTokenSource && !this.$store.state.anneal.output;
+        return TeamAnnealState.isAnnealRequestInProgress(this.$store.state);
     }
 
     get rootNodeAvailable() {

@@ -1,8 +1,15 @@
 import { CancelTokenSource } from "axios";
+
 import * as Record from "../../../common/Record";
+import * as Stratum from "../../../common/Stratum";
+import * as Constraint from "../../../common/Constraint";
+import * as SourceData from "../../../common/SourceData";
+import * as SourceDataColumn from "../../../common/SourceDataColumn";
+import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
+
 import * as TeamAnnealState from "./TeamAnnealState";
 import * as ListCounter from "./ListCounter";
-import * as Stratum from "./Stratum";
+import * as _Stratum from "./Stratum";
 
 import axios from "axios";
 
@@ -75,7 +82,7 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
     return node;
 }
 
-export function labelTree(rootNode: ResultArrayNode, strata: ReadonlyArray<Stratum.Stratum>) {
+export function labelTree(rootNode: ResultArrayNode, strata: ReadonlyArray<_Stratum.Stratum>) {
     if (rootNode.children === undefined) {
         throw new Error("Root node must have children");
     }
@@ -109,7 +116,7 @@ export function binNodeIntoCollection(node: ResultArrayNode, collection: Readonl
     }
 }
 
-export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode[]>, strata: ReadonlyArray<Stratum.Stratum>) {
+export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode[]>, strata: ReadonlyArray<_Stratum.Stratum>) {
     collection.forEach((nodes, stratumIndex) => {
         // We currently get the strata in reverse order because the internal
         // strata object is currently ordered:
@@ -150,4 +157,217 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
             node.label = `${stratumLabel} ${counterValue}`;
         });
     });
+}
+
+
+export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealState.TeamAnnealState>) {
+    // ===============
+    // Validity checks
+    // ===============
+
+    if ($state.sourceFile === undefined) {
+        throw new Error("No source file information");
+    }
+
+    const sourceFile = $state.sourceFile;
+
+    if ($state.constraintsConfig === undefined) {
+        throw new Error("No constraints configuration information");
+    }
+
+    const constraintsConfig = $state.constraintsConfig;
+
+
+
+    if (sourceFile.cookedData === undefined) {
+        throw new Error("No cooked data representation");
+    }
+
+    if (sourceFile.columnInfo === undefined) {
+        throw new Error("No column information");
+    }
+
+    if (constraintsConfig.strata === undefined) {
+        throw new Error("No strata");
+    }
+
+    if (constraintsConfig.constraints === undefined) {
+        throw new Error("No constraints");
+    }
+
+
+
+
+    // ====================================
+    // Source data (Partitions and columns)
+    // ====================================
+
+    // We use the cooked representation not the raw data to send to the server
+    // as the values and types are normalised by the client beforehand
+    const cookedData = sourceFile.cookedData;
+    const columnInfo = sourceFile.columnInfo;
+
+    // Apply partitioning to data records
+    const partitionColumnIndex = constraintsConfig.partitionColumnIndex;
+
+    let partitions: SourceData.PartitionedRecordArray;
+
+    if (partitionColumnIndex === undefined) {
+        // In the event that there was no partition column set, then we just 
+        // wrap the records with an array to pretend we have one partition of
+        // all records - this has no difference on the outcome of the anneal
+        partitions = [cookedData];
+    } else {
+        // Partition over values
+        const partitionColumnInfo = columnInfo[partitionColumnIndex];
+        const columnValueSet: Set<number | string> = partitionColumnInfo.valueSet;
+
+        const tempPartitionSet: any[][] = [];
+
+        // Go through each distinct value to partition
+        columnValueSet.forEach((val) => {
+            const partition: any[] = [];
+
+            // For each (cooked) data row, check if the cell value of the row in
+            // the partition column is equal to the distinct value being cycled 
+            // through in the column value forEach loop
+            cookedData.forEach((row) => {
+                if (row[partitionColumnIndex] === val) {
+                    // If so, push into the rows for this partition
+                    partition.push(row);
+                }
+            });
+
+            // Finally we push the partition into the overall partition set
+            tempPartitionSet.push(partition);
+        });
+
+        partitions = tempPartitionSet;
+    }
+
+    // Map the column info objects into just what we need for the request
+    const columns: SourceDataColumn.ColumnDescArray = columnInfo.map(
+        (column, i) => ({
+            label: column.label,
+            type: column.type,
+            isId: i === constraintsConfig.idColumnIndex,
+        })
+    );
+
+    // Compile the source data object
+    const sourceData: SourceData.Desc = {
+        columns,
+        records: partitions,
+        isPartitioned: true,    // We have partitioned the data above regardless
+    }
+
+
+
+
+    // ======
+    // Strata
+    // ======
+
+    const internalStrata = constraintsConfig.strata;
+
+    // We currently get the strata in reverse order because the internal
+    // strata object is currently ordered:
+    //      [highest, ..., lowest]
+    // rather than:
+    //      [lowest, ..., highest]
+    // which is what the server receives as input to the anneal endpoint.
+    // 
+    // This is also noted in file: client/data/ConstraintsConfig.ts
+    //
+    // TODO: Fix up the internal strata object order
+    let strata: Stratum.Desc[] = [];
+
+    for (let i = internalStrata.length - 1; i >= 0; --i) {
+        const internalStratum = internalStrata[i];
+
+        const stratum: Stratum.Desc = {
+            label: internalStratum.label,
+            size: internalStratum.size,
+        }
+
+        strata.push(stratum);
+    }
+
+
+
+    // ===========
+    // Constraints
+    // ===========
+
+    const constraints: ReadonlyArray<Constraint.Desc> = constraintsConfig.constraints.map(
+        (internalConstraint) => {
+            // TODO: The below code is copied three times due to TypeScript's
+            // strict type checking - it should be combined into one
+            switch (internalConstraint.type) {
+                case "count": {
+                    const constraint: Constraint.Desc = {
+                        type: internalConstraint.type,
+                        weight: internalConstraint.weight,
+
+                        strata: internalConstraint.strata,
+
+                        filter: internalConstraint.filter,
+                        condition: internalConstraint.condition,
+
+                        applicability: internalConstraint.applicability,
+                    }
+
+                    return constraint;
+                }
+
+                case "limit": {
+                    const constraint: Constraint.Desc = {
+                        type: internalConstraint.type,
+                        weight: internalConstraint.weight,
+
+                        strata: internalConstraint.strata,
+
+                        filter: internalConstraint.filter,
+                        condition: internalConstraint.condition,
+
+                        applicability: internalConstraint.applicability,
+                    }
+
+                    return constraint;
+                }
+
+                case "similarity": {
+                    const constraint: Constraint.Desc = {
+                        type: internalConstraint.type,
+                        weight: internalConstraint.weight,
+
+                        strata: internalConstraint.strata,
+
+                        filter: internalConstraint.filter,
+                        condition: internalConstraint.condition,
+
+                        applicability: internalConstraint.applicability,
+                    }
+
+                    return constraint;
+                }
+            }
+
+            throw new Error("Unrecognised constraint type");
+        }
+    );
+
+    const request: ToServerAnnealRequest.Root = {
+        sourceData,
+        strata,
+        constraints,
+        config: {
+            // TODO: This is entire block is dummy data;
+            // The config parameters are currently unused and will be cleaned up in TA-52
+            iterations: 0,
+            returnAllData: true,
+        },
+    }
+
+    return request;
 }

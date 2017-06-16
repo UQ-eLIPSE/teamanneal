@@ -1,4 +1,6 @@
 import * as Record from "../../../common/Record";
+import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
+
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
@@ -16,7 +18,7 @@ export interface TeamAnnealState {
         ajaxRequest: AxiosPromise | undefined,
         ajaxCancelTokenSource: CancelTokenSource | undefined,
 
-        input: any | undefined,
+        input: ToServerAnnealRequest.Root | undefined,
         output: AnnealOutput | undefined,
         outputTree: ResultArrayNode | undefined,
         outputSatisfaction: undefined,      // TODO: Not yet implemented
@@ -53,8 +55,9 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
 export function isAnnealRequestInProgress(state: Partial<TeamAnnealState>) {
     return (
         state.anneal &&
-        state.anneal.ajaxCancelTokenSource &&
-        !state.anneal.output
+        state.anneal.input &&                   // Has an input anneal request
+        state.anneal.ajaxCancelTokenSource &&   // Has a cancel token set up
+        !state.anneal.output                    // But doesn't have a output yet
     );
 }
 

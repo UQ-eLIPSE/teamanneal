@@ -131,6 +131,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
+
+        next: () => viewResult,
     },
     viewResult = {
         label: "View result",

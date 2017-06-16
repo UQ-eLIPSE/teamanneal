@@ -199,8 +199,9 @@ const store = new Vuex.Store({
             const existingCancelTokenSource = $state.anneal.ajaxCancelTokenSource;
             AnnealAjax.cancelAnnealAjaxRequest(existingCancelTokenSource);
 
-            // Wipe anneal AJAX data
+            // Wipe existing AJAX and anneal request data
             context.commit("initialiseAnnealAjax");
+            context.commit("initialiseAnnealInputOutput");
 
             // Cache the input
             context.commit("updateAnnealInput", data);
