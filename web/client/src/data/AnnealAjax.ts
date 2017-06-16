@@ -269,6 +269,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // ======
 
     const internalStrata = constraintsConfig.strata;
+    const numberOfStrata = internalStrata.length;
 
     // We currently get the strata in reverse order because the internal
     // strata object is currently ordered:
@@ -282,7 +283,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // TODO: Fix up the internal strata object order
     let strata: Stratum.Desc[] = [];
 
-    for (let i = internalStrata.length - 1; i >= 0; --i) {
+    for (let i = numberOfStrata - 1; i >= 0; --i) {
         const internalStratum = internalStrata[i];
 
         const stratum: Stratum.Desc = {
@@ -309,7 +310,8 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        strata: internalConstraint.strata,
+                        // TODO: Fix up the internal strata object order
+                        strata: numberOfStrata - internalConstraint.strata - 1,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
@@ -325,7 +327,8 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        strata: internalConstraint.strata,
+                        // TODO: Fix up the internal strata object order
+                        strata: numberOfStrata - internalConstraint.strata - 1,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
@@ -341,7 +344,8 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        strata: internalConstraint.strata,
+                        // TODO: Fix up the internal strata object order
+                        strata: numberOfStrata - internalConstraint.strata - 1,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
@@ -362,7 +366,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
         strata,
         constraints,
         config: {
-            // TODO: This is entire block is dummy data;
+            // TODO: This entire block is dummy data;
             // The config parameters are currently unused and will be cleaned up in TA-52
             iterations: 0,
             returnAllData: true,
