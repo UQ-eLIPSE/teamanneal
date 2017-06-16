@@ -98,7 +98,6 @@ export default class StrataStructureEditor extends Vue {
 
 button.add-subgroup {
     display: flex;
-    border: 0;
     margin: 0 auto;
 
     width: 3em;
