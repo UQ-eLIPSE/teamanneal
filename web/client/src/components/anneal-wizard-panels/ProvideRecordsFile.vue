@@ -4,15 +4,24 @@
         <p>
             Select a
             <b>CSV</b> file containing records of persons along with any attributes you would like to apply constraints to.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
         <div class="bottom-buttons">
             <label v-if="!isFileSetInStore">
-                <input type="file" id="load-file" accept=".csv" @change="onFileInputChanged($event)">
-                <button class="button" @click.stop.prevent="openFilePicker">Select CSV file...</button>
+                <input type="file"
+                       id="load-file"
+                       accept=".csv"
+                       @change="onFileInputChanged($event)">
+                <button class="button"
+                        @click.stop.prevent="openFilePicker">Select CSV file...</button>
             </label>
-            <button class="button" @click="emitWizardNavNext" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
-            <button class="button gold" @click="clearFile" v-if="isFileSetInStore">Clear file</button>
+            <button class="button"
+                    @click="emitWizardNavNext"
+                    v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
+            <button class="button gold"
+                    @click="clearFile"
+                    v-if="isFileSetInStore">Clear file</button>
         </div>
     </div>
 </template>
@@ -23,6 +32,7 @@
 import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
 
+import * as Stratum from "../../data/Stratum";
 import * as SourceFile from "../../data/SourceFile";
 import * as ColumnInfo from "../../data/ColumnInfo";
 import * as CookedData from "../../data/CookedData";
@@ -130,8 +140,20 @@ export default class ProvideRecordsFile extends Vue {
         // Wipe existing constraints
         c("initialiseConstraintsConfig");
 
+        // Add a generic stratum now for users to get started with
+        const genericStratum: Stratum.Stratum = {
+            _id: performance.now(),
+            label: "Team",
+            size: {
+                min: 2,
+                ideal: 3,
+                max: 4,
+            },
+            counter: "decimal",
+        }
+        c("insertConstraintsConfigStrata", genericStratum);
 
-
+        // Move on to the next step
         this.emitWizardNavNext();
     }
 }
