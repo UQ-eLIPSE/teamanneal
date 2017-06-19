@@ -47,13 +47,20 @@ export function transformOutputIntoTree(outputData: TeamAnnealState.AnnealOutput
     // Each level of nested array corresponds to one stratum
     const rootNode = createNodeFromResultArray(amalgamatedData);
 
+    // Flip root node flag
+    rootNode.isRoot = true;
+
     return rootNode;
 }
 
 export interface ResultArrayNode {
-    label: string | undefined,
+    counterValue: string | number | undefined,
+    stratumLabel: string | undefined,
+    processedLabel: string | undefined,
     children: ReadonlyArray<ResultArrayNode> | undefined,
     content: Record.Record | undefined,
+
+    isRoot: boolean,
 }
 
 export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArray): ResultArrayNode {
@@ -64,9 +71,13 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
         const record: Record.Record = resultArray as any[];
 
         const node: ResultArrayNode = {
-            label: undefined,
+            counterValue: undefined,
+            stratumLabel: undefined,
+            processedLabel: undefined,
             children: undefined,
             content: record,
+
+            isRoot: false,
         };
 
         return node;
@@ -74,9 +85,13 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
 
     // Recursively call
     const node: ResultArrayNode = {
-        label: undefined,
+        counterValue: undefined,
+        stratumLabel: undefined,
+        processedLabel: undefined,
         children: resultArray.map((x: TeamAnnealState.ResultArray) => createNodeFromResultArray(x)),
         content: undefined,
+
+        isRoot: false,
     }
 
     return node;
@@ -114,6 +129,39 @@ export function binNodeIntoCollection(node: ResultArrayNode, collection: Readonl
     if (node.children !== undefined) {
         node.children.forEach(childNode => binNodeIntoCollection(childNode, collection, stratumIndex - 1));
     }
+}
+
+export function mapRawDataToNodeHierarchy(idColumnIndex: number, node: ResultArrayNode, map = new Map<string, ResultArrayNode[]>(), inputHierarchy: ResultArrayNode[] = []) {
+    // We need to copy the array to prevent modifying object from caller
+    const hierarchy = inputHierarchy.slice();
+
+    // If node is record, append hierarchy to map and terminate recursion
+    if (node.content !== undefined) {
+        // Use the ID column as key
+        const key = node.content[idColumnIndex];
+
+        if (key === null) {
+            throw new Error("Key cannot be null");
+        }
+
+        // Keys are normalised to strings
+        map.set('' + key, hierarchy);
+
+        return;
+    }
+
+    // Otherwise, build up hierarchy array and recurse down
+    if (node.children !== undefined) {
+        // Push node if not root node
+        if (!node.isRoot) {
+            hierarchy.push(node);
+        }
+
+        node.children.forEach(childNode => mapRawDataToNodeHierarchy(idColumnIndex, childNode, map, hierarchy));
+    }
+
+    // Return filled map at end of process
+    return map;
 }
 
 export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode[]>, strata: ReadonlyArray<_Stratum.Stratum>) {
@@ -154,11 +202,13 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
 
         nodes.forEach((node, i) => {
             const counterValue = counterArray[i % counterArrayLength];
-            node.label = `${stratumLabel} ${counterValue}`;
+
+            node.counterValue = counterValue;
+            node.stratumLabel = stratumLabel;
+            node.processedLabel = `${stratumLabel} ${counterValue}`;
         });
     });
 }
-
 
 export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealState.TeamAnnealState>) {
     // ===============

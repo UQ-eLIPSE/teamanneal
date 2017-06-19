@@ -12,9 +12,9 @@
         </div>
     
         <div class="bottom-buttons">
-            <button class="button"
-                    @click="emitWizardNavNext"
-                    :disabled="isWizardNavNextDisabled">Continue</button>
+            <button class="button export-button"
+                    @click="onExportButtonClick"
+                    :disabled="isExportButtonDisabled">Export as CSV</button>
         </div>
     </div>
 </template>
@@ -23,13 +23,16 @@
 
 <script lang="ts">
 import { Vue, Component } from "av-ts";
+import * as Papa from "papaparse";
 
+import * as Stratum from "../../data/Stratum";
+import * as AnnealAjax from "../../data/AnnealAjax";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
-import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+// import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import ResultArrayNodeView from "../ResultArrayNodeView.vue";
 
-const thisWizardStep = AnnealProcessWizardEntries.viewResult;
+// const thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
 @Component({
     components: {
@@ -37,32 +40,51 @@ const thisWizardStep = AnnealProcessWizardEntries.viewResult;
     }
 })
 export default class ViewResult extends Vue {
-    emitWizardNavNext() {
-        // Don't go if next is disabled
-        if (this.isWizardNavNextDisabled) {
-            return;
-        }
+    onExportButtonClick() {
+        const exportCsvRows: ReadonlyArray<string | number>[] = [];
 
-        this.$emit("wizardNavigation", {
-            event: "next",
+        // Use raw data and append the strata columns to the end of them as necessary
+        const rawData = this.sourceFileRawData;
+        const strata = this.strata;
+        const outputIdNodeMap = this.outputIdNodeMap;
+        const idColumnIndex = this.idColumnIndex;
+
+        rawData.forEach((originalRow, rowIndex) => {
+            // Row must be copied otherwise we're mutating the stored raw data
+            const row = originalRow.slice();
+
+            if (rowIndex === 0) {
+                // If row is header row, just add the stratum label as part of
+                // column headings
+                strata.forEach((stratum) => {
+                    row.push(stratum.label);
+                });
+            } else {
+                // If normal data row, use the row -> hierarchy map to get label
+                const key = '' + originalRow[idColumnIndex];
+
+                const hierarchy = outputIdNodeMap.get(key);
+
+                if (hierarchy === undefined) {
+                    throw new Error(`Could not find node hierarchy for record ID ${key}`);
+                }
+
+                hierarchy.forEach((node) => {
+                    row.push(node.counterValue);
+                });
+            }
+
+            // Add new row into export array
+            exportCsvRows.push(row);
         });
+
+        const csv = Papa.unparse(exportCsvRows);
+
+        console.log(csv);
     }
 
-    get isWizardNavNextDisabled() {
-        const state = this.$store.state;
-
-        // Check if we have a next step defined
-        if (thisWizardStep.next === undefined) { return false; }
-
-        // Get the next step
-        const next = thisWizardStep.next(state);
-
-        // Get the disabled check function or say it is not disabled if the
-        // function does not exist
-        if (next.disabled === undefined) { return false; }
-        const disabled = next.disabled(state);
-
-        return disabled;
+    get isExportButtonDisabled() {
+        return this.isRequestInProgress;
     }
 
     get isRequestInProgress() {
@@ -75,6 +97,22 @@ export default class ViewResult extends Vue {
 
     get rootNodeChildren() {
         return this.$store.state.anneal.outputTree.children;
+    }
+
+    get outputIdNodeMap() {
+        return this.$store.state.anneal.outputIdNodeMap as Map<string, ReadonlyArray<AnnealAjax.ResultArrayNode>>;
+    }
+
+    get sourceFileRawData() {
+        return this.$store.state.sourceFile.rawData as ReadonlyArray<ReadonlyArray<string | number>>;
+    }
+
+    get strata() {
+        return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
+    }
+
+    get idColumnIndex() {
+        return this.$store.state.constraintsConfig.idColumnIndex as number;
     }
 }
 </script>
@@ -113,5 +151,9 @@ export default class ViewResult extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+.export-button {
+    background: darkgreen;
 }
 </style>
