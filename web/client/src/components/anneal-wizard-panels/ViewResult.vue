@@ -24,6 +24,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
+import * as FileSaver from "file-saver";
 
 import * as Stratum from "../../data/Stratum";
 import * as AnnealAjax from "../../data/AnnealAjax";
@@ -70,7 +71,7 @@ export default class ViewResult extends Vue {
                 }
 
                 hierarchy.forEach((node) => {
-                    row.push(node.counterValue);
+                    row.push(node.counterValue!);
                 });
             }
 
@@ -78,9 +79,10 @@ export default class ViewResult extends Vue {
             exportCsvRows.push(row);
         });
 
-        const csv = Papa.unparse(exportCsvRows);
+        const csvString = Papa.unparse(exportCsvRows);
 
-        console.log(csv);
+        const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" })
+        FileSaver.saveAs(csvBlob, `${this.sourceFileName}.teamanneal.csv`, true);
     }
 
     get isExportButtonDisabled() {
@@ -105,6 +107,10 @@ export default class ViewResult extends Vue {
 
     get sourceFileRawData() {
         return this.$store.state.sourceFile.rawData as ReadonlyArray<ReadonlyArray<string | number>>;
+    }
+
+    get sourceFileName() {
+        return this.$store.state.sourceFile.name as string;
     }
 
     get strata() {
