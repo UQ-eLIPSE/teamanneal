@@ -13,7 +13,8 @@ export let
     selectPartitionColumn: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
-    configureConstraints: WNE;
+    configureConstraints: WNE,
+    viewResult: WNE;
 
 /**
  * Contains all entries for the anneal process wizard
@@ -28,6 +29,12 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             }
         },
         path: "/anneal/provide-records-file",
+        disabled: (state: TAState) => {
+            return !(
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
+            );
+        },
 
         next: () => reviewRecords,
     },
@@ -37,8 +44,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: TAState) => {
             // Disabled when there is no source file data
             return !(
-                TeamAnnealState.hasSourceFileData(state)
-            )
+                TeamAnnealState.hasSourceFileData(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
+            );
         },
 
         next: () => selectIdColumn,
@@ -49,8 +59,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: TAState) => {
             // Disabled when there is no source file data
             return !(
-                TeamAnnealState.hasSourceFileData(state)
-            )
+                TeamAnnealState.hasSourceFileData(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
+            );
         },
 
         next: () => selectPartitionColumn,
@@ -62,7 +75,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             // Disabled when there is no ID column selected (a number above -1)
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state)
+                TeamAnnealState.hasValidIdColumnIndex(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
 
@@ -75,7 +91,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             // Disabled when there is no ID column selected (a number above -1)
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state)
+                TeamAnnealState.hasValidIdColumnIndex(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
 
@@ -89,7 +108,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state)
+                TeamAnnealState.hasStrata(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
 
@@ -103,7 +125,27 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             return !(
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state)
+                TeamAnnealState.hasStrata(state) &&
+
+                // Disable when processing request
+                !TeamAnnealState.isAnnealRequestInProgress(state)
+            );
+        },
+
+        next: () => viewResult,
+    },
+    viewResult = {
+        label: "View result",
+        path: "/anneal/view-result",
+        disabled: (state: TAState) => {
+            // Disabled when there are no strata (output groups)
+            return !(
+                TeamAnnealState.hasSourceFileData(state) &&
+                TeamAnnealState.hasValidIdColumnIndex(state) &&
+                TeamAnnealState.hasStrata(state) &&
+
+                // Enable only when the anneal request is actually created
+                TeamAnnealState.isAnnealRequestCreated(state)
             );
         },
     },

@@ -1,18 +1,20 @@
 <template>
     <div id="wizard">
-        <h1>Configure constraints</h1>
-        <p>
-            TeamAnneal forms groups with consideration to constraints you provide. Add as many constraints as you need to describe desired properties for each group.
-            <a class="more"
-               href="#">Need help?</a>
+        <h1>View result</h1>
+    
+        <p v-if="isRequestInProgress"
+           style="color: #fff; background: darkred; padding: 0.5em;">
+            Request in progress... (see console)
         </p>
-        <p>
-            <ConstraintsEditor />
-        </p>
+        <div v-if="rootNodeAvailable">
+            <ResultArrayNodeView v-for="childNode in rootNodeChildren"
+                                 :node="childNode" />
+        </div>
+    
         <div class="bottom-buttons">
-            <!--<button class="button" @click="emitWizardNavNext" :disabled="isWizardNavNextDisabled">Continue</button>-->
             <button class="button"
-                    @click="onAnnealButtonClick">Anneal</button>
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
@@ -22,19 +24,19 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import * as AnnealAjax from "../../data/AnnealAjax";
 
-import ConstraintsEditor from "../ConstraintsEditor.vue";
+import ResultArrayNodeView from "../ResultArrayNodeView.vue";
 
-const thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
+const thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
 @Component({
     components: {
-        ConstraintsEditor,
-    },
+        ResultArrayNodeView,
+    }
 })
-export default class ConfigureConstraints extends Vue {
+export default class ViewResult extends Vue {
     emitWizardNavNext() {
         // Don't go if next is disabled
         if (this.isWizardNavNextDisabled) {
@@ -63,15 +65,16 @@ export default class ConfigureConstraints extends Vue {
         return disabled;
     }
 
-    onAnnealButtonClick() {
-        // Convert state to anneal request input 
-        const annealInput = AnnealAjax.transformStateToAnnealRequestBody(this.$store.state);
+    get isRequestInProgress() {
+        return TeamAnnealState.isAnnealRequestInProgress(this.$store.state);
+    }
 
-        // Fire off the anneal request
-        this.$store.dispatch("newAnnealAjaxRequest", annealInput);
+    get rootNodeAvailable() {
+        return this.$store.state.anneal.outputTree && this.$store.state.anneal.outputTree.children.length > 0;
+    }
 
-        // Go to next step regardless of what happens at this point
-        this.emitWizardNavNext();
+    get rootNodeChildren() {
+        return this.$store.state.anneal.outputTree.children;
     }
 }
 </script>
