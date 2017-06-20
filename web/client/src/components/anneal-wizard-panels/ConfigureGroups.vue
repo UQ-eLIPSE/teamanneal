@@ -3,13 +3,16 @@
         <h1>Configure groups</h1>
         <p>
             Here you can configure the sizes of each group and subgroups, and how output groups are labelled after annealing.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
         <p>
             <StrataEditor />
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="emitWizardNavNext" :disabled="isWizardNavNextDisabled">Continue</button>
+            <button class="button"
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
