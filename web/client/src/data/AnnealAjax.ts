@@ -56,7 +56,6 @@ export function transformOutputIntoTree(outputData: TeamAnnealState.AnnealOutput
 export interface ResultArrayNode {
     counterValue: string | number | undefined,
     stratumLabel: string | undefined,
-    processedLabel: string | undefined,
     children: ReadonlyArray<ResultArrayNode> | undefined,
     content: Record.Record | undefined,
 
@@ -73,7 +72,6 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
         const node: ResultArrayNode = {
             counterValue: undefined,
             stratumLabel: undefined,
-            processedLabel: undefined,
             children: undefined,
             content: record,
 
@@ -87,7 +85,6 @@ export function createNodeFromResultArray(resultArray: TeamAnnealState.ResultArr
     const node: ResultArrayNode = {
         counterValue: undefined,
         stratumLabel: undefined,
-        processedLabel: undefined,
         children: resultArray.map((x: TeamAnnealState.ResultArray) => createNodeFromResultArray(x)),
         content: undefined,
 
@@ -205,7 +202,6 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
 
             node.counterValue = counterValue;
             node.stratumLabel = stratumLabel;
-            node.processedLabel = `${stratumLabel} ${counterValue}`;
         });
     });
 }

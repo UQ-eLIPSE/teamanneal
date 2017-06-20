@@ -52,7 +52,7 @@ export default class ResultArrayNodeView extends Vue {
     }
 
     get nodeName() {
-        return this.node.processedLabel;
+        return `${this.node.stratumLabel} ${this.node.counterValue}`;
     }
 
     get nodeContainsSubnodes() {
