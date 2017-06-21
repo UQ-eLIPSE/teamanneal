@@ -32,6 +32,7 @@
 import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
 
+import * as Stratum from "../../data/Stratum";
 import * as SourceFile from "../../data/SourceFile";
 import * as ColumnInfo from "../../data/ColumnInfo";
 import * as CookedData from "../../data/CookedData";
@@ -141,8 +142,20 @@ export default class ProvideRecordsFile extends Vue {
         c("initialiseAnnealAjax");
         c("initialiseAnnealInputOutput");
 
+        // Add a generic stratum now for users to get started with
+        const genericStratum: Stratum.Stratum = {
+            _id: performance.now(),
+            label: "Team",
+            size: {
+                min: 2,
+                ideal: 3,
+                max: 4,
+            },
+            counter: "decimal",
+        }
+        c("insertConstraintsConfigStrata", genericStratum);
 
-
+        // Move on to the next step
         this.emitWizardNavNext();
     }
 }
