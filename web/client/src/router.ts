@@ -17,6 +17,7 @@ import Anneal_SelectPartitionColumn from "./components/anneal-wizard-panels/Sele
 import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/DesignGroupStructure.vue";
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
+import Anneal_ViewResult from "./components/anneal-wizard-panels/ViewResult.vue";
 
 
 Vue.use(VueRouter);
@@ -84,7 +85,14 @@ export default (store: Vuex.Store<any>) => {
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.configureConstraints,
                         },
-                    }
+                    },
+                    {
+                        path: "view-result",
+                        component: Anneal_ViewResult,
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.viewResult,
+                        },
+                    },
                 ]
             },
         ],

@@ -4,15 +4,24 @@
         <p>
             Select a
             <b>CSV</b> file containing records of persons along with any attributes you would like to apply constraints to.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
         <div class="bottom-buttons">
             <label v-if="!isFileSetInStore">
-                <input type="file" id="load-file" accept=".csv" @change="onFileInputChanged($event)">
-                <button class="button" @click.stop.prevent="openFilePicker">Select CSV file...</button>
+                <input type="file"
+                       id="load-file"
+                       accept=".csv"
+                       @change="onFileInputChanged($event)">
+                <button class="button"
+                        @click.stop.prevent="openFilePicker">Select CSV file...</button>
             </label>
-            <button class="button" @click="emitWizardNavNext" v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
-            <button class="button gold" @click="clearFile" v-if="isFileSetInStore">Clear file</button>
+            <button class="button"
+                    @click="emitWizardNavNext"
+                    v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
+            <button class="button gold"
+                    @click="clearFile"
+                    v-if="isFileSetInStore">Clear file</button>
         </div>
     </div>
 </template>
@@ -127,8 +136,10 @@ export default class ProvideRecordsFile extends Vue {
         c("updateSourceFileCookedData", CookedData.cook(columnInfo, fileData, true));
         c("updateSourceFileColumnInfo", columnInfo);
 
-        // Wipe existing constraints
+        // Wipe existing data
         c("initialiseConstraintsConfig");
+        c("initialiseAnnealAjax");
+        c("initialiseAnnealInputOutput");
 
 
 
