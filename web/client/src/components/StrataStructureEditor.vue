@@ -53,14 +53,23 @@ export default class StrataStructureEditor extends Vue {
         this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
     }
 
+    generateRandomStratumName() {
+        const names = [
+            "Group",
+            "Subgroup",
+        ];
+
+        return names[(Math.random() * names.length) >>> 0];
+    }
+
     addNewStratum() {
         const stratum: Stratum.Stratum = {
             _id: performance.now(),
-            label: `Subgroup${this.strata.length + 1}`,
+            label: this.generateRandomStratumName(),
             size: {
-                min: 1,
-                ideal: 2,
-                max: 3,
+                min: 2,
+                ideal: 3,
+                max: 4,
             },
             counter: "decimal",
         }
