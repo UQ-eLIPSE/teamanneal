@@ -6,10 +6,11 @@
                     <StrataStructureEditorStratumItem :key="stratum._id"
                                                       :stratum="stratum"
                                                       :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
+                                                      :deletable="isStratumDeletable(i)"
                                                       @change="onStratumItemChange"
                                                       @delete="onStratumItemDelete" />
                 </li>
-                <li>
+                <li v-if="subgroupButtonEnabled">
                     <button class="button add-subgroup"
                             @click="addNewStratum">
                         <span>Add subgroup</span>
@@ -39,6 +40,11 @@ export default class StrataStructureEditor extends Vue {
         return this.$store.state.constraintsConfig.strata!;
     }
 
+    get subgroupButtonEnabled() {
+        // Enable only for no more than 2 strata
+        return this.strata.length < 2;
+    }
+
     onStratumItemChange(stratumUpdate: Stratum.Update) {
         this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
@@ -47,19 +53,33 @@ export default class StrataStructureEditor extends Vue {
         this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
     }
 
+    generateRandomStratumName() {
+        const names = [
+            "Group",
+            "Subgroup",
+        ];
+
+        return names[(Math.random() * names.length) >>> 0];
+    }
+
     addNewStratum() {
         const stratum: Stratum.Stratum = {
             _id: performance.now(),
-            label: `Subgroup${this.strata.length + 1}`,
+            label: this.generateRandomStratumName(),
             size: {
-                min: 1,
-                ideal: 2,
-                max: 3,
+                min: 2,
+                ideal: 3,
+                max: 4,
             },
             counter: "decimal",
         }
 
         this.$store.commit("insertConstraintsConfigStrata", stratum);
+    }
+
+    isStratumDeletable(i: number) {
+        // Only substrata are deletable
+        return i > 0;
     }
 }
 </script>
@@ -98,7 +118,6 @@ export default class StrataStructureEditor extends Vue {
 
 button.add-subgroup {
     display: flex;
-    border: 0;
     margin: 0 auto;
 
     width: 3em;

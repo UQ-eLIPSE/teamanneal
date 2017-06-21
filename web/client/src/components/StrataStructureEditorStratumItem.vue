@@ -6,7 +6,8 @@
                                         :val="p_label"
                                         @change="onLabelValueChange" />
             </span>
-            <button class="button delete"
+            <button v-if="deletable"
+                    class="button delete"
                     @click="emitDelete">
                 <span>Delete</span>
             </button>
@@ -35,6 +36,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
     // Props
     @Prop stratum: Stratum.Stratum = p(Object) as any;
     @Prop childUnit = p(String);
+    @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
 
     // Private data
     p_label: string = "";
@@ -45,7 +47,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
     }
 
     get childUnitText() {
-        return this.childUnit || "<unit>";
+        return this.childUnit || "<group>";
     }
 
     get pluralChildUnitText() {

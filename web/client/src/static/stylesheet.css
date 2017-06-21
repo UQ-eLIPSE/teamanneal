@@ -62,8 +62,13 @@ option {
 .button:hover,
 .button:focus,
 .button:active {
-    background: #370546;
+    background: #858;
     box-shadow: rgba(55, 5, 70, 0.3) 0 0.2rem 0.5rem;
+}
+
+.button:focus {
+    /* Disable outlining because it can look really ugly on certain shapes */
+    outline: none;
 }
 
 .button.secondary {
@@ -74,7 +79,7 @@ option {
 .button.secondary:hover,
 .button.secondary:focus,
 .button.secondary:active {
-    background: #fafafa;
+    background: #ddd;
     box-shadow: rgba(55, 55, 55, 0.3) 0 0.2rem 0.5rem;
 }
 
@@ -87,7 +92,7 @@ option {
 .button.gold:hover,
 .button.gold:focus,
 .button.gold:active {
-    background: #a58d45;
+    background: #947b2f;
     box-shadow: rgba(90, 70, 40, 0.3) 0 0.2rem 0.5rem;
 }
 
