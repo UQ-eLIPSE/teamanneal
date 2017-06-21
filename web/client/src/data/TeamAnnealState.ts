@@ -52,22 +52,6 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
     );
 }
 
-export function isAnnealRequestInProgress(state: Partial<TeamAnnealState>) {
-    return (
-        state.anneal &&
-        state.anneal.input &&                   // Has an input anneal request
-        state.anneal.ajaxCancelTokenSource &&   // Has a cancel token set up
-        !state.anneal.output                    // But doesn't have a output yet
-    );
-}
-
-export function isAnnealRequestCreated(state: Partial<TeamAnnealState>) {
-    return (
-        state.anneal &&
-        state.anneal.ajaxCancelTokenSource
-    );
-}
-
 export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
     if (state.constraintsConfig === undefined) { return false; }
 
@@ -94,4 +78,20 @@ export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
 
     // Otherwise we're good to go
     return true;
+}
+
+export function isAnnealRequestInProgress(state: Partial<TeamAnnealState>) {
+    return (
+        state.anneal &&
+        state.anneal.input &&                   // Has an input anneal request
+        state.anneal.ajaxCancelTokenSource &&   // Has a cancel token set up
+        !state.anneal.output                    // But doesn't have a output yet
+    );
+}
+
+export function isAnnealRequestCreated(state: Partial<TeamAnnealState>) {
+    return (
+        state.anneal &&
+        state.anneal.ajaxCancelTokenSource
+    );
 }

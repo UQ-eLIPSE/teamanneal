@@ -109,11 +109,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
+                TeamAnnealState.isStrataConfigValid(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state) &&
-
-                TeamAnnealState.isStrataConfigValid(state)
+                !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
 
@@ -128,11 +127,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
+                TeamAnnealState.isStrataConfigValid(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state) &&
-
-                TeamAnnealState.isStrataConfigValid(state)
+                !TeamAnnealState.isAnnealRequestInProgress(state)
             );
         },
 
@@ -147,11 +145,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
+                TeamAnnealState.isStrataConfigValid(state) &&
 
                 // Enable only when the anneal request is actually created
-                TeamAnnealState.isAnnealRequestCreated(state) &&
-
-                TeamAnnealState.isStrataConfigValid(state)
+                TeamAnnealState.isAnnealRequestCreated(state)
             );
         },
     },
