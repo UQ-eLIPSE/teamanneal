@@ -52,7 +52,7 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
     );
 }
 
-export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
+export function isStrataConfigNamesValid(state: Partial<TeamAnnealState>) {
     if (state.constraintsConfig === undefined) { return false; }
 
     const strata = state.constraintsConfig.strata;
@@ -75,6 +75,44 @@ export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
 
     // Do not permit non unique strata names
     if (strataNameSet.size !== strata.length) { return false; }
+
+    // Otherwise we're good to go
+    return true;
+}
+
+export function isStrataConfigSizesValid(state: Partial<TeamAnnealState>) {
+    if (state.constraintsConfig === undefined) { return false; }
+
+    const strata = state.constraintsConfig.strata;
+
+    if (strata === undefined) { return false; }
+
+    // All stratum sizes must be valid
+    for (let i = 0; i < strata.length; ++i) {
+        const stratum = strata[i];
+
+        const { min, ideal, max } = stratum.size;
+
+        // Run validity checks
+        if (
+            // Values must be integers
+            (min >>> 0 !== min) ||
+            (ideal >>> 0 !== ideal) ||
+            (max >>> 0 !== max) ||
+
+            // Must be min <= ideal <= max
+            (min > ideal) ||
+            (ideal > max) ||
+
+            // Not permitted for min to equal max
+            (min === max) ||
+
+            // Minimum is always 1
+            (min < 1)
+        ) {
+            return false;
+        }
+    }
 
     // Otherwise we're good to go
     return true;

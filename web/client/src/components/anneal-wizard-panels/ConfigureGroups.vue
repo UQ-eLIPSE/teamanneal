@@ -6,6 +6,11 @@
             <a class="more"
                href="#">Need help?</a>
         </p>
+        <div v-if="!isStrataConfigSizesValid"
+             class="error-msg">
+            <h3>Group sizes are not valid</h3>
+            <p>You have groups with invalid sizes. For example, it could be that you have set a minimum greater than a maximum size. Please correct this before continuing.</p>
+        </div>
         <p>
             <StrataEditor />
         </p>
@@ -21,6 +26,8 @@
 
 <script lang="ts">
 import { Vue, Component } from "av-ts";
+
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -46,6 +53,9 @@ export default class ConfigureGroups extends Vue {
     }
 
     get isWizardNavNextDisabled() {
+        // Disable next step if strata is currently invalid
+        if (!this.isStrataConfigSizesValid) { return true; }
+
         const state = this.$store.state;
 
         // Check if we have a next step defined
@@ -60,6 +70,10 @@ export default class ConfigureGroups extends Vue {
         const disabled = next.disabled(state);
 
         return disabled;
+    }
+
+    get isStrataConfigSizesValid() {
+        return TeamAnnealState.isStrataConfigSizesValid(this.$store.state);
     }
 }
 </script>
@@ -98,5 +112,11 @@ export default class ConfigureGroups extends Vue {
 
 #wizard .bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
