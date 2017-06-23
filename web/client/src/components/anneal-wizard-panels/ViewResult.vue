@@ -29,11 +29,8 @@ import * as FileSaver from "file-saver";
 import * as Stratum from "../../data/Stratum";
 import * as AnnealAjax from "../../data/AnnealAjax";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
-// import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import ResultArrayNodeView from "../ResultArrayNodeView.vue";
-
-// const thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
 @Component({
     components: {

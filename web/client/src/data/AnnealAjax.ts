@@ -47,7 +47,8 @@ export function transformOutputIntoTree(outputData: TeamAnnealState.AnnealOutput
     // Each level of nested array corresponds to one stratum
     const rootNode = createNodeFromResultArray(amalgamatedData);
 
-    // Flip root node flag
+    // Set the top most node that we created as the root node of a tree we're
+    // about to return
     rootNode.isRoot = true;
 
     return rootNode;
