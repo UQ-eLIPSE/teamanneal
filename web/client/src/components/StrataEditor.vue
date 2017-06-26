@@ -2,11 +2,17 @@
     <div>
         <div id="tree">
             <ul>
-                <li v-for="(stratum, i) in strata">
-                    <StrataEditorStratumItem :key="stratum._id"
-                                             :stratum="stratum"
+                <li v-if="isPartitionColumnSet">
+                    <StrataEditorStratumItem :stratum="partitionStratumShimObject"
+                                             :childUnit="strata[0].label"
+                                             :isPartition="true"></StrataEditorStratumItem>
+                </li>
+                <li v-for="(stratum, i) in strata"
+                    :key="stratum._id">
+                    <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
-                                             @change="onStratumItemChange" />
+                                             :isPartition="false"
+                                             @change="onStratumItemChange"></StrataEditorStratumItem>
                 </li>
             </ul>
         </div>
@@ -21,6 +27,8 @@ import { Vue, Component } from "av-ts";
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
 import * as Stratum from "../data/Stratum";
+import * as SourceFile from "../data/SourceFile";
+import * as ConstraintsConfig from "../data/ConstraintsConfig";
 
 @Component({
     components: {
@@ -28,12 +36,56 @@ import * as Stratum from "../data/Stratum";
     },
 })
 export default class StrataEditor extends Vue {
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get constraintsConfigInStore() {
+        const config: Partial<ConstraintsConfig.ConstraintsConfig> = this.$store.state.constraintsConfig;
+        return config;
+    }
+
     get strata() {
-        return this.$store.state.constraintsConfig.strata!;
+        return this.constraintsConfigInStore.strata!;
     }
 
     onStratumItemChange(stratumUpdate: Stratum.Update) {
         this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
+    }
+
+    /**
+     * Determines if a partition column is set
+     */
+    get isPartitionColumnSet() {
+        return this.constraintsConfigInStore.partitionColumnIndex !== undefined;
+    }
+
+    /**
+     * Returns a shim object that projects the partition as stratum
+     */
+    get partitionStratumShimObject() {
+        const columnInfo = this.fileInStore.columnInfo || [];
+        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
+
+        if (partitionColumnIndex === undefined) {
+            throw new Error("No partition column set");
+        }
+
+        const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
+
+        const stratumShim: Stratum.Stratum = {
+            _id: performance.now(),
+            label: `Partition (${partitionColumnLabel})`,
+            size: {
+                min: 0,
+                ideal: 0,
+                max: 0,
+            },
+            counter: [],
+        }
+
+        return stratumShim;
     }
 }
 </script>
