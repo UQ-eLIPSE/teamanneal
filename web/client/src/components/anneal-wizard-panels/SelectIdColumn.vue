@@ -3,17 +3,24 @@
         <h1>Select ID column</h1>
         <p>
             TeamAnneal needs to know which column identifies each unique record in your data.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
         <p>
             <select v-model="idColumnIndex">
-                <option disabled value="-1">Please select the ID column</option>
-                <option v-for="option in possibleIdColumns" :value="option.value">{{ option.text }}</option>
+                <option disabled
+                        value="-1">Please select ID column</option>
+                <option v-for="option in possibleIdColumns"
+                        :key="option.value"
+                        :value="option.value">{{ option.text }}</option>
             </select>
         </p>
-        <p class="error" v-if="possibleIdColumns.length === 0">Your records file has no detected ID column to choose from. Please ensure that your records file has a column with one unique ID value per record.</p>
+        <p class="error"
+           v-if="possibleIdColumns.length === 0">Your records file has no detected ID column to choose from. Please ensure that your records file has a column with one unique ID value per record.</p>
         <div class="bottom-buttons">
-            <button class="button" @click="emitWizardNavNext" :disabled="isWizardNavNextDisabled">Continue</button>
+            <button class="button"
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
@@ -109,7 +116,6 @@ export default class SelectIdColumn extends Vue {
     set idColumnIndex(val: string) {
         const idColumnIndex = +val;     // Convert to number 
         this.$store.commit("updateConstraintsConfigIdColumnIndex", idColumnIndex);
-
     }
 }
 </script>
