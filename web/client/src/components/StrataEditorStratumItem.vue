@@ -5,7 +5,9 @@
         </div>
         <div class="stratum-config">
             <div class="stratum-size">
-                <h3>Sizing</h3>
+                <h3>Size
+                    <span class="size-unit-text">({{ pluralChildUnitText }} per {{ stratum.label }})</span>
+                </h3>
                 <div class="size-block">
                     <div class="three-sizes">
                         <div>
@@ -33,13 +35,10 @@
                             </span>
                         </div>
                     </div>
-                    <div class="size-unit-text">
-                        {{ pluralChildUnitText }} per {{ stratum.label }}
-                    </div>
                 </div>
             </div>
             <div class="stratum-name">
-                <h3>Naming</h3>
+                <h3>Name</h3>
                 <div>
                     <select>
                         <option v-for="counterOption in counterList"
@@ -123,7 +122,7 @@ export default class StrataEditorStratumItem extends Vue {
 
     get pluralChildUnitText() {
         if (this.childUnitText === "person") {
-            return "people";
+            return "People";
         }
         return this.childUnitText + "s";
     }
@@ -259,11 +258,8 @@ export default class StrataEditorStratumItem extends Vue {
 }
 
 .size-unit-text {
-    padding: 0.3em;
-    background: rgba(0, 0, 0, 0.05);
-
     font-size: 0.8em;
     font-style: italic;
-    color: rgba(0, 0, 0, 0.8);
+    font-weight: 300;
 }
 </style>
