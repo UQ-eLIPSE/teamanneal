@@ -41,9 +41,10 @@
             <div class="stratum-name">
                 <h3>Naming</h3>
                 <div>
-                    <select>
+                    <select :value="stratum.counter"
+                            @change="onCounterSelectChange">
                         <option v-for="counterOption in counterList"
-                                :val="counterOption.value">{{counterOption.text}}</option>
+                                :value="counterOption.value">{{counterOption.text}}</option>
                     </select>
                 </div>
                 <p>
@@ -117,6 +118,14 @@ export default class StrataEditorStratumItem extends Vue {
         });
     }
 
+    onCounterSelectChange($event: Event) {
+        const el = $event.target as HTMLSelectElement;
+
+        this.emitChange({
+            counter: el.value as any,
+        });
+    }
+
     get childUnitText() {
         return this.childUnit || "<group>";
     }
@@ -144,8 +153,9 @@ export default class StrataEditorStratumItem extends Vue {
                 throw new Error(`Counter "${counter}" not supported`);
             }
 
-            const randomLength = ((Math.random() * 20) >>> 0) + 1;
-            return counterDesc.generator(randomLength)[randomLength - 1];
+            // Generate sequence of 20 elements, and pick a random one from that
+            const randomIndex = ((Math.random() * 20) >>> 0);
+            return counterDesc.generator(20)[randomIndex];
         }
     }
 
