@@ -41,12 +41,18 @@
             <div class="stratum-name">
                 <h3>Naming</h3>
                 <div>
-                    <select :value="stratum.counter"
+                    <select :value="counterSelectValue"
                             @change="onCounterSelectChange">
                         <option v-for="counterOption in counterList"
-                                :value="counterOption.value">{{counterOption.text}}</option>
+                                :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
                 </div>
+                <p v-if="isCounterCustomList">
+                    Provide a list of names, one per line:
+                    <br>
+                    <textarea rows="5"
+                              @change="onCustomCounterListChange">{{ customCounterListAsString }}</textarea>
+                </p>
                 <p>
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
@@ -65,12 +71,23 @@ import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
 
-const CounterList = ListCounter.SupportedListCounters.map(counter => {
-    return {
-        value: counter.type,
-        text: counter.example,
-    }
-});
+const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
+    const list: { value: string, text: string, }[] =
+        ListCounter.SupportedListCounters.map(counter => {
+            return {
+                value: counter.type,
+                text: counter.example,
+            }
+        });
+
+    // Add "custom" entry
+    list.push({
+        value: "custom",
+        text: "[Custom list]",
+    });
+
+    return list;
+})();
 
 @Component({
     components: {
@@ -121,8 +138,27 @@ export default class StrataEditorStratumItem extends Vue {
     onCounterSelectChange($event: Event) {
         const el = $event.target as HTMLSelectElement;
 
+        const counterType = el.value;
+
+        if (counterType === "custom") {
+            return this.emitChange({
+                // Default custom list is "Red", "Green", "Blue"
+                counter: ["Red", "Green", "Blue"],
+            });
+        } else {
+            return this.emitChange({
+                counter: counterType as any,
+            });
+        }
+    }
+
+    onCustomCounterListChange($event: Event) {
+        const el = $event.target as HTMLTextAreaElement;
+
+        const customCounterList = el.value.trim().split("\n");
+
         this.emitChange({
-            counter: el.value as any,
+            counter: customCounterList,
         });
     }
 
@@ -161,6 +197,30 @@ export default class StrataEditorStratumItem extends Vue {
 
     get counterList() {
         return CounterList;
+    }
+
+    get counterSelectValue() {
+        const counterValue = this.stratum.counter;
+
+        if (Array.isArray(counterValue)) {
+            return "custom";
+        } else {
+            return counterValue;
+        }
+    }
+
+    get isCounterCustomList() {
+        return Array.isArray(this.stratum.counter);
+    }
+
+    get customCounterListAsString() {
+        const counterValue = this.stratum.counter;
+
+        if (!Array.isArray(counterValue)) {
+            throw new Error("Not custom counter list");
+        }
+
+        return counterValue.join("\n");
     }
 
     emitChange(diff: Partial<Stratum.Stratum>) {
