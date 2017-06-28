@@ -1,6 +1,7 @@
 <template>
     <tr v-if="isItemGroupHeading">
         <td v-once
+            class="group-heading"
             :colspan="numberOfColumns">{{ item }}</td>
     </tr>
     <tr v-else>
@@ -95,5 +96,11 @@ th select.column-type {
     content: "No value";
     font-style: italic;
     font-size: 0.7em;
+}
+
+.group-heading {
+    background: #738;
+    color: #fff;
+    font-weight: 400;
 }
 </style>
