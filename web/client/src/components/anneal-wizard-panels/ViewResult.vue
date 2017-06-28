@@ -1,31 +1,37 @@
 <template>
     <div class="wizard-panel">
-        <div class="wizard-panel-content">
-            <div class="desc-text">
-                <h1>View result</h1>
-                <p v-if="!isRequestInProgress">
-                    The annealing result is shown below. To save this result as a file, click "Export as CSV".
-                    <a class="more"
-                       href="#">Need help?</a>
-                </p>
-                <p v-if="isRequestInProgress"
-                   style="color: #fff; background: darkred; padding: 0.5em;">
-                    Request in progress...
-                </p>
+        <template v-if="!isRequestInProgress">
+            <div class="wizard-panel-content">
+                <div class="desc-text">
+                    <h1>View result</h1>
+                    <p>The annealing result is shown below. To save this result as a file, click "Export as CSV".
+                        <a class="more"
+                           href="#">Need help?</a>
+                    </p>
+                </div>
+                <div v-if="rootNodeAvailable"
+                     class="spreadsheet">
+                    <SpreadsheetTreeView class="viewer"
+                                         :tree="rootNode"
+                                         :columnInfo="columnInfo"></SpreadsheetTreeView>
+                </div>
             </div>
             <div v-if="rootNodeAvailable"
-                 class="spreadsheet">
-                <SpreadsheetTreeView class="viewer"
-                                     :tree="rootNode"
-                                     :columnInfo="columnInfo"></SpreadsheetTreeView>
+                 class="wizard-panel-bottom-buttons">
+                <button class="button export-button"
+                        @click="onExportButtonClick"
+                        :disabled="isExportButtonDisabled">Export as CSV</button>
             </div>
-        </div>
-        <div class="wizard-panel-bottom-buttons">
-            <button class="button export-button"
-                    @click="onExportButtonClick"
-                    :disabled="isExportButtonDisabled">Export as CSV</button>
-    
-        </div>
+        </template>
+        <template v-else>
+            <div class="wizard-panel-content">
+                <div class="desc-text">
+                    <h1>Anneal in progress</h1>
+                    <p>Please wait while TeamAnneal forms groups...</p>
+                    <p>This may take a minute or two.</p>
+                </div>
+            </div>
+        </template>
     </div>
 </template>
 
@@ -191,6 +197,45 @@ export default class ViewResult extends Vue {
 
 .wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+
+
+
+
+
+
+.wizard-panel-content {
+    display: flex;
+    flex-direction: column;
+
+    flex-grow: 1;
+
+    padding: 0;
+}
+
+.desc-text {
+    padding: 1rem 2rem;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.spreadsheet {
+    background: #fff;
+
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    position: relative;
+}
+
+.spreadsheet .viewer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .export-button {
