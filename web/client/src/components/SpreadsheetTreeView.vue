@@ -77,7 +77,6 @@ table {
 
 th {
     border: 1px solid #ddd;
-    padding: 0.3em 0.5em;
     text-align: inherit;
 
     background: #49075E;

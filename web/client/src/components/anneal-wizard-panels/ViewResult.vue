@@ -1,13 +1,21 @@
 <template>
     <div id="wizard">
-        <h1>View result</h1>
-    
-        <p v-if="isRequestInProgress"
-           style="color: #fff; background: darkred; padding: 0.5em;">
-            Request in progress... (see console)
-        </p>
-        <div v-if="rootNodeAvailable">
-            <SpreadsheetTreeView :tree="rootNode"
+        <div class="desc-text">
+            <h1>View result</h1>
+            <p v-if="!isRequestInProgress">
+                The annealing result is shown below. To save this result as a file, click "Export as CSV".
+                <a class="more"
+                   href="#">Need help?</a>
+            </p>
+            <p v-if="isRequestInProgress"
+               style="color: #fff; background: darkred; padding: 0.5em;">
+                Request in progress...
+            </p>
+        </div>
+        <div v-if="rootNodeAvailable"
+             class="spreadsheet">
+            <SpreadsheetTreeView class="viewer"
+                                 :tree="rootNode"
                                  :columnInfo="columnInfo"></SpreadsheetTreeView>
         </div>
         <div class="bottom-buttons">
