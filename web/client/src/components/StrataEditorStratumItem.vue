@@ -3,7 +3,8 @@
         <div>
             <span class="stratum-label">{{ stratum.label }}</span>
         </div>
-        <div class="stratum-config">
+        <div v-if="!isPartition"
+             class="stratum-config">
             <div class="stratum-size">
                 <h3>Sizing</h3>
                 <div class="size-block">
@@ -13,7 +14,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.min"
-                                                        @change="onMinValueChange" />
+                                                        @change="onMinValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                         <div>
@@ -21,7 +22,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.ideal"
-                                                        @change="onIdealValueChange" />
+                                                        @change="onIdealValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                         <div>
@@ -29,7 +30,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.max"
-                                                        @change="onMaxValueChange" />
+                                                        @change="onMaxValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                     </div>
@@ -43,13 +44,20 @@
                 <div>
                     <select>
                         <option v-for="counterOption in counterList"
-                                :val="counterOption.value">{{counterOption.text}}</option>
+                                :key="counterOption.value"
+                                :val="counterOption.value">{{ counterOption.text }}</option>
                     </select>
                 </div>
                 <p>
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
+            </div>
+        </div>
+        <div v-else
+             class="stratum-config">
+            <div>
+                <i>You cannot configure the size or names of partitions.</i>
             </div>
         </div>
     </div>
@@ -80,6 +88,7 @@ export default class StrataEditorStratumItem extends Vue {
     // Props
     @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
+    @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     onLabelValueChange(newValue: string) {
         this.emitChange({
