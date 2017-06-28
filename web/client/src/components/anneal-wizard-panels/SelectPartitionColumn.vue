@@ -3,20 +3,27 @@
         <h1>Select partition column</h1>
         <p>
             If you need teams to be formed within clusters of records, select a column to partition your data over.
-            <a class="more" href="#">Need help?</a>
+            <a class="more"
+               href="#">Need help?</a>
         </p>
         <p>
             For example, you may have students in assigned project types - teams may need to be comprised of those in the same project. In this situation, you would set the project column as the partition column.
         </p>
         <p>
             <select v-model="partitionColumnIndex">
-                <option disabled value="-1">Please select a partition column</option>
-                <option v-for="option in possiblePartitionColumns" :value="option.value">{{ option.text }}</option>
+                <option disabled
+                        value="-1">Please select partition column</option>
+                <option v-for="option in possiblePartitionColumns"
+                        :key="option.value"
+                        :value="option.value">{{ option.text }}</option>
             </select>
         </p>
         <div class="bottom-buttons">
-            <button class="button" @click="setPartitionColumn" :disabled="partitionColumnIndex === '-1'">Set partition column</button>
-            <button class="button gold" @click="skipPartitioning">Don't partition</button>
+            <button class="button"
+                    @click="setPartitionColumn"
+                    :disabled="partitionColumnIndex === '-1'">Set partition column</button>
+            <button class="button gold"
+                    @click="skipPartitioning">Don't partition</button>
         </div>
     </div>
 </template>
@@ -83,8 +90,21 @@ export default class SelectPartitionColumn extends Vue {
     }
 
     get possiblePartitionColumns() {
+        const allRawData = this.fileInStore.rawData;
         const columnInfo = this.fileInStore.columnInfo || [];
-        return columnInfo.map((info, i) => ({ text: info.label, value: i }));
+
+        // No data to even process
+        if (allRawData === undefined || allRawData.length === 0) { return []; }
+
+        // The total number of records is equal to the full raw data array
+        // length minus the header (1 row)
+        const numberOfRecords = allRawData.length - 1;
+
+        // Filter only those with column values non-unique (i.e. drop ID-like 
+        // columns)
+        return columnInfo
+            .filter(info => info.valueSet.size !== numberOfRecords)
+            .map(info => ({ text: info.label, value: columnInfo.indexOf(info) }));
     }
 
     get partitionColumnIndex(): string {
