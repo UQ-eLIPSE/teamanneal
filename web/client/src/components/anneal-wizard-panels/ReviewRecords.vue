@@ -14,7 +14,6 @@
                 <SpreadsheetView class="viewer"
                                  :rows="cookedDataWithHeader"
                                  :columnInfo="columnInfo"
-                                 :stickyHeader="false"
                                  @columnTypeChange="onColumnTypeChange"></SpreadsheetView>
             </div>
         </div>
