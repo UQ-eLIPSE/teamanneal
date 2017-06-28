@@ -2,13 +2,20 @@
     <div>
         <div class="group-structure">
             <ul>
-                <li v-for="(stratum, i) in strata">
-                    <StrataStructureEditorStratumItem :key="stratum._id"
-                                                      :stratum="stratum"
+                <li v-if="isPartitionColumnSet">
+                    <StrataStructureEditorStratumItem :stratum="partitionStratumShimObject"
+                                                      :childUnit="strata[0].label"
+                                                      :deletable="false"
+                                                      :editable="false"></StrataStructureEditorStratumItem>
+                </li>
+                <li v-for="(stratum, i) in strata"
+                    :key="stratum._id">
+                    <StrataStructureEditorStratumItem :stratum="stratum"
                                                       :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                                       :deletable="isStratumDeletable(i)"
+                                                      :editable="true"
                                                       @change="onStratumItemChange"
-                                                      @delete="onStratumItemDelete" />
+                                                      @delete="onStratumItemDelete"></StrataStructureEditorStratumItem>
                 </li>
                 <li v-if="subgroupButtonEnabled">
                     <button class="button add-subgroup"
@@ -29,6 +36,8 @@ import { Vue, Component } from "av-ts";
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
 import * as Stratum from "../data/Stratum";
+import * as SourceFile from "../data/SourceFile";
+import * as ConstraintsConfig from "../data/ConstraintsConfig";
 
 @Component({
     components: {
@@ -36,8 +45,18 @@ import * as Stratum from "../data/Stratum";
     },
 })
 export default class StrataStructureEditor extends Vue {
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get constraintsConfigInStore() {
+        const config: Partial<ConstraintsConfig.ConstraintsConfig> = this.$store.state.constraintsConfig;
+        return config;
+    }
+
     get strata() {
-        return this.$store.state.constraintsConfig.strata!;
+        return this.constraintsConfigInStore.strata!;
     }
 
     get subgroupButtonEnabled() {
@@ -80,6 +99,40 @@ export default class StrataStructureEditor extends Vue {
     isStratumDeletable(i: number) {
         // Only substrata are deletable
         return i > 0;
+    }
+
+    /**
+     * Determines if a partition column is set
+     */
+    get isPartitionColumnSet() {
+        return this.constraintsConfigInStore.partitionColumnIndex !== undefined;
+    }
+
+    /**
+     * Returns a shim object that projects the partition as stratum
+     */
+    get partitionStratumShimObject() {
+        const columnInfo = this.fileInStore.columnInfo || [];
+        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
+
+        if (partitionColumnIndex === undefined) {
+            throw new Error("No partition column set");
+        }
+
+        const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
+
+        const stratumShim: Stratum.Stratum = {
+            _id: performance.now(),
+            label: `Partition (${partitionColumnLabel})`,
+            size: {
+                min: 0,
+                ideal: 0,
+                max: 0,
+            },
+            counter: [],
+        }
+
+        return stratumShim;
     }
 }
 </script>

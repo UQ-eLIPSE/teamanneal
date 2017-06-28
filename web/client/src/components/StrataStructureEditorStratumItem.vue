@@ -2,9 +2,11 @@
     <div>
         <div>
             <span class="input-wrapper">
-                <DynamicWidthInputField class="input"
-                                        :val="p_label"
-                                        @change="onLabelValueChange" />
+                <DynamicWidthInputField v-if="editable"
+                                        class="input"
+                                        :val="stratum.label"
+                                        @change="onLabelValueChange"></DynamicWidthInputField>
+                <span v-else>{{ stratum.label }}</span>
             </span>
             <button v-if="deletable"
                     class="button delete"
@@ -14,7 +16,7 @@
         </div>
         <div class="subgroup-nesting-explanatory-text">
             One
-            <b>{{ p_label }}</b> will contain many {{ pluralChildUnitText }}
+            <b>{{ stratum.label }}</b> will contain a number of {{ pluralChildUnitText }}
         </div>
     </div>
 </template>
@@ -22,7 +24,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
@@ -37,13 +39,21 @@ export default class StrataStructureEditorStratumItem extends Vue {
     @Prop stratum: Stratum.Stratum = p(Object) as any;
     @Prop childUnit = p(String);
     @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
-
-    // Private data
-    p_label: string = "";
+    @Prop editable: boolean = p({ type: Boolean, required: false, default: true, }) as any;
 
     onLabelValueChange(newValue: string) {
-        this.p_label = newValue;
-        this.emitChange();
+        const stratum: Stratum.Stratum = {
+            _id: this.stratum._id,
+            label: newValue,
+            size: this.stratum.size,
+            counter: this.stratum.counter,
+        }
+
+        const stratumUpdate: Stratum.Update = {
+            stratum,
+        }
+
+        this.$emit("change", stratumUpdate);
     }
 
     get childUnitText() {
@@ -57,41 +67,8 @@ export default class StrataStructureEditorStratumItem extends Vue {
         return this.childUnitText + "s";
     }
 
-    emitChange() {
-        const stratum: Stratum.Stratum = {
-            _id: this.stratum._id,
-            label: this.p_label,
-            size: this.stratum.size,
-            counter: this.stratum.counter,
-        }
-
-        const stratumUpdate: Stratum.Update = {
-            stratum,
-        }
-
-        this.$emit("change", stratumUpdate);
-    }
-
     emitDelete() {
         this.$emit("delete", this.stratum);
-    }
-
-    emitSwapUp() {
-        this.$emit("swapUp", this.stratum);
-    }
-
-    emitSwapDown() {
-        this.$emit("swapDown", this.stratum);
-    }
-
-    transferPropsToData() {
-        const stratum = this.stratum;
-
-        this.p_label = stratum.label;
-    }
-
-    @Lifecycle created() {
-        this.transferPropsToData();
     }
 }
 </script>
@@ -117,6 +94,8 @@ export default class StrataStructureEditorStratumItem extends Vue {
     border-radius: 0.3em;
 
     font-size: 1.5em;
+    
+    color: #fff;
 }
 
 .subgroup-nesting-explanatory-text {
