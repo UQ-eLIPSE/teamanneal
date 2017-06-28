@@ -4,7 +4,7 @@
             <div class="wizard-panel-content">
                 <div class="desc-text">
                     <h1>View result</h1>
-                    <p>The annealing result is shown below. To save this result as a file, click "Export as CSV".
+                    <p>Annealed groups are shown below. To save this output as a file, click "Export as CSV".
                         <a class="more"
                            href="#">Need help?</a>
                     </p>
