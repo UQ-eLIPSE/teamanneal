@@ -1,11 +1,16 @@
 <template>
     <tr v-if="isItemGroupHeading">
+        <!-- Group heading -->
         <td v-once
             class="group-heading"
-            :colspan="numberOfColumns">{{ item }}</td>
+            :data-depth="itemDepth"
+            :colspan="numberOfColumns">
+            <span class="group-heading-text"
+                  :style="groupHeadingTextStyle">{{ itemContent }}</span>
+        </td>
     </tr>
     <tr v-else>
-        <template v-for="cell in item">
+        <template v-for="cell in itemContent">
             <!-- Don't display any content for NaN cells -->
             <td v-if="Number.isNaN(cell)"
                 class="cell-content nan"></td>
@@ -25,21 +30,35 @@ import { Vue, Component, Prop, p } from "av-ts";
 
 import * as Record from "../../../common/Record";
 
-// import * as AnnealAjax from "../data/AnnealAjax";
 import * as ColumnInfo from "../data/ColumnInfo";
+import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 @Component
 export default class SpreadsheetTreeViewItem extends Vue {
     // Props
-    @Prop item: string | Record.Record = p({ required: true, }) as any;
+    @Prop item: FlattenedTreeItem = p({ type: Object, required: true, }) as any;
     @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
 
     get numberOfColumns() {
         return this.columnInfo.length;
     }
 
+    get itemDepth() {
+        return this.item.depth;
+    }
+
+    get itemContent() {
+        return this.item.content;
+    }
+
     get isItemGroupHeading() {
-        return typeof this.item === "string";
+        return typeof this.itemContent === "string";
+    }
+
+    get groupHeadingTextStyle() {
+        return {
+            marginLeft: `${this.itemDepth}em`,
+        };
     }
 }   
 </script>
@@ -102,5 +121,17 @@ th select.column-type {
     background: #738;
     color: #fff;
     font-weight: 400;
+}
+
+.group-heading[data-depth="0"] {
+    background: #738;
+}
+
+.group-heading[data-depth="1"] {
+    background: #947b2f;
+}
+
+.group-heading-text {
+    display: inline-block;
 }
 </style>

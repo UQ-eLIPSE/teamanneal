@@ -28,21 +28,36 @@ import * as Record from "../../../common/Record";
 
 import * as AnnealAjax from "../data/AnnealAjax";
 import * as ColumnInfo from "../data/ColumnInfo";
+import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
 
-function flatten(flattenedArray: (string | Record.Record)[], node: AnnealAjax.ResultArrayNode) {
+/**
+ * Flattens the result tree into a form that can be used to construct table rows
+ * for SpreadsheetTreeView* components
+ */
+function flatten(flattenedArray: FlattenedTreeItem[], depth: number, node: AnnealAjax.ResultArrayNode) {
     if (node.children !== undefined) {
         // Push in group heading if not root
         if (!node.isRoot) {
-            flattenedArray.push(`${node.stratumLabel} ${node.counterValue}`);
+            const flattenedTreeItem: FlattenedTreeItem = {
+                content: `${node.stratumLabel} ${node.counterValue}`,
+                depth: depth++,     // Increment depth while we're at it
+            };
+
+            flattenedArray.push(flattenedTreeItem);
         }
 
         // Recurse into children
-        node.children.forEach((childNode) => flatten(flattenedArray, childNode));
+        node.children.forEach((childNode) => flatten(flattenedArray, depth, childNode));
     } else {
         // Insert record
-        flattenedArray.push(node.content!);
+        const flattenedTreeItem: FlattenedTreeItem = {
+            content: node.content!,
+            depth,
+        };
+
+        flattenedArray.push(flattenedTreeItem);
     }
 
     return flattenedArray;
@@ -59,7 +74,7 @@ export default class SpreadsheetTreeView extends Vue {
     @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
 
     get flattenedTree() {
-        return flatten([], this.tree);
+        return flatten([], 0, this.tree);
     }
 }   
 </script>
