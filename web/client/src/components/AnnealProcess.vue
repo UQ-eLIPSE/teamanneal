@@ -66,6 +66,8 @@ export default class AnnealProcess extends Vue {
     background: rgb(230, 230, 230);
 
     box-shadow: inset -1rem 0 1rem rgba(0, 0, 0, 0.1);
+    
+    overflow-y: auto;
 }
 
 #wizard-content {
