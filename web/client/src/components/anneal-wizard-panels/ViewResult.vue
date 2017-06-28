@@ -47,12 +47,10 @@ import * as Stratum from "../../data/Stratum";
 import * as AnnealAjax from "../../data/AnnealAjax";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
 
-import ResultArrayNodeView from "../ResultArrayNodeView.vue";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 @Component({
     components: {
-        ResultArrayNodeView,
         SpreadsheetTreeView,
     }
 })
