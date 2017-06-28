@@ -7,10 +7,9 @@
             Request in progress... (see console)
         </p>
         <div v-if="rootNodeAvailable">
-            <ResultArrayNodeView v-for="childNode in rootNodeChildren"
-                                 :node="childNode" />
+            <SpreadsheetTreeView :tree="rootNode"
+                                 :columnInfo="columnInfo"></SpreadsheetTreeView>
         </div>
-    
         <div class="bottom-buttons">
             <button class="button"
                     @click="emitWizardNavNext"
@@ -24,16 +23,19 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as SourceFile from "../../data/SourceFile";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import ResultArrayNodeView from "../ResultArrayNodeView.vue";
+import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 const thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
 @Component({
     components: {
         ResultArrayNodeView,
+        SpreadsheetTreeView,
     }
 })
 export default class ViewResult extends Vue {
@@ -73,8 +75,21 @@ export default class ViewResult extends Vue {
         return this.$store.state.anneal.outputTree && this.$store.state.anneal.outputTree.children.length > 0;
     }
 
+    get rootNode() {
+        return this.$store.state.anneal.outputTree;
+    }
+
     get rootNodeChildren() {
-        return this.$store.state.anneal.outputTree.children;
+        return this.rootNode.children;
+    }
+
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get columnInfo() {
+        return this.fileInStore.columnInfo;
     }
 }
 </script>
