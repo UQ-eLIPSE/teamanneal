@@ -1,27 +1,30 @@
 <template>
-    <div id="wizard">
-        <div class="desc-text">
-            <h1>View result</h1>
-            <p v-if="!isRequestInProgress">
-                The annealing result is shown below. To save this result as a file, click "Export as CSV".
-                <a class="more"
-                   href="#">Need help?</a>
-            </p>
-            <p v-if="isRequestInProgress"
-               style="color: #fff; background: darkred; padding: 0.5em;">
-                Request in progress...
-            </p>
+    <div class="wizard-panel">
+        <div class="wizard-panel-content">
+            <div class="desc-text">
+                <h1>View result</h1>
+                <p v-if="!isRequestInProgress">
+                    The annealing result is shown below. To save this result as a file, click "Export as CSV".
+                    <a class="more"
+                       href="#">Need help?</a>
+                </p>
+                <p v-if="isRequestInProgress"
+                   style="color: #fff; background: darkred; padding: 0.5em;">
+                    Request in progress...
+                </p>
+            </div>
+            <div v-if="rootNodeAvailable"
+                 class="spreadsheet">
+                <SpreadsheetTreeView class="viewer"
+                                     :tree="rootNode"
+                                     :columnInfo="columnInfo"></SpreadsheetTreeView>
+            </div>
         </div>
-        <div v-if="rootNodeAvailable"
-             class="spreadsheet">
-            <SpreadsheetTreeView class="viewer"
-                                 :tree="rootNode"
-                                 :columnInfo="columnInfo"></SpreadsheetTreeView>
-        </div>
-        <div class="bottom-buttons">
+        <div class="wizard-panel-bottom-buttons">
             <button class="button export-button"
                     @click="onExportButtonClick"
                     :disabled="isExportButtonDisabled">Export as CSV</button>
+    
         </div>
     </div>
 </template>
@@ -146,36 +149,47 @@ export default class ViewResult extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#wizard {
-    padding: 1rem 2rem;
+.wizard-panel {
+    display: flex;
+    flex-direction: column;
 }
 
-#wizard h1 {
+.wizard-panel-content {
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    padding: 1rem 2rem;
+
+    overflow-y: auto;
+}
+
+.wizard-panel-content h1 {
     color: #49075E;
     font-weight: 400;
     font-size: 2.5em;
     margin: 1rem 0;
 }
 
-#wizard p {
+.wizard-panel-content p {
     margin: 1rem 0;
 }
 
-#wizard .bottom-buttons {
+.wizard-panel-bottom-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     background: #e6e6e6;
-    margin: 0 -2rem -1rem;
     padding: 1rem 2rem;
+
+    margin-bottom: -1px;
 
     display: flex;
     flex-direction: row-reverse;
-
-    position: sticky;
-    bottom: -1px;
 }
 
-#wizard .bottom-buttons>* {
+.wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
 }
 

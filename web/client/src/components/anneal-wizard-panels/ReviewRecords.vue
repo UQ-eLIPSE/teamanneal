@@ -1,18 +1,26 @@
 <template>
-    <div id="wizard">
-        <div class="desc-text">
-            <h1>Double check data</h1>
-            <p>
-                Take a moment to make sure column data types and all records are correct.
-                <a class="more" href="#">Need help?</a>
-            </p>
-            <div class="column-data-type-editor"></div>
+    <div class="wizard-panel">
+        <div class="wizard-panel-content">
+            <div class="desc-text">
+                <h1>Double check data</h1>
+                <p>
+                    Take a moment to make sure column data types and all records are correct.
+                    <a class="more"
+                       href="#">Need help?</a>
+                </p>
+                <div class="column-data-type-editor"></div>
+            </div>
+            <div class="spreadsheet">
+                <SpreadsheetView class="viewer"
+                                 :rows="cookedDataWithHeader"
+                                 :columnInfo="columnInfo"
+                                 :stickyHeader="false"
+                                 @columnTypeChange="onColumnTypeChange"></SpreadsheetView>
+            </div>
         </div>
-        <div class="spreadsheet">
-            <SpreadsheetView class="viewer" :rows="cookedDataWithHeader" :columnInfo="columnInfo" :stickyHeader="false" @columnTypeChange="onColumnTypeChange" />
-        </div>
-        <div class="bottom-buttons">
-            <button class="button" @click="emitWizardNavNext">Continue</button>
+        <div class="wizard-panel-bottom-buttons">
+            <button class="button"
+                    @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
 </template>
@@ -129,36 +137,63 @@ export default class ReviewRecords extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#wizard {
+.wizard-panel {
     display: flex;
     flex-direction: column;
 }
 
-#wizard h1 {
+.wizard-panel-content {
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    padding: 1rem 2rem;
+
+    overflow-y: auto;
+}
+
+.wizard-panel-content h1 {
     color: #49075E;
     font-weight: 400;
     font-size: 2.5em;
     margin: 1rem 0;
 }
 
-#wizard p {
+.wizard-panel-content p {
     margin: 1rem 0;
 }
 
-#wizard .bottom-buttons {
+.wizard-panel-bottom-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     background: #e6e6e6;
-    /*margin: 0 -2rem -1rem;*/
     padding: 1rem 2rem;
+
+    margin-bottom: -1px;
 
     display: flex;
     flex-direction: row-reverse;
-
-    flex-grow: 0;
-    flex-shrink: 0;
 }
 
-#wizard .bottom-buttons>* {
+.wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+
+
+
+
+
+
+.wizard-panel-content {
+    display: flex;
+    flex-direction: column;
+
+    flex-grow: 1;
+
+    padding: 0;
 }
 
 .desc-text {
