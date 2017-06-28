@@ -1,12 +1,39 @@
 <template>
     <div id="constraint-item">
-        <DynamicWidthSelect class="select cost-weight" :list="costWeightList" :selectedIndex="selectedCostWeightIndex" @change="onCostWeightChange" />
-        <DynamicWidthSelect class="select condition-function" :list="conditionFunctionList" :selectedIndex="selectedConditionFunctionIndex" @change="onConditionFunctionChange" />
-        <DynamicWidthInputField class="input condition-count" v-if="showConditionCount" :val="''+p_conditionCount" @change="onConditionCountChange" />
-        <DynamicWidthSelect class="select filter-column" :list="columnInfoList" :selectedIndex="p_filterColumn" @change="onFilterColumnChange" />
-        <DynamicWidthSelect class="select filter-function" v-if="showFilterFunction" :list="filterFunctionList" :selectedIndex="selectedFilterFunctionIndex" @change="onFilterFunctionChange" />
-        <DynamicWidthInputField class="input filter-value" v-if="showFilterValueAsInput" :val="''+p_filterValue" @change="onFilterValueAsInputChange" />
-        <DynamicWidthSelect class="select filter-value" v-if="showFilterValueAsSelect" :list="filterValueAsSelectList" :selectedIndex="selectedFilterValueAsSelectIndex" @change="onFilterValueAsSelectChange" />
+        <DynamicWidthSelect class="select cost-weight"
+                            :list="costWeightList"
+                            :selectedIndex="selectedCostWeightIndex"
+                            @change="onCostWeightChange"></DynamicWidthSelect>
+        <span v-if="!personUnitNounFollowsCondition"
+              class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+        <DynamicWidthSelect class="select condition-function"
+                            :list="conditionFunctionList"
+                            :selectedIndex="selectedConditionFunctionIndex"
+                            @change="onConditionFunctionChange"></DynamicWidthSelect>
+        <DynamicWidthInputField class="input condition-count"
+                                v-if="showConditionCount"
+                                :val="''+p_conditionCount"
+                                @change="onConditionCountChange"></DynamicWidthInputField>
+        <span v-if="personUnitNounFollowsCondition"
+              class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+        <DynamicWidthSelect class="select filter-column"
+                            :list="columnInfoList"
+                            :selectedIndex="p_filterColumn"
+                            @change="onFilterColumnChange"></DynamicWidthSelect>
+        <DynamicWidthSelect class="select filter-function"
+                            v-if="showFilterFunction"
+                            :list="filterFunctionList"
+                            :selectedIndex="selectedFilterFunctionIndex"
+                            @change="onFilterFunctionChange"></DynamicWidthSelect>
+        <DynamicWidthInputField class="input filter-value"
+                                v-if="showFilterValueAsInput"
+                                :val="''+p_filterValue"
+                                @change="onFilterValueAsInputChange"></DynamicWidthInputField>
+        <DynamicWidthSelect class="select filter-value"
+                            v-if="showFilterValueAsSelect"
+                            :list="filterValueAsSelectList"
+                            :selectedIndex="selectedFilterValueAsSelectIndex"
+                            @change="onFilterValueAsSelectChange"></DynamicWidthSelect>
         <button @click="deleteConstraint">Delete</button>
     </div>
 </template>
@@ -89,7 +116,7 @@ const ConditionFunctionList = [
     },
     {
         value: "gt",
-        text: "greater than",
+        text: "more than",
     },
     {
         value: "lt",
@@ -97,11 +124,11 @@ const ConditionFunctionList = [
     },
     {
         value: "low",
-        text: "as few of",
+        text: "as few",
     },
     {
         value: "high",
-        text: "as many of",
+        text: "as many",
     },
     {
         value: "similar",
@@ -342,8 +369,32 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return this.showFilterFunction && this.thisConstraintColumnInfo.type === "string";
     }
 
+    /**
+     * Generates the appropriate (pluralised) noun for the constraints editor
+     * sentence
+     */
+    get personUnitNoun() {
+        // If the count is exactly one, return "person"
+        if (this.showConditionCount && this.p_conditionCount === 1) {
+            return "person";
+        } else {
+            return "people";
+        }
+    }
 
+    /**
+     * Determines if the person unit noun ("person" or "people") comes after
+     * the condition function selection menu in the constraints editor sentence
+     */
+    get personUnitNounFollowsCondition() {
+        switch (this.p_conditionFunction) {
+            case "similar":
+            case "different":
+                return false;
+        }
 
+        return true;
+    }
 
     onCostWeightChange(option: any) {
         this.p_costWeight = option.value;
@@ -456,5 +507,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     padding: 0.2em 0.3em;
     margin: 0.2em 0;
     background: rgba(0, 0, 0, 0.05);
+}
+
+.personUnitNounFragment {
+    display: inline-block;
+    color: #49075E;
 }
 </style>
