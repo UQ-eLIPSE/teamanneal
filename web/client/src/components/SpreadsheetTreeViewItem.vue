@@ -28,8 +28,6 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as Record from "../../../common/Record";
-
 import * as ColumnInfo from "../data/ColumnInfo";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
