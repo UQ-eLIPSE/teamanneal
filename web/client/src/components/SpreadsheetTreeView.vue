@@ -34,9 +34,9 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
 function flatten(flattenedArray: (string | Record.Record)[], node: AnnealAjax.ResultArrayNode) {
     if (node.children !== undefined) {
         // Push in group heading if not root
-        // if (!node.isRoot) {
-            flattenedArray.push(`${node.label}`);
-        // }
+        if (!node.isRoot) {
+            flattenedArray.push(`${node.stratumLabel} ${node.counterValue}`);
+        }
 
         // Recurse into children
         node.children.forEach((childNode) => flatten(flattenedArray, childNode));
@@ -59,7 +59,7 @@ export default class SpreadsheetTreeView extends Vue {
     @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
 
     get flattenedTree() {
-        return flatten([], this.tree.children);
+        return flatten([], this.tree);
     }
 }   
 </script>
