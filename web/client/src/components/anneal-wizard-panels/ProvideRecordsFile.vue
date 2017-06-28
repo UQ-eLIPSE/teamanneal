@@ -103,6 +103,7 @@ export default class ProvideRecordsFile extends Vue {
                 complete: resolve,
                 error: reject,
                 worker: false,          // DO NOT use web workers, as there is a problem with Webpack, papaparse and workers
+                skipEmptyLines: true,
             });
         });
         console.log("Parse complete");

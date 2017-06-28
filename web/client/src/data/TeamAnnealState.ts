@@ -22,6 +22,7 @@ export interface TeamAnnealState {
         output: AnnealOutput | undefined,
         outputTree: ResultArrayNode | undefined,
         outputSatisfaction: undefined,      // TODO: Not yet implemented
+        outputIdNodeMap: Map<string, ReadonlyArray<ResultArrayNode>> | undefined,
     }
 
     sourceFile: Partial<SourceFile.SourceFile>,

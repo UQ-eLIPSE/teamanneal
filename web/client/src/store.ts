@@ -27,6 +27,7 @@ const state: TeamAnnealState.TeamAnnealState = {
         output: undefined,
         outputTree: undefined,
         outputSatisfaction: undefined,
+        outputIdNodeMap: undefined,
     },
 
     sourceFile: {},
@@ -189,11 +190,16 @@ const store = new Vuex.Store({
         updateAnnealOutputTree(state, node: AnnealAjax.ResultArrayNode) {
             state.anneal.outputTree = node;
         },
+
+        updateAnnealOutputIdNodeMap(state, map: Map<string, ReadonlyArray<AnnealAjax.ResultArrayNode>>) {
+            state.anneal.outputIdNodeMap = map;
+        },
     },
     actions: {
         // Anneal AJAX and result
         newAnnealAjaxRequest(context, data: any) {
             const $state = context.state;
+            const idColumnIndex = $state.constraintsConfig.idColumnIndex;
 
             // Cancel any existing anneal AJAX request
             const existingCancelTokenSource = $state.anneal.ajaxCancelTokenSource;
@@ -202,6 +208,11 @@ const store = new Vuex.Store({
             // Wipe existing AJAX and anneal request data
             context.commit("initialiseAnnealAjax");
             context.commit("initialiseAnnealInputOutput");
+
+            // We need the ID column index for processing later
+            if (idColumnIndex === undefined) {
+                throw new Error("ID column index not defined");
+            }
 
             // Cache the input
             context.commit("updateAnnealInput", data);
@@ -224,8 +235,11 @@ const store = new Vuex.Store({
                 const tree = AnnealAjax.transformOutputIntoTree(output);
                 AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
 
+                const idToNodeHierarchyMap = AnnealAjax.mapRawDataToNodeHierarchy(idColumnIndex, tree);
+
                 context.commit("updateAnnealOutput", output);
                 context.commit("updateAnnealOutputTree", tree);
+                context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
             });
         }
     },
