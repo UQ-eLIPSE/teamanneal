@@ -1,42 +1,36 @@
 <template>
     <div id="spreadsheet">
         <table>
-            <tr v-for="(row, i) in rows" :class="{ 'header': i === 0, }">
-                <template v-for="(cell, j) in row">
-    
-                    <!-- Header -->
-                    <th v-if="i === 0">
-    
-                        <!-- When column info is supplied -->
-                        <template v-if="!!getColumnInfo(j)">
-                            <span class="cell-content">{{ getColumnLabel(j) }}</span>
+            <thead>
+                <tr class="header">
+                    <th v-for="column in columnInfo">
+                        <template>
+                            <span class="cell-content">{{ column.label }}</span>
                             <br>
-                            <select class="column-type" :value="getColumnType(j)" @change="emitColumnTypeChange(getColumnInfo(j), $event)">
+                            <select class="column-type"
+                                    :value="column.type"
+                                    @change="emitColumnTypeChange(column, $event)">
                                 <option>string</option>
                                 <option>number</option>
                             </select>
                         </template>
-    
-                        <!-- When column info is NOT supplied -->
-                        <template v-else>
-                            <span class="cell-content">{{ cell }}</span>
-                        </template>
-    
                     </th>
-    
-                    <!-- Normal cell -->
-                    <template v-else>
-    
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="row in contentRows">
+                    <template v-for="cell in row">
                         <!-- Don't display any content for NaN cells -->
-                        <td v-if="Number.isNaN(cell)" class="cell-content nan"></td>
+                        <td v-if="Number.isNaN(cell)"
+                            class="cell-content nan"></td>
     
                         <!-- Normal cell content -->
-                        <td v-else class="cell-content" :class="{ 'null': cell === null, }">{{cell}}</td>
-    
+                        <td v-else
+                            class="cell-content"
+                            :class="{ 'null': cell === null, }">{{cell}}</td>
                     </template>
-    
-                </template>
-            </tr>
+                </tr>
+            </tbody>
         </table>
     </div>
 </template>
@@ -44,7 +38,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 import * as ColumnInfo from "../data/ColumnInfo";
 
@@ -52,39 +46,10 @@ import * as ColumnInfo from "../data/ColumnInfo";
 export default class SpreadsheetView extends Vue {
     // Props
     @Prop rows: ReadonlyArray<string | number | null> = p(Array) as any;
-    @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> | undefined = p(Array) as any;
-    @Prop stickyHeader = p(Boolean);
+    @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
 
-    stickyHeader_lastUpdate: number = 0;
-
-    get headerRow() {
-        // Returns the first <tr> it encounters, which is the header row
-        return this.$el.querySelector("tr");
-    }
-
-    getColumnInfo(columnIndex: number) {
-        // If there is no information, returned undefined
-        if (this.columnInfo === undefined) { return undefined; }
-
-        return this.columnInfo[columnIndex];
-    }
-
-    getColumnLabel(columnIndex: number) {
-        const columnInfo = this.getColumnInfo(columnIndex);
-
-        // If there is no information, returned undefined
-        if (columnInfo === undefined) { return undefined; }
-
-        return columnInfo.label;
-    }
-
-    getColumnType(columnIndex: number) {
-        const columnInfo = this.getColumnInfo(columnIndex);
-
-        // If there is no information, returned undefined
-        if (columnInfo === undefined) { return undefined; }
-
-        return columnInfo.type;
+    get contentRows() {
+        return this.rows.slice(1);
     }
 
     emitColumnTypeChange(columnInfo: ColumnInfo.ColumnInfo, event: Event) {
@@ -99,25 +64,6 @@ export default class SpreadsheetView extends Vue {
             columnInfo,
             newColumnType,
         });
-    }
-
-    @Lifecycle mounted() {
-        if (this.stickyHeader) {
-            // Enable sticky header on scroll
-            this.$el.addEventListener("scroll", () => {
-                Vue.nextTick(() => requestAnimationFrame((time: number) => {
-                    // If already processed in same frame, don't do again
-                    if (this.stickyHeader_lastUpdate === time) { return; }
-
-                    // Translate Y to move header down to compensate for scroll
-                    const offset = this.$el.scrollTop;
-                    this.headerRow!.style.transform = `translateY(${offset}px)`;
-
-                    // Unmark flag
-                    this.stickyHeader_lastUpdate = time;
-                }));
-            });
-        }
     }
 }   
 </script>

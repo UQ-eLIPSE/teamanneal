@@ -1,22 +1,37 @@
 <template>
     <div class="wizard-panel">
-        <div class="wizard-panel-content">
-            <h1>View result</h1>
-    
-            <p v-if="isRequestInProgress"
-               style="color: #fff; background: darkred; padding: 0.5em;">
-                Request in progress... (see console)
-            </p>
-            <div v-if="rootNodeAvailable">
-                <ResultArrayNodeView v-for="childNode in rootNodeChildren"
-                                     :node="childNode"></ResultArrayNodeView>
+        <template v-if="!isRequestInProgress">
+            <div class="wizard-panel-content">
+                <div class="desc-text">
+                    <h1>View result</h1>
+                    <p>Annealed groups are shown below. To save this output as a file, click "Export as CSV".
+                        <a class="more"
+                           href="#">Need help?</a>
+                    </p>
+                </div>
+                <div v-if="rootNodeAvailable"
+                     class="spreadsheet">
+                    <SpreadsheetTreeView class="viewer"
+                                         :tree="rootNode"
+                                         :columnInfo="columnInfo"></SpreadsheetTreeView>
+                </div>
             </div>
-        </div>
-        <div class="wizard-panel-bottom-buttons">
-            <button class="button export-button"
-                    @click="onExportButtonClick"
-                    :disabled="isExportButtonDisabled">Export as CSV</button>
-        </div>
+            <div v-if="rootNodeAvailable"
+                 class="wizard-panel-bottom-buttons">
+                <button class="button export-button"
+                        @click="onExportButtonClick"
+                        :disabled="isExportButtonDisabled">Export as CSV</button>
+            </div>
+        </template>
+        <template v-else>
+            <div class="wizard-panel-content">
+                <div class="desc-text">
+                    <h1>Anneal in progress</h1>
+                    <p>Please wait while TeamAnneal forms groups...</p>
+                    <p>This may take a minute or two.</p>
+                </div>
+            </div>
+        </template>
     </div>
 </template>
 
@@ -27,15 +42,16 @@ import { Vue, Component } from "av-ts";
 import * as Papa from "papaparse";
 import * as FileSaver from "file-saver";
 
+import * as SourceFile from "../../data/SourceFile";
 import * as Stratum from "../../data/Stratum";
 import * as AnnealAjax from "../../data/AnnealAjax";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
 
-import ResultArrayNodeView from "../ResultArrayNodeView.vue";
+import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 @Component({
     components: {
-        ResultArrayNodeView,
+        SpreadsheetTreeView,
     }
 })
 export default class ViewResult extends Vue {
@@ -95,8 +111,21 @@ export default class ViewResult extends Vue {
         return this.$store.state.anneal.outputTree && this.$store.state.anneal.outputTree.children.length > 0;
     }
 
+    get rootNode() {
+        return this.$store.state.anneal.outputTree;
+    }
+
     get rootNodeChildren() {
-        return this.$store.state.anneal.outputTree.children;
+        return this.rootNode.children;
+    }
+
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get columnInfo() {
+        return this.fileInStore.columnInfo;
     }
 
     get outputIdNodeMap() {
@@ -166,6 +195,45 @@ export default class ViewResult extends Vue {
 
 .wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
+}
+
+
+
+
+
+
+
+.wizard-panel-content {
+    display: flex;
+    flex-direction: column;
+
+    flex-grow: 1;
+
+    padding: 0;
+}
+
+.desc-text {
+    padding: 1rem 2rem;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.spreadsheet {
+    background: #fff;
+
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    position: relative;
+}
+
+.spreadsheet .viewer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .export-button {
