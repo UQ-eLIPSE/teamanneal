@@ -10,7 +10,8 @@
         </td>
     </tr>
     <tr v-else>
-        <template v-for="cell in itemContent">
+        <template v-for="(cell, i) in itemContent"
+                  :key="i">
             <!-- Don't display any content for NaN cells -->
             <td v-if="Number.isNaN(cell)"
                 class="cell-content nan"></td>

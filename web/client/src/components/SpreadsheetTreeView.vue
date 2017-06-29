@@ -3,7 +3,8 @@
         <table>
             <thead>
                 <tr class="header">
-                    <th v-for="column in columnInfo">
+                    <th v-for="(column, i) in columnInfo"
+                        :key="i">
                         <template>
                             <span class="cell-content">{{ column.label }}</span>
                         </template>
@@ -11,7 +12,8 @@
                 </tr>
             </thead>
             <tbody>
-                <SpreadsheetTreeViewItem v-for="item in flattenedTree"
+                <SpreadsheetTreeViewItem v-for="(item, i) in flattenedTree"
+                                         :key="i"
                                          :item="item"
                                          :columnInfo="columnInfo"></SpreadsheetTreeViewItem>
             </tbody>
