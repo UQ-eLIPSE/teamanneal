@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div>
+        <div class="pos-rel">
             <span class="input-wrapper">
                 <DynamicWidthInputField v-if="editable"
                                         class="input"
@@ -94,7 +94,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
     border-radius: 0.3em;
 
     font-size: 1.5em;
-    
+
     color: #fff;
 }
 
