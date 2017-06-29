@@ -10,17 +10,11 @@
         </td>
     </tr>
     <tr v-else>
-        <template v-for="(cell, i) in itemContent"
-                  :key="i">
-            <!-- Don't display any content for NaN cells -->
-            <td v-if="Number.isNaN(cell)"
-                class="cell-content nan"></td>
-    
-            <!-- Normal cell content -->
-            <td v-else
-                class="cell-content"
-                :class="{ 'null': cell === null, }">{{ cell }}</td>
-        </template>
+        <td v-for="(cell, i) in itemContent"
+            :key="i"
+            :class="cellClasses(cell)">
+            <template v-if="cellContentVisible(cell)">{{ cell }}</template>
+        </td>
     </tr>
 </template>
 
@@ -58,6 +52,20 @@ export default class SpreadsheetTreeViewItem extends Vue {
         return {
             marginLeft: `${this.itemDepth}em`,
         };
+    }
+
+    cellContentVisible(value: any) {
+        return !Number.isNaN(value);
+    }
+
+    cellClasses(value: any) {
+        const classes = {
+            "cell-content": true,
+            "nan": Number.isNaN(value),
+            "null": value === null,
+        }
+
+        return classes;
     }
 }   
 </script>
