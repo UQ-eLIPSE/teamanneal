@@ -154,7 +154,27 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
 
         nodes.forEach((node, i) => {
             const counterValue = counterArray[i % counterArrayLength];
-            node.label = `${stratumLabel} ${counterValue}`;
+            let label = `${stratumLabel} ${counterValue}`;
+
+            // Not enough counter strings, so adding an extra number at the end
+            // in an attempt to make the team names distinct
+            //
+            // For example:
+            // * Team Red           ┐
+            // * Team Green         ├ The actual counter array is of length 3
+            // * Team Blue          ┘
+            // * Team Red 2         ┐
+            // * Team Green 2       ├ "2" is appended at the end
+            // * Team Blue 2        ┘
+            // ...
+
+            if (i >= counterArrayLength) {
+                const suffix = ((i / counterArrayLength) >>> 0) + 1;
+                label += ` ${suffix}`;
+            }
+
+            // Set the label right on the node itself
+            node.label = label;
         });
     });
 }
