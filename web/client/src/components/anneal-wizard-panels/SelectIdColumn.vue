@@ -15,7 +15,7 @@
             <p>
                 <select v-model="idColumnIndex">
                     <option disabled
-                            value="-1">Please select the ID column</option>
+                            value="-1">Please select ID column</option>
                     <option v-for="option in possibleIdColumns"
                             :key="option.value"
                             :value="option.value">{{ option.text }}</option>
