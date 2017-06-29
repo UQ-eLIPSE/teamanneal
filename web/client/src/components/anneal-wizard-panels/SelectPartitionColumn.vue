@@ -13,7 +13,7 @@
             <p>
                 <select v-model="partitionColumnIndex">
                     <option disabled
-                            value="-1">Please select a partition column</option>
+                            value="-1">Please select partition column</option>
                     <option v-for="option in possiblePartitionColumns"
                             :key="option.value"
                             :value="option.value">{{ option.text }}</option>
