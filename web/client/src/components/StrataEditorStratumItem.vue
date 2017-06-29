@@ -15,7 +15,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.min"
-                                                        @change="onMinValueChange" />
+                                                        @change="onMinValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                         <div>
@@ -23,7 +23,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.ideal"
-                                                        @change="onIdealValueChange" />
+                                                        @change="onIdealValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                         <div>
@@ -31,7 +31,7 @@
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.max"
-                                                        @change="onMaxValueChange" />
+                                                        @change="onMaxValueChange"></DynamicWidthInputField>
                             </span>
                         </div>
                     </div>
@@ -42,6 +42,7 @@
                 <div>
                     <select>
                         <option v-for="counterOption in counterList"
+                                :key="counterOption.value"
                                 :val="counterOption.value">{{counterOption.text}}</option>
                     </select>
                 </div>
