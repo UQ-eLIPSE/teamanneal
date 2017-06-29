@@ -77,7 +77,9 @@ export default class AnnealProcess extends Vue {
 
     background: #f2f2f2;
 
-    overflow-y: auto;
+    /* Don't permit overflowing content in wizard,
+       which would cause <body> to scroll */
+    overflow-y: hidden;
 }
 
 .wizard-subcomponent {

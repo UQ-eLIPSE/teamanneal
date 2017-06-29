@@ -1,23 +1,27 @@
 <template>
-    <div id="wizard">
-        <h1>Select ID column</h1>
-        <p>
-            TeamAnneal needs to know which column identifies each unique record in your data.
-            <a class="more"
-               href="#">Need help?</a>
-        </p>
-        <p>
-            <select v-model="idColumnIndex">
-                <option disabled
-                        value="-1">Please select ID column</option>
-                <option v-for="option in possibleIdColumns"
-                        :key="option.value"
-                        :value="option.value">{{ option.text }}</option>
-            </select>
-        </p>
-        <p class="error"
-           v-if="possibleIdColumns.length === 0">Your records file has no detected ID column to choose from. Please ensure that your records file has a column with one unique ID value per record.</p>
-        <div class="bottom-buttons">
+    <div class="wizard-panel">
+        <div class="wizard-panel-content">
+            <h1>Select ID column</h1>
+            <p>
+                TeamAnneal needs to know which column identifies each unique record in your data.
+                <a class="more"
+                   href="#">Need help?</a>
+            </p>
+            <div v-if="possibleIdColumns.length === 0"
+                 class="error-msg">
+                <h3>Your records file has no detected ID column</h3>
+                <p>Please ensure that your records file has a column with one unique ID value per record.</p>
+            </div>
+            <p>
+                <select v-model="idColumnIndex">
+                    <option disabled
+                            value="-1">Please select ID column</option>
+                    <option v-for="option in possibleIdColumns"
+                            :value="option.value">{{ option.text }}</option>
+                </select>
+            </p>
+        </div>
+        <div class="wizard-panel-bottom-buttons">
             <button class="button"
                     @click="emitWizardNavNext"
                     :disabled="isWizardNavNextDisabled">Continue</button>
@@ -123,40 +127,53 @@ export default class SelectIdColumn extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#wizard {
-    padding: 1rem 2rem;
+.wizard-panel {
+    display: flex;
+    flex-direction: column;
 }
 
-#wizard h1 {
+.wizard-panel-content {
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    padding: 1rem 2rem;
+
+    overflow-y: auto;
+}
+
+.wizard-panel-content h1 {
     color: #49075E;
     font-weight: 400;
     font-size: 2.5em;
     margin: 1rem 0;
 }
 
-#wizard p {
+.wizard-panel-content p {
     margin: 1rem 0;
 }
 
-#wizard .bottom-buttons {
+.wizard-panel-bottom-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     background: #e6e6e6;
-    margin: 0 -2rem -1rem;
     padding: 1rem 2rem;
+
+    margin-bottom: -1px;
 
     display: flex;
     flex-direction: row-reverse;
-
-    position: sticky;
-    bottom: -1px;
 }
 
-#wizard .bottom-buttons>* {
+.wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
 }
 
-.error {
-    color: red;
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
