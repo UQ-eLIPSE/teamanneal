@@ -1,24 +1,26 @@
 <template>
-    <div id="wizard">
-        <h1>Select partition column</h1>
-        <p>
-            If you need teams to be formed within clusters of records, select a column to partition your data over.
-            <a class="more"
-               href="#">Need help?</a>
-        </p>
-        <p>
-            For example, you may have students in assigned project types - teams may need to be comprised of those in the same project. In this situation, you would set the project column as the partition column.
-        </p>
-        <p>
-            <select v-model="partitionColumnIndex">
-                <option disabled
-                        value="-1">Please select partition column</option>
-                <option v-for="option in possiblePartitionColumns"
-                        :key="option.value"
-                        :value="option.value">{{ option.text }}</option>
-            </select>
-        </p>
-        <div class="bottom-buttons">
+    <div class="wizard-panel">
+        <div class="wizard-panel-content">
+            <h1>Select partition column</h1>
+            <p>
+                If you need teams to be formed within clusters of records, select a column to partition your data over.
+                <a class="more"
+                   href="#">Need help?</a>
+            </p>
+            <p>
+                For example, you may have students in assigned project types - teams may need to be comprised of those in the same project. In this situation, you would set the project column as the partition column.
+            </p>
+            <p>
+                <select v-model="partitionColumnIndex">
+                    <option disabled
+                            value="-1">Please select a partition column</option>
+                    <option v-for="option in possiblePartitionColumns"
+                            :key="option.value"
+                            :value="option.value">{{ option.text }}</option>
+                </select>
+            </p>
+        </div>
+        <div class="wizard-panel-bottom-buttons">
             <button class="button"
                     @click="setPartitionColumn"
                     :disabled="partitionColumnIndex === '-1'">Set partition column</button>
@@ -128,36 +130,47 @@ export default class SelectPartitionColumn extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#wizard {
-    padding: 1rem 2rem;
+.wizard-panel {
+    display: flex;
+    flex-direction: column;
 }
 
-#wizard h1 {
+.wizard-panel-content {
+    flex-grow: 0;
+    flex-shrink: 1;
+
+    padding: 1rem 2rem;
+
+    overflow-y: auto;
+}
+
+.wizard-panel-content h1 {
     color: #49075E;
     font-weight: 400;
     font-size: 2.5em;
     margin: 1rem 0;
 }
 
-#wizard p {
+.wizard-panel-content p {
     margin: 1rem 0;
 }
 
-#wizard .bottom-buttons {
+.wizard-panel-bottom-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     background: #e6e6e6;
-    margin: 0 -2rem -1rem;
     padding: 1rem 2rem;
+
+    margin-bottom: -1px;
 
     display: flex;
     flex-direction: row-reverse;
-
-    position: sticky;
-    bottom: -1px;
 }
 
-#wizard .bottom-buttons>* {
+.wizard-panel-bottom-buttons>* {
     margin: 0 0.2em;
 }
 </style>
