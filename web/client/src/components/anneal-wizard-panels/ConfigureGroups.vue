@@ -6,11 +6,6 @@
             <a class="more"
                href="#">Need help?</a>
         </p>
-        <div v-if="!isStrataConfigSizesValid"
-             class="error-msg">
-            <h3>Group sizes are not valid</h3>
-            <p>You have groups with invalid sizes. For example, it could be that you have set a minimum greater than a maximum size. Please correct this before continuing.</p>
-        </div>
         <p>
             <StrataEditor />
         </p>

@@ -1,6 +1,7 @@
 import * as Record from "../../../common/Record";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
+import * as Stratum from "./Stratum";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
@@ -91,24 +92,22 @@ export function isStrataConfigSizesValid(state: Partial<TeamAnnealState>) {
     for (let i = 0; i < strata.length; ++i) {
         const stratum = strata[i];
 
-        const { min, ideal, max } = stratum.size;
-
         // Run validity checks
         if (
             // Values must be integers
-            (min >>> 0 !== min) ||
-            (ideal >>> 0 !== ideal) ||
-            (max >>> 0 !== max) ||
+            Stratum.isSizeMinNotUint32(stratum) ||
+            Stratum.isSizeIdealNotUint32(stratum) ||
+            Stratum.isSizeMaxNotUint32(stratum) ||
 
             // Must be min <= ideal <= max
-            (min > ideal) ||
-            (ideal > max) ||
+            Stratum.isSizeMinGreaterThanIdeal(stratum) ||
+            Stratum.isSizeIdealGreaterThanMax(stratum) ||
 
             // Not permitted for min to equal max
-            (min === max) ||
+            Stratum.isSizeMinEqualToMax(stratum) ||
 
             // Minimum is always 1
-            (min < 1)
+            Stratum.isSizeMinLessThanOne(stratum)
         ) {
             return false;
         }
