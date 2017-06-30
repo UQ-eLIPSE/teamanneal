@@ -109,7 +109,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigValid(state) &&
+                TeamAnnealState.isStrataConfigNamesValid(state) &&
 
                 // Disable when processing request
                 !TeamAnnealState.isAnnealRequestInProgress(state)
@@ -127,7 +127,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigValid(state) &&
+                TeamAnnealState.isStrataConfigNamesValid(state) &&
+                TeamAnnealState.isStrataConfigSizesValid(state) &&
 
                 // Disable when processing request
                 !TeamAnnealState.isAnnealRequestInProgress(state)
@@ -145,7 +146,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 TeamAnnealState.hasSourceFileData(state) &&
                 TeamAnnealState.hasValidIdColumnIndex(state) &&
                 TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigValid(state) &&
+                TeamAnnealState.isStrataConfigNamesValid(state) &&
+                TeamAnnealState.isStrataConfigSizesValid(state) &&
 
                 // Enable only when the anneal request is actually created
                 TeamAnnealState.isAnnealRequestCreated(state)

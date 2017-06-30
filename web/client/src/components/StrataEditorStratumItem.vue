@@ -11,31 +11,36 @@
                 </h3>
                 <div class="size-block">
                     <div class="three-sizes">
-                        <div>
+                        <label :class="stratumSizeMinClasses">
                             <div>Min</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.min"
                                                         @change="onMinValueChange"></DynamicWidthInputField>
                             </span>
-                        </div>
-                        <div>
+                        </label>
+                        <label :class="stratumSizeIdealClasses">
                             <div>Ideal</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.ideal"
                                                         @change="onIdealValueChange"></DynamicWidthInputField>
                             </span>
-                        </div>
-                        <div>
+                        </label>
+                        <label :class="stratumSizeMaxClasses">
                             <div>Max</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
                                                         :val="''+stratum.size.max"
                                                         @change="onMaxValueChange"></DynamicWidthInputField>
                             </span>
-                        </div>
+                        </label>
                     </div>
+                    <ul v-if="stratumSizeErrors.length > 0"
+                        class="stratum-size-errors">
+                        <li v-for="msg in stratumSizeErrors"
+                            :key="msg">{{ msg }}</li>
+                    </ul>
                 </div>
             </div>
             <div class="stratum-name">
@@ -161,6 +166,72 @@ export default class StrataEditorStratumItem extends Vue {
         return CounterList;
     }
 
+    get stratumSizeMinClasses() {
+        const classes = {
+            "invalid-size": (
+                Stratum.isSizeMinNotUint32(this.stratum) ||
+                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.isSizeMinEqualToMax(this.stratum) ||
+                Stratum.isSizeMinLessThanOne(this.stratum)
+            ),
+        }
+
+        return classes;
+    }
+
+    get stratumSizeIdealClasses() {
+        const classes = {
+            "invalid-size": (
+                Stratum.isSizeIdealNotUint32(this.stratum) ||
+                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.isSizeIdealGreaterThanMax(this.stratum)
+            ),
+        }
+
+        return classes;
+    }
+
+    get stratumSizeMaxClasses() {
+        const classes = {
+            "invalid-size": (
+                Stratum.isSizeMaxNotUint32(this.stratum) ||
+                Stratum.isSizeIdealGreaterThanMax(this.stratum) ||
+                Stratum.isSizeMinEqualToMax(this.stratum)
+            ),
+        }
+
+        return classes;
+    }
+
+    get stratumSizeErrors() {
+        const errMsgs: string[] = [];
+        const stratum = this.stratum;
+
+        /**
+         * Runs error check functions, and if true, adds error message to array
+         */
+        const errCheck =
+            (func: (stratum: Stratum.Stratum) => boolean, msg: string) =>
+                func(stratum) && errMsgs.push(msg);
+
+
+        // Run checks
+        errCheck(Stratum.isSizeMinNotUint32, "Min size is not an integer");
+        errCheck(Stratum.isSizeIdealNotUint32, "Ideal size is not an integer");
+        errCheck(Stratum.isSizeMaxNotUint32, "Max size is not an integer");
+
+        errCheck(Stratum.isSizeMinGreaterThanIdeal, "Min size cannot be greater than ideal size");
+        errCheck(Stratum.isSizeIdealGreaterThanMax, "Ideal size cannot be greater than max size");
+
+        errCheck(Stratum.isSizeMinEqualToMax, "Min size cannot be equal to max size");
+
+        errCheck(Stratum.isSizeMinLessThanOne, "Min size cannot be less than 1");
+
+
+        // Return array of error messages
+        return errMsgs;
+    }
+
     emitChange(diff: Partial<Stratum.Stratum>) {
         // Get current stratum object
         const _: Stratum.Stratum = this.stratum;
@@ -252,7 +323,7 @@ export default class StrataEditorStratumItem extends Vue {
     justify-content: space-between;
 }
 
-.three-sizes>div {
+.three-sizes>label {
     padding: 0.3em;
     background: rgba(0, 0, 0, 0.05);
 
@@ -262,13 +333,33 @@ export default class StrataEditorStratumItem extends Vue {
     width: 30%;
 }
 
+.three-sizes>label.invalid-size {
+    background: rgba(255, 140, 0, 0.7);
+}
+
 .three-sizes .input-area {
     font-size: 1.5em;
+
+    display: inline-block;
 }
 
 .size-unit-text {
     font-size: 0.8em;
     font-style: italic;
     font-weight: 300;
+}
+
+ul.stratum-size-errors {
+    background: rgba(255, 140, 0, 0.7);
+
+    font-size: 0.8em;
+    text-align: left;
+    margin: 0.5em 0;
+
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    padding-right: 0.2em;
+
+    list-style: disc outside;
 }
 </style>
