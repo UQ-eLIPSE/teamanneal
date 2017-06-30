@@ -7,7 +7,7 @@
                 <a class="more"
                    href="#">Need help?</a>
             </p>
-            <div v-if="!isStrataConfigValid"
+            <div v-if="!isStrataConfigNamesValid"
                  class="error-msg">
                 <h3>Group structure is not valid</h3>
                 <p>You have groups with blank or conflicting names. Please correct this before continuing.</p>
@@ -56,7 +56,7 @@ export default class DesignGroupStructure extends Vue {
 
     get isWizardNavNextDisabled() {
         // Disable next step if strata is currently invalid
-        if (!this.isStrataConfigValid) { return true; }
+        if (!this.isStrataConfigNamesValid) { return true; }
 
         const state = this.$store.state;
 
@@ -74,8 +74,8 @@ export default class DesignGroupStructure extends Vue {
         return disabled;
     }
 
-    get isStrataConfigValid() {
-        return TeamAnnealState.isStrataConfigValid(this.$store.state);
+    get isStrataConfigNamesValid() {
+        return TeamAnnealState.isStrataConfigNamesValid(this.$store.state);
     }
 }
 </script>

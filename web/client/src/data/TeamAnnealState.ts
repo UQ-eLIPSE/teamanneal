@@ -1,6 +1,7 @@
 import * as Record from "../../../common/Record";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
+import * as Stratum from "./Stratum";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
@@ -53,7 +54,7 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
     );
 }
 
-export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
+export function isStrataConfigNamesValid(state: Partial<TeamAnnealState>) {
     if (state.constraintsConfig === undefined) { return false; }
 
     const strata = state.constraintsConfig.strata;
@@ -76,6 +77,42 @@ export function isStrataConfigValid(state: Partial<TeamAnnealState>) {
 
     // Do not permit non unique strata names
     if (strataNameSet.size !== strata.length) { return false; }
+
+    // Otherwise we're good to go
+    return true;
+}
+
+export function isStrataConfigSizesValid(state: Partial<TeamAnnealState>) {
+    if (state.constraintsConfig === undefined) { return false; }
+
+    const strata = state.constraintsConfig.strata;
+
+    if (strata === undefined) { return false; }
+
+    // All stratum sizes must be valid
+    for (let i = 0; i < strata.length; ++i) {
+        const stratum = strata[i];
+
+        // Run validity checks
+        if (
+            // Values must be integers
+            Stratum.isSizeMinNotUint32(stratum) ||
+            Stratum.isSizeIdealNotUint32(stratum) ||
+            Stratum.isSizeMaxNotUint32(stratum) ||
+
+            // Must be min <= ideal <= max
+            Stratum.isSizeMinGreaterThanIdeal(stratum) ||
+            Stratum.isSizeIdealGreaterThanMax(stratum) ||
+
+            // Not permitted for min to equal max
+            Stratum.isSizeMinEqualToMax(stratum) ||
+
+            // Minimum is always 1
+            Stratum.isSizeMinLessThanOne(stratum)
+        ) {
+            return false;
+        }
+    }
 
     // Otherwise we're good to go
     return true;
