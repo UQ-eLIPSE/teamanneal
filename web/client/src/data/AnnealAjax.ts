@@ -182,7 +182,25 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
         // Generate array of counters
         let counterArray: ReadonlyArray<string>;
         if (Array.isArray(counter)) {
-            counterArray = counter;     // Counter is an arbitrary string array
+            // Counter is an arbitrary string array that the user provided
+
+            // Trim all values and filter out blanks
+            // 
+            // We can't block people from at least providing blanks for the
+            // final counter value in the input array because stripping it out
+            // will cause Vue to feed back values without the final line to the
+            // input <textarea /> when a user hits the ENTER key, and thus
+            // preventing them from ever creating a new line.
+            //
+            // This is also the same case for stripping out spaces in each line:
+            // that would prevent people from putting spaces into names as each
+            // press of the SPACEBAR key would still end up with a line without
+            // spaces.
+            counterArray =
+                counter
+                    .map(counterString => counterString.trim())
+                    .filter(counterString => counterString.length !== 0);
+
         } else {
             const listCounters = ListCounter.SupportedListCounters;
             const counterDesc = listCounters.find(x => x.type === counter);
@@ -199,8 +217,26 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
         const stratumLabel = stratum.label;
 
         nodes.forEach((node, i) => {
-            const counterValue = counterArray[i % counterArrayLength];
+            let counterValue = counterArray[i % counterArrayLength];
 
+            // Not enough counter strings, so adding an extra number at the end
+            // in an attempt to make the team names distinct
+            //
+            // For example:
+            // * Team Red           ┐
+            // * Team Green         ├ The actual counter array is of length 3
+            // * Team Blue          ┘
+            // * Team Red 2         ┐
+            // * Team Green 2       ├ "2" is appended at the end
+            // * Team Blue 2        ┘
+            // ...
+
+            if (i >= counterArrayLength) {
+                const suffix = ((i / counterArrayLength) >>> 0) + 1;
+                counterValue += ` ${suffix}`;
+            }
+
+            // Set the label right on the node itself
             node.counterValue = counterValue;
             node.stratumLabel = stratumLabel;
         });

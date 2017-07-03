@@ -81,13 +81,41 @@ export namespace DecimalIndexZeroLeadingZero {
     }
 }
 
+export namespace Base26 {
+    /**
+     * Generates an array of specified length with base 26 number arrays 
+     * monotonically increasing from 0.
+     */
+    export function Generate(length: number): ReadonlyArray<ReadonlyArray<number>> {
+        const arr: number[][] = [];
+
+        for (let i = 1; i <= length; ++i) {
+            // Based off https://github.com/alexfeseto/hexavigesimal
+            let n = i;                          // Working number
+            let thisNumArr: number[] = [];      // Number to be built up
+
+            while (n > 0) {
+                --n;
+                thisNumArr.unshift(n % 26);     // Insert at start of number array
+                n = (n / 26) >>> 0;             // Integer divide by 26
+            }
+
+            arr.push(thisNumArr);
+        }
+
+        return arr;
+    }
+}
+
 export namespace LowerLatin {
     const startCharCode = 97;       // "a"
 
     export function Generate(length: number): ReadonlyArray<string> {
-        length;
-        startCharCode;
-        throw new Error("Not implemented");
+        return Base26.Generate(length).map((numArr) => {
+            return numArr.map((base26Number) => {
+                return String.fromCharCode(startCharCode + base26Number);
+            }).join("");
+        });
     }
 }
 
@@ -95,9 +123,11 @@ export namespace UpperLatin {
     const startCharCode = 65;       // "A"
 
     export function Generate(length: number): ReadonlyArray<string> {
-        length;
-        startCharCode;
-        throw new Error("Not implemented");
+        return Base26.Generate(length).map((numArr) => {
+            return numArr.map((base26Number) => {
+                return String.fromCharCode(startCharCode + base26Number);
+            }).join("");
+        });
     }
 }
 
