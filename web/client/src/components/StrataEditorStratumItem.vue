@@ -46,11 +46,22 @@
             <div class="stratum-name">
                 <h3>Name</h3>
                 <div>
-                    <select>
+                    <select :value="counterSelectValue"
+                            @change="onCounterSelectChange">
                         <option v-for="counterOption in counterList"
                                 :key="counterOption.value"
-                                :val="counterOption.value">{{ counterOption.text }}</option>
+                                :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
+                </div>
+                <p v-if="isCounterCustomList">
+                    Provide a list of names, one per line:
+                    <br>
+                    <textarea v-model="customCounterList"
+                              rows="5"></textarea>
+                </p>
+                <div v-if="isCounterCustomList && !isCounterCustomListValid"
+                     class="error-msg">
+                    <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
                 </div>
                 <p>
                     For example:
@@ -76,12 +87,23 @@ import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
 
-const CounterList = ListCounter.SupportedListCounters.map(counter => {
-    return {
-        value: counter.type,
-        text: counter.example,
-    }
-});
+const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
+    const list: { value: string, text: string, }[] =
+        ListCounter.SupportedListCounters.map(counter => {
+            return {
+                value: counter.type,
+                text: counter.example,
+            }
+        });
+
+    // Add "custom" entry
+    list.push({
+        value: "custom",
+        text: "[Custom list]",
+    });
+
+    return list;
+})();
 
 @Component({
     components: {
@@ -130,6 +152,23 @@ export default class StrataEditorStratumItem extends Vue {
         });
     }
 
+    onCounterSelectChange($event: Event) {
+        const el = $event.target as HTMLSelectElement;
+
+        const counterType = el.value;
+
+        if (counterType === "custom") {
+            return this.emitChange({
+                // Default custom list is "Red", "Green", "Blue"
+                counter: ["Red", "Green", "Blue"],
+            });
+        } else {
+            return this.emitChange({
+                counter: counterType as any,
+            });
+        }
+    }
+
     get childUnitText() {
         return this.childUnit || "<group>";
     }
@@ -147,8 +186,12 @@ export default class StrataEditorStratumItem extends Vue {
         // Generate a random value for an example name
         // Random index is up to the 20th index
         if (Array.isArray(counter)) {
-            const randomIndex = (Math.random() * (Math.min(20, counter.length))) >>> 0;
-            return counter[randomIndex];
+            const counterArray = counter
+                .map(counterString => counterString.trim())
+                .filter(counterString => counterString.length !== 0);
+
+            const randomIndex = (Math.random() * (Math.min(20, counterArray.length))) >>> 0;
+            return counterArray[randomIndex];
         } else {
             const listCounters = ListCounter.SupportedListCounters;
             const counterDesc = listCounters.find(x => x.type === counter);
@@ -157,8 +200,9 @@ export default class StrataEditorStratumItem extends Vue {
                 throw new Error(`Counter "${counter}" not supported`);
             }
 
-            const randomLength = ((Math.random() * 20) >>> 0) + 1;
-            return counterDesc.generator(randomLength)[randomLength - 1];
+            // Generate sequence of 20 elements, and pick a random one from that
+            const randomIndex = ((Math.random() * 20) >>> 0);
+            return counterDesc.generator(20)[randomIndex];
         }
     }
 
@@ -232,6 +276,61 @@ export default class StrataEditorStratumItem extends Vue {
         return errMsgs;
     }
 
+    get counterSelectValue() {
+        const counterValue = this.stratum.counter;
+
+        if (Array.isArray(counterValue)) {
+            return "custom";
+        } else {
+            return counterValue;
+        }
+    }
+
+    get isCounterCustomList() {
+        return Array.isArray(this.stratum.counter);
+    }
+
+    get customCounterList() {
+        const counterValue = this.stratum.counter;
+
+        if (!Array.isArray(counterValue)) {
+            throw new Error("Not custom counter list");
+        }
+
+        return counterValue.join("\n");
+    }
+
+    set customCounterList(newValue: string) {
+        const customCounterList = newValue.split("\n");
+
+        this.emitChange({
+            counter: customCounterList,
+        });
+    }
+
+    get isCounterCustomListValid() {
+        return !(
+            this.doesCounterCustomListContainDuplicates
+        );
+    }
+
+    get doesCounterCustomListContainDuplicates() {
+        const counterValue = this.stratum.counter;
+
+        if (!Array.isArray(counterValue)) {
+            throw new Error("Not custom counter list");
+        }
+
+        // Check for duplicates in the custom list
+        const trimmedCounterStrings = counterValue
+            .map(counterString => counterString.trim())
+            .filter(counterString => counterString.length !== 0);
+
+        const counterValueSet = new Set(trimmedCounterStrings);
+
+        return counterValueSet.size !== trimmedCounterStrings.length;
+    }
+
     emitChange(diff: Partial<Stratum.Stratum>) {
         // Get current stratum object
         const _: Stratum.Stratum = this.stratum;
@@ -303,8 +402,7 @@ export default class StrataEditorStratumItem extends Vue {
 
 .stratum-config>div {
     flex-grow: 1;
-    flex-shrink: 0;
-
+    /*flex-shrink: 0;*/
     margin: 1rem;
 }
 
@@ -361,5 +459,11 @@ ul.stratum-size-errors {
     padding-right: 0.2em;
 
     list-style: disc outside;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
