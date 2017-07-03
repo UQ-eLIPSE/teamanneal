@@ -50,9 +50,13 @@
                 <p v-if="isCounterCustomList">
                     Provide a list of names, one per line:
                     <br>
-                    <textarea rows="5"
-                              @change="onCustomCounterListChange">{{ customCounterListAsString }}</textarea>
+                    <textarea v-model="customCounterList"
+                              rows="5"></textarea>
                 </p>
+                <div v-if="isCounterCustomList && !isCounterCustomListValid"
+                     class="error-msg">
+                    <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
+                </div>
                 <p>
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
@@ -152,16 +156,6 @@ export default class StrataEditorStratumItem extends Vue {
         }
     }
 
-    onCustomCounterListChange($event: Event) {
-        const el = $event.target as HTMLTextAreaElement;
-
-        const customCounterList = el.value.trim().split("\n");
-
-        this.emitChange({
-            counter: customCounterList,
-        });
-    }
-
     get childUnitText() {
         return this.childUnit || "<group>";
     }
@@ -179,8 +173,12 @@ export default class StrataEditorStratumItem extends Vue {
         // Generate a random value for an example name
         // Random index is up to the 20th index
         if (Array.isArray(counter)) {
-            const randomIndex = (Math.random() * (Math.min(20, counter.length))) >>> 0;
-            return counter[randomIndex];
+            const counterArray = counter
+                .map(counterString => counterString.trim())
+                .filter(counterString => counterString.length !== 0);
+
+            const randomIndex = (Math.random() * (Math.min(20, counterArray.length))) >>> 0;
+            return counterArray[randomIndex];
         } else {
             const listCounters = ListCounter.SupportedListCounters;
             const counterDesc = listCounters.find(x => x.type === counter);
@@ -213,7 +211,7 @@ export default class StrataEditorStratumItem extends Vue {
         return Array.isArray(this.stratum.counter);
     }
 
-    get customCounterListAsString() {
+    get customCounterList() {
         const counterValue = this.stratum.counter;
 
         if (!Array.isArray(counterValue)) {
@@ -221,6 +219,37 @@ export default class StrataEditorStratumItem extends Vue {
         }
 
         return counterValue.join("\n");
+    }
+
+    set customCounterList(newValue: string) {
+        const customCounterList = newValue.split("\n");
+
+        this.emitChange({
+            counter: customCounterList,
+        });
+    }
+
+    get isCounterCustomListValid() {
+        return !(
+            this.doesCounterCustomListContainDuplicates
+        );
+    }
+
+    get doesCounterCustomListContainDuplicates() {
+        const counterValue = this.stratum.counter;
+
+        if (!Array.isArray(counterValue)) {
+            throw new Error("Not custom counter list");
+        }
+
+        // Check for duplicates in the custom list
+        const trimmedCounterStrings = counterValue
+            .map(counterString => counterString.trim())
+            .filter(counterString => counterString.length !== 0);
+
+        const counterValueSet = new Set(trimmedCounterStrings);
+
+        return counterValueSet.size !== trimmedCounterStrings.length;
     }
 
     emitChange(diff: Partial<Stratum.Stratum>) {
@@ -294,8 +323,7 @@ export default class StrataEditorStratumItem extends Vue {
 
 .stratum-config>div {
     flex-grow: 1;
-    flex-shrink: 0;
-
+    /*flex-shrink: 0;*/
     margin: 1rem;
 }
 
@@ -335,5 +363,11 @@ export default class StrataEditorStratumItem extends Vue {
     font-size: 0.8em;
     font-style: italic;
     color: rgba(0, 0, 0, 0.8);
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
