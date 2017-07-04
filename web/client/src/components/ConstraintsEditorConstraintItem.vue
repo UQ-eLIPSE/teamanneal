@@ -11,10 +11,9 @@
                             v-model="constraintConditionFunction"
                             :list="conditionFunctionList"></DynamicWidthSelect>
     
-        <!--<DynamicWidthInputField class="input condition-count"
-                                                                                                                                                                    v-if="showConditionCount"
-                                                                                                                                                                    :val="''+constraintConditionCount"
-                                                                                                                                                                    @change="onConditionCountChange"></DynamicWidthInputField>-->
+        <DynamicWidthInputField class="input condition-count"
+                                v-if="showConditionCount"
+                                v-model="constraintConditionCount"></DynamicWidthInputField>
     
         <span v-if="personUnitNounFollowsCondition"
               class="personUnitNounFragment">{{ personUnitNoun }} with</span>
@@ -28,10 +27,9 @@
                             v-model="constraintFilterFunction"
                             :list="filterFunctionList"></DynamicWidthSelect>
     
-        <!--<DynamicWidthInputField class="input filter-value"
-                                                                                                                                                                    v-if="showFilterValueAsInput"
-                                                                                                                                                                    :val="''+constraintFilterValues"
-                                                                                                                                                                    @change="onFilterValueAsInputChange"></DynamicWidthInputField>-->
+        <DynamicWidthInputField class="input filter-value"
+                                v-if="showFilterValueAsInput"
+                                v-model="constraintFilterValues"></DynamicWidthInputField>
     
         <DynamicWidthSelect class="select filter-value"
                             v-if="showFilterValueAsSelect"
