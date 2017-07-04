@@ -1,9 +1,13 @@
 <template>
     <div id="constraint-group">
         Each
-        <DynamicWidthSelect class="select" :list="strataSelectList" :selectedIndex="stratumIndex" @change="onStratumChange" />
+        <DynamicWidthSelect class="select"
+                            v-model="stratumIndex"
+                            :list="strataSelectList"></DynamicWidthSelect>
         <div id="constraint-items">
-            <ConstraintsEditorConstraintItem v-for="constraint in stratumConstraints" :key="constraint._id" :constraint="constraint" />
+            <ConstraintsEditorConstraintItem v-for="constraint in stratumConstraints"
+                                             :key="constraint._id"
+                                             :constraint="constraint" />
         </div>
         <button @click="addNewConstraint">Add new constraint</button>
     </div>
@@ -28,7 +32,7 @@ import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.v
 })
 export default class ConstraintEditorGroupItem extends Vue {
     // Props
-    @Prop stratumConstraints = p(Array);
+    @Prop stratumConstraints: any[] = p({ type: Array, required: true, }) as any;
 
     get strata() {
         return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
@@ -40,34 +44,11 @@ export default class ConstraintEditorGroupItem extends Vue {
         return stratumConstraints[0]!.strata;
     }
 
-    get strataSelectList() {
-        return this.strata.map(stratum => ({
-            value: stratum,
-            text: stratum.label,
-        }));
-    }
-
-    get thisGroupStratum() {
-        return this.strata[this.stratumIndex];
-    }
-
-
-
-
-
-
-
-
-
-
-    onStratumChange(option: any) {
-        const newStratum: Stratum.Stratum = option.value;
-        const newStrataIndex = this.strata.findIndex(s => s._id === newStratum._id);
-
+    set stratumIndex(newStratumIndex: number) {
         this.stratumConstraints!.forEach(constraint => {
             // Shallow copy constraint and set new stratum index
             const newConstraint = { ...constraint };
-            newConstraint.strata = newStrataIndex;
+            newConstraint.strata = newStratumIndex;
 
             const constraintUpdate: Constraint.Update = {
                 constraint: newConstraint,
@@ -75,6 +56,13 @@ export default class ConstraintEditorGroupItem extends Vue {
 
             this.$store.commit("updateConstraintsConfigConstraint", constraintUpdate);
         });
+    }
+
+    get strataSelectList() {
+        return this.strata.map((stratum, stratumIndex) => ({
+            value: stratumIndex,
+            text: stratum.label,
+        }));
     }
 
     addNewConstraint() {
