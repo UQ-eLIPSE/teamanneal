@@ -5,7 +5,7 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as Anneal from "../anneal/Anneal";
 
 export function initialise(workerId: string) {
-    IPCQueue.queue.process("anneal", 1, (job, done) => {
+    IPCQueue.process("anneal", 1, (job, done) => {
         const data: IPCData.AnnealJobData = job.data;
         const serverResponseId = data.serverResponseId;
 
@@ -28,10 +28,7 @@ export function initialise(workerId: string) {
             }
 
             // Pass message back with result
-            IPCQueue.queue
-                .create("anneal-result", resultMessage)
-                .removeOnComplete(true)
-                .save();
+            IPCQueue.queueMessage("anneal-result", resultMessage);
 
             done();
 
@@ -42,10 +39,7 @@ export function initialise(workerId: string) {
             }
 
             // Pass message back with error
-            IPCQueue.queue
-                .create("anneal-result", resultMessage)
-                .removeOnComplete(true)
-                .save();
+            IPCQueue.queueMessage("anneal-result", resultMessage);
 
             console.error(error);
             done(error);

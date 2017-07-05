@@ -4,7 +4,7 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResponseStore from "../data/PendingResponseStore";
 
 export function initialise() {
-    IPCQueue.queue.process("anneal-result", 1, (job, done) => {
+    IPCQueue.process("anneal-result", 1, (job, done) => {
         const annealResultMessageData: IPCData.AnnealResultMessageData = job.data;
 
         const { error, result, serverResponseId } = annealResultMessageData;

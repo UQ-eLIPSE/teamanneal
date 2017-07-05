@@ -42,10 +42,7 @@ const anneal: express.RequestHandler =
         }
 
         // Queue job
-        IPCQueue.queue
-            .create("anneal", annealJobData)
-            .removeOnComplete(true)
-            .save();
+        IPCQueue.queueMessage("anneal", annealJobData);
 
         // There is no response yet; the anneal job has been sent and will be
         // responded to by the "anneal-result" message handler
