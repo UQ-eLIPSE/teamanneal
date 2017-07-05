@@ -1,8 +1,8 @@
 import * as AnnealJobHandler from "../queue/Anneal";
 
-export function initialise(workerId: string) {
+export function init(workerId: string) {
     console.log(`Anneal worker ${workerId} - Initialising anneal job handler`);
-    AnnealJobHandler.initialise(workerId);
+    AnnealJobHandler.init(workerId);
 
     console.log(`Anneal worker ${workerId} - Initialisation complete`);
 }

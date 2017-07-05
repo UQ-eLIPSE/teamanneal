@@ -3,7 +3,7 @@ import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResponseStore from "../data/PendingResponseStore";
 
-export function initialise() {
+export function init() {
     IPCQueue.process("anneal-result", 1, (job, done) => {
         const annealResultMessageData: IPCData.AnnealResultMessageData = job.data;
 

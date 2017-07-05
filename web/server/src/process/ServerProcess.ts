@@ -12,7 +12,7 @@ const port = 8080;
 const apiRoot = "/api";
 
 
-export function initialise() {
+export function init() {
     // Init the server
     console.log("Initialising Express application");
     const app = Application.init();
@@ -29,7 +29,7 @@ export function initialise() {
 
     // Set up anneal result handling
     console.log(`Initialising anneal result message handler`);
-    AnnealResultMessageHandler.initialise();
+    AnnealResultMessageHandler.init();
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);

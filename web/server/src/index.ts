@@ -6,7 +6,7 @@ import * as AnnealProcess from "./process/AnnealProcess";
 
 if (cluster.isMaster) {
     // Initialise the main server process for master
-    ServerProcess.initialise();
+    ServerProcess.init();
 
     // Number of anneal workers is (CPU cores - 1), with a floor of 1
     const numberOfAnnealWorkers = Math.max(1, os.cpus().length - 1);
@@ -30,5 +30,5 @@ if (cluster.isMaster) {
         throw new Error("Undefined worker ID");
     }
 
-    AnnealProcess.initialise(workerId);
+    AnnealProcess.init(workerId);
 }

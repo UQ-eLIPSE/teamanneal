@@ -4,7 +4,7 @@ import * as IPCQueue from "../data/IPCQueue";
 
 import * as Anneal from "../anneal/Anneal";
 
-export function initialise(workerId: string) {
+export function init(workerId: string) {
     IPCQueue.process("anneal", 1, (job, done) => {
         const data: IPCData.AnnealJobData = job.data;
         const serverResponseId = data.serverResponseId;
