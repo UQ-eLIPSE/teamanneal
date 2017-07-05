@@ -1,10 +1,19 @@
 <template>
     <div>
-        <div id="constraint-groups">
-            <ConstraintsEditorGroupItem class="constraint-group" v-for="stratumConstraints in stratumGroupedConstraints" :key="stratumConstraints._id" :stratumConstraints="stratumConstraints" />
-        </div>
-        <div>
-            <button :disabled="strataWithoutConstraints.length === 0" @click="addNewGroupConstraints">Add group constraints</button>
+        <div class="constraints-editor">
+            <ul>
+                <li v-if="isPartitionColumnSet">
+                    <ConstraintsEditorStratum :stratum="partitionStratumShimObject"
+                                              :stratumConstraints="[]"
+                                              :isPartition="true"></ConstraintsEditorStratum>
+                </li>
+                <li v-for="stratum in strata"
+                    :key="stratum._id">
+                    <ConstraintsEditorStratum :stratum="stratum"
+                                              :stratumConstraints="getStratumConstraints(stratum)"
+                                              :isPartition="false"></ConstraintsEditorStratum>
+                </li>
+            </ul>
         </div>
     </div>
 </template>
@@ -15,103 +24,72 @@
 import { Vue, Component } from "av-ts";
 
 import * as Stratum from "../data/Stratum";
-import * as Constraint from "../data/Constraint";
+import * as SourceFile from "../data/SourceFile";
+import * as ConstraintsConfig from "../data/ConstraintsConfig";
 
-import ConstraintsEditorGroupItem from "./ConstraintsEditorGroupItem.vue";
+import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
 @Component({
     components: {
-        ConstraintsEditorGroupItem,
+        ConstraintsEditorStratum,
     },
 })
 export default class ConstraintsEditor extends Vue {
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get constraintsConfigInStore() {
+        const config: Partial<ConstraintsConfig.ConstraintsConfig> = this.$store.state.constraintsConfig;
+        return config;
+    }
 
     get strata() {
-        return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
+        return this.constraintsConfigInStore.strata!;
     }
 
     get constraints() {
-        return this.$store.state.constraintsConfig.constraints as ReadonlyArray<Constraint.Constraint>;
+        return this.constraintsConfigInStore.constraints!;
     }
 
-    get strataWithConstraintsSet() {
-        const strataSet = new Set<Stratum.Stratum>();
-        const constraints = this.constraints;
-
-        constraints.forEach((constraint) => {
-            const stratumId = constraint.strata;
-            const stratum = this.strata[stratumId];
-
-            strataSet.add(stratum);
-        });
-
-        return strataSet;
+    /**
+     * Determines if a partition column is set
+     */
+    get isPartitionColumnSet() {
+        return this.constraintsConfigInStore.partitionColumnIndex !== undefined;
     }
 
-    get strataWithoutConstraints() {
-        const strataWithConstraintsSet = this.strataWithConstraintsSet;
-        return this.strata.filter(stratum => !strataWithConstraintsSet.has(stratum));
-    }
+    /**
+     * Returns a shim object that projects the partition as stratum
+     */
+    get partitionStratumShimObject() {
+        const columnInfo = this.fileInStore.columnInfo || [];
+        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
 
-    /** Constraints grouped by stratum ID */
-    get stratumGroupedConstraints() {
-        const stratumIds: number[] = [];
-        const stratumGroupedConstraints: Constraint.Constraint[][] = [];
-        const constraints = this.constraints;
-
-        constraints.forEach((constraint) => {
-            // Find which stratum this constraint belongs to
-            const stratumId = constraint.strata;
-            const stratumIdIndex = stratumIds.indexOf(stratumId);
-
-            // Push this constraint under the stratum's array of constraints
-            let stratumConstraintsArray: Constraint.Constraint[];
-            if (stratumIdIndex < 0) {
-                stratumConstraintsArray = [];
-                stratumGroupedConstraints.push(stratumConstraintsArray);
-                stratumIds.push(stratumId);
-
-                // Additionally pop a custom _id property on the array as a key
-                (stratumConstraintsArray as any)._id = stratumId;
-            } else {
-                stratumConstraintsArray = stratumGroupedConstraints[stratumIdIndex];
-            }
-
-            stratumConstraintsArray.push(constraint);
-        });
-
-
-        return stratumGroupedConstraints;
-    }
-
-
-
-
-    addNewGroupConstraints() {
-        // Add new constraint in next stratum without constraints
-        const stratum = this.strataWithoutConstraints[0];
-
-        // TODO: Generate random constraint?
-        const constraint: Constraint.Constraint = {
-            _id: performance.now(),
-            strata: this.strata.findIndex(s => s._id === stratum._id),
-            weight: 50,
-            type: "count",
-            filter: {
-                column: 0,
-                function: "eq",
-                values: [
-                    "some value"
-                ]
-            },
-            condition: {
-                function: "eq",
-                value: 1
-            },
-            applicability: []
+        if (partitionColumnIndex === undefined) {
+            throw new Error("No partition column set");
         }
 
-        this.$store.commit("insertConstraintsConfigConstraint", constraint);
+        const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
+
+        const stratumShim: Stratum.Stratum = {
+            _id: performance.now(),
+            label: `Partition (${partitionColumnLabel})`,
+            size: {
+                min: 0,
+                ideal: 0,
+                max: 0,
+            },
+            counter: [],
+        }
+
+        return stratumShim;
+    }
+
+    getStratumConstraints(stratum: Stratum.Stratum) {
+        const stratumIndex = this.strata.findIndex(s => s._id === stratum._id);
+        return this.constraints.filter(constraint => constraint.strata === stratumIndex);
     }
 }
 </script>
@@ -119,14 +97,31 @@ export default class ConstraintsEditor extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#constraint-groups {
+.constraints-editor {
     background: rgba(0, 0, 0, 0.05);
 
-    display: flex;
-    flex-direction: column;
+    width: 100%;
+    height: auto;
+
+    padding: 1rem;
 }
 
-.constraint-group {
-    margin: 0.5em;
+.constraints-editor ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    background-image: linear-gradient(to top, transparent, transparent 1em, #a6b 7em, #a6b);
+    background-position: left 1em top 0;
+    background-repeat: no-repeat;
+    background-size: 0.3em 100%;
+}
+
+.constraints-editor li {
+    padding: 0;
+}
+
+.constraints-editor li+li {
+    margin-top: 2rem;
 }
 </style>

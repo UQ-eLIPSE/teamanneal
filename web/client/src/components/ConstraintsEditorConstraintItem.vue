@@ -498,19 +498,18 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     border: 0;
     border-bottom: 1px dotted;
 
-    color: #49075E;
+    color: inherit;
 
     cursor: pointer;
 }
 
 #constraint-item {
     padding: 0.2em 0.3em;
-    margin: 0.2em 0;
-    background: rgba(0, 0, 0, 0.05);
+    margin: 0;
+    color: #49075E;
 }
 
 .personUnitNounFragment {
     display: inline-block;
-    color: #49075E;
 }
 </style>
