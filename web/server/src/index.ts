@@ -1,20 +1,15 @@
-/*
- * TeamAnneal Web
- */
 import * as os from "os";
 import * as cluster from "cluster";
 
 import * as ServerProcess from "./process/ServerProcess";
 import * as AnnealProcess from "./process/AnnealProcess";
 
-
-// Number of anneal workers is CPU cores - 2, with a floor of 1
-const numberOfAnnealWorkers = Math.max(1, os.cpus().length - 2);
-
-
 if (cluster.isMaster) {
     // Initialise the main server process for master
     ServerProcess.initialise();
+
+    // Number of anneal workers is (CPU cores - 1), with a floor of 1
+    const numberOfAnnealWorkers = Math.max(1, os.cpus().length - 1);
 
     // Start up anneal workers
     console.log(`Creating ${numberOfAnnealWorkers} anneal workers...`);
