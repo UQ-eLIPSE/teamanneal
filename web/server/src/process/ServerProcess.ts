@@ -25,7 +25,7 @@ export function initialise() {
 
     // Set up static file delivery
     console.log(`Initialising static file delivery`);
-    Application.enableStaticFileServing(app, `${__dirname}/../../client`);
+    Application.enableStaticFileServing(app, `${__dirname}/../../../client`);
 
     // Set up anneal result handling
     console.log(`Initialising anneal result message handler`);
