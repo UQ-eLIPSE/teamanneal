@@ -1,10 +1,5 @@
-import * as Logger from "./Logger";
-
 import * as fs from "fs-extra";
 import * as express from "express";
-
-const globalLogger = Logger.getGlobal();
-const log = Logger.log(globalLogger);
 
 /**
  * Creates a new Express router object and attaches router at specified path.
@@ -37,12 +32,12 @@ export const initAllRoutes =
                 const subrouterName = file.substring(0, file.length - 3);   // Remove ".js" at end of `file`
 
                 // Generate subrouter
-                log("info")(`Fetching router "${subrouterName}"`);
+                console.log(`Fetching router "${subrouterName}"`);
                 const subrouterGenerator = require(`${__dirname}/../routes/${file}`);
                 const subrouter = subrouterGenerator();
 
                 // Attach under /<file name>
-                log("info")(`Attaching router "${subrouterName}" to "${root}/${subrouterName}"`)
+                console.log(`Attaching router "${subrouterName}" to "${root}/${subrouterName}"`)
                 router.use(`/${subrouterName}`, subrouter);
             });
 

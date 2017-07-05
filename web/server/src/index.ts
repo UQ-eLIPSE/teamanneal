@@ -1,58 +1,39 @@
 /*
  * TeamAnneal Web
- * 
- * 
  */
-import * as Logger from "./core/Logger";
-import * as Application from "./core/Application";
-import * as Router from "./core/Router";
+import * as os from "os";
+import * as cluster from "cluster";
 
-// TODO: Move configuration into config file
-
-// Port config
-const port = 8080;
-
-// API root URL
-const apiRoot = "/api";
-
-// Logger
-const globalLogger = Logger.getGlobal();
-const log = Logger.log(globalLogger);
+import * as ServerProcess from "./process/ServerProcess";
+import * as AnnealProcess from "./process/AnnealProcess";
 
 
+// Number of anneal workers is CPU cores - 2, with a floor of 1
+const numberOfAnnealWorkers = Math.max(1, os.cpus().length - 2);
 
 
-// Set up logs
-Logger.setLevel(globalLogger)("info");
-Logger.enableLogConsole(globalLogger);
-Logger.enableLogFileDailyRotate(globalLogger)(`${__dirname}/../../../logs`);
+if (cluster.isMaster) {
+    // Initialise the main server process for master
+    ServerProcess.initialise();
 
-log("info")("Logger set up");
+    // Start up anneal workers
+    console.log(`Creating ${numberOfAnnealWorkers} anneal workers...`);
+    for (let i = 0; i < numberOfAnnealWorkers; ++i) {
+        const workerId = '' + i;
 
+        console.log(`* Forking process with worker ID: ${workerId}`);
 
+        cluster.fork({
+            "ANNEAL_WORKER_ID": workerId,
+        });
+    }
+} else {
+    // All children processes are anneal workers
+    const workerId: string | undefined = process.env["ANNEAL_WORKER_ID"];
 
-// Init the server
-log("info")("Initialising Express application");
-const app = Application.init();
+    if (workerId === undefined || workerId.length === 0) {
+        throw new Error("Undefined worker ID");
+    }
 
-// Enable body parser with 1MB body limit
-Application.enableBodyParser(app, "1mb");
-
-Application.listenOn(app, port);
-log("info")(`Application listening on port ${port}`);
-
-
-// Set up static file delivery
-log("info")(`Initialising static file delivery`);
-Application.enableStaticFileServing(app, `${__dirname}/../../client`);
-
-
-// Set up routes
-log("info")(`Initialising all routes, under "${apiRoot}"`);
-Router.initAllRoutes(app)(apiRoot);
-
-
-
-
-
-log("info")(`Initialisation complete: http://localhost:${port}/`);
+    AnnealProcess.initialise(workerId);
+}
