@@ -37,7 +37,7 @@ export function initialise(workerId: string) {
 
         } catch (error) {
             const resultMessage: IPCData.AnnealResultMessageData = {
-                error,
+                error: '' + error,
                 serverResponseId,
             }
 
