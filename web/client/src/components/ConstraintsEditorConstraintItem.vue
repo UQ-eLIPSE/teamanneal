@@ -1,40 +1,48 @@
 <template>
-    <div id="constraint-item">
-        <DynamicWidthSelect class="select cost-weight"
-                            :list="costWeightList"
-                            :selectedIndex="selectedCostWeightIndex"
-                            @change="onCostWeightChange"></DynamicWidthSelect>
-        <span v-if="!personUnitNounFollowsCondition"
-              class="personUnitNounFragment">{{ personUnitNoun }} with</span>
-        <DynamicWidthSelect class="select condition-function"
-                            :list="conditionFunctionList"
-                            :selectedIndex="selectedConditionFunctionIndex"
-                            @change="onConditionFunctionChange"></DynamicWidthSelect>
-        <DynamicWidthInputField class="input condition-count"
-                                v-if="showConditionCount"
-                                :val="''+p_conditionCount"
-                                @change="onConditionCountChange"></DynamicWidthInputField>
-        <span v-if="personUnitNounFollowsCondition"
-              class="personUnitNounFragment">{{ personUnitNoun }} with</span>
-        <DynamicWidthSelect class="select filter-column"
-                            :list="columnInfoList"
-                            :selectedIndex="p_filterColumn"
-                            @change="onFilterColumnChange"></DynamicWidthSelect>
-        <DynamicWidthSelect class="select filter-function"
-                            v-if="showFilterFunction"
-                            :list="filterFunctionList"
-                            :selectedIndex="selectedFilterFunctionIndex"
-                            @change="onFilterFunctionChange"></DynamicWidthSelect>
-        <DynamicWidthInputField class="input filter-value"
-                                v-if="showFilterValueAsInput"
-                                :val="''+p_filterValue"
-                                @change="onFilterValueAsInputChange"></DynamicWidthInputField>
-        <DynamicWidthSelect class="select filter-value"
-                            v-if="showFilterValueAsSelect"
-                            :list="filterValueAsSelectList"
-                            :selectedIndex="selectedFilterValueAsSelectIndex"
-                            @change="onFilterValueAsSelectChange"></DynamicWidthSelect>
-        <button @click="deleteConstraint">Delete</button>
+    <div class="constraint-item">
+        <div class="constraint-content">
+            <DynamicWidthSelect class="select cost-weight"
+                                :list="costWeightList"
+                                :selectedIndex="selectedCostWeightIndex"
+                                @change="onCostWeightChange"></DynamicWidthSelect>
+            <span v-if="!personUnitNounFollowsCondition"
+                  class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+            <DynamicWidthSelect class="select condition-function"
+                                :list="conditionFunctionList"
+                                :selectedIndex="selectedConditionFunctionIndex"
+                                @change="onConditionFunctionChange"></DynamicWidthSelect>
+            <DynamicWidthInputField class="input condition-count"
+                                    v-if="showConditionCount"
+                                    :val="''+p_conditionCount"
+                                    @change="onConditionCountChange"></DynamicWidthInputField>
+            <span v-if="personUnitNounFollowsCondition"
+                  class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+            <DynamicWidthSelect class="select filter-column"
+                                :list="columnInfoList"
+                                :selectedIndex="p_filterColumn"
+                                @change="onFilterColumnChange"></DynamicWidthSelect>
+            <DynamicWidthSelect class="select filter-function"
+                                v-if="showFilterFunction"
+                                :list="filterFunctionList"
+                                :selectedIndex="selectedFilterFunctionIndex"
+                                @change="onFilterFunctionChange"></DynamicWidthSelect>
+            <DynamicWidthInputField class="input filter-value"
+                                    v-if="showFilterValueAsInput"
+                                    :val="''+p_filterValue"
+                                    @change="onFilterValueAsInputChange"></DynamicWidthInputField>
+            <DynamicWidthSelect class="select filter-value"
+                                v-if="showFilterValueAsSelect"
+                                :list="filterValueAsSelectList"
+                                :selectedIndex="selectedFilterValueAsSelectIndex"
+                                @change="onFilterValueAsSelectChange"></DynamicWidthSelect>
+        </div>
+        <div class="action-buttons">
+            <button class="button delete"
+                    title="Delete constraint"
+                    @click="deleteConstraint">
+                <span>Delete</span>
+            </button>
+        </div>
     </div>
 </template>
 
@@ -503,13 +511,101 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     cursor: pointer;
 }
 
-#constraint-item {
-    padding: 0.2em 0.3em;
+.constraint-item {
+    display: flex;
+    flex-direction: row;
+
+    padding: 0;
     margin: 0;
     color: #49075E;
 }
 
+.constraint-item>div {
+    padding: 0.2em 0.3em;
+}
+
+.constraint-item>div+div {
+    padding-left: 0;
+}
+
+.constraint-item>.constraint-content {
+    flex-grow: 1;
+}
+
+.constraint-item>.action-buttons {
+    flex-shrink: 0;
+
+    font-size: 0.7em;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+}
+
 .personUnitNounFragment {
     display: inline-block;
+}
+
+button.delete {
+    display: inline-flex;
+    border: 0;
+    margin: 0;
+    padding: 0;
+
+    width: 1.5em;
+    height: 1.5em;
+
+    background: transparent;
+
+    border-radius: 50%;
+
+    justify-content: center;
+    align-items: center;
+
+    position: relative;
+}
+
+button.delete>span {
+    position: absolute;
+    font-size: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+button.delete::before {
+    display: block;
+    content: "";
+
+    width: 1.3em;
+    height: 1.3em;
+
+    /* 
+     * "Trash" by Gregor Cresnar, "Pixel Perfect Collection" 
+     * https://thenounproject.com/grega.cresnar/collection/pixel-perfect/?q=trash&i=976401
+     * License: CC BY 3.0 US
+     */
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMjAwJyBoZWlnaHQ9JzIwMCcgZmlsbD0iIzk5OTk5OSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBkYXRhLW5hbWU9IkxheWVyIDEiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB4PSIwcHgiIHk9IjBweCI+PHRpdGxlPjFBcnRib2FyZCAyMTwvdGl0bGU+PHBhdGggZD0iTTU4LDIwdjZINzRhMiwyLDAsMCwxLDIsMnY0YTIsMiwwLDAsMS0yLDJIMjZhMiwyLDAsMCwxLTItMlYyOGEyLDIsMCwwLDEsMi0ySDQyVjIwYTIsMiwwLDAsMSwyLTJINTZBMiwyLDAsMCwxLDU4LDIwWk0zNCw4Mkg2NmE2LDYsMCwwLDAsNi02VjQwSDI4Vjc2QTYsNiwwLDAsMCwzNCw4MloiLz48L3N2Zz4=");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+button.delete:hover,
+button.delete:focus,
+button.delete:active {
+    background-color: #8b0000;
+}
+
+button.delete:hover::before,
+button.delete:focus::before,
+button.delete:active::before {
+    /* 
+     * "Trash" by Gregor Cresnar, "Pixel Perfect Collection"
+     * https://thenounproject.com/grega.cresnar/collection/pixel-perfect/?q=trash&i=976401
+     * License: CC BY 3.0 US
+     */
+    background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
 }
 </style>

@@ -111,10 +111,10 @@ export default class ConstraintsEditor extends Vue {
     padding: 0;
     list-style: none;
 
-    background-image: linear-gradient(to top, transparent, transparent 1em, #a6b 7em, #a6b);
-    background-position: left 1em top 0;
+    background-image: linear-gradient(to top, transparent, transparent 1.1rem, #a6b 1.1rem, #a6b);
+    background-position: left 1rem top 0;
     background-repeat: no-repeat;
-    background-size: 0.3em 100%;
+    background-size: 0.3rem 100%;
 }
 
 .constraints-editor li {

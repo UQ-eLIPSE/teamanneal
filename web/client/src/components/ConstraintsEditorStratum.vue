@@ -8,6 +8,10 @@
         <div v-if="!isPartition"
              class="stratum-constraints">
             <div>
+                <div class="no-constraints-msg"
+                     v-if="stratumConstraints.length === 0">
+                    <i>Configure constraints for {{ stratum.label }}s by clicking on the Add button below.</i>
+                </div>
                 <ul>
                     <li class="constraint"
                         v-for="constraint in stratumConstraints"
@@ -112,13 +116,13 @@ export default class ConstraintsEditorStratum extends Vue {
 }
 
 .stratum-constraints {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
 
     justify-content: flex-start;
     align-items: flex-start;
 
-    margin-left: 1.5em;
+    margin-left: 1.5rem;
 }
 
 .stratum-constraints>div {
@@ -128,26 +132,49 @@ export default class ConstraintsEditorStratum extends Vue {
 }
 
 .stratum-constraints ul {
-    margin: 0;
+    margin: 0 -1rem;
     padding: 0;
     list-style: none;
 }
 
-.stratum-constraints .constraint {
-    font-size: 1.4em;
-    background: rgba(0, 0, 0, 0.05);
+.stratum-constraints li {
+    position: relative;
 }
 
-.stratum-constraints .constraint+.constraint {
-    margin-top: 0.5em;
+.stratum-constraints li+li {
+    margin-top: 1rem;
+}
+
+.stratum-constraints .constraint {
+    padding-left: 0.6rem;
+    font-size: 1.4em;
+}
+
+.stratum-constraints .constraint::before {
+    content: "";
+    position: absolute;
+    display: inline-block;
+
+    width: 1rem;
+    height: 1rem;
+
+    border-radius: 50%;
+    background: #49075E;
+
+    top: 0.5em;
+    left: -0.9rem;
+}
+
+.stratum-constraints .constraint:hover {
+    background: rgba(0, 0, 0, 0.05);
+    background-clip: content-box;
 }
 
 button.add-constraint {
     display: inline-flex;
-    margin-top: 1em;
 
-    width: 3em;
-    height: 3em;
+    width: 2.5rem;
+    height: 2.5rem;
 
     border-radius: 50%;
 
@@ -155,6 +182,7 @@ button.add-constraint {
     align-items: center;
 
     position: relative;
+    left: -1.6rem;
 }
 
 button.add-constraint>span {
@@ -185,5 +213,9 @@ button.add-constraint:hover>span,
 button.add-constraint:focus>span,
 button.add-constraint:active>span {
     display: block;
+}
+
+.no-constraints-msg {
+    margin-bottom: 1rem;
 }
 </style>
