@@ -16,7 +16,8 @@
                     <li class="constraint"
                         v-for="constraint in stratumConstraints"
                         :key="constraint._id">
-                        <ConstraintsEditorConstraintItem :constraint="constraint"></ConstraintsEditorConstraintItem>
+                        <ConstraintsEditorConstraintItem :stratum="stratum"
+                                                         :constraint="constraint"></ConstraintsEditorConstraintItem>
                     </li>
                     <li>
                         <button class="button add-constraint"

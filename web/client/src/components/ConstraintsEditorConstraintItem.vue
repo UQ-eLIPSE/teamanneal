@@ -6,7 +6,7 @@
                                 :list="costWeightList"></DynamicWidthSelect>
     
             <span v-if="!personUnitNounFollowsCondition"
-                  class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+                  class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
             <DynamicWidthSelect class="select condition-function"
                                 v-model="constraintConditionFunction"
@@ -17,7 +17,7 @@
                                     v-model="constraintConditionCount"></DynamicWidthInputField>
     
             <span v-if="personUnitNounFollowsCondition"
-                  class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+                  class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
             <DynamicWidthSelect class="select filter-column"
                                 v-model="constraintFilterColumnInfo"
@@ -36,6 +36,10 @@
                                 v-if="showFilterValueAsSelect"
                                 v-model="constraintFilterValues"
                                 :list="filterValueAsSelectList"></DynamicWidthSelect>
+    
+            <span class="group-size-applicability-condition-fragment"
+                  :class="groupSizeApplicabilityConditionFragmentClasses">when {{ stratum.label }} has
+                <u>any number of</u> people</span>
         </div>
         <div class="action-buttons">
             <button class="button delete"
@@ -54,6 +58,7 @@ import { Vue, Component, Prop, p } from "av-ts";
 
 import { deepCopy, deepMerge } from "../util/Object";
 
+import * as Stratum from "../data/Stratum";
 import * as Constraint from "../data/Constraint";
 import * as ColumnInfo from "../data/ColumnInfo";
 
@@ -179,6 +184,7 @@ const CostWeightList = [
 })
 export default class ConstraintsEditorConstraintItem extends Vue {
     // Props
+    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
     @Prop constraint: Constraint.Constraint = p({ type: Object, required: true, }) as any;
 
     get costWeightList() {
@@ -355,6 +361,16 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         }
 
         return true;
+    }
+
+    get isGroupSizeSpecified() {
+        return this.constraint.applicability.some(condition => condition.type === "group-size");
+    }
+
+    get groupSizeApplicabilityConditionFragmentClasses() {
+        return {
+            'group-size-specified': this.isGroupSizeSpecified,
+        }
     }
 
 
@@ -534,7 +550,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     align-items: center;
 }
 
-.personUnitNounFragment {
+.person-unit-noun-fragment {
     display: inline-block;
 }
 
@@ -597,5 +613,15 @@ button.delete:active::before {
      * License: CC BY 3.0 US
      */
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
+}
+
+.group-size-applicability-condition-fragment {
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.group-size-applicability-condition-fragment.group-size-specified {
+    opacity: 1;
+    font-style: inherit;
 }
 </style>
