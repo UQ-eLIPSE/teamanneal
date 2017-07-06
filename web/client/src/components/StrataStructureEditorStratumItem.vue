@@ -2,15 +2,14 @@
     <div>
         <div class="pos-rel">
             <span class="input-wrapper">
-                <DynamicWidthInputField v-if="editable"
-                                        class="input"
-                                        :val="stratum.label"
-                                        @change="onLabelValueChange"></DynamicWidthInputField>
+                <DynamicWidthInputField class="input"
+                                        v-if="editable"
+                                        v-model="stratumLabel"></DynamicWidthInputField>
                 <span v-else>{{ stratum.label }}</span>
             </span>
-            <button v-if="deletable"
-                    class="button delete"
-                    @click="emitDelete">
+            <button class="button delete"
+                    v-if="deletable"
+                    @click="deleteStratum">
                 <span>Delete</span>
             </button>
         </div>
@@ -26,6 +25,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { deepCopy, deepMerge } from "../util/Object";
+
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
 
@@ -36,39 +37,42 @@ import * as Stratum from "../data/Stratum";
 })
 export default class StrataStructureEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p(Object) as any;
-    @Prop childUnit = p(String);
+    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
+    @Prop childUnit: string = p({ type: String, required: false, default: "<group>" }) as any;
     @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
     @Prop editable: boolean = p({ type: Boolean, required: false, default: true, }) as any;
 
-    onLabelValueChange(newValue: string) {
-        const stratum: Stratum.Stratum = {
-            _id: this.stratum._id,
-            label: newValue,
-            size: this.stratum.size,
-            counter: this.stratum.counter,
-        }
+    updateStratum(diff: any) {
+        // Deep copy and merge in diff
+        const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
+        // Commit update
         const stratumUpdate: Stratum.Update = {
-            stratum,
+            stratum: newStratum,
         }
 
-        this.$emit("change", stratumUpdate);
+        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
 
-    get childUnitText() {
-        return this.childUnit || "<group>";
+    deleteStratum() {
+        this.$store.commit("deleteConstraintsConfigStrataOf", this.stratum._id);
+    }
+
+    get stratumLabel() {
+        return this.stratum.label;
+    }
+
+    set stratumLabel(newValue: string) {
+        this.updateStratum({
+            label: newValue,
+        });
     }
 
     get pluralChildUnitText() {
-        if (this.childUnitText === "person") {
+        if (this.childUnit === "person") {
             return "people";
         }
-        return this.childUnitText + "s";
-    }
-
-    emitDelete() {
-        this.$emit("delete", this.stratum);
+        return this.childUnit + "s";
     }
 }
 </script>

@@ -15,24 +15,21 @@
                             <div>Min</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
-                                                        :val="''+stratum.size.min"
-                                                        @change="onMinValueChange"></DynamicWidthInputField>
+                                                        v-model="stratumSizeMin"></DynamicWidthInputField>
                             </span>
                         </label>
                         <label :class="stratumSizeIdealClasses">
                             <div>Ideal</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
-                                                        :val="''+stratum.size.ideal"
-                                                        @change="onIdealValueChange"></DynamicWidthInputField>
+                                                        v-model="stratumSizeIdeal"></DynamicWidthInputField>
                             </span>
                         </label>
                         <label :class="stratumSizeMaxClasses">
                             <div>Max</div>
                             <span class="input-area">
                                 <DynamicWidthInputField class="input"
-                                                        :val="''+stratum.size.max"
-                                                        @change="onMaxValueChange"></DynamicWidthInputField>
+                                                        v-model="stratumSizeMax"></DynamicWidthInputField>
                             </span>
                         </label>
                     </div>
@@ -83,6 +80,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { deepCopy, deepMerge } from "../util/Object";
+
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
@@ -116,54 +115,18 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
-    onLabelValueChange(newValue: string) {
-        this.emitChange({
-            label: newValue,
-        });
-    }
-
-    onMinValueChange(newValue: string) {
-        this.emitChange({
-            size: {
-                min: +newValue || 0,        // Convert to number
-                ideal: this.stratum.size.ideal,
-                max: this.stratum.size.max,
-            }
-        });
-    }
-
-    onIdealValueChange(newValue: string) {
-        this.emitChange({
-            size: {
-                min: this.stratum.size.min,
-                ideal: +newValue || 0,      // Convert to number
-                max: this.stratum.size.max,
-            }
-        });
-    }
-
-    onMaxValueChange(newValue: string) {
-        this.emitChange({
-            size: {
-                min: this.stratum.size.min,
-                ideal: this.stratum.size.ideal,
-                max: +newValue || 0,        // Convert to number
-            }
-        });
-    }
-
     onCounterSelectChange($event: Event) {
         const el = $event.target as HTMLSelectElement;
 
         const counterType = el.value;
 
         if (counterType === "custom") {
-            return this.emitChange({
+            return this.updateStratum({
                 // Default custom list is "Red", "Green", "Blue"
                 counter: ["Red", "Green", "Blue"],
             });
         } else {
-            return this.emitChange({
+            return this.updateStratum({
                 counter: counterType as any,
             });
         }
@@ -303,7 +266,7 @@ export default class StrataEditorStratumItem extends Vue {
     set customCounterList(newValue: string) {
         const customCounterList = newValue.split("\n");
 
-        this.emitChange({
+        this.updateStratum({
             counter: customCounterList,
         });
     }
@@ -331,31 +294,52 @@ export default class StrataEditorStratumItem extends Vue {
         return counterValueSet.size !== trimmedCounterStrings.length;
     }
 
-    emitChange(diff: Partial<Stratum.Stratum>) {
-        // Get current stratum object
-        const _: Stratum.Stratum = this.stratum;
+    updateStratum(diff: any) {
+        // Deep copy and merge in diff
+        const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
-        // Copy out stratum
-        const stratum: Stratum.Stratum = {
-            _id: _._id,
-            label: _.label,
-            size: {
-                min: _.size.min,
-                ideal: _.size.ideal,
-                max: _.size.max,
-            },
-            counter: _.counter,
-        }
-
-        // Apply diff
-        Object.assign(stratum, diff);
-
-        // Emit change event
+        // Commit update
         const stratumUpdate: Stratum.Update = {
-            stratum,
+            stratum: newStratum,
         }
 
-        this.$emit("change", stratumUpdate);
+        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
+    }
+
+    get stratumSizeMin() {
+        return this.stratum.size.min;
+    }
+
+    set stratumSizeMin(newValue: any) {
+        this.updateStratum({
+            size: {
+                min: (+newValue || 0) >>> 0,        // Convert to uint32
+            },
+        });
+    }
+
+    get stratumSizeIdeal() {
+        return this.stratum.size.ideal;
+    }
+
+    set stratumSizeIdeal(newValue: any) {
+        this.updateStratum({
+            size: {
+                ideal: (+newValue || 0) >>> 0,      // Convert to uint32
+            },
+        });
+    }
+
+    get stratumSizeMax() {
+        return this.stratum.size.max;
+    }
+
+    set stratumSizeMax(newValue: any) {
+        this.updateStratum({
+            size: {
+                max: (+newValue || 0) >>> 0,        // Convert to uint32
+            },
+        });
     }
 }
 </script>
