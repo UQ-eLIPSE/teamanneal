@@ -1,39 +1,41 @@
 <template>
     <div id="constraint-item">
         <DynamicWidthSelect class="select cost-weight"
-                            :list="costWeightList"
-                            :selectedIndex="selectedCostWeightIndex"
-                            @change="onCostWeightChange"></DynamicWidthSelect>
+                            v-model="constraintCostWeight"
+                            :list="costWeightList"></DynamicWidthSelect>
+    
         <span v-if="!personUnitNounFollowsCondition"
               class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+    
         <DynamicWidthSelect class="select condition-function"
-                            :list="conditionFunctionList"
-                            :selectedIndex="selectedConditionFunctionIndex"
-                            @change="onConditionFunctionChange"></DynamicWidthSelect>
+                            v-model="constraintConditionFunction"
+                            :list="conditionFunctionList"></DynamicWidthSelect>
+    
         <DynamicWidthInputField class="input condition-count"
                                 v-if="showConditionCount"
-                                :val="''+p_conditionCount"
-                                @change="onConditionCountChange"></DynamicWidthInputField>
+                                v-model="constraintConditionCount"></DynamicWidthInputField>
+    
         <span v-if="personUnitNounFollowsCondition"
               class="personUnitNounFragment">{{ personUnitNoun }} with</span>
+    
         <DynamicWidthSelect class="select filter-column"
-                            :list="columnInfoList"
-                            :selectedIndex="p_filterColumn"
-                            @change="onFilterColumnChange"></DynamicWidthSelect>
+                            v-model="constraintFilterColumnInfo"
+                            :list="columnInfoList"></DynamicWidthSelect>
+    
         <DynamicWidthSelect class="select filter-function"
                             v-if="showFilterFunction"
-                            :list="filterFunctionList"
-                            :selectedIndex="selectedFilterFunctionIndex"
-                            @change="onFilterFunctionChange"></DynamicWidthSelect>
+                            v-model="constraintFilterFunction"
+                            :list="filterFunctionList"></DynamicWidthSelect>
+    
         <DynamicWidthInputField class="input filter-value"
                                 v-if="showFilterValueAsInput"
-                                :val="''+p_filterValue"
-                                @change="onFilterValueAsInputChange"></DynamicWidthInputField>
+                                v-model="constraintFilterValues"></DynamicWidthInputField>
+    
         <DynamicWidthSelect class="select filter-value"
                             v-if="showFilterValueAsSelect"
-                            :list="filterValueAsSelectList"
-                            :selectedIndex="selectedFilterValueAsSelectIndex"
-                            @change="onFilterValueAsSelectChange"></DynamicWidthSelect>
+                            v-model="constraintFilterValues"
+                            :list="filterValueAsSelectList"></DynamicWidthSelect>
+    
         <button @click="deleteConstraint">Delete</button>
     </div>
 </template>
@@ -41,7 +43,9 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
+
+import { deepCopy, deepMerge } from "../util/Object";
 
 import * as Constraint from "../data/Constraint";
 import * as ColumnInfo from "../data/ColumnInfo";
@@ -168,16 +172,7 @@ const CostWeightList = [
 })
 export default class ConstraintsEditorConstraintItem extends Vue {
     // Props
-    @Prop constraint: Constraint.Constraint = p(Object) as any;
-
-    // Private
-    p_costWeight: number | undefined = 0;
-    p_conditionFunction: string | undefined = "";
-    p_conditionCount: number | undefined = 0;
-    p_filterColumn: number | undefined = 0;
-    p_filterFunction: string | undefined = "";
-    p_filterValue: number | string | undefined = "";
-
+    @Prop constraint: Constraint.Constraint = p({ type: Object, required: true, }) as any;
 
     get costWeightList() {
         return CostWeightList;
@@ -188,7 +183,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get filterFunctionList() {
-        switch (this.thisConstraintColumnInfo.type) {
+        switch (this.constraintFilterColumnInfo.type) {
             case "number":
                 return NumberFilterFunctionList;
             case "string":
@@ -217,7 +212,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get thisConstraintType() {
-        switch (this.p_conditionFunction) {
+        switch (this.constraintConditionFunction) {
             case "eq":
             case "neq":
             case "gte":
@@ -238,23 +233,19 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown constraint type");
     }
 
-    get thisConstraintColumnInfo() {
-        return this.columnInfo[this.p_filterColumn!];
-    }
-
     get thisConstraintFilter() {
         switch (this.thisConstraintType) {
             case "count":
             case "limit":
                 return {
-                    column: this.p_filterColumn!,
-                    function: this.p_filterFunction!,
-                    values: [this.p_filterValue!],
+                    column: this.constraintFilterColumnInfo!,
+                    function: this.constraintFilterFunction!,
+                    values: [this.constraintFilterValues!],
                 }
 
             case "similarity":
                 return {
-                    column: this.p_filterColumn!,
+                    column: this.constraintFilterColumnInfo!,
                 }
         }
 
@@ -265,70 +256,27 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         switch (this.thisConstraintType) {
             case "count":
                 return {
-                    function: this.p_conditionFunction! as any,
-                    value: this.p_conditionCount!,
+                    function: this.constraintConditionFunction! as any,
+                    value: this.constraintConditionCount!,
                 }
             case "limit":
                 return {
-                    function: this.p_conditionFunction! as any,
+                    function: this.constraintConditionFunction! as any,
                 }
 
             case "similarity":
                 return {
-                    function: this.p_conditionFunction! as any,
+                    function: this.constraintConditionFunction! as any,
                 }
         }
 
         throw new Error("Unknown constraint type");
     }
 
-    get selectedCostWeightIndex() {
-        const value = this.p_costWeight;
-        const index = CostWeightList.findIndex(option => option.value === value);
 
-        if (index < 0) {
-            return 0;
-        }
-
-        return index;
-    }
-
-    get selectedConditionFunctionIndex() {
-        const value = this.p_conditionFunction;
-        const index = ConditionFunctionList.findIndex(option => option.value === value);
-
-        if (index < 0) {
-            return 0;
-        }
-
-        return index;
-    }
-
-    get selectedFilterFunctionIndex() {
-        const value = this.p_filterFunction;
-        const index = this.filterFunctionList.findIndex(option => option.value === value);
-
-        if (index < 0) {
-            return 0;
-        }
-
-        return index;
-    }
-
-    get selectedFilterValueAsSelectIndex() {
-        const value = this.p_filterValue;
-        const index = this.filterValueAsSelectList.findIndex(option => option.value === value);
-
-        if (index < 0) {
-            return 0;
-        }
-
-        return index;
-    }
 
     get filterValueAsSelectList() {
-        const filterColumnIndex = this.p_filterColumn!;
-        return Array.from(this.columnInfo[filterColumnIndex].valueSet as any as ArrayLike<number | string>)
+        return Array.from(this.constraintFilterColumnInfo.valueSet as any as ArrayLike<number | string>)
             .sort()
             .map(value => ({
                 value,
@@ -340,7 +288,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
     get showConditionCount() {
-        switch (this.p_conditionFunction) {
+        switch (this.constraintConditionFunction) {
             case "low":
             case "high":
             case "similar":
@@ -352,7 +300,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get showFilterFunction() {
-        switch (this.p_conditionFunction) {
+        switch (this.constraintConditionFunction) {
             case "similar":
             case "different":
                 return false;
@@ -362,11 +310,17 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get showFilterValueAsInput() {
-        return this.showFilterFunction && this.thisConstraintColumnInfo.type === "number";
+        return (
+            this.showFilterFunction &&
+            this.constraintFilterColumnInfo.type === "number"
+        );
     }
 
     get showFilterValueAsSelect() {
-        return this.showFilterFunction && this.thisConstraintColumnInfo.type === "string";
+        return (
+            this.showFilterFunction &&
+            this.constraintFilterColumnInfo.type === "string"
+        );
     }
 
     /**
@@ -375,7 +329,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
      */
     get personUnitNoun() {
         // If the count is exactly one, return "person"
-        if (this.showConditionCount && this.p_conditionCount === 1) {
+        if (this.showConditionCount && this.constraintConditionCount === 1) {
             return "person";
         } else {
             return "people";
@@ -387,7 +341,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
      * the condition function selection menu in the constraints editor sentence
      */
     get personUnitNounFollowsCondition() {
-        switch (this.p_conditionFunction) {
+        switch (this.constraintConditionFunction) {
             case "similar":
             case "different":
                 return false;
@@ -396,48 +350,12 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return true;
     }
 
-    onCostWeightChange(option: any) {
-        this.p_costWeight = option.value;
-        this.saveConstraint();
-    }
 
-    onConditionFunctionChange(option: any) {
-        this.p_conditionFunction = option.value;
-        this.saveConstraint();
-    }
 
-    onConditionCountChange(newConditionCount: string) {
-        this.p_conditionCount = +newConditionCount || 0;
-        this.saveConstraint();
-    }
 
-    onFilterColumnChange(option: any) {
-        this.p_filterColumn = this.columnInfo.indexOf(option.value);
-        this.saveConstraint();
-    }
-
-    onFilterFunctionChange(option: any) {
-        this.p_filterFunction = option.value;
-        this.saveConstraint();
-    }
-
-    onFilterValueAsInputChange(newFilterValue: string) {
-        this.p_filterValue = this.sanitiseFilterValue(newFilterValue);
-        this.saveConstraint();
-    }
-
-    onFilterValueAsSelectChange(option: any) {
-        this.p_filterValue = option.value;
-        this.saveConstraint();
-    }
-
-    @Watch("p_filterColumn")
-    updateFilterValueOnFilterColumnChange() {
-        this.p_filterValue = this.sanitiseFilterValue(this.p_filterValue!);
-    }
 
     sanitiseFilterValue(filterValue: number | string) {
-        switch (this.thisConstraintColumnInfo.type) {
+        switch (this.constraintFilterColumnInfo.type) {
             case "number":
                 return +filterValue || 0;
 
@@ -448,20 +366,13 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown column type");
     }
 
-
     deleteConstraint() {
         this.$store.commit("deleteConstraintsConfigConstraintOf", this.thisConstraintId);
     }
 
-    saveConstraint() {
-        // Shallow copy constraint
-        const newConstraint = { ...(this.constraint) };
-
-        // Write new values in
-        newConstraint.weight = this.p_costWeight!;
-        newConstraint.type = this.thisConstraintType;
-        newConstraint.filter = this.thisConstraintFilter;
-        newConstraint.condition = this.thisConstraintCondition;
+    updateConstraint(diff: any) {
+        // Deep copy and merge in diff
+        const newConstraint = deepMerge(deepCopy(this.constraint), diff);
 
         // Commit update
         const constraintUpdate: Constraint.Update = {
@@ -471,19 +382,99 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         this.$store.commit("updateConstraintsConfigConstraint", constraintUpdate);
     }
 
-    transferPropsToData() {
-        const constraint = this.constraint;
-
-        this.p_costWeight = constraint.weight;
-        this.p_conditionFunction = constraint.condition.function;
-        this.p_conditionCount = (constraint.condition as any).value;
-        this.p_filterColumn = constraint.filter.column;
-        this.p_filterFunction = (constraint.filter as any).function;
-        this.p_filterValue = this.sanitiseFilterValue(((constraint.filter as any).values || [])[0]);  // NOTE: Values is an array, but we only support single values for now
+    get constraintCostWeight() {
+        return this.constraint.weight;
     }
 
-    @Lifecycle created() {
-        this.transferPropsToData();
+    set constraintCostWeight(newValue: number) {
+        this.updateConstraint({
+            weight: newValue,
+        });
+    }
+
+    get constraintConditionFunction() {
+        return this.constraint.condition.function;
+    }
+
+    set constraintConditionFunction(newValue: string) {
+        this.updateConstraint({
+            condition: {
+                function: newValue,
+            },
+        });
+    }
+
+    get constraintConditionCount() {
+        return (this.constraint.condition as any).value;
+    }
+
+    set constraintConditionCount(newValue: any) {
+        // Must be a uint32 number
+        const conditionCount = (+newValue || 0) >>> 0;
+        this.updateConstraint({
+            condition: {
+                value: conditionCount,
+            },
+        });
+    }
+
+    get constraintFilterColumnInfo() {
+        return this.columnInfo[this.constraint.filter.column];
+    }
+
+    set constraintFilterColumnInfo(newValue: ColumnInfo.ColumnInfo) {
+        const columnIndex = this.columnInfo.indexOf(newValue);
+        this.updateConstraint({
+            filter: {
+                column: columnIndex,
+            },
+        });
+    }
+
+    get constraintFilterFunction() {
+        const filterFunction: string = (this.constraint.filter as any).function;
+
+        // If the filter function value does not exist within the list, then
+        // set the filter function value to the first available option
+        if (this.filterFunctionList.findIndex(item => item.value === filterFunction) < 0) {
+            this.constraintFilterFunction = this.filterFunctionList[0].value;
+        }
+
+        return filterFunction;
+    }
+
+    set constraintFilterFunction(newValue: string) {
+        this.updateConstraint({
+            filter: {
+                function: newValue,
+            },
+        });
+    }
+
+    get constraintFilterValues() {
+        // NOTE: Values is an array, but we only support single values for now
+        const filterValue: string | number = this.sanitiseFilterValue(((this.constraint.filter as any).values || [])[0]);
+
+        // If the filter value is determined by a select list and the filter
+        // value does not exist within the list, then set the filter value to
+        // the first available option
+        if (this.showFilterValueAsSelect &&
+            this.filterValueAsSelectList.findIndex(item => item.value === filterValue) < 0) {
+            this.constraintFilterValues = this.filterValueAsSelectList[0].value;
+        }
+
+        return filterValue;
+    }
+
+    set constraintFilterValues(newValue: string | number) {
+        // NOTE: Values is an array, but we only support single values for now
+        this.updateConstraint({
+            filter: {
+                values: [
+                    this.sanitiseFilterValue(newValue),
+                ],
+            },
+        });
     }
 }
 </script>

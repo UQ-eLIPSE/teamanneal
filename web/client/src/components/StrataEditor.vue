@@ -11,8 +11,7 @@
                     :key="stratum._id">
                     <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
-                                             :isPartition="false"
-                                             @change="onStratumItemChange"></StrataEditorStratumItem>
+                                             :isPartition="false"></StrataEditorStratumItem>
                 </li>
             </ul>
         </div>
@@ -48,10 +47,6 @@ export default class StrataEditor extends Vue {
 
     get strata() {
         return this.constraintsConfigInStore.strata!;
-    }
-
-    onStratumItemChange(stratumUpdate: Stratum.Update) {
-        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
 
     /**
