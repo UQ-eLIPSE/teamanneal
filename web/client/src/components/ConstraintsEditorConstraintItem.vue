@@ -39,7 +39,34 @@
     
             <span class="group-size-applicability-condition-fragment"
                   :class="groupSizeApplicabilityConditionFragmentClasses">when {{ stratum.label }} has
-                <u>any number of</u> people</span>
+                <span class="popover-link-area">
+                    <a href="#"
+                       @click.prevent="onGroupSizeApplicabilityConditionValueClick">{{ groupSizeApplicabilityConditionDisplayedValue }} {{ groupSizeApplicabilityConditionPersonUnitNoun }}</a>
+                    <div class="popover"
+                         v-if="groupSizeApplicabilityConditionPopoverVisible">
+                        <ul>
+                            <li>
+                                <label>
+                                    <input type="radio"
+                                           name="groupSizeApplicabilityConditionPresence"
+                                           value="not-specified"
+                                           v-model="groupSizeApplicabilityConditionPresence"> any number of people</label>
+                            </li>
+                            <li @click="onGroupSizeApplicabilityConditionValueInputFieldClick">
+                                <label>
+                                    <input type="radio"
+                                           name="groupSizeApplicabilityConditionPresence"
+                                           value="specified"
+                                           v-model="groupSizeApplicabilityConditionPresence">
+                                    <DynamicWidthInputField class="input"
+                                                            :minWidth="5"
+                                                            :disabled="constraintGroupSizeApplicabilityCondition === undefined"
+                                                            v-model="groupSizeApplicabilityConditionValue"></DynamicWidthInputField> {{ groupSizeApplicabilityConditionPersonUnitNoun }}</label>
+                            </li>
+                        </ul>
+                    </div>
+                </span>
+            </span>
         </div>
         <div class="action-buttons">
             <button class="button delete"
@@ -186,6 +213,9 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     // Props
     @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
     @Prop constraint: Constraint.Constraint = p({ type: Object, required: true, }) as any;
+
+    // Private
+    groupSizeApplicabilityConditionPopoverVisible: boolean = false;
 
     get costWeightList() {
         return CostWeightList;
@@ -363,15 +393,37 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return true;
     }
 
-    get isGroupSizeSpecified() {
-        return this.constraint.applicability.some(condition => condition.type === "group-size");
-    }
+
+
+
+
+
+
 
     get groupSizeApplicabilityConditionFragmentClasses() {
         return {
-            'group-size-specified': this.isGroupSizeSpecified,
+            "group-size-specified": this.constraintGroupSizeApplicabilityCondition !== undefined,
+            "popover-active": this.groupSizeApplicabilityConditionPopoverVisible,
         }
     }
+
+    get groupSizeApplicabilityConditionDisplayedValue() {
+        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
+            return "any number of";
+        } else {
+            return '' + this.constraintGroupSizeApplicabilityCondition.value;
+        }
+    }
+
+    onGroupSizeApplicabilityConditionValueClick() {
+        this.groupSizeApplicabilityConditionPopoverVisible = !this.groupSizeApplicabilityConditionPopoverVisible;
+    }
+
+    onGroupSizeApplicabilityConditionValueInputFieldClick() {
+        // Always activate the input field when clicked on
+        this.groupSizeApplicabilityConditionPresence = "specified";
+    }
+
 
 
 
@@ -499,6 +551,86 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             },
         });
     }
+
+    get constraintGroupSizeApplicabilityCondition() {
+        return this.constraint.applicability.find(condition => condition.type === "group-size");
+    }
+
+    set constraintGroupSizeApplicabilityCondition(newValue: any | undefined) {
+        // Copy applicability array with group size applicability conditions 
+        // filtered out
+        const applicabilityArray =
+            this.constraint.applicability
+                .slice()
+                .filter(condition => condition.type !== "group-size");
+
+
+        // When we have a new group size applicability condition, insert that in
+        if (newValue !== undefined) {
+            applicabilityArray.push(newValue);
+        }
+
+        this.updateConstraint({
+            applicability: applicabilityArray,
+        });
+    }
+
+    get groupSizeApplicabilityConditionPresence() {
+        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
+            return "not-specified";
+        } else {
+            return "specified";
+        }
+    }
+
+    set groupSizeApplicabilityConditionPresence(newValue: string) {
+        switch (newValue) {
+            case "not-specified": {
+                // Delete the group size applicability condition
+                this.constraintGroupSizeApplicabilityCondition = undefined;
+                return;
+            }
+            case "specified": {
+                // Default to 2
+                this.groupSizeApplicabilityConditionValue = "2";
+                return;
+            }
+        }
+
+        throw new Error("Group size applicability presence value invalid");
+    }
+
+    get groupSizeApplicabilityConditionPersonUnitNoun() {
+        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
+            return "people";
+        }
+
+        if (this.constraintGroupSizeApplicabilityCondition.value === 1) {
+            return "person";
+        }
+
+        return "people";
+    }
+
+    get groupSizeApplicabilityConditionValue() {
+        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
+            return "some number of";
+        } else {
+            return '' + this.constraintGroupSizeApplicabilityCondition.value;
+        }
+    }
+
+    set groupSizeApplicabilityConditionValue(newValue: string) {
+        const groupSizeValue = (+newValue || 0) >>> 0;
+
+        // Update constraint applicability condition
+        this.constraintGroupSizeApplicabilityCondition = {
+            type: "group-size",
+            function: "eq",
+            value: groupSizeValue,
+        };
+    }
+
 }
 </script>
 
@@ -515,6 +647,15 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     color: inherit;
 
     cursor: pointer;
+}
+
+.select[disabled],
+.input[disabled] {
+    border-bottom-color: transparent;
+
+    font-style: italic;
+
+    cursor: inherit;
 }
 
 .constraint-item {
@@ -615,13 +756,57 @@ button.delete:active::before {
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
 }
 
-.group-size-applicability-condition-fragment {
-    opacity: 0.5;
-    font-style: italic;
+.group-size-applicability-condition-fragment .popover-link-area {
+    display: inline-block;
+
+    position: relative;
+    z-index: 1;
 }
 
-.group-size-applicability-condition-fragment.group-size-specified {
-    opacity: 1;
-    font-style: inherit;
+.group-size-applicability-condition-fragment .popover-link-area a {
+    background: none;
+    text-decoration: none;
+
+    display: block;
+
+    border: 0;
+    border-bottom: 1px dotted;
+
+    padding: 0 0.2em;
+
+    color: inherit;
+
+    cursor: pointer;
+}
+
+.group-size-applicability-condition-fragment.popover-active .popover-link-area a {
+    outline: 2px solid #608;
+    border-bottom-color: transparent;
+}
+
+.group-size-applicability-condition-fragment .popover {
+    position: absolute;
+    display: inline-block;
+
+    background: #fff;
+    padding: 0.5em;
+
+    min-width: 13em;
+    width: calc(100% + 4px);
+
+    font-size: 0.7em;
+
+    margin-left: -2px;
+
+    border: 2px solid #608;
+}
+
+.group-size-applicability-condition-fragment .popover ul {
+    padding: 0;
+    list-style: none;
+}
+
+.group-size-applicability-condition-fragment .popover .input[disabled] {
+    padding: 0;
 }
 </style>

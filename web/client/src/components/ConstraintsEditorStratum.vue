@@ -147,8 +147,13 @@ export default class ConstraintsEditorStratum extends Vue {
 }
 
 .stratum-constraints .constraint {
-    padding-left: 0.6rem;
+    padding-left: 0.8rem;
     font-size: 1.4em;
+
+    z-index: 1;
+
+    background: rgba(0, 0, 0, 0.05);
+    background-clip: content-box;
 }
 
 .stratum-constraints .constraint::before {
@@ -164,11 +169,6 @@ export default class ConstraintsEditorStratum extends Vue {
 
     top: 0.5em;
     left: -0.9rem;
-}
-
-.stratum-constraints .constraint:hover {
-    background: rgba(0, 0, 0, 0.05);
-    background-clip: content-box;
 }
 
 button.add-constraint {
