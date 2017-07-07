@@ -656,8 +656,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 return;
             }
             case "specified": {
-                // Default to 2
-                this.groupSizeApplicabilityConditionValue = "2";
+                // Default to 2 if condition not previously set
+                if (this.groupSizeApplicabilityConditionPresence !== "specified") {
+                    this.groupSizeApplicabilityConditionValue = "2";
+                }
+
                 return;
             }
         }
