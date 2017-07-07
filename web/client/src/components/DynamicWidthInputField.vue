@@ -1,5 +1,6 @@
 <template>
     <input v-model="inputValue"
+           :disabled="disabled"
            :style="{ width: elWidth }">
 </template>
 
@@ -19,6 +20,8 @@ const widthTestElement = document.createElement("span");
 export default class DynamicWidthInputField extends Vue {
     // Props
     @Prop value: any = p({ required: true, }) as any;
+    @Prop minWidth: number = p({ type: Number, required: false, default: 1, }) as any;
+    @Prop disabled: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     // Private
     elWidth: string = "0px";
@@ -53,7 +56,7 @@ export default class DynamicWidthInputField extends Vue {
 
         // Test width
         const rect = widthTestElement.getBoundingClientRect();
-        const width = rect.width;
+        const width = Math.max(this.minWidth, (rect.width >>> 0) + 1);
 
         // Remove test element
         parentNode.removeChild(widthTestElement);
