@@ -45,6 +45,7 @@ import { Vue, Component, Prop, p } from "av-ts";
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 import * as Stratum from "../data/Stratum";
 import * as Constraint from "../data/Constraint";
+import * as SourceFile from "../data/SourceFile";
 
 @Component({
     components: {
@@ -57,6 +58,15 @@ export default class ConstraintsEditorStratum extends Vue {
     @Prop stratumConstraints: ReadonlyArray<Constraint.Constraint> = p({ type: Array, required: true, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
+    get fileInStore() {
+        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
+        return file;
+    }
+
+    get columnInfo() {
+        return this.fileInStore.columnInfo;
+    }
+
     get strata() {
         return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
     }
@@ -67,6 +77,15 @@ export default class ConstraintsEditorStratum extends Vue {
     }
 
     addNewConstraint() {
+        const columnInfo = this.columnInfo!;
+
+        // Pick random column and random default value
+        const defaultColumn = (Math.random() * columnInfo.length) >>> 0;
+        const defaultColumnInfo = columnInfo[defaultColumn];
+
+        const valueSetArray = Array.from(defaultColumnInfo.valueSet as Set<string | number>);
+        const defaultFilterValue = valueSetArray[(Math.random() * valueSetArray.length) >>> 0];
+
         // TODO: Generate random constraint?
         const constraint: Constraint.Constraint = {
             _id: performance.now(),
@@ -74,10 +93,10 @@ export default class ConstraintsEditorStratum extends Vue {
             weight: 50,
             type: "count",
             filter: {
-                column: 0,
+                column: defaultColumn,
                 function: "eq",
                 values: [
-                    "some value"
+                    defaultFilterValue,
                 ]
             },
             condition: {
