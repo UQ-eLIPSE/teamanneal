@@ -416,7 +416,63 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     onGroupSizeApplicabilityConditionValueClick() {
-        this.groupSizeApplicabilityConditionPopoverVisible = !this.groupSizeApplicabilityConditionPopoverVisible;
+        const newVisibleState = !this.groupSizeApplicabilityConditionPopoverVisible;
+        this.groupSizeApplicabilityConditionPopoverVisible = newVisibleState;
+
+        // When menu is now open...
+        if (newVisibleState) {
+            // Get the element that wraps the fragment
+            const groupSizeMenuElement: HTMLSpanElement | null =
+                this.$el.querySelector("span.group-size-applicability-condition-fragment") as HTMLSpanElement;
+
+            if (groupSizeMenuElement === null) {
+                // No element to work with
+                return;
+            }
+
+            // Focus on radio buttons after Vue updates
+            Vue.nextTick(() => {
+                const checkedPresenceOption: HTMLInputElement | null =
+                    groupSizeMenuElement.querySelector("input[name=groupSizeApplicabilityConditionPresence]:checked") as HTMLInputElement;
+
+                if (checkedPresenceOption !== null) {
+                    checkedPresenceOption.focus();
+                }
+            });
+
+            // Attach blur handler for menu
+            const blurHandlerDocumentEvents = [
+                "click",
+                "focusin",
+            ];
+
+            const isDescendantOfGroupSizeMenu = (child: Node) => {
+                var node = child.parentNode;
+                while (node != null) {
+                    if (node === groupSizeMenuElement) {
+                        return true;
+                    }
+                    node = node.parentNode;
+                }
+                return false;
+            }
+
+            const blurHandler = (e: Event) => {
+                if (isDescendantOfGroupSizeMenu(e.target as Node)) {
+                    // Ignore if event occurred within group size menu
+                    return;
+                }
+
+                // Close menu on blur
+                this.groupSizeApplicabilityConditionPopoverVisible = false;
+
+                // Clean up after blurring by detaching handlers
+                blurHandlerDocumentEvents.forEach(type => document.removeEventListener(type, blurHandler));
+            }
+
+            // Attach blur handler
+            blurHandlerDocumentEvents.forEach(type => document.addEventListener(type, blurHandler));
+        }
     }
 
     onGroupSizeApplicabilityConditionValueInputFieldClick() {
@@ -711,7 +767,7 @@ button.delete {
     justify-content: center;
     align-items: center;
 
-    position: relative;
+    /*position: relative;*/
 }
 
 button.delete>span {
@@ -759,8 +815,8 @@ button.delete:active::before {
 .group-size-applicability-condition-fragment .popover-link-area {
     display: inline-block;
 
-    position: relative;
-    z-index: 1;
+    /*position: relative;
+    z-index: 1;*/
 }
 
 .group-size-applicability-condition-fragment .popover-link-area a {
@@ -792,8 +848,7 @@ button.delete:active::before {
     padding: 0.5em;
 
     min-width: 13em;
-    width: calc(100% + 4px);
-
+    /*width: calc(100% + 4px);*/
     font-size: 0.7em;
 
     margin-left: -2px;

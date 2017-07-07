@@ -104,6 +104,8 @@ export default class ConstraintsEditor extends Vue {
     height: auto;
 
     padding: 1rem;
+
+    position: relative;
 }
 
 .constraints-editor ul {

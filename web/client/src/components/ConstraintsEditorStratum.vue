@@ -138,10 +138,6 @@ export default class ConstraintsEditorStratum extends Vue {
     list-style: none;
 }
 
-.stratum-constraints li {
-    position: relative;
-}
-
 .stratum-constraints li+li {
     margin-top: 1rem;
 }
@@ -167,8 +163,8 @@ export default class ConstraintsEditorStratum extends Vue {
     border-radius: 50%;
     background: #49075E;
 
-    top: 0.5em;
-    left: -0.9rem;
+    margin-top: 0.5em;
+    margin-left: -1.7rem;
 }
 
 button.add-constraint {
