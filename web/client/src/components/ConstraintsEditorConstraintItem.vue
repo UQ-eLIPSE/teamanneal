@@ -93,13 +93,13 @@ import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
 /*
- * Sentence structure
+ * Example sentence structures
  * 
- * <weight>      <condition>                                  <filter>
- * -----------------------------------------------------------------------------
- * [must have]   [at least] _n_                      [column] [equal to] _x_
- * [should have] [as many of]                        [column] [not equal to] _x_
- * [may have]    [as similar values as possible for] [column]
+ * Type       | <weight>      <condition>                       <filter>                        <applicability condition>
+ * ------------------------------------------------------------------------------------------------------
+ * count      | [must have]   [at least] _n_ people with        [column] [equal to] _x_         when <group> has [any number of people]
+ * limit      | [should have] [as many] people with             [column] [not equal to] _x_     when <group> has [5 people]
+ * similarity | [may have]    people with [similar values of]   [column]                        when <group> has [2 people]
  */
 
 const NumberFilterFunctionList = [
