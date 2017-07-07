@@ -328,12 +328,28 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
     get filterValueAsSelectList() {
-        return Array.from(this.constraintFilterColumnInfo.valueSet as any as ArrayLike<number | string>)
+        const columnInfo = this.constraintFilterColumnInfo;
+        return Array.from(columnInfo.valueSet as Set<number | string>)
             .sort()
-            .map(value => ({
-                value,
-                text: value,
-            }));
+            .map(value => {
+                switch (columnInfo.type) {
+                    case "number": {
+                        return {
+                            value: +value,
+                            text: +value,
+                        }
+                    }
+
+                    case "string": {
+                        return {
+                            value: '' + value,
+                            text: '' + value,
+                        }
+                    }
+                }
+
+                throw new Error("Unknown column type");
+            });
     }
 
 
@@ -598,6 +614,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // value does not exist within the list, then set the filter value to
         // the first available option
         if (this.showFilterValueAsSelect &&
+            // You must compare the string values or they may not match
             this.filterValueAsSelectList.findIndex(item => item.value === filterValue) < 0) {
             this.constraintFilterValues = this.filterValueAsSelectList[0].value;
         }
