@@ -45,6 +45,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import * as Constraint from "../data/Constraint";
@@ -418,11 +419,9 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set constraintConditionCount(newValue: any) {
-        // Must be a uint32 number
-        const conditionCount = (+newValue || 0) >>> 0;
         this.updateConstraint({
             condition: {
-                value: conditionCount,
+                min: parseUint32(newValue, this.constraintConditionCount),
             },
         });
     }

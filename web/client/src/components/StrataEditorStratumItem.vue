@@ -80,6 +80,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -313,7 +314,7 @@ export default class StrataEditorStratumItem extends Vue {
     set stratumSizeMin(newValue: any) {
         this.updateStratum({
             size: {
-                min: (+newValue || 0) >>> 0,        // Convert to uint32
+                min: parseUint32(newValue, this.stratumSizeMin),
             },
         });
     }
@@ -325,7 +326,7 @@ export default class StrataEditorStratumItem extends Vue {
     set stratumSizeIdeal(newValue: any) {
         this.updateStratum({
             size: {
-                ideal: (+newValue || 0) >>> 0,      // Convert to uint32
+                ideal: parseUint32(newValue, this.stratumSizeIdeal),
             },
         });
     }
@@ -337,7 +338,7 @@ export default class StrataEditorStratumItem extends Vue {
     set stratumSizeMax(newValue: any) {
         this.updateStratum({
             size: {
-                max: (+newValue || 0) >>> 0,        // Convert to uint32
+                max: parseUint32(newValue, this.stratumSizeMax),
             },
         });
     }
