@@ -705,7 +705,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set groupSizeApplicabilityConditionValue(newValue: string) {
-        const groupSizeValue = (+newValue || 0) >>> 0;
+        const groupSizeValue = parseUint32(newValue, this.constraintGroupSizeApplicabilityCondition.value);
 
         // Update constraint applicability condition
         this.constraintGroupSizeApplicabilityCondition = {
