@@ -512,8 +512,16 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     sanitiseFilterValue(filterValue: number | string) {
         switch (this.constraintFilterColumnInfo.type) {
-            case "number":
-                return parse(filterValue, +this.constraintFilterValues);
+            case "number": {
+                let oldFilterValue = +this.constraintFilterValues;
+
+                // If the previous value was also bad, then just fall back to 0
+                if (Number.isNaN(oldFilterValue)) {
+                    oldFilterValue = 0;
+                }
+
+                return parse(filterValue, oldFilterValue);
+            }
 
             case "string":
                 return "" + filterValue;
@@ -578,11 +586,42 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set constraintFilterColumnInfo(newValue: ColumnInfo.ColumnInfo) {
-        const columnIndex = this.columnInfo.indexOf(newValue);
+        const oldColumnInfo = this.constraintFilterColumnInfo;
+        const oldFilterValue = this.constraintFilterValues;
+        const newColumnInfo = newValue;
+
         this.updateConstraint({
             filter: {
-                column: columnIndex,
+                column: newColumnInfo.index,
             },
+        });
+
+        // We need to convert the filter value if the types are different, or
+        // trigger an automatic realignment of the filter value for different
+        // columns of the same type by forcing another save.
+        // 
+        // This can only happen after the above column change has been
+        // reconciled and hence sits within a Vue.nextTick().
+        Vue.nextTick(() => {
+            const oldColumnType = oldColumnInfo.type;
+            const newColumnType = newValue.type;
+
+            if (oldColumnType !== newColumnType ||
+                oldColumnInfo.index !== newColumnInfo.index) {
+                switch (newColumnType) {
+                    case "number": {
+                        this.constraintFilterValues = +oldFilterValue;
+                        break;
+                    }
+                    case "string": {
+                        this.constraintFilterValues = '' + oldFilterValue;
+                        break;
+                    }
+                    default: {
+                        throw new Error("Unknown column type");
+                    }
+                }
+            }
         });
     }
 
@@ -609,25 +648,27 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     get constraintFilterValues() {
         // NOTE: Values is an array, but we only support single values for now
         const filterValue: string | number = ((this.constraint.filter as any).values || [])[0];
+        return filterValue;
+    }
+
+    set constraintFilterValues(newValue: string | number) {
+        // NOTE: Values is an array, but we only support single values for now
+
+        let newFilterValue = this.sanitiseFilterValue(newValue);
 
         // If the filter value is determined by a select list and the filter
         // value does not exist within the list, then set the filter value to
         // the first available option
         if (this.showFilterValueAsSelect &&
             // You must compare the string values or they may not match
-            this.filterValueAsSelectList.findIndex(item => item.value === filterValue) < 0) {
-            this.constraintFilterValues = this.filterValueAsSelectList[0].value;
+            this.filterValueAsSelectList.findIndex(item => item.value === newFilterValue) < 0) {
+            newFilterValue = this.filterValueAsSelectList[0].value;
         }
 
-        return filterValue;
-    }
-
-    set constraintFilterValues(newValue: string | number) {
-        // NOTE: Values is an array, but we only support single values for now
         this.updateConstraint({
             filter: {
                 values: [
-                    this.sanitiseFilterValue(newValue),
+                    newFilterValue,
                 ],
             },
         });
