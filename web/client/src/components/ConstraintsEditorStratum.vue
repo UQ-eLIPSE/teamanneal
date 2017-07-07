@@ -80,11 +80,26 @@ export default class ConstraintsEditorStratum extends Vue {
         const columnInfo = this.columnInfo!;
 
         // Pick random column and random default value
-        const defaultColumn = (Math.random() * columnInfo.length) >>> 0;
-        const defaultColumnInfo = columnInfo[defaultColumn];
+        const defaultColumnIndex = (Math.random() * columnInfo.length) >>> 0;
+        const defaultColumnInfo = columnInfo[defaultColumnIndex];
 
         const valueSetArray = Array.from(defaultColumnInfo.valueSet as Set<string | number>);
-        const defaultFilterValue = valueSetArray[(Math.random() * valueSetArray.length) >>> 0];
+        let defaultFilterValue = valueSetArray[(Math.random() * valueSetArray.length) >>> 0];
+
+        // Ensure that the default filter value is of the appropriate type
+        switch (defaultColumnInfo.type) {
+            case "number": {
+                defaultFilterValue = +defaultFilterValue || 0;
+                break;
+            }
+            case "string": {
+                defaultFilterValue = '' + defaultFilterValue;
+                break;
+            }
+            default: {
+                throw new Error("Unknown column type");
+            }
+        }
 
         // TODO: Generate random constraint?
         const constraint: Constraint.Constraint = {
@@ -93,7 +108,7 @@ export default class ConstraintsEditorStratum extends Vue {
             weight: 50,
             type: "count",
             filter: {
-                column: defaultColumn,
+                column: defaultColumnIndex,
                 function: "eq",
                 values: [
                     defaultFilterValue,
