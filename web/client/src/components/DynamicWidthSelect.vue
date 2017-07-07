@@ -1,6 +1,11 @@
 <template>
-    <select @change="onSelectChange" :style="{ width: elWidth }">
-        <option v-for="(option, i) in list" :value="option" :selected="i === selectedIndex">{{ option.text }}</option>
+    <select v-model="activeItemValue"
+            :disabled="disabled"
+            :style="{ width: elWidth }">
+        <option v-for="item in list"
+                :key="item.value"
+                :value="item.value"
+                :selected="item.value === activeItemValue">{{ item.text }}</option>
     </select>
 </template>
 
@@ -17,41 +22,53 @@ const widthTestElement = document.createElement("option");
 selectTestElement.className = "__DynamicWidthSelect_TestElement";
 selectTestElement.appendChild(widthTestElement);
 
-@Component
+@Component({
+    model: {
+        event: "valueUpdate",
+        prop: "selectedValue",
+    },
+})
 export default class DynamicWidthSelect extends Vue {
     // Props
-    @Prop list = p({ type: Array, required: true, });
-    @Prop selectedIndex: number = p({ type: Number, required: true, default: 0, }) as any;
+    @Prop list: any[] = p({ type: Array, required: true, }) as any;
+    @Prop selectedValue: any = p({ required: true, }) as any;
+    @Prop minWidth: number = p({ type: Number, required: false, default: 30 }) as any;
+    @Prop disabled: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     // Private
     elWidth: string = "0px";
 
-    onSelectChange() {
-        const el = this.$el as HTMLSelectElement;
-        const selectedIndex = el.selectedIndex;
-
-        // Rerender the select menu
-        const newOption = this.list![selectedIndex];
-        const text = newOption.text;
-
-        this.updateRenderWidth(text);
-
-        // Pass value back up via. `change` event
-        this.$emit("change", newOption);
+    get activeItem() {
+        return this.list.find(item => item.value === this.activeItemValue);
     }
 
-    updateRenderWidth(text: string) {
+    get activeItemValue() {
+        return this.selectedValue;
+    }
+
+    set activeItemValue(newValue: any) {
+        this.$emit("valueUpdate", newValue);
+    }
+
+    updateRenderWidth() {
+        const activeItem = this.activeItem;
+
+        // Can't do anything if we have no item selected
+        if (activeItem === undefined) {
+            return;
+        }
+
         // Extract element
         const el = this.$el as HTMLSelectElement;
 
         // Set up width test element
         const parentNode = el.parentNode!;
-        widthTestElement.textContent = text;
+        widthTestElement.textContent = activeItem.text;
         parentNode.insertBefore(selectTestElement, el);
 
         // Test width
         const rect = selectTestElement.getBoundingClientRect();
-        const width = rect.width;
+        const width = Math.max(this.minWidth, (rect.width >>> 0) + 1);
 
         // Remove test element
         parentNode.removeChild(selectTestElement);
@@ -60,41 +77,14 @@ export default class DynamicWidthSelect extends Vue {
         this.elWidth = `${width}px`;
     }
 
-    @Watch("list")
-    onListChange() {
-        // Rerender the select menu
-        let newOption = this.list![this.selectedIndex];
-
-        // If the option does not exist, we set the supposed selected index to
-        // 0 and do it again
-        if (newOption === undefined) {
-            newOption = this.list![0];
-        }
-
-        const text = newOption.text;
-
-        this.updateRenderWidth(text);
-
-        // Fire change event again
-        this.$emit("change", newOption);
+    @Watch("selectedValue")
+    onSelectedValueChange() {
+        this.updateRenderWidth();
     }
 
     @Lifecycle mounted() {
-        // Rerender the select menu
-        let newOption = this.list![this.selectedIndex];
-
-        // If the option does not exist, we set the supposed selected index to
-        // 0 and do it again
-        if (newOption === undefined) {
-            newOption = this.list![0];
-        }
-
-        const text = newOption.text;
-
-        this.updateRenderWidth(text);
-
-        // Fire change event again
-        this.$emit("change", newOption);
+        // Force update render width now
+        this.updateRenderWidth();
     }
 }
 </script>

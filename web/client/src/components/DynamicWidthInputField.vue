@@ -1,6 +1,7 @@
 <template>
-    <input v-model="inputValue" :style="{ width: elWidth }">
-    </input>
+    <input v-model="inputValue"
+           :disabled="disabled"
+           :style="{ width: elWidth }">
 </template>
 
 <!-- ####################################################################### -->
@@ -10,20 +11,43 @@ import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
 
 const widthTestElement = document.createElement("span");
 
-@Component
+@Component({
+    model: {
+        event: "change",
+        prop: "value",
+    }
+})
 export default class DynamicWidthInputField extends Vue {
     // Props
-    @Prop val = p(String);
+    @Prop value: any = p({ required: true, }) as any;
+    @Prop minWidth: number = p({ type: Number, required: false, default: 1, }) as any;
+    @Prop disabled: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     // Private
-    inputValue: string = "";
     elWidth: string = "0px";
 
-    @Watch("inputValue")
-    onInputValueChange(newVal: string) {
+    get inputValue() {
+        return '' + this.value;
+    }
+
+    set inputValue(newValue: string) {
+        // Pass value back up via. `change` event
+        this.$emit("change", newValue);
+
+        // Ensure that input values always sync up
+        this.syncInputValueToElement();
+    }
+
+    updateRenderWidth() {
+        const value = this.inputValue;
+
+        // Can't do anything if we have no value
+        if (value === undefined) {
+            return;
+        }
+
         // Extract element and value
         const el = this.$el as HTMLInputElement;
-        const value = newVal;
 
         // Set up width test element
         const parentNode = el.parentNode!;
@@ -32,25 +56,36 @@ export default class DynamicWidthInputField extends Vue {
 
         // Test width
         const rect = widthTestElement.getBoundingClientRect();
-        const width = rect.width;
+        const width = Math.max(this.minWidth, (rect.width >>> 0) + 1);
 
         // Remove test element
         parentNode.removeChild(widthTestElement);
 
         // Update element width
         this.elWidth = `${width}px`;
-
-        // Pass value back up via. `change` event
-        this.$emit("change", value);
     }
 
-    @Watch("val")
-    onValChange() {
-        this.inputValue = this.val!;
+    syncInputValueToElement() {
+        // Extract element and value
+        const el = this.$el as HTMLInputElement;
+
+        // Check values after Vue has reconciled changes
+        Vue.nextTick(() => {
+            // If the values do not match, then force resync
+            if (this.inputValue !== el.value) {
+                el.value = this.inputValue;
+            }
+        });
+    }
+
+    @Watch("value")
+    onValueChange() {
+        this.updateRenderWidth();
     }
 
     @Lifecycle mounted() {
-        this.inputValue = this.val!;
+        // Force update render width now
+        this.updateRenderWidth();
     }
 }
 </script>

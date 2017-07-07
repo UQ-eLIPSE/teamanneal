@@ -2,15 +2,14 @@
     <div>
         <div class="pos-rel">
             <span class="input-wrapper">
-                <DynamicWidthInputField v-if="editable"
-                                        class="input"
-                                        :val="stratum.label"
-                                        @change="onLabelValueChange"></DynamicWidthInputField>
+                <DynamicWidthInputField class="input"
+                                        v-if="editable"
+                                        v-model="stratumLabel"></DynamicWidthInputField>
                 <span v-else>{{ stratum.label }}</span>
             </span>
-            <button v-if="deletable"
-                    class="button delete"
-                    @click="emitDelete">
+            <button class="button delete"
+                    v-if="deletable"
+                    @click="deleteStratum">
                 <span>Delete</span>
             </button>
         </div>
@@ -26,6 +25,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { deepCopy, deepMerge } from "../util/Object";
+
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 import * as Stratum from "../data/Stratum";
 
@@ -36,39 +37,42 @@ import * as Stratum from "../data/Stratum";
 })
 export default class StrataStructureEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p(Object) as any;
-    @Prop childUnit = p(String);
+    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
+    @Prop childUnit: string = p({ type: String, required: false, default: "<group>" }) as any;
     @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
     @Prop editable: boolean = p({ type: Boolean, required: false, default: true, }) as any;
 
-    onLabelValueChange(newValue: string) {
-        const stratum: Stratum.Stratum = {
-            _id: this.stratum._id,
-            label: newValue,
-            size: this.stratum.size,
-            counter: this.stratum.counter,
-        }
+    updateStratum(diff: any) {
+        // Deep copy and merge in diff
+        const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
+        // Commit update
         const stratumUpdate: Stratum.Update = {
-            stratum,
+            stratum: newStratum,
         }
 
-        this.$emit("change", stratumUpdate);
+        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
     }
 
-    get childUnitText() {
-        return this.childUnit || "<group>";
+    deleteStratum() {
+        this.$store.commit("deleteConstraintsConfigStrataOf", this.stratum._id);
+    }
+
+    get stratumLabel() {
+        return this.stratum.label;
+    }
+
+    set stratumLabel(newValue: string) {
+        this.updateStratum({
+            label: newValue,
+        });
     }
 
     get pluralChildUnitText() {
-        if (this.childUnitText === "person") {
+        if (this.childUnit === "person") {
             return "people";
         }
-        return this.childUnitText + "s";
-    }
-
-    emitDelete() {
-        this.$emit("delete", this.stratum);
+        return this.childUnit + "s";
     }
 }
 </script>
@@ -150,7 +154,7 @@ button.delete::before {
      * https://thenounproject.com/grega.cresnar/collection/pixel-perfect/?q=trash&i=976401
      * License: CC BY 3.0 US
      */
-    background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjOGIwMDAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMjAwJyBoZWlnaHQ9JzIwMCcgZmlsbD0iIzk5OTk5OSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBkYXRhLW5hbWU9IkxheWVyIDEiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB4PSIwcHgiIHk9IjBweCI+PHRpdGxlPjFBcnRib2FyZCAyMTwvdGl0bGU+PHBhdGggZD0iTTU4LDIwdjZINzRhMiwyLDAsMCwxLDIsMnY0YTIsMiwwLDAsMS0yLDJIMjZhMiwyLDAsMCwxLTItMlYyOGEyLDIsMCwwLDEsMi0ySDQyVjIwYTIsMiwwLDAsMSwyLTJINTZBMiwyLDAsMCwxLDU4LDIwWk0zNCw4Mkg2NmE2LDYsMCwwLDAsNi02VjQwSDI4Vjc2QTYsNiwwLDAsMCwzNCw4MloiLz48L3N2Zz4=");
     background-repeat: no-repeat;
     background-size: cover;
 }
