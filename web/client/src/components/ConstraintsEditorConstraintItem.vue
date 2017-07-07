@@ -45,7 +45,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import { parseUint32 } from "../util/Number";
+import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import * as Constraint from "../data/Constraint";
@@ -366,7 +366,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     sanitiseFilterValue(filterValue: number | string) {
         switch (this.constraintFilterColumnInfo.type) {
             case "number":
-                return +filterValue || 0;
+                return parse(filterValue, +this.constraintFilterValues);
 
             case "string":
                 return "" + filterValue;
@@ -421,7 +421,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     set constraintConditionCount(newValue: any) {
         this.updateConstraint({
             condition: {
-                min: parseUint32(newValue, this.constraintConditionCount),
+                value: parseUint32(newValue, this.constraintConditionCount),
             },
         });
     }
@@ -461,7 +461,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     get constraintFilterValues() {
         // NOTE: Values is an array, but we only support single values for now
-        const filterValue: string | number = this.sanitiseFilterValue(((this.constraint.filter as any).values || [])[0]);
+        const filterValue: string | number = ((this.constraint.filter as any).values || [])[0];
 
         // If the filter value is determined by a select list and the filter
         // value does not exist within the list, then set the filter value to
