@@ -207,12 +207,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
 
-    get thisConstraintId() {
-        return this.constraint._id;
-    }
-
-    get thisConstraintType() {
-        switch (this.constraintConditionFunction) {
+    getConstraintType(conditionFunction: string) {
+        switch (conditionFunction) {
             case "eq":
             case "neq":
             case "gte":
@@ -231,6 +227,18 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         }
 
         throw new Error("Unknown constraint type");
+    }
+
+
+
+
+
+    get thisConstraintId() {
+        return this.constraint._id;
+    }
+
+    get thisConstraintType() {
+        return this.getConstraintType(this.constraintConditionFunction);
     }
 
     get thisConstraintFilter() {
@@ -398,6 +406,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     set constraintConditionFunction(newValue: string) {
         this.updateConstraint({
+            type: this.getConstraintType(newValue),
             condition: {
                 function: newValue,
             },
