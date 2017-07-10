@@ -43,8 +43,7 @@
             <div class="stratum-name">
                 <h3>Name</h3>
                 <div>
-                    <select :value="counterSelectValue"
-                            @change="onCounterSelectChange">
+                    <select v-model="counterType">
                         <option v-for="counterOption in counterList"
                                 :key="counterOption.value"
                                 :value="counterOption.value">{{ counterOption.text }}</option>
@@ -114,23 +113,6 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
-
-    onCounterSelectChange($event: Event) {
-        const el = $event.target as HTMLSelectElement;
-
-        const counterType = el.value;
-
-        if (counterType === "custom") {
-            return this.updateStratum({
-                // Default custom list is "Red", "Green", "Blue"
-                counter: ["Red", "Green", "Blue"],
-            });
-        } else {
-            return this.updateStratum({
-                counter: counterType as any,
-            });
-        }
-    }
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -239,13 +221,34 @@ export default class StrataEditorStratumItem extends Vue {
         return errMsgs;
     }
 
-    get counterSelectValue() {
+    get counterType() {
         const counterValue = this.stratum.counter;
 
         if (Array.isArray(counterValue)) {
             return "custom";
         } else {
-            return counterValue;
+            return counterValue as string;
+        }
+    }
+
+    set counterType(newValue: string) {
+        const oldCounterValue = this.stratum.counter;
+
+        if (newValue === "custom") {
+            // If already a custom array, do nothing
+            if (Array.isArray(oldCounterValue)) {
+                return;
+            }
+
+            // Otherwise set the counter to a default array
+            this.updateStratum({
+                // Default custom list is "Red", "Green", "Blue"
+                counter: ["Red", "Green", "Blue"],
+            });
+        } else {
+            this.updateStratum({
+                counter: newValue,
+            });
         }
     }
 
