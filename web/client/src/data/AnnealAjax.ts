@@ -383,6 +383,18 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // Constraints
     // ===========
 
+    const convertConstraintValue = (columnIndex: number, value: Record.RecordElement) => {
+        // If the value is a string that terminates with a decimal point and
+        // falls under a numeric column, then convert it to a number
+        if (typeof value === "string" &&
+            value[value.length - 1] === "." &&
+            columnInfo[columnIndex].type === "number") {
+            return +value;
+        }
+
+        return value;
+    }
+
     const constraints: ReadonlyArray<Constraint.Desc> = constraintsConfig.constraints.map(
         (internalConstraint) => {
             // TODO: The below code is copied three times due to TypeScript's
@@ -396,7 +408,12 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         // TODO: Fix up the internal strata object order
                         strata: numberOfStrata - internalConstraint.strata - 1,
 
-                        filter: internalConstraint.filter,
+                        filter: {
+                            column: internalConstraint.filter.column,
+                            function: internalConstraint.filter.function,
+                            values: internalConstraint.filter.values
+                                .map((value) => convertConstraintValue(internalConstraint.filter.column, value)),
+                        },
                         condition: internalConstraint.condition,
 
                         applicability: internalConstraint.applicability,
@@ -413,7 +430,12 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         // TODO: Fix up the internal strata object order
                         strata: numberOfStrata - internalConstraint.strata - 1,
 
-                        filter: internalConstraint.filter,
+                        filter: {
+                            column: internalConstraint.filter.column,
+                            function: internalConstraint.filter.function,
+                            values: internalConstraint.filter.values
+                                .map((value) => convertConstraintValue(internalConstraint.filter.column, value)),
+                        },
                         condition: internalConstraint.condition,
 
                         applicability: internalConstraint.applicability,
