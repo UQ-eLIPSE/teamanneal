@@ -136,10 +136,7 @@ const store = new Vuex.Store({
                 return;
             }
 
-            // Only allow expected properties
-            const filteredConstraint = Constraint.cleanObject(updatedConstraint);
-
-            Vue.set(constraints, index, filteredConstraint);
+            Vue.set(constraints, index, updatedConstraint);
         },
 
         insertConstraintsConfigConstraint(state, constraint: Constraint.Constraint) {

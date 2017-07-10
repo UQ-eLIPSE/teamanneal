@@ -11,7 +11,7 @@ export interface Update {
 /**
  * Cleans out unnecessary object properties for constraints
  */
-export function cleanObject(obj: Constraint) {
+export function cleanObject(obj: Constraint.Desc) {
     let definition: Object;
 
     switch (obj.type) {
