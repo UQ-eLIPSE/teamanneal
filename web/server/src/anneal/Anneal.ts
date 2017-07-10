@@ -115,6 +115,13 @@ ${JSON.stringify(satisfaction)}`);
 function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>) {
     const tempDerSamples = 200;
 
+    // We define a maximum number of iterations to run for deriving the starting
+    // temperature because some anneal configurations may have few uphill costs
+    // being accumulated, leading to a long running derivation loop or even
+    // infinite loops
+    const maximumLoopIterations = 1e8 >>> 0;    // 100 million
+    let loopIterationCount = 0;
+
     // Preserve the initial state
     recordPointers.saveToStoreA();
 
@@ -161,6 +168,11 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
 
         // Update the new current cost, as we don't reset the state
         tempDerCurrentCost = newCost;
+
+        // Throw when maximum number of iterations reached
+        if (++loopIterationCount >= maximumLoopIterations) {
+            throw new Error(`Maximum number of iterations reached in starting temperature derivation loop; ${tempDer.costArray.length} of ${tempDer.size} slots filled`);
+        }
     }
 
     // Derive the starting temperature
