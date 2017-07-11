@@ -89,8 +89,8 @@ export default class ConstraintsEditor extends Vue {
     }
 
     getStratumConstraints(stratum: Stratum.Stratum) {
-        const stratumIndex = this.strata.findIndex(s => s._id === stratum._id);
-        return this.constraints.filter(constraint => constraint.strata === stratumIndex);
+        const stratumId = stratum._id;
+        return this.constraints.filter(constraint => constraint._stratumId === stratumId);
     }
 }
 </script>
