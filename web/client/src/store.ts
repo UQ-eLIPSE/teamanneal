@@ -241,6 +241,38 @@ const store = new Vuex.Store({
                 context.commit("updateAnnealOutputTree", tree);
                 context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
             });
+        },
+
+
+        /**
+         * Deletes supplied stratum, but also asks user to confirm this action
+         * in the event that constraints will also be deleted
+         */
+        deleteStratumConfirmSideEffect(context, stratum: Stratum.Stratum) {
+            const $state = context.state;
+
+            // Check if there are constraints that depend on this stratum
+            const stratumId = stratum._id;
+            const dependentConstraints =
+                $state.constraintsConfig.constraints!.filter(c => c._stratumId === stratumId);
+
+            if (dependentConstraints.length > 0) {
+                const confirmationMessage =
+                    `Deleting this group will also result in dependent constraints being deleted.`;
+
+                const proceed = confirm(confirmationMessage);
+
+                // Stop if the user selected Cancel
+                if (!proceed) {
+                    return;
+                }
+            }
+
+            context.commit("deleteConstraintsConfigStrataOf", stratum._id);
+
+            dependentConstraints.forEach((constraint) => {
+                context.commit("deleteConstraintsConfigConstraintOf", constraint._id);
+            });
         }
     },
 });

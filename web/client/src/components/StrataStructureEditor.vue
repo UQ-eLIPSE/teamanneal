@@ -13,9 +13,7 @@
                     <StrataStructureEditorStratumItem :stratum="stratum"
                                                       :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                                       :deletable="isStratumDeletable(i)"
-                                                      :editable="true"
-                                                      @change="onStratumItemChange"
-                                                      @delete="onStratumItemDelete"></StrataStructureEditorStratumItem>
+                                                      :editable="true"></StrataStructureEditorStratumItem>
                 </li>
                 <li v-if="subgroupButtonEnabled">
                     <button class="button add-subgroup"
@@ -63,14 +61,6 @@ export default class StrataStructureEditor extends Vue {
     get subgroupButtonEnabled() {
         // Enable only for no more than 2 strata
         return this.strata.length < 2;
-    }
-
-    onStratumItemChange(stratumUpdate: Stratum.Update) {
-        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
-    }
-
-    onStratumItemDelete(stratum: Stratum.Stratum) {
-        this.$store.commit("deleteConstraintsConfigStrataOf", stratum._id);
     }
 
     generateRandomStratumName() {
