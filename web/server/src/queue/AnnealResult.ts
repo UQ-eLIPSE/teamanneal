@@ -4,35 +4,36 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResponseStore from "../data/PendingResponseStore";
 
 export function init() {
-    IPCQueue.process("anneal-result", 1, (job, done) => {
-        const annealResultMessageData: IPCData.AnnealResultMessageData = job.data;
+    IPCQueue.openQueue()
+        .process("anneal-result", 1, (job, done) => {
+            const annealResultMessageData: IPCData.AnnealResultMessageData = job.data;
 
-        const { error, result, serverResponseId } = annealResultMessageData;
-        const res = PendingResponseStore.get(serverResponseId);
+            const { error, result, serverResponseId } = annealResultMessageData;
+            const res = PendingResponseStore.get(serverResponseId);
 
-        console.log(`Anneal result received for response ID ${serverResponseId}`);
+            console.log(`Anneal result received for response ID ${serverResponseId}`);
 
-        if (res === undefined) {
-            throw new Error(`No response object found for ID ${serverResponseId}`);
-        }
+            if (res === undefined) {
+                throw new Error(`No response object found for ID ${serverResponseId}`);
+            }
 
-        if (error) {
-            res
-                .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                .json({
-                    error,
-                });
-        } else {
-            res
-                .status(HTTPResponseCode.SUCCESS.OK)
-                .json({
-                    output: result,
-                });
-        }
+            if (error) {
+                res
+                    .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+                    .json({
+                        error,
+                    });
+            } else {
+                res
+                    .status(HTTPResponseCode.SUCCESS.OK)
+                    .json({
+                        output: result,
+                    });
+            }
 
-        // Clean up response from the map
-        PendingResponseStore.remove(serverResponseId);
+            // Clean up response from the map
+            PendingResponseStore.remove(serverResponseId);
 
-        done();
-    });
+            done();
+        });
 }
