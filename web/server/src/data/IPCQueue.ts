@@ -1,11 +1,9 @@
 import * as kue from "kue";
 
-const queue = kue.createQueue();
-
-export const process = queue.process;
-export const create = queue.create;
+export const openQueue = kue.createQueue;
 
 export const queueMessage = (type: string, data: any) => {
+    const queue = openQueue();
     return queue
         .create(type, data)
         .removeOnComplete(true)
