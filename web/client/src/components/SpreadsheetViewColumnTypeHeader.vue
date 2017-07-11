@@ -29,9 +29,6 @@ export default class SpreadsheetViewColumnTypeHeader extends Vue {
     set columnType(newColumnType: string) {
         const columnInfo = this.column;
 
-        // If no change, then nothing to do
-        if (columnInfo.type === newColumnType) { return; }
-
         // If the column type changed, then trigger store update action
         const updateData: ColumnInfo.ChangeTypeUpdate = {
             columnInfo,

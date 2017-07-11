@@ -255,11 +255,12 @@ const store = new Vuex.Store({
             // Check if there are constraints that depend on this stratum
             const constraints = $state.constraintsConfig.constraints || [];
             const stratumId = stratum._id;
+            const stratumLabel = stratum.label;
             const dependentConstraints = constraints.filter(c => c._stratumId === stratumId);
 
             if (dependentConstraints.length > 0) {
                 const confirmationMessage =
-                    `Deleting this group will also result in dependent constraints being deleted.`;
+                    `Deleting "${stratumLabel}" will also result in dependent constraints being deleted.`;
 
                 const proceed = confirm(confirmationMessage);
 
@@ -295,7 +296,7 @@ const store = new Vuex.Store({
 
             if (constraints.some(c => c.filter.column === colIndex)) {
                 const message =
-                    `The column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
+                    `Column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
 
 Delete constraints that use this column and try again.`;
 
