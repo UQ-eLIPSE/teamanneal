@@ -1,4 +1,4 @@
-# TeamAnneal 2 (JS)
+# TeamAnneal 2 (Web)
 
 Version of TeamAnneal written in JavaScript for server and client.
 
@@ -7,11 +7,12 @@ Version of TeamAnneal written in JavaScript for server and client.
 ### Recommended for best annealing performance
 * Node.js 8.1.0+ (version 8.1.0+) - will become LTS after October 2017
   * npm 5.0.0+ (this should be included)
+* Redis 3.0+
 
 ### Minimum supported
 * Node.js 6.x LTS (version 6.9.0+)
   * npm 3.10.0+ (this should be included)
-
+* Redis 3.0+
 
 ## Installation
 From this folder:
