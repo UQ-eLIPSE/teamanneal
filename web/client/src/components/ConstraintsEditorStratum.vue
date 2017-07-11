@@ -69,15 +69,6 @@ export default class ConstraintsEditorStratum extends Vue {
         return this.fileInStore.columnInfo;
     }
 
-    get strata() {
-        return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
-    }
-
-    get stratumIndex() {
-        const id = this.stratum._id;
-        return this.strata.findIndex(s => s._id === id);
-    }
-
     addNewConstraint() {
         const columnInfo = this.columnInfo!;
 
@@ -105,7 +96,8 @@ export default class ConstraintsEditorStratum extends Vue {
 
         const constraint: Constraint.Constraint = {
             _id: UUID.generate(),
-            strata: this.stratumIndex,
+            _stratumId: this.stratum._id,
+            strata: Number.NaN,     // We don't use the "strata" property in the internal state
             weight: 50,
             type: "count",
             filter: {

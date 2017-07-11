@@ -173,7 +173,7 @@ export function labelNodesInCollection(collection: ReadonlyArray<ResultArrayNode
         // 
         // This is also noted in file: client/data/ConstraintsConfig.ts
         //
-        // TODO: Fix up the internal strata object order
+        // TODO: Fix up the internal strata object order (TA-58)
         const stratum = strata[strata.length - stratumIndex - 1];
         // const stratum = strata[stratumIndex];
 
@@ -363,7 +363,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // 
     // This is also noted in file: client/data/ConstraintsConfig.ts
     //
-    // TODO: Fix up the internal strata object order
+    // TODO: Fix up the internal strata object order (TA-58)
     let strata: Stratum.Desc[] = [];
 
     for (let i = numberOfStrata - 1; i >= 0; --i) {
@@ -385,6 +385,17 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
 
     const constraints: ReadonlyArray<Constraint.Desc> = constraintsConfig.constraints.map(
         (internalConstraint) => {
+            // Get the index of the stratum for the constraint
+            const stratumId = internalConstraint._stratumId;
+            const internalStratumIndex = internalStrata.findIndex(s => s._id === stratumId);
+
+            if (internalStratumIndex < 0) {
+                throw new Error(`Stratum ${stratumId} does not exist`);
+            }
+
+            // TODO: Fix up the internal strata object order (TA-58)
+            const stratumIndex = numberOfStrata - internalStratumIndex - 1;
+
             // TODO: The below code is copied three times due to TypeScript's
             // strict type checking - it should be combined into one
             switch (internalConstraint.type) {
@@ -393,8 +404,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        // TODO: Fix up the internal strata object order
-                        strata: numberOfStrata - internalConstraint.strata - 1,
+                        strata: stratumIndex,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
@@ -410,8 +420,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        // TODO: Fix up the internal strata object order
-                        strata: numberOfStrata - internalConstraint.strata - 1,
+                        strata: stratumIndex,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
@@ -427,8 +436,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         type: internalConstraint.type,
                         weight: internalConstraint.weight,
 
-                        // TODO: Fix up the internal strata object order
-                        strata: numberOfStrata - internalConstraint.strata - 1,
+                        strata: stratumIndex,
 
                         filter: internalConstraint.filter,
                         condition: internalConstraint.condition,
