@@ -3,11 +3,12 @@ import Vuex from "vuex";
 
 import { AxiosPromise, CancelTokenSource } from "axios";
 
-import * as TeamAnnealState from "./data/TeamAnnealState";
-import * as ColumnInfo from "./data/ColumnInfo";
 import * as Stratum from "./data/Stratum";
+import * as ColumnInfo from "./data/ColumnInfo";
 import * as Constraint from "./data/Constraint";
 import * as AnnealAjax from "./data/AnnealAjax";
+import * as CookedData from "./data/CookedData";
+import * as TeamAnnealState from "./data/TeamAnnealState";
 
 Vue.use(Vuex);
 
@@ -252,9 +253,9 @@ const store = new Vuex.Store({
             const $state = context.state;
 
             // Check if there are constraints that depend on this stratum
+            const constraints = $state.constraintsConfig.constraints || [];
             const stratumId = stratum._id;
-            const dependentConstraints =
-                $state.constraintsConfig.constraints!.filter(c => c._stratumId === stratumId);
+            const dependentConstraints = constraints.filter(c => c._stratumId === stratumId);
 
             if (dependentConstraints.length > 0) {
                 const confirmationMessage =
@@ -273,6 +274,67 @@ const store = new Vuex.Store({
             dependentConstraints.forEach((constraint) => {
                 context.commit("deleteConstraintsConfigConstraintOf", constraint._id);
             });
+        },
+
+        /**
+         * Changes the type of the supplied column info
+         */
+        changeColumnInfoType(context, data: ColumnInfo.ChangeTypeUpdate) {
+            const $state = context.state;
+
+            const oldColumnInfo = data.columnInfo;
+            const newColumnType = data.newType;
+
+            const colIndex = oldColumnInfo.index;
+            const colLabel = oldColumnInfo.label;
+
+            const rawData = $state.sourceFile.rawData!;
+
+            // Check that the column isn't used by any constraints
+            const constraints = $state.constraintsConfig.constraints || [];
+
+            if (constraints.some(c => c.filter.column === colIndex)) {
+                const message =
+                    `The column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
+
+Delete constraints that use this column and try again.`;
+
+                alert(message);
+                return;
+            }
+
+            // Get the column values again and generate new column info objects
+            const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
+
+            let newColumnInfo: ColumnInfo.ColumnInfo;
+            switch (newColumnType) {
+                case "number": {
+                    newColumnInfo = ColumnInfo.createColumnInfoNumber(colLabel, colIndex, valueSet as Set<number>);
+                    break;
+                }
+
+                case "string": {
+                    newColumnInfo = ColumnInfo.createColumnInfoString(colLabel, colIndex, valueSet as Set<string>);
+                    break;
+                }
+
+                default:
+                    throw new Error("Unknown column type");
+            }
+
+            // Update store column info
+            const updateData: ColumnInfo.ReplaceUpdate = {
+                oldColumnInfo,
+                newColumnInfo,
+            }
+            context.commit("replaceSourceFileColumnInfo", updateData);
+
+            // Recook the data with new columns in the store
+            const columnInfoArray = $state.sourceFile.columnInfo!;
+            const cookedData = CookedData.cook(columnInfoArray, rawData, true);
+
+            // Serve freshly cooked data to the stale store
+            context.commit("updateSourceFileCookedData", cookedData);
         }
     },
 });

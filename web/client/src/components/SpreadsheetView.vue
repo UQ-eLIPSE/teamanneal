@@ -59,11 +59,12 @@ export default class SpreadsheetView extends Vue {
         // If no change, then nothing to do
         if (columnInfo.type === newColumnType) { return; }
 
-        // If the column type changed, then pass event up
-        this.$emit("columnTypeChange", {
-            columnInfo,
-            newColumnType,
-        });
+        const updateData: ColumnInfo.ChangeTypeUpdate = {
+            columnInfo: columnInfo,
+            newType: newColumnType,
+        };
+
+        this.$store.dispatch("changeColumnInfoType", updateData);
     }
 }   
 </script>
