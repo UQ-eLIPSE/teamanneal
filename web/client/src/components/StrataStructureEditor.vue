@@ -35,6 +35,7 @@ import { Vue, Component } from "av-ts";
 
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
+import * as UUID from "../data/UUID";
 import * as Stratum from "../data/Stratum";
 import * as SourceFile from "../data/SourceFile";
 import * as ConstraintsConfig from "../data/ConstraintsConfig";
@@ -83,7 +84,7 @@ export default class StrataStructureEditor extends Vue {
 
     addNewStratum() {
         const stratum: Stratum.Stratum = {
-            _id: performance.now(),
+            _id: UUID.generate(),
             label: this.generateRandomStratumName(),
             size: {
                 min: 2,
@@ -122,7 +123,7 @@ export default class StrataStructureEditor extends Vue {
         const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
 
         const stratumShim: Stratum.Stratum = {
-            _id: performance.now(),
+            _id: UUID.generate(),
             label: `Partition (${partitionColumnLabel})`,
             size: {
                 min: 0,

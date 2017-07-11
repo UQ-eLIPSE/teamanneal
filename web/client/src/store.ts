@@ -114,7 +114,7 @@ const store = new Vuex.Store({
             state.constraintsConfig.strata!.push(stratum);
         },
 
-        deleteConstraintsConfigStrataOf(state, _id: number) {
+        deleteConstraintsConfigStrataOf(state, _id: string) {
             const strata = state.constraintsConfig.strata!;
 
             const index = strata.findIndex(stratum => stratum._id === _id);
@@ -143,7 +143,7 @@ const store = new Vuex.Store({
             state.constraintsConfig.constraints!.push(constraint);
         },
 
-        deleteConstraintsConfigConstraintOf(state, _id: number) {
+        deleteConstraintsConfigConstraintOf(state, _id: string) {
             const constraints = state.constraintsConfig.constraints!;
 
             const index = constraints.findIndex(constraint => constraint._id === _id);

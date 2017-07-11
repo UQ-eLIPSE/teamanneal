@@ -23,6 +23,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
+import * as UUID from "../data/UUID";
 import * as Stratum from "../data/Stratum";
 import * as SourceFile from "../data/SourceFile";
 import * as ConstraintsConfig from "../data/ConstraintsConfig";
@@ -74,7 +75,7 @@ export default class ConstraintsEditor extends Vue {
         const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
 
         const stratumShim: Stratum.Stratum = {
-            _id: performance.now(),
+            _id: UUID.generate(),
             label: `Partition (${partitionColumnLabel})`,
             size: {
                 min: 0,

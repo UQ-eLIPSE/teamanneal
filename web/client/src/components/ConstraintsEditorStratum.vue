@@ -43,6 +43,8 @@
 import { Vue, Component, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
+
+import * as UUID from "../data/UUID";
 import * as Stratum from "../data/Stratum";
 import * as Constraint from "../data/Constraint";
 import * as SourceFile from "../data/SourceFile";
@@ -101,9 +103,8 @@ export default class ConstraintsEditorStratum extends Vue {
             }
         }
 
-        // TODO: Generate random constraint?
         const constraint: Constraint.Constraint = {
-            _id: performance.now(),
+            _id: UUID.generate(),
             strata: this.stratumIndex,
             weight: 50,
             type: "count",
