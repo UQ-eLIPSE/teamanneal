@@ -33,7 +33,7 @@ interface ColumnInfoString {
 
 export interface ChangeTypeUpdate {
     columnInfo: ColumnInfo,
-    newType: string,
+    newColumnType: string,
 }
 
 export interface ReplaceUpdate {

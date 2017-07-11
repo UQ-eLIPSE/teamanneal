@@ -277,13 +277,13 @@ const store = new Vuex.Store({
         },
 
         /**
-         * Changes the type of the supplied column info
+         * Updates the type of the supplied column info
          */
-        changeColumnInfoType(context, data: ColumnInfo.ChangeTypeUpdate) {
+        updateColumnType(context, data: ColumnInfo.ChangeTypeUpdate) {
             const $state = context.state;
 
             const oldColumnInfo = data.columnInfo;
-            const newColumnType = data.newType;
+            const newColumnType = data.newColumnType;
 
             const colIndex = oldColumnInfo.index;
             const colLabel = oldColumnInfo.label;
