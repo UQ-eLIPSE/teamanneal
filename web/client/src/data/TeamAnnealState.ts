@@ -6,7 +6,7 @@ import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
 import { ResultArrayNode } from "./AnnealAjax";
-import { AxiosPromise, CancelTokenSource } from "axios";
+import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
 
 type ResultArrayContent = ResultArray | Record.RecordSet;
 export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
@@ -24,6 +24,7 @@ export interface TeamAnnealState {
         outputTree: ResultArrayNode | undefined,
         outputSatisfaction: undefined,      // TODO: Not yet implemented
         outputIdNodeMap: Map<string, ReadonlyArray<ResultArrayNode>> | undefined,
+        outputError: AxiosError | undefined,
     }
 
     sourceFile: Partial<SourceFile.SourceFile>,
@@ -123,7 +124,8 @@ export function isAnnealRequestInProgress(state: Partial<TeamAnnealState>) {
         state.anneal &&
         state.anneal.input &&                   // Has an input anneal request
         state.anneal.ajaxCancelTokenSource &&   // Has a cancel token set up
-        !state.anneal.output                    // But doesn't have a output yet
+        !state.anneal.output &&                 // But doesn't have a output or error yet
+        !state.anneal.outputError
     );
 }
 
@@ -131,5 +133,13 @@ export function isAnnealRequestCreated(state: Partial<TeamAnnealState>) {
     return (
         state.anneal &&
         state.anneal.ajaxCancelTokenSource
+    );
+}
+
+export function isAnnealSuccessful(state: Partial<TeamAnnealState>) {
+    return (
+        state.anneal &&
+        state.anneal.output &&
+        !state.anneal.outputError
     );
 }
