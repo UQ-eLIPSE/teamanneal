@@ -113,7 +113,7 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
     // temperature because some anneal configurations may have few uphill costs
     // being accumulated, leading to a long running derivation loop or even
     // infinite loops
-    const maximumLoopIterations = 1e8 >>> 0;    // 100 million
+    const maximumLoopIterations = 1e7 >>> 0;    // 10 million
     let loopIterationCount = 0;
 
     // Preserve the initial state
