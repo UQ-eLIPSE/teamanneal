@@ -37,9 +37,17 @@ export default (store: Vuex.Store<any>) => {
                         path: "",
                         redirect: "provide-records-file",
                     },
+
+                    // NOTE: *At least one* of these components needs to be of
+                    // type "any" in order to pass the TypeScript type checker
+                    // 
+                    // Appears to be some issue with interface/shape matching 
+                    // after mixins were implemented
+                    //
+                    // Investigation into this filed as TEAMANNEAL-82
                     {
                         path: "provide-records-file",
-                        component: Anneal_ProvideRecordsFile,
+                        component: Anneal_ProvideRecordsFile as any,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.provideRecordsFile,
                         },

@@ -22,52 +22,24 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import * as TeamAnnealState from "../../data/TeamAnnealState";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import StrataEditor from "../StrataEditor.vue";
-
-const thisWizardStep = AnnealProcessWizardEntries.configureGroups;
 
 @Component({
     components: {
         StrataEditor,
     }
 })
-export default class ConfigureGroups extends Vue {
-    emitWizardNavNext() {
-        // Don't go if next is disabled
-        if (this.isWizardNavNextDisabled) {
-            return;
-        }
-
-        this.$emit("wizardNavigation", {
-            event: "next",
-        });
-    }
-
-    get isWizardNavNextDisabled() {
-        // Disable next step if strata is currently invalid
-        if (!this.isStrataConfigSizesValid) { return true; }
-
-        const state = this.$store.state;
-
-        // Check if we have a next step defined
-        if (thisWizardStep.next === undefined) { return false; }
-
-        // Get the next step
-        const next = thisWizardStep.next(state);
-
-        // Get the disabled check function or say it is not disabled if the
-        // function does not exist
-        if (next.disabled === undefined) { return false; }
-        const disabled = next.disabled(state);
-
-        return disabled;
-    }
+export default class ConfigureGroups extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+    // Required by AnnealProcessWizardPanel
+    // Defines the wizard step
+    readonly thisWizardStep = AnnealProcessWizardEntries.configureGroups;
 
     get isStrataConfigSizesValid() {
         return TeamAnnealState.isStrataConfigSizesValid(this.$store.state);

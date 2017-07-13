@@ -60,12 +60,14 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Component, Mixin } from "av-ts";
 import * as Papa from "papaparse";
 import * as FileSaver from "file-saver";
 
 import * as TeamAnnealState from "../../data/TeamAnnealState";
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 @Component({
@@ -73,7 +75,11 @@ import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
         SpreadsheetTreeView,
     }
 })
-export default class ViewResult extends Vue {
+export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+    // Required by AnnealProcessWizardPanel
+    // Defines the wizard step
+    readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
+
     onExportButtonClick() {
         const exportCsvRows: ReadonlyArray<string | number>[] = [];
 
