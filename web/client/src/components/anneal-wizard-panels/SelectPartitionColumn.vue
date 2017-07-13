@@ -105,6 +105,4 @@ export default class SelectPartitionColumn extends Mixin<AnnealProcessWizardPane
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
-</style>
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>

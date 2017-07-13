@@ -149,9 +149,9 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
+<style scoped>
 #load-file {
     display: none;
 }

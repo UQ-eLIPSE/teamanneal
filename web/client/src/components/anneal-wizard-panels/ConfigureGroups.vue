@@ -49,6 +49,4 @@ export default class ConfigureGroups extends Mixin<AnnealProcessWizardPanel>(Ann
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
-</style>
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>

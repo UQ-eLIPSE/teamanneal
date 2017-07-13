@@ -231,9 +231,9 @@ XMLHttpRequest {
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
+<style scoped>
 .wizard-panel-content {
     display: flex;
     flex-direction: column;

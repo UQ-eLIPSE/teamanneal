@@ -68,9 +68,9 @@ export default class ReviewRecords extends Mixin<AnnealProcessWizardPanel>(Annea
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
+<style scoped>
 .wizard-panel-content {
     display: flex;
     flex-direction: column;

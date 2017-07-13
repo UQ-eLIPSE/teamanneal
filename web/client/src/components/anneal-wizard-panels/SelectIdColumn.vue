@@ -103,9 +103,9 @@ export default class SelectIdColumn extends Mixin<AnnealProcessWizardPanel>(Anne
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
+<style scoped>
 .error-msg {
     font-size: 0.9em;
     background: darkorange;

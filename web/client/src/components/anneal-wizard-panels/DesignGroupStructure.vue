@@ -54,9 +54,9 @@ export default class DesignGroupStructure extends Mixin<AnnealProcessWizardPanel
 
 <!-- ####################################################################### -->
 
-<style scoped>
-@import "../../static/anneal-process-wizard-panel.css";
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
+<style scoped>
 .error-msg {
     font-size: 0.9em;
     background: darkorange;
