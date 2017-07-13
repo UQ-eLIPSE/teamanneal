@@ -232,62 +232,7 @@ XMLHttpRequest {
 <!-- ####################################################################### -->
 
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content h2 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 1.9em;
-    margin: 0.5rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
-
-
-
-
-
-
+@import "../../static/anneal-process-wizard-panel.css";
 
 .wizard-panel-content {
     display: flex;

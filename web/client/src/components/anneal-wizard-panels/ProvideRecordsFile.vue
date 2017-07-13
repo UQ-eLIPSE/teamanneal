@@ -6,8 +6,15 @@
                 Select a
                 <b>CSV</b> file containing records of persons along with any attributes you would like to apply constraints to.
                 <a class="more"
-                   href="#">Need help?</a>
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>Where to get data from</h2>
+                <p>You can obtain CSV files from most common data sources, such as Blackboard. Look for the "export" feature, and select "CSV" as the output format.</p>
+                <p>Spreadsheet programs, such as Microsoft Excel, are also able to save files as CSV.</p>
+            </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
             <label v-if="!isFileSetInStore">
@@ -143,49 +150,7 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 <!-- ####################################################################### -->
 
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
+@import "../../static/anneal-process-wizard-panel.css";
 
 #load-file {
     display: none;
