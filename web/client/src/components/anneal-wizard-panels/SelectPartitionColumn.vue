@@ -87,7 +87,7 @@ export default class SelectPartitionColumn extends Vue {
     }
 
     get constraintsConfigInStore() {
-        const config: Partial<ConstraintsConfig.ConstraintsConfig> = this.$store.state.constraintsConfig;
+        const config: ConstraintsConfig.ConstraintsConfig = this.$store.state.constraintsConfig;
         return config;
     }
 

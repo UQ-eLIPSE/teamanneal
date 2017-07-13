@@ -41,7 +41,7 @@ export default class ConstraintsEditor extends Vue {
     }
 
     get constraintsConfigInStore() {
-        const config: Partial<ConstraintsConfig.ConstraintsConfig> = this.$store.state.constraintsConfig;
+        const config: ConstraintsConfig.ConstraintsConfig = this.$store.state.constraintsConfig;
         return config;
     }
 
@@ -50,7 +50,7 @@ export default class ConstraintsEditor extends Vue {
     }
 
     get constraints() {
-        return this.constraintsConfigInStore.constraints!;
+        return this.constraintsConfigInStore.constraints;
     }
 
     /**

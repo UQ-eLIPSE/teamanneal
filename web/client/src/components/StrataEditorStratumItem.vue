@@ -390,7 +390,6 @@ export default class StrataEditorStratumItem extends Vue {
 
 .stratum-config>div {
     flex-grow: 1;
-    /*flex-shrink: 0;*/
     margin: 1rem;
 }
 

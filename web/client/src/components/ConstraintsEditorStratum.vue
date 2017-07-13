@@ -162,7 +162,6 @@ export default class ConstraintsEditorStratum extends Vue {
 
 .stratum-constraints>div {
     flex-grow: 1;
-    /*flex-shrink: 0;*/
     margin: 1rem;
 }
 

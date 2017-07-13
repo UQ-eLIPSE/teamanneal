@@ -2,8 +2,8 @@ import * as Stratum from "./Stratum";
 import * as Constraint from "./Constraint";
 
 export interface ConstraintsConfig {
-    idColumnIndex: number,
-    partitionColumnIndex: number,
+    idColumnIndex: number | undefined,
+    partitionColumnIndex: number | undefined,
 
     /**
      * NOTE: This strata order is in tree top-down order because it is used as
