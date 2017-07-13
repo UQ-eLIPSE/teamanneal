@@ -27,7 +27,7 @@ export interface TeamAnnealState {
     }
 
     sourceFile: Partial<SourceFile.SourceFile>,
-    constraintsConfig: Partial<ConstraintsConfig.ConstraintsConfig>,
+    constraintsConfig: ConstraintsConfig.ConstraintsConfig,
 }
 
 export function hasSourceFileData(state: Partial<TeamAnnealState>) {
