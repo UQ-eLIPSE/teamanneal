@@ -41,7 +41,6 @@ export default class TeamAnneal extends Vue {
     font-size: 0.8rem;
     color: #fff;
     width: 100%;
-    /*height: 7rem;*/
     display: flex;
     flex-direction: row;
 

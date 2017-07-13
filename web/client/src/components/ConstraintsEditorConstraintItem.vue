@@ -837,8 +837,6 @@ button.delete {
 
     justify-content: center;
     align-items: center;
-
-    /*position: relative;*/
 }
 
 button.delete>span {
@@ -885,9 +883,6 @@ button.delete:active::before {
 
 .group-size-applicability-condition-fragment .popover-link-area {
     display: inline-block;
-
-    /*position: relative;
-    z-index: 1;*/
 }
 
 .group-size-applicability-condition-fragment .popover-link-area a {
@@ -919,7 +914,6 @@ button.delete:active::before {
     padding: 0.5em;
 
     min-width: 13em;
-    /*width: calc(100% + 4px);*/
     font-size: 0.7em;
 
     margin-left: -2px;
