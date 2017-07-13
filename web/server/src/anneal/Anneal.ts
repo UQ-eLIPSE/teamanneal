@@ -143,10 +143,8 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
         // This is done via. the immediate parent - which are the lowest
         // stratum nodes (index = 0)
         const modifiedPointerIndicies = MutationOperation.randPick()(strata[0]);
-        modifiedPointerIndicies;
 
         // Wipe costs on nodes with modified record pointers
-        // CostCompute.wipeAllCost(strata);
         CostCompute.wipeCost(strata, modifiedPointerIndicies);
 
         // Calculate cost
@@ -512,7 +510,6 @@ function annealBranchLoop(recordPointers: AnnealRecordPointerArray, strata: Read
         const modifiedPointerIndicies = MutationOperation.randPick()(strata[0]);
 
         // Wipe costs on nodes with modified record pointers
-        // CostCompute.wipeAllCost(strata);
         CostCompute.wipeCost(strata, modifiedPointerIndicies);
 
         // Calculate total cost
