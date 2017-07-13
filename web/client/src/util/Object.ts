@@ -2,7 +2,7 @@ export function deepCopy<T extends Object>(object: T): T {
     return JSON.parse(JSON.stringify(object));
 }
 
-// Below is extracted from https://stackoverflow.com/a/34749873
+// Below 2 functions are extracted from https://stackoverflow.com/a/34749873
 
 /**
  * Simple object check.
@@ -30,4 +30,22 @@ export function deepMerge<T extends Object, U extends keyof T>(target: T, ...sou
     }
 
     return deepMerge(target, ...sources);
+}
+
+/**
+ * Cleans out unneeded properties by deleting them
+ */
+export function deepClean<T extends Object>(target: T, definition: Object) {
+    for (const key in target) {
+        // Delete key in target if definition doesn't contain it
+        if (!definition.hasOwnProperty(key)) {
+            delete target[key];
+            continue;
+        }
+
+        // Recurse down for subobjects
+        if (isObject(target[key])) {
+            deepClean(target[key], (definition as any)[key]);
+        }
+    }
 }
