@@ -520,7 +520,19 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                     oldFilterValue = 0;
                 }
 
-                return parse(filterValue, oldFilterValue);
+                const newFilterValue = parse(filterValue, oldFilterValue);
+
+                // Check that the numeric value is properly representable as a
+                // plain fixed decimal number by trying a reconversion back to
+                // string
+                // 
+                // This can happen in the case of long numbers (e-notation) or
+                // large numbers that JS can't handle ("Infinity")
+                if (!("" + newFilterValue).match(/^-?\d+\.?\d*$/)) {
+                    return oldFilterValue;
+                }
+
+                return newFilterValue;
             }
 
             case "string":
@@ -655,6 +667,25 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // NOTE: Values is an array, but we only support single values for now
 
         let newFilterValue = this.sanitiseFilterValue(newValue);
+
+        // Permit decimal being inputted by not updating the constraint if the
+        // delta is only just the input of the "." character at the end
+        if (this.constraintFilterColumnInfo.type === "number") {
+            const oldFilterValue = this.constraintFilterValues;
+            const oldFilterValueAsString = "" + oldFilterValue;
+            const rawValueAsString = "" + newValue;
+
+            // If the value is exactly one character longer, has the previous
+            // value at the start, and the last character is "." then use this
+            // decimal-terminating numeric string
+            if (oldFilterValue === newFilterValue &&
+                rawValueAsString.length === oldFilterValueAsString.length + 1 &&
+                rawValueAsString.indexOf(oldFilterValueAsString) === 0 &&
+                rawValueAsString[rawValueAsString.length - 1] === ".") {
+                // Use the raw string to store into state
+                newFilterValue = rawValueAsString;
+            }
+        }
 
         // If the filter value is determined by a select list and the filter
         // value does not exist within the list, then set the filter value to
