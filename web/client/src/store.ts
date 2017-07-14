@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { AxiosPromise, CancelTokenSource } from "axios";
+import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
 
 import * as TeamAnnealState from "./data/TeamAnnealState";
 import * as ColumnInfo from "./data/ColumnInfo";
@@ -29,6 +29,8 @@ const state: TeamAnnealState.TeamAnnealState = {
         outputTree: undefined,
         outputSatisfaction: undefined,
         outputIdNodeMap: undefined,
+
+        outputError: undefined,
     },
 
     sourceFile: {},
@@ -177,6 +179,7 @@ const store = new Vuex.Store({
             state.anneal.output = undefined;
             state.anneal.outputTree = undefined;
             state.anneal.outputSatisfaction = undefined;
+            state.anneal.outputError = undefined;
         },
 
         updateAnnealAjaxRequest(state, request: AxiosPromise) {
@@ -201,6 +204,10 @@ const store = new Vuex.Store({
 
         updateAnnealOutputIdNodeMap(state, map: Map<string, ReadonlyArray<AnnealAjax.ResultArrayNode>>) {
             state.anneal.outputIdNodeMap = map;
+        },
+
+        updateAnnealOutputError(state, error: AxiosError) {
+            state.anneal.outputError = error;
         },
     },
     actions: {
@@ -235,20 +242,26 @@ const store = new Vuex.Store({
             context.commit("updateAnnealAjaxCancelTokenSource", cancelTokenSource);
 
             // On AJAX success, we save the output to the state store
-            request.then((response) => {
-                // TODO: Make an interface for response data
-                const data: any = response.data;
-                const output = data.output;
+            request
+                .then((response) => {
+                    // TODO: Make an interface for response data
+                    const data: any = response.data;
+                    const output = data.output;
 
-                const tree = AnnealAjax.transformOutputIntoTree(output);
-                AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
+                    const tree = AnnealAjax.transformOutputIntoTree(output);
+                    AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
 
-                const idToNodeHierarchyMap = AnnealAjax.mapRawDataToNodeHierarchy(idColumnIndex, tree);
+                    const idToNodeHierarchyMap = AnnealAjax.mapRawDataToNodeHierarchy(idColumnIndex, tree);
 
-                context.commit("updateAnnealOutput", output);
-                context.commit("updateAnnealOutputTree", tree);
-                context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
-            });
+                    context.commit("updateAnnealOutput", output);
+                    context.commit("updateAnnealOutputTree", tree);
+                    context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
+                })
+                .catch((error: AxiosError) => {
+                    // Store the error into the store so that components can 
+                    // read out the error
+                    context.commit("updateAnnealOutputError", error);
+                });
         },
 
         // Updating column types
