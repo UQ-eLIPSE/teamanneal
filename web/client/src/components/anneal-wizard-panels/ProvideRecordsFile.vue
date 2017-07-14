@@ -31,7 +31,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Component, Mixin } from "av-ts";
 import * as Papa from "papaparse";
 
 import * as Stratum from "../../data/Stratum";
@@ -41,37 +41,13 @@ import * as CookedData from "../../data/CookedData";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
-const thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
+import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
 @Component
-export default class ProvideRecordsFile extends Vue {
-    emitWizardNavNext() {
-        // Don't go if next is disabled
-        if (this.isWizardNavNextDisabled) {
-            return;
-        }
-
-        this.$emit("wizardNavigation", {
-            event: "next",
-        });
-    }
-
-    get isWizardNavNextDisabled() {
-        const state = this.$store.state;
-
-        // Check if we have a next step defined
-        if (thisWizardStep.next === undefined) { return false; }
-
-        // Get the next step
-        const next = thisWizardStep.next(state);
-
-        // Get the disabled check function or say it is not disabled if the
-        // function does not exist
-        if (next.disabled === undefined) { return false; }
-        const disabled = next.disabled(state);
-
-        return disabled;
-    }
+export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+    // Required by AnnealProcessWizardPanel
+    // Defines the wizard step
+    readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
     clearFile() {
         // Wipe all working file/config
