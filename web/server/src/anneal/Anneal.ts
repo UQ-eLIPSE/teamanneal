@@ -1,6 +1,3 @@
-import * as Logger from "../core/Logger";
-// import * as Util from "../core/Util";
-
 // Interfaces
 import * as SourceData from "../../../common/SourceData";
 import * as Stratum from "../../../common/Stratum";
@@ -30,23 +27,20 @@ import { AnnealRecordPointerArray } from "./AnnealRecordPointerArray";
 import { AnnealStratum } from "./AnnealStratum";
 import { AnnealStratumNode } from "./AnnealStratumNode";
 
-const globalLogger = Logger.getGlobal();
-const log = Logger.log(globalLogger);
-
 export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
     // Generate column information objects
     const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
 
     // Operate per partition (isolated data sets - can be parallelised)
-    log("info")(`Starting anneal`);
+    console.log(`Starting anneal`);
 
     const partitions = sourceData.records;
     const output = partitions.map((partition, i) => {
-        log("info")(`Annealing partition ${i + 1}`);
+        console.log(`Annealing partition ${i + 1}`);
         return annealPartition(partition, columnInfos, strata, constraints);
     });
 
-    log("info")(`Finished anneal`);
+    console.log(`Finished anneal`);
 
     return output;
 }
@@ -60,7 +54,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// ============================================
 
     // A linear array store that holds pointers to records in the partition
-    log("info")("Creating record pointers...");
+    console.log("Creating record pointers...");
     const recordPointers = createAnnealRecordPointerArray(partition.length);
 
 
@@ -68,7 +62,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Configuring constraints
     /// =======================
 
-    log("info")("Creating constraint obj...");
+    console.log("Creating constraint obj...");
     const constraints = createConstraintObjects(partition, columnInfos, constraintDefs);
 
 
@@ -77,7 +71,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Constructing strata
     /// ===================
 
-    log("info")("Creating strata obj...");
+    console.log("Creating strata obj...");
     const strata = createStrataObjects(recordPointers, constraints, strataDefs);
 
 
@@ -86,7 +80,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Calculating temperature
     /// =======================
 
-    log("info")("Deriving temperature...");
+    console.log("Deriving temperature...");
     const startTemp = deriveStartingTemperature(recordPointers, strata);
 
 
@@ -95,7 +89,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// Loop over iterations
     /// ====================
 
-    log("info")("Iterating...");
+    console.log("Iterating...");
     annealOuterLoop(recordPointers, strata, startTemp);
 
 
@@ -103,7 +97,7 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     // Output constraint satisfaction
     const satisfaction = generateSatisfactionArray(constraints, strata);
 
-    log("info")(`Satisfaction
+    console.log(`Satisfaction
 ${JSON.stringify(satisfaction)}`);
 
     return convertStrataToArray(strata, partition);
