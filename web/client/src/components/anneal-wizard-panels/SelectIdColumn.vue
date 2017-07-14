@@ -4,9 +4,17 @@
             <h1>Select ID column</h1>
             <p>
                 TeamAnneal needs to know which column identifies each unique record in your data.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>Available ID columns</h2>
+                <p>TeamAnneal only shows you columns which can be validly used as an ID - those which uniquely identify each person's record, such as a student ID or email address.</p>
+                <p>If there are no available ID columns to choose from, make sure that your data set has at least one column which has a unique value for each row.</p>
+            </div>
             <div v-if="possibleIdColumns.length === 0"
                  class="error-msg">
                 <h3>Your records file has no detected ID column</h3>
