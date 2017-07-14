@@ -3,12 +3,12 @@ import Vuex from "vuex";
 
 import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
 
-import * as TeamAnnealState from "./data/TeamAnnealState";
-import * as ColumnInfo from "./data/ColumnInfo";
 import * as Stratum from "./data/Stratum";
+import * as ColumnInfo from "./data/ColumnInfo";
 import * as Constraint from "./data/Constraint";
 import * as AnnealAjax from "./data/AnnealAjax";
 import * as CookedData from "./data/CookedData";
+import * as TeamAnnealState from "./data/TeamAnnealState";
 
 Vue.use(Vuex);
 
@@ -124,7 +124,7 @@ const store = new Vuex.Store({
             state.constraintsConfig.strata.push(stratum);
         },
 
-        deleteConstraintsConfigStrataOf(state, _id: number) {
+        deleteConstraintsConfigStrataOf(state, _id: string) {
             const strata = state.constraintsConfig.strata;
 
             const index = strata.findIndex(stratum => stratum._id === _id);
@@ -153,7 +153,7 @@ const store = new Vuex.Store({
             state.constraintsConfig.constraints.push(constraint);
         },
 
-        deleteConstraintsConfigConstraintOf(state, _id: number) {
+        deleteConstraintsConfigConstraintOf(state, _id: string) {
             const constraints = state.constraintsConfig.constraints;
 
             const index = constraints.findIndex(constraint => constraint._id === _id);
@@ -264,14 +264,65 @@ const store = new Vuex.Store({
                 });
         },
 
-        // Updating column types
-        updateColumnType(context, data: any) {
-            const oldColumnInfo: ColumnInfo.ColumnInfo = data.columnInfo;
-            const newColumnType: string = data.newColumnType;
+
+        /**
+         * Deletes supplied stratum, but also asks user to confirm this action
+         * in the event that constraints will also be deleted
+         */
+        deleteStratumConfirmSideEffect(context, stratum: Stratum.Stratum) {
+            const $state = context.state;
+
+            // Check if there are constraints that depend on this stratum
+            const constraints = $state.constraintsConfig.constraints || [];
+            const stratumId = stratum._id;
+            const stratumLabel = stratum.label;
+            const dependentConstraints = constraints.filter(c => c._stratumId === stratumId);
+
+            if (dependentConstraints.length > 0) {
+                const confirmationMessage =
+                    `Deleting "${stratumLabel}" will also result in dependent constraints being deleted.`;
+
+                const proceed = confirm(confirmationMessage);
+
+                // Stop if the user selected Cancel
+                if (!proceed) {
+                    return;
+                }
+            }
+
+            context.commit("deleteConstraintsConfigStrataOf", stratum._id);
+
+            dependentConstraints.forEach((constraint) => {
+                context.commit("deleteConstraintsConfigConstraintOf", constraint._id);
+            });
+        },
+
+        /**
+         * Updates the type of the supplied column info
+         */
+        updateColumnType(context, data: ColumnInfo.ChangeTypeUpdate) {
+            const $state = context.state;
+
+            const oldColumnInfo = data.columnInfo;
+            const newColumnType = data.newColumnType;
 
             const colIndex = oldColumnInfo.index;
             const colLabel = oldColumnInfo.label;
-            const rawData = context.state.sourceFile.rawData!;
+
+            const rawData = $state.sourceFile.rawData!;
+
+            // Check that the column isn't used by any constraints
+            const constraints = $state.constraintsConfig.constraints || [];
+
+            if (constraints.some(c => c.filter.column === colIndex)) {
+                const message =
+                    `Column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
+
+Delete constraints that use this column and try again.`;
+
+                alert(message);
+                return;
+            }
 
             // Get the column values again and generate new column info objects
             const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
@@ -293,11 +344,14 @@ const store = new Vuex.Store({
             }
 
             // Update store column info
-            const columnInfoReplaceUpdate: ColumnInfo.ReplaceUpdate = { oldColumnInfo, newColumnInfo, };
-            context.commit("replaceSourceFileColumnInfo", columnInfoReplaceUpdate);
+            const updateData: ColumnInfo.ReplaceUpdate = {
+                oldColumnInfo,
+                newColumnInfo,
+            }
+            context.commit("replaceSourceFileColumnInfo", updateData);
 
             // Recook the data with new columns in the store
-            const columnInfoArray = context.state.sourceFile.columnInfo!;
+            const columnInfoArray = $state.sourceFile.columnInfo!;
             const cookedData = CookedData.cook(columnInfoArray, rawData, true);
 
             // Serve freshly cooked data to the stale store

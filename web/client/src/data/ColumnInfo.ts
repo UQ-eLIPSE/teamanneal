@@ -31,6 +31,11 @@ interface ColumnInfoString {
     valueSet: Set<string>,
 }
 
+export interface ChangeTypeUpdate {
+    columnInfo: ColumnInfo,
+    newColumnType: string,
+}
+
 export interface ReplaceUpdate {
     oldColumnInfo: ColumnInfo,
     newColumnInfo: ColumnInfo,

@@ -2,7 +2,12 @@ import * as Constraint from "../../../common/Constraint";
 
 import { deepClean } from "../util/Object";
 
-export type Constraint = { _id: number } & Constraint.Desc;
+export type Constraint = {
+    _id: string,
+
+    /** The stratum is referenced by ID rather than index number in the state */
+    _stratumId: string,
+} & Constraint.Desc;
 
 export interface Update {
     constraint: Constraint,

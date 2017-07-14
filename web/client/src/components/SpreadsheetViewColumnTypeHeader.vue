@@ -28,15 +28,25 @@ export default class SpreadsheetViewColumnTypeHeader extends Vue {
 
     set columnType(newColumnType: string) {
         const columnInfo = this.column;
+        const selectElement = this.$el.getElementsByClassName("column-type")[0] as HTMLSelectElement;
 
-        // If no change, then nothing to do
-        if (columnInfo.type === newColumnType) { return; }
-
-        // If the column type changed, then pass event up
-        this.$store.dispatch("updateColumnType", {
+        // If the column type changed, then trigger store update action
+        const updateData: ColumnInfo.ChangeTypeUpdate = {
             columnInfo,
             newColumnType,
-        });
+        }
+
+        this.$store.dispatch("updateColumnType", updateData)
+            .then(() => {
+                // There is an issue with keeping the <select> element in sync
+                // with the store value when the updates don't go through
+                // (e.g. in the instance that a column type change is not
+                // permitted)
+                // 
+                // We wait until the column type updating is done and then
+                // force the <select> to have the value that is in the store
+                selectElement.value = this.columnType;
+            });
     }
 }   
 </script>
