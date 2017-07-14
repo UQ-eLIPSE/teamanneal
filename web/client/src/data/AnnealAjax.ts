@@ -10,6 +10,7 @@ import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 import * as TeamAnnealState from "./TeamAnnealState";
 import * as ListCounter from "./ListCounter";
 import * as _Stratum from "./Stratum";
+import * as _Constraint from "./Constraint";
 
 import axios from "axios";
 
@@ -402,7 +403,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         applicability: internalConstraint.applicability,
                     }
 
-                    return constraint;
+                    return _Constraint.cleanObject(constraint);
                 }
 
                 case "limit": {
@@ -419,7 +420,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         applicability: internalConstraint.applicability,
                     }
 
-                    return constraint;
+                    return _Constraint.cleanObject(constraint);
                 }
 
                 case "similarity": {
@@ -436,7 +437,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
                         applicability: internalConstraint.applicability,
                     }
 
-                    return constraint;
+                    return _Constraint.cleanObject(constraint);
                 }
             }
 
