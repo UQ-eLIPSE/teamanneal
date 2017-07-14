@@ -3,6 +3,7 @@
         <span class="cell-content">{{ column.label }}</span>
         <br>
         <select class="column-type"
+                title="Select a column type"
                 v-model="columnType">
             <option>string</option>
             <option>number</option>

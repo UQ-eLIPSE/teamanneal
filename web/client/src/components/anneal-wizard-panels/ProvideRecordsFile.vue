@@ -15,7 +15,8 @@
                 <h2>Where to get data from</h2>
                 <p>You can obtain CSV files from most common data sources, such as Blackboard. Look for a "Export" or "Download" feature, and select "CSV" as the output format.</p>
                 <p>Spreadsheet software, such as Microsoft Excel, are also able to save files as CSV.</p>
-                <h2>How the data should be formatted</h2>
+    
+                <h2>How data should be formatted</h2>
                 <ul>
                     <li>Your CSV file should have fields which are comma-separated (,)</li>
                     <li>The first row
