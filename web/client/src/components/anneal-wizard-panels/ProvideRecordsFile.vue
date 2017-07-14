@@ -5,15 +5,32 @@
             <p>
                 Select a
                 <b>CSV</b> file containing records of persons along with any attributes you would like to apply constraints to.
-                <a class="more"
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
                    href="#"
                    @click.prevent="toggleHelp">Need help?</a>
             </p>
             <div class="help-box"
                  v-if="showHelp">
                 <h2>Where to get data from</h2>
-                <p>You can obtain CSV files from most common data sources, such as Blackboard. Look for the "export" feature, and select "CSV" as the output format.</p>
-                <p>Spreadsheet programs, such as Microsoft Excel, are also able to save files as CSV.</p>
+                <p>You can obtain CSV files from most common data sources, such as Blackboard. Look for a "Export" or "Download" feature, and select "CSV" as the output format.</p>
+                <p>Spreadsheet software, such as Microsoft Excel, are also able to save files as CSV.</p>
+                <h2>How the data should be formatted</h2>
+                <ul>
+                    <li>Your CSV file should have fields which are comma-separated (,)</li>
+                    <li>The first row
+                        <em>must</em> contain the headers of the data set</li>
+                    <li>Each record should sit on one line</li>
+                </ul>
+                <p>For example:</p>
+                <div class="example-data">
+                    StudentID,Last Name,First Name,Discipline,Gender,GPA
+                    <br> 40587853,Lueilwitz,Earnestine,Electrical,Male,5.56
+                    <br> 40433178,Heller,Sarah,Mechanical,Female,6.11
+                    <br> 40341654,Jewess,Corbin,Software,Male,4.98
+                    <br> 40168610,Kutch,Jessica,Mechatronic,Female,5.29
+                    <br> ...
+                </div>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
@@ -154,5 +171,16 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 <style scoped>
 #load-file {
     display: none;
+}
+
+.example-data {
+    display: inline-block;
+    font-family: monospace;
+
+    padding: 0.5em 0.7em;
+
+    background: #ddd;
+    border: 1px solid #aaa;
+    border-radius: 0.5em;
 }
 </style>

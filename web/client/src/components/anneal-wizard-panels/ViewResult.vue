@@ -272,7 +272,7 @@ XMLHttpRequest {
 }
 
 .anneal-error {
-    background: #ccc;
+    background: #ddd;
     border: 1px dashed #a00;
     padding: 1em;
     overflow: auto;
