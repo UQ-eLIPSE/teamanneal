@@ -31,7 +31,12 @@ const state: TeamAnnealState.TeamAnnealState = {
     },
 
     sourceFile: {},
-    constraintsConfig: {},
+    constraintsConfig: {
+        idColumnIndex: undefined,
+        partitionColumnIndex: undefined,
+        strata: [],
+        constraints: [],
+    },
 };
 
 const store = new Vuex.Store({
@@ -80,6 +85,8 @@ const store = new Vuex.Store({
         // Incremental constraints configuration build
         initialiseConstraintsConfig(state) {
             state.constraintsConfig = {
+                idColumnIndex: undefined,
+                partitionColumnIndex: undefined,
                 strata: [],
                 constraints: [],
             };
@@ -94,11 +101,11 @@ const store = new Vuex.Store({
         },
 
         deleteConstraintsConfigPartitionColumnIndex(state) {
-            Vue.delete(state.constraintsConfig, "partitionColumnIndex");
+            Vue.set(state.constraintsConfig, "partitionColumnIndex", undefined);
         },
 
         updateConstraintsConfigStrata(state, stratumUpdate: Stratum.Update) {
-            const strata = state.constraintsConfig.strata!;
+            const strata = state.constraintsConfig.strata;
             const newStratum = stratumUpdate.stratum;
 
             const index = strata.findIndex(stratum => stratum._id === newStratum._id);
@@ -111,11 +118,11 @@ const store = new Vuex.Store({
         },
 
         insertConstraintsConfigStrata(state, stratum: Stratum.Stratum) {
-            state.constraintsConfig.strata!.push(stratum);
+            state.constraintsConfig.strata.push(stratum);
         },
 
         deleteConstraintsConfigStrataOf(state, _id: number) {
-            const strata = state.constraintsConfig.strata!;
+            const strata = state.constraintsConfig.strata;
 
             const index = strata.findIndex(stratum => stratum._id === _id);
 
@@ -127,7 +134,7 @@ const store = new Vuex.Store({
         },
 
         updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
-            const constraints = state.constraintsConfig.constraints!;
+            const constraints = state.constraintsConfig.constraints;
             const updatedConstraint = constraintUpdate.constraint;
 
             const index = constraints.findIndex(constraint => constraint._id === updatedConstraint._id);
@@ -140,11 +147,11 @@ const store = new Vuex.Store({
         },
 
         insertConstraintsConfigConstraint(state, constraint: Constraint.Constraint) {
-            state.constraintsConfig.constraints!.push(constraint);
+            state.constraintsConfig.constraints.push(constraint);
         },
 
         deleteConstraintsConfigConstraintOf(state, _id: number) {
-            const constraints = state.constraintsConfig.constraints!;
+            const constraints = state.constraintsConfig.constraints;
 
             const index = constraints.findIndex(constraint => constraint._id === _id);
 

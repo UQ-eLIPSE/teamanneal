@@ -32,7 +32,7 @@ export default class DynamicWidthSelect extends Vue {
     // Props
     @Prop list: any[] = p({ type: Array, required: true, }) as any;
     @Prop selectedValue: any = p({ required: true, }) as any;
-    @Prop minWidth: number = p({ type: Number, required: false, default: 30 }) as any;
+    @Prop minWidth: number = p({ type: Number, required: false, default: 20 }) as any;
     @Prop disabled: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     // Private

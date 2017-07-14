@@ -83,6 +83,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import * as Stratum from "../data/Stratum";
@@ -327,12 +328,28 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
     get filterValueAsSelectList() {
-        return Array.from(this.constraintFilterColumnInfo.valueSet as any as ArrayLike<number | string>)
+        const columnInfo = this.constraintFilterColumnInfo;
+        return Array.from(columnInfo.valueSet as Set<number | string>)
             .sort()
-            .map(value => ({
-                value,
-                text: value,
-            }));
+            .map(value => {
+                switch (columnInfo.type) {
+                    case "number": {
+                        return {
+                            value: +value,
+                            text: +value,
+                        }
+                    }
+
+                    case "string": {
+                        return {
+                            value: '' + value,
+                            text: '' + value,
+                        }
+                    }
+                }
+
+                throw new Error("Unknown column type");
+            });
     }
 
 
@@ -495,8 +512,16 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     sanitiseFilterValue(filterValue: number | string) {
         switch (this.constraintFilterColumnInfo.type) {
-            case "number":
-                return +filterValue || 0;
+            case "number": {
+                let oldFilterValue = +this.constraintFilterValues;
+
+                // If the previous value was also bad, then just fall back to 0
+                if (Number.isNaN(oldFilterValue)) {
+                    oldFilterValue = 0;
+                }
+
+                return parse(filterValue, oldFilterValue);
+            }
 
             case "string":
                 return "" + filterValue;
@@ -549,11 +574,9 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set constraintConditionCount(newValue: any) {
-        // Must be a uint32 number
-        const conditionCount = (+newValue || 0) >>> 0;
         this.updateConstraint({
             condition: {
-                value: conditionCount,
+                value: parseUint32(newValue, this.constraintConditionCount),
             },
         });
     }
@@ -563,11 +586,42 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set constraintFilterColumnInfo(newValue: ColumnInfo.ColumnInfo) {
-        const columnIndex = this.columnInfo.indexOf(newValue);
+        const oldColumnInfo = this.constraintFilterColumnInfo;
+        const oldFilterValue = this.constraintFilterValues;
+        const newColumnInfo = newValue;
+
         this.updateConstraint({
             filter: {
-                column: columnIndex,
+                column: newColumnInfo.index,
             },
+        });
+
+        // We need to convert the filter value if the types are different, or
+        // trigger an automatic realignment of the filter value for different
+        // columns of the same type by forcing another save.
+        // 
+        // This can only happen after the above column change has been
+        // reconciled and hence sits within a Vue.nextTick().
+        Vue.nextTick(() => {
+            const oldColumnType = oldColumnInfo.type;
+            const newColumnType = newValue.type;
+
+            if (oldColumnType !== newColumnType ||
+                oldColumnInfo.index !== newColumnInfo.index) {
+                switch (newColumnType) {
+                    case "number": {
+                        this.constraintFilterValues = +oldFilterValue;
+                        break;
+                    }
+                    case "string": {
+                        this.constraintFilterValues = '' + oldFilterValue;
+                        break;
+                    }
+                    default: {
+                        throw new Error("Unknown column type");
+                    }
+                }
+            }
         });
     }
 
@@ -593,25 +647,28 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     get constraintFilterValues() {
         // NOTE: Values is an array, but we only support single values for now
-        const filterValue: string | number = this.sanitiseFilterValue(((this.constraint.filter as any).values || [])[0]);
-
-        // If the filter value is determined by a select list and the filter
-        // value does not exist within the list, then set the filter value to
-        // the first available option
-        if (this.showFilterValueAsSelect &&
-            this.filterValueAsSelectList.findIndex(item => item.value === filterValue) < 0) {
-            this.constraintFilterValues = this.filterValueAsSelectList[0].value;
-        }
-
+        const filterValue: string | number = ((this.constraint.filter as any).values || [])[0];
         return filterValue;
     }
 
     set constraintFilterValues(newValue: string | number) {
         // NOTE: Values is an array, but we only support single values for now
+
+        let newFilterValue = this.sanitiseFilterValue(newValue);
+
+        // If the filter value is determined by a select list and the filter
+        // value does not exist within the list, then set the filter value to
+        // the first available option
+        if (this.showFilterValueAsSelect &&
+            // You must compare the string values or they may not match
+            this.filterValueAsSelectList.findIndex(item => item.value === newFilterValue) < 0) {
+            newFilterValue = this.filterValueAsSelectList[0].value;
+        }
+
         this.updateConstraint({
             filter: {
                 values: [
-                    this.sanitiseFilterValue(newValue),
+                    newFilterValue,
                 ],
             },
         });
@@ -689,7 +746,9 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set groupSizeApplicabilityConditionValue(newValue: string) {
-        const groupSizeValue = (+newValue || 0) >>> 0;
+        const existingGroupSizeApplicabilityCondition = this.constraintGroupSizeApplicabilityCondition;
+
+        const groupSizeValue = parseUint32(newValue, (existingGroupSizeApplicabilityCondition || {}).value || 0);
 
         // Update constraint applicability condition
         this.constraintGroupSizeApplicabilityCondition = {
@@ -778,8 +837,6 @@ button.delete {
 
     justify-content: center;
     align-items: center;
-
-    /*position: relative;*/
 }
 
 button.delete>span {
@@ -826,9 +883,6 @@ button.delete:active::before {
 
 .group-size-applicability-condition-fragment .popover-link-area {
     display: inline-block;
-
-    /*position: relative;
-    z-index: 1;*/
 }
 
 .group-size-applicability-condition-fragment .popover-link-area a {
@@ -860,7 +914,6 @@ button.delete:active::before {
     padding: 0.5em;
 
     min-width: 13em;
-    /*width: calc(100% + 4px);*/
     font-size: 0.7em;
 
     margin-left: -2px;
