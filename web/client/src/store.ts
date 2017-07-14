@@ -8,6 +8,7 @@ import * as ColumnInfo from "./data/ColumnInfo";
 import * as Stratum from "./data/Stratum";
 import * as Constraint from "./data/Constraint";
 import * as AnnealAjax from "./data/AnnealAjax";
+import * as CookedData from "./data/CookedData";
 
 Vue.use(Vuex);
 
@@ -248,6 +249,46 @@ const store = new Vuex.Store({
                 context.commit("updateAnnealOutputTree", tree);
                 context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
             });
+        },
+
+        // Updating column types
+        updateColumnType(context, data: any) {
+            const oldColumnInfo: ColumnInfo.ColumnInfo = data.columnInfo;
+            const newColumnType: string = data.newColumnType;
+
+            const colIndex = oldColumnInfo.index;
+            const colLabel = oldColumnInfo.label;
+            const rawData = context.state.sourceFile.rawData!;
+
+            // Get the column values again and generate new column info objects
+            const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
+
+            let newColumnInfo: ColumnInfo.ColumnInfo;
+            switch (newColumnType) {
+                case "number": {
+                    newColumnInfo = ColumnInfo.createColumnInfoNumber(colLabel, colIndex, valueSet as Set<number>);
+                    break;
+                }
+
+                case "string": {
+                    newColumnInfo = ColumnInfo.createColumnInfoString(colLabel, colIndex, valueSet as Set<string>);
+                    break;
+                }
+
+                default:
+                    throw new Error("Unknown column type");
+            }
+
+            // Update store column info
+            const columnInfoReplaceUpdate: ColumnInfo.ReplaceUpdate = { oldColumnInfo, newColumnInfo, };
+            context.commit("replaceSourceFileColumnInfo", columnInfoReplaceUpdate);
+
+            // Recook the data with new columns in the store
+            const columnInfoArray = context.state.sourceFile.columnInfo!;
+            const cookedData = CookedData.cook(columnInfoArray, rawData, true);
+
+            // Serve freshly cooked data to the stale store
+            context.commit("updateSourceFileCookedData", cookedData);
         }
     },
 });
