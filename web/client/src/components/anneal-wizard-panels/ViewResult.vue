@@ -14,9 +14,15 @@
                 <div class="desc-text">
                     <h1>View result</h1>
                     <p>Annealed groups are shown below. To save this output as a file, click "Export as CSV".
-                        <a class="more"
-                           href="#">Need help?</a>
+                        <a class="more help-link"
+                           :class="{'active': showHelp}"
+                           href="#"
+                           @click.prevent="toggleHelp">Need help?</a>
                     </p>
+                    <div class="help-box"
+                         v-if="showHelp">
+                        [no content]
+                    </div>
                 </div>
                 <div v-if="rootNodeAvailable"
                      class="spreadsheet">

@@ -4,9 +4,15 @@
             <h1>Configure groups</h1>
             <p>
                 Here you can configure the sizes of each group and subgroups, and how output groups are labelled after annealing.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                 [no content]
+            </div>
             <p>
                 <StrataEditor></StrataEditor>
             </p>
