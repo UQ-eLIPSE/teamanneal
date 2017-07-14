@@ -43,6 +43,8 @@
 import { Vue, Component, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
+
+import * as UUID from "../data/UUID";
 import * as Stratum from "../data/Stratum";
 import * as Constraint from "../data/Constraint";
 import * as SourceFile from "../data/SourceFile";
@@ -65,15 +67,6 @@ export default class ConstraintsEditorStratum extends Vue {
 
     get columnInfo() {
         return this.fileInStore.columnInfo;
-    }
-
-    get strata() {
-        return this.$store.state.constraintsConfig.strata as ReadonlyArray<Stratum.Stratum>;
-    }
-
-    get stratumIndex() {
-        const id = this.stratum._id;
-        return this.strata.findIndex(s => s._id === id);
     }
 
     addNewConstraint() {
@@ -101,10 +94,10 @@ export default class ConstraintsEditorStratum extends Vue {
             }
         }
 
-        // TODO: Generate random constraint?
         const constraint: Constraint.Constraint = {
-            _id: performance.now(),
-            strata: this.stratumIndex,
+            _id: UUID.generate(),
+            _stratumId: this.stratum._id,
+            strata: Number.NaN,     // We don't use the "strata" property in the internal state
             weight: 50,
             type: "count",
             filter: {

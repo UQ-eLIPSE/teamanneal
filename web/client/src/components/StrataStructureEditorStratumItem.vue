@@ -55,7 +55,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
     }
 
     deleteStratum() {
-        this.$store.commit("deleteConstraintsConfigStrataOf", this.stratum._id);
+        this.$store.dispatch("deleteStratumConfirmSideEffect", this.stratum);
     }
 
     get stratumLabel() {

@@ -34,6 +34,7 @@
 import { Component, Mixin } from "av-ts";
 import * as Papa from "papaparse";
 
+import * as UUID from "../../data/UUID";
 import * as Stratum from "../../data/Stratum";
 import * as SourceFile from "../../data/SourceFile";
 import * as ColumnInfo from "../../data/ColumnInfo";
@@ -123,7 +124,7 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 
         // Add a generic stratum now for users to get started with
         const genericStratum: Stratum.Stratum = {
-            _id: performance.now(),
+            _id: UUID.generate(),
             label: "Team",
             size: {
                 min: 2,
