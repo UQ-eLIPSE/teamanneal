@@ -225,6 +225,12 @@ export const stdDev =
         const size = arr.length;
         const average = avg(arr);
 
+        // You can't compute a standard deviation of an array with one or fewer
+        // elements
+        if (size <= 1) {
+            throw new Error("Array must be of size greater than 1");
+        }
+
         let sumOfSquareDiffs: number = 0;
 
         for (let i = 0; i < size; ++i) {
