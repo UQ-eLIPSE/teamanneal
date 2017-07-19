@@ -10,11 +10,13 @@
                        href="#"
                        @click.prevent="toggleHelp">Need help?</a>
                 </p>
+                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Clear File" and try again.</p>
                 <div class="help-box"
                      v-if="showHelp">
                     <h2>Choosing column types ("number", "string")</h2>
                     <p>Normally you do not need to worry about choosing a column type - TeamAnneal will automatically detect this and choose the most appropriate type for you.</p>
                     <p>If you believe that the type detection has incorrectly set the type of a column, you can switch between the two types by selecting the option from the dropdown menu in the header of the column in question. You will be able to see the result of the type conversion immediately in the viewer below.</p>
+                    <p>Make sure that the values in the column are correct after you change the column type.</p>
     
                     <h2>Bad or incorrectly parsed data</h2>
                     <p>If the content in the viewer below appears to be invalid, check that your input CSV file is correctly formatted, reload the file and try again.</p>
