@@ -8,8 +8,9 @@ if (cluster.isMaster) {
     // Initialise the main server process for master
     ServerProcess.init();
 
-    // Number of anneal workers is (CPU cores - 1), with a floor of 1
-    const numberOfAnnealWorkers = Math.max(1, os.cpus().length - 1);
+    // Number of anneal workers is (CPU cores - 1), with a floor of 1 and a cap of 20
+    const numberOfCpus = os.cpus().length;
+    const numberOfAnnealWorkers = Math.min(20, Math.max(1, numberOfCpus - 1));
 
     // Start up anneal workers
     console.log(`Creating ${numberOfAnnealWorkers} anneal workers...`);
