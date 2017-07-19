@@ -385,10 +385,9 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // ===========
 
     const convertConstraintValue = (columnIndex: number, value: Record.RecordElement) => {
-        // If the value is a string that terminates with a decimal point and
-        // falls under a numeric column, then convert it to a number
+        // If the value is a string that falls under a numeric column, then
+        // convert it to a number
         if (typeof value === "string" &&
-            value[value.length - 1] === "." &&
             columnInfo[columnIndex].type === "number") {
             return +value;
         }
