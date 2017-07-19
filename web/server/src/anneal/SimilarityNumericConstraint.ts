@@ -76,7 +76,14 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
         }
 
         // Run condition cost function 
-        return this.constraintConditionCostFunction(columnRange, values);
+        let cost = this.constraintConditionCostFunction(columnRange, values);
+
+        // Costs cannot be negative; floor at 0
+        if (cost < 0) {
+            cost = 0;
+        }
+
+        return cost;
     }
 
     public getValues(recordPointers: Uint32Array) {
@@ -99,8 +106,25 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
 
     private static generateConditionCostFunction(fn: string) {
         switch (fn) {
-            case "similar": return (columnRange: number, values: ReadonlyArray<number>) => 2 * Util.stdDev(values) / columnRange;
-            case "different": return (columnRange: number, values: ReadonlyArray<number>) => (columnRange - 2 * Util.stdDev(values)) / columnRange;
+            case "similar":
+                return (columnRange: number, values: ReadonlyArray<number>) => {
+                    // Can't do standard deviation of array of 1
+                    if (values.length <= 1) {
+                        return 0;   // Consider constraint met
+                    }
+
+                    return 2 * Util.stdDev(values) / columnRange;
+                }
+
+            case "different":
+                return (columnRange: number, values: ReadonlyArray<number>) => {
+                    // Can't do standard deviation of array of 1
+                    if (values.length <= 1) {
+                        return 1;   // Consider constraint not met
+                    }
+
+                    return (columnRange - 2 * Util.stdDev(values)) / columnRange;
+                }
         }
 
         throw new Error("Unknown similarity constraint condition function");
