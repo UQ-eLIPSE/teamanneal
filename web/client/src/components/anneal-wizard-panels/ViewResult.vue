@@ -21,7 +21,12 @@
                     </p>
                     <div class="help-box"
                          v-if="showHelp">
-                        [no content]
+                        <h2>Results don't seem to fit constraints</h2>
+                        <p>TeamAnneal uses a simulated annealing algorithm to form groups with consideration to constraints you provide. This process is random and can be affected by the constraints you configure.</p>
+                        <p>If you are unsatisfied with the result, try adding, removing or adjusting your constraints before attempting another anneal.</p>
+                        <p>If you still believe that the results are unreasonable or contain errors,
+                            <a href="https://www.elipse.uq.edu.au/"
+                               target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
                 <div v-if="rootNodeAvailable"

@@ -84,7 +84,7 @@ export default class StrataStructureEditorStratumItem extends Vue {
     background: none;
 
     border: 0;
-    border-bottom: 0.1em dashed;
+    border-bottom: 0.1em dotted;
 
     color: #fff;
 
