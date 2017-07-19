@@ -31,6 +31,11 @@ export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned,
     // Generate column information objects
     const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
 
+    // Check that constraints array is not empty
+    if (constraints.length === 0) {
+        throw new Error("Constraints array is empty; aborting anneal");
+    }
+
     // Operate per partition (isolated data sets - can be parallelised)
     console.log(`Starting anneal`);
 
