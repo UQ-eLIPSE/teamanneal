@@ -4,8 +4,8 @@
         <br>
         <select class="column-type"
                 v-model="columnType">
-            <option>string</option>
-            <option>number</option>
+            <option value="string">text</option>
+            <option value="number">number</option>
         </select>
     </th>
 </template>
