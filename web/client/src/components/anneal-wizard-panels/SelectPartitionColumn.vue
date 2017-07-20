@@ -3,12 +3,19 @@
         <div class="wizard-panel-content">
             <h1>Select partition column</h1>
             <p>
-                If you need teams to be formed within clusters of records, select a column to partition your data over.
+                If you need to form groups based on existing groupings in your data, select the corresponding column as a partition for the data.
                 <a class="more"
                    href="#">Need help?</a>
             </p>
             <p>
-                For example, you may have students in assigned project types - teams may need to be comprised of those in the same project. In this situation, you would set the project column as the partition column.
+                For example, in your data you may already have assigned students to
+                <i>"project"</i> groups. It may be a requirement that you need groups that require these
+                <i>project</i> groups to be considered as a whole; i.e. all students in the same
+                <i>project</i> working together. In this situation, you would set the
+                <i>"project"</i> column as a partition for your data.
+            </p>
+            <p>
+                If you do not need to set a partition or need to unset the partition column, click "Don't partition".
             </p>
             <p>
                 <select v-model="partitionColumnIndex">
