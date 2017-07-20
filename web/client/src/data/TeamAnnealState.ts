@@ -55,6 +55,14 @@ export function hasStrata(state: Partial<TeamAnnealState>) {
     );
 }
 
+export function hasConstraints(state: Partial<TeamAnnealState>) {
+    return (
+        state.constraintsConfig &&
+        state.constraintsConfig.constraints &&
+        state.constraintsConfig.constraints.length > 0
+    );
+}
+
 export function isStrataConfigNamesValid(state: Partial<TeamAnnealState>) {
     if (state.constraintsConfig === undefined) { return false; }
 
