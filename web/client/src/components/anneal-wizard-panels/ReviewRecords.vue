@@ -2,7 +2,7 @@
     <div class="wizard-panel">
         <div class="wizard-panel-content">
             <div class="desc-text">
-                <h1>Double check data</h1>
+                <h1>Review data</h1>
                 <p>
                     Take a moment to make sure column data types and all records are correct.
                     <a class="more"

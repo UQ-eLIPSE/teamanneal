@@ -1,7 +1,7 @@
 <template>
     <div class="wizard-panel">
         <div class="wizard-panel-content">
-            <h1>Design group structure</h1>
+            <h1>Define group structure</h1>
             <p>
                 Add, remove and relabel subgroups to form the group structure you want.
                 <a class="more"

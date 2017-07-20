@@ -10,7 +10,7 @@
             <div>
                 <div class="no-constraints-msg"
                      v-if="stratumConstraints.length === 0">
-                    <i>Configure constraints for {{ stratum.label }}s by clicking on the Add button below.</i>
+                    <i>Set constraints for {{ stratum.label }}s by clicking on the Add button below.</i>
                 </div>
                 <ul>
                     <li class="constraint"
