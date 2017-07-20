@@ -32,7 +32,6 @@
 
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
-import * as Papa from "papaparse";
 
 import * as UUID from "../../data/UUID";
 import * as Stratum from "../../data/Stratum";
@@ -73,38 +72,22 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
         const fileElement = $event.target as HTMLInputElement;
 
         // Parse
-        console.log("Parsing...");
         const file = fileElement.files![0];
-        const parseResult = await new Promise<PapaParse.ParseResult>((resolve, reject) => {
-            Papa.parse(file, {
-                dynamicTyping: true,    // Auto convert numbers
-                header: false,          // Don't try to convert into objects, preserve as val[][] type
-                complete: resolve,
-                error: reject,
-                worker: false,          // DO NOT use web workers, as there is a problem with Webpack, papaparse and workers
-                skipEmptyLines: true,
-            });
-        });
-        console.log("Parse complete");
-
-        // If errors encountered
-        if (parseResult.errors.length) {
-            console.error(parseResult.errors);
-            alert("Errors encountered during parse - see console");
-            throw new Error("Errors encountered during parse");
-        }
-
-
-
-        const fileName = file.name;
+        const parseResult = await SourceFile.parseCsvFile(file);
         const fileData: ReadonlyArray<ReadonlyArray<string | number>> = parseResult.data;
-
-
 
         // Compute column info
         // TODO: Check for header-ness/stringiness
         const headers = fileData[0] as string[];
-        const columnInfo = ColumnInfo.fromRawData(headers, fileData, true);
+        let columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo>;
+
+        try {
+            columnInfo = ColumnInfo.fromRawData(headers, fileData, true);
+        } catch (e) {
+            // Show error to user
+            alert(e.toString());
+            return;
+        }
 
 
         // Shorthand for this.$store.commit
@@ -112,7 +95,7 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 
         // Set CSV file data in store
         c("initialiseSourceFile");
-        c("updateSourceFileName", fileName);
+        c("updateSourceFileName", file.name);
         c("updateSourceFileRawData", fileData);
         c("updateSourceFileCookedData", CookedData.cook(columnInfo, fileData, true));
         c("updateSourceFileColumnInfo", columnInfo);
