@@ -6,6 +6,7 @@ import { WizardNavigationEntry } from "../data/WizardNavigationEntry";
 @Trait
 export class AnnealProcessWizardPanel extends Vue {
     readonly thisWizardStep: WizardNavigationEntry;
+    showHelp: boolean = false;
 
     /**
      * Method to allow subclasses to also provide their own code for
@@ -45,6 +46,10 @@ export class AnnealProcessWizardPanel extends Vue {
         const disabled = next.disabled(state);
 
         return disabled;
+    }
+
+    toggleHelp() {
+        return this.showHelp = !this.showHelp;
     }
 }
 

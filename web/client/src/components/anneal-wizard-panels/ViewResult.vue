@@ -14,9 +14,20 @@
                 <div class="desc-text">
                     <h1>View result</h1>
                     <p>Annealed groups are shown below. To save this output as a file, click "Export as CSV".
-                        <a class="more"
-                           href="#">Need help?</a>
+                        <a class="more help-link"
+                           :class="{'active': showHelp}"
+                           href="#"
+                           @click.prevent="toggleHelp">Need help?</a>
                     </p>
+                    <div class="help-box"
+                         v-if="showHelp">
+                        <h2>Results don't seem to fit constraints</h2>
+                        <p>TeamAnneal uses a simulated annealing algorithm to form groups with consideration to constraints you provide. This process is random and can be affected by the constraints you configure.</p>
+                        <p>If you are unsatisfied with the result, try adding, removing or adjusting your constraints before attempting another anneal.</p>
+                        <p>If you still believe that the results are unreasonable or contain errors,
+                            <a href="https://www.elipse.uq.edu.au/"
+                               target="_blank">contact eLIPSE</a>.</p>
+                    </div>
                 </div>
                 <div v-if="rootNodeAvailable"
                      class="spreadsheet">
@@ -231,64 +242,9 @@ XMLHttpRequest {
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content h2 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 1.9em;
-    margin: 0.5rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
-
-
-
-
-
-
-
 .wizard-panel-content {
     display: flex;
     flex-direction: column;
@@ -327,7 +283,7 @@ XMLHttpRequest {
 }
 
 .anneal-error {
-    background: #ccc;
+    background: #ddd;
     border: 1px dashed #a00;
     padding: 1em;
     overflow: auto;

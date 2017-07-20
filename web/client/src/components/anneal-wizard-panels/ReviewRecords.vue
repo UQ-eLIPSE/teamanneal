@@ -5,10 +5,25 @@
                 <h1>Double check data</h1>
                 <p>
                     Take a moment to make sure column data types and all records are correct.
-                    <a class="more"
-                       href="#">Need help?</a>
+                    <a class="more help-link"
+                       :class="{'active': showHelp}"
+                       href="#"
+                       @click.prevent="toggleHelp">Need help?</a>
                 </p>
-                <div class="column-data-type-editor"></div>
+                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Clear File" and try again.</p>
+                <div class="help-box"
+                     v-if="showHelp">
+                    <h2>Choosing column types ("number", "string")</h2>
+                    <p>Normally you do not need to worry about choosing a column type - TeamAnneal will automatically detect this and choose the most appropriate type for you.</p>
+                    <p>If you believe that the type detection has incorrectly set the type of a column, you can switch between the two types by selecting the option from the dropdown menu in the header of the column in question. You will be able to see the result of the type conversion immediately in the viewer below.</p>
+                    <p>Make sure that the values in the column are correct after you change the column type.</p>
+    
+                    <h2>Bad or incorrectly parsed data</h2>
+                    <p>If the content in the viewer below appears to be invalid, check that your input CSV file is correctly formatted, reload the file and try again.</p>
+                    <p>If you continue to encounter issues,
+                        <a href="https://www.elipse.uq.edu.au/"
+                           target="_blank">contact eLIPSE</a>.</p>
+                </div>
             </div>
             <div class="spreadsheet">
                 <SpreadsheetView class="viewer"
@@ -68,57 +83,9 @@ export default class ReviewRecords extends Mixin<AnnealProcessWizardPanel>(Annea
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
-
-
-
-
-
-
-
 .wizard-panel-content {
     display: flex;
     flex-direction: column;
