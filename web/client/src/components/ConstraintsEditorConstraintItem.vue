@@ -646,19 +646,21 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 if (typeof newValue === "string" && newValue.trim().length === 0) {
                     newFilterValue = oldValue;
                 } else {
+                    const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
+
                     const parsedNewValue = parse(newValue, Number.NaN);
 
                     // * Check that the number is valid
                     //
                     // * Check that the numeric value is properly representable 
-                    //   as a plain fixed decimal number by trying a 
-                    //   reconversion back to string
+                    //   as a plain fixed decimal number by checking that its
+                    //   string representation is valid as a decimal number
                     // 
                     //   This can happen in the case of long numbers
                     //   (e-notation) or large numbers that JS can't handle 
                     //   ("Infinity")
                     if (Number.isNaN(parsedNewValue) ||
-                        (!("" + parsedNewValue).match(/^-?\d+\.?\d*$/))) {
+                        !("" + parsedNewValue).match(validDecimalNumericStringRegex)) {
                         newFilterValue = oldValue;
                     } else {
                         newFilterValue = newValue;
