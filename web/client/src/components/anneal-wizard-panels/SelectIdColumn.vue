@@ -4,9 +4,17 @@
             <h1>Select ID column</h1>
             <p>
                 TeamAnneal needs to know which column identifies each unique record in your data.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>Available ID columns</h2>
+                <p>TeamAnneal only shows you columns which can be validly used as an ID - those which uniquely identify each person's record, such as a student ID or email address.</p>
+                <p>If there are no available ID columns to choose from, make sure that your data set has at least one column which has a unique value for each row.</p>
+            </div>
             <div v-if="possibleIdColumns.length === 0"
                  class="error-msg">
                 <h3>Your records file has no detected ID column</h3>
@@ -103,51 +111,9 @@ export default class SelectIdColumn extends Mixin<AnnealProcessWizardPanel>(Anne
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
-
 .error-msg {
     font-size: 0.9em;
     background: darkorange;

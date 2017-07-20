@@ -355,7 +355,7 @@ export default class StrataEditorStratumItem extends Vue {
     background: none;
 
     border: 0;
-    border-bottom: 0.1em dashed;
+    border-bottom: 0.1em dotted;
 
     color: #49075E;
 
@@ -416,6 +416,8 @@ export default class StrataEditorStratumItem extends Vue {
     flex-shrink: 0;
 
     width: 30%;
+
+    cursor: pointer;
 }
 
 .three-sizes>label.invalid-size {

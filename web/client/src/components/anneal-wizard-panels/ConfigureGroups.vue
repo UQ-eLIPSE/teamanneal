@@ -4,9 +4,28 @@
             <h1>Configure groups</h1>
             <p>
                 Here you can configure the sizes of each group and subgroups, and how output groups are labelled after annealing.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>How group size parameters are considered</h2>
+                <p>TeamAnneal will attempt to create as many groups as possible with the
+                    <b>ideal</b> size. In the event that it cannot do so, it will attempt to vary the number per group.</p>
+                <p>In all circumstances, TeamAnneal will always form groups within the
+                    <b>minimum</b> and
+                    <b>maximum</b> sizes that you set.</p>
+    
+                <h2>How to configure group names</h2>
+                <p>For each group, you can use the dropdown to set the particular type of name you would like. A preview is given to help you get a sense of what this will look like.</p>
+                <p>If you wish to use a custom list of names, choose "Custom list" from the dropdown and fill in one name per line.</p>
+    
+                <h2>When group names are generated and applied</h2>
+                <p>Because groups have not yet been formed at this stage, you will not be able to see what the generated group names will be.</p>
+                <p>TeamAnneal generates and applies group names after annealing; you will be able to see this clearly labelled on each team on the results page once the process is complete.</p>
+            </div>
             <p>
                 <StrataEditor></StrataEditor>
             </p>
@@ -49,54 +68,4 @@ export default class ConfigureGroups extends Mixin<AnnealProcessWizardPanel>(Ann
 
 <!-- ####################################################################### -->
 
-<style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
-}
-
-.error-msg {
-    font-size: 0.9em;
-    background: darkorange;
-    padding: 1px 1em;
-}
-</style>
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>

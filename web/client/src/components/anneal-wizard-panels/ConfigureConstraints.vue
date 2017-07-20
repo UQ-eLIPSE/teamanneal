@@ -4,9 +4,55 @@
             <h1>Configure constraints</h1>
             <p>
                 TeamAnneal forms groups with consideration to constraints you provide. Add as many constraints as you need to describe desired properties for each group.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>Significance of constraint order and modal verbs ("should have", etc.)</h2>
+                <p>The order of constraints is
+                    <b>not significant</b> to the anneal process.</p>
+                <p>Instead, modal verbs ("weights") that appear at the start of each constraint is used to determine which is more significant compared to others.</p>
+                <p>The relative weights for each are listed below:</p>
+                <table class="example-table">
+                    <thead>
+                        <tr>
+                            <th>Modal verb</th>
+                            <th>Relative weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>may have</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>could have</td>
+                            <td>5</td>
+                        </tr>
+                        <tr>
+                            <td>should have</td>
+                            <td>25</td>
+                        </tr>
+                        <tr>
+                            <td>must have</td>
+                            <td>500</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>This means that a "must have" constraint is considered with 500 times greater importance than a "may have" constraint.</p>
+    
+                <h2>Constraint applicability to groups only of a certain size</h2>
+                <p>In general, constraints will apply to all groups being formed. This is indicated in each constraint by "when
+                    <i>group</i> has
+                    <u>any number of people</u>".</p>
+                <p>If you wish to only have TeamAnneal consider the constraint for groups of a certain size, you can edit the applicability condition to only apply, for example, "when
+                    <i>group</i> has
+                    <u>3 people</u>".</p>
+                <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
+            </div>
             <p>
                 <ConstraintsEditor></ConstraintsEditor>
             </p>
@@ -65,48 +111,16 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
+.example-table {
+    border-collapse: collapse;
 }
 
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
+.example-table th,
+.example-table td {
+    border: 1px solid #aaa;
+    padding: 0.1em 0.3em;
 }
 </style>
