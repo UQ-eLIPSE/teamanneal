@@ -3,7 +3,7 @@
         <div class="wizard-panel-content">
             <h1>Define group structure</h1>
             <p>
-                Add, remove and relabel subgroups to form the group structure you want.
+                Add and remove subgroups to form the group structure you want. Click on the name to relabel the group.
                 <a class="more"
                    href="#">Need help?</a>
             </p>
