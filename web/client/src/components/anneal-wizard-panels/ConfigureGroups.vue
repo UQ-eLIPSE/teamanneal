@@ -19,7 +19,7 @@
                     <b>maximum</b> sizes that you set.</p>
     
                 <h2>How to configure group names</h2>
-                <p>For each group, you can use the dropdown to set the particular type of name you would like. A preview is given to help you get a sense of how this will look like.</p>
+                <p>For each group, you can use the dropdown to set the particular type of name you would like. A preview is given to help you get a sense of what this will look like.</p>
                 <p>If you wish to use a custom list of names, choose "Custom list" from the dropdown and fill in one name per line.</p>
     
                 <h2>When group names are generated and applied</h2>
