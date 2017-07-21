@@ -342,8 +342,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
                     case "string": {
                         return {
-                            value: '' + value,
-                            text: '' + value,
+                            value: "" + value,
+                            text: "" + value,
                         }
                     }
                 }
@@ -436,7 +436,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         if (this.constraintGroupSizeApplicabilityCondition === undefined) {
             return "any number of";
         } else {
-            return '' + this.constraintGroupSizeApplicabilityCondition.value;
+            return "" + this.constraintGroupSizeApplicabilityCondition.value;
         }
     }
 
@@ -510,37 +510,6 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
 
-    sanitiseFilterValue(filterValue: number | string) {
-        switch (this.constraintFilterColumnInfo.type) {
-            case "number": {
-                let oldFilterValue = +this.constraintFilterValues;
-
-                // If the previous value was also bad, then just fall back to 0
-                if (Number.isNaN(oldFilterValue)) {
-                    oldFilterValue = 0;
-                }
-
-                const newFilterValue = parse(filterValue, oldFilterValue);
-
-                // Check that the numeric value is properly representable as a
-                // plain fixed decimal number by trying a reconversion back to
-                // string
-                // 
-                // This can happen in the case of long numbers (e-notation) or
-                // large numbers that JS can't handle ("Infinity")
-                if (!("" + newFilterValue).match(/^-?\d+\.?\d*$/)) {
-                    return oldFilterValue;
-                }
-
-                return newFilterValue;
-            }
-
-            case "string":
-                return "" + filterValue;
-        }
-
-        throw new Error("Unknown column type");
-    }
 
     deleteConstraint() {
         this.$store.commit("deleteConstraintsConfigConstraintOf", this.thisConstraintId);
@@ -622,11 +591,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 oldColumnInfo.index !== newColumnInfo.index) {
                 switch (newColumnType) {
                     case "number": {
-                        this.constraintFilterValues = +oldFilterValue;
+                        this.constraintFilterValues = +oldFilterValue || 0;
                         break;
                     }
                     case "string": {
-                        this.constraintFilterValues = '' + oldFilterValue;
+                        this.constraintFilterValues = "" + oldFilterValue;
                         break;
                     }
                     default: {
@@ -666,24 +635,48 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     set constraintFilterValues(newValue: string | number) {
         // NOTE: Values is an array, but we only support single values for now
 
-        let newFilterValue = this.sanitiseFilterValue(newValue);
+        let newFilterValue: string | number;
 
-        // Permit decimal being inputted by not updating the constraint if the
-        // delta is only just the input of the "." character at the end
-        if (this.constraintFilterColumnInfo.type === "number") {
-            const oldFilterValue = this.constraintFilterValues;
-            const oldFilterValueAsString = "" + oldFilterValue;
-            const rawValueAsString = "" + newValue;
+        switch (this.constraintFilterColumnInfo.type) {
+            case "number": {
+                const oldValue = this.constraintFilterValues;
 
-            // If the value is exactly one character longer, has the previous
-            // value at the start, and the last character is "." then use this
-            // decimal-terminating numeric string
-            if (oldFilterValue === newFilterValue &&
-                rawValueAsString.length === oldFilterValueAsString.length + 1 &&
-                rawValueAsString.indexOf(oldFilterValueAsString) === 0 &&
-                rawValueAsString[rawValueAsString.length - 1] === ".") {
-                // Use the raw string to store into state
-                newFilterValue = rawValueAsString;
+                // Any parseable numeric string is acceptable, except for empty
+                // string
+                if (typeof newValue === "string" && newValue.trim().length === 0) {
+                    newFilterValue = oldValue;
+                } else {
+                    const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
+
+                    const parsedNewValue = parse(newValue, Number.NaN);
+
+                    // * Check that the number is valid
+                    //
+                    // * Check that the numeric value is properly representable 
+                    //   as a plain fixed decimal number by checking that its
+                    //   string representation is valid as a decimal number
+                    // 
+                    //   This can happen in the case of long numbers
+                    //   (e-notation) or large numbers that JS can't handle 
+                    //   ("Infinity")
+                    if (Number.isNaN(parsedNewValue) ||
+                        !("" + parsedNewValue).match(validDecimalNumericStringRegex)) {
+                        newFilterValue = oldValue;
+                    } else {
+                        newFilterValue = newValue;
+                    }
+                }
+
+                break;
+            }
+
+            case "string": {
+                newFilterValue = "" + newValue;
+                break;
+            }
+
+            default: {
+                throw new Error("Unknown column type");
             }
         }
 
@@ -772,7 +765,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         if (this.constraintGroupSizeApplicabilityCondition === undefined) {
             return "some number of";
         } else {
-            return '' + this.constraintGroupSizeApplicabilityCondition.value;
+            return "" + this.constraintGroupSizeApplicabilityCondition.value;
         }
     }
 
