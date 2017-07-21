@@ -22,6 +22,9 @@ body {
 *::after {
     box-sizing: inherit;
     line-height: inherit;
+
+    /* Some platforms have rounded borders which affects visual style */
+    border-radius: 0;
 }
 
 
