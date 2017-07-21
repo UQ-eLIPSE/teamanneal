@@ -13,7 +13,8 @@
         </div>
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
-                    @click="onAnnealButtonClick">Anneal</button>
+                    @click="onAnnealButtonClick"
+                    :disabled="isAnnealButtonDisabled">Anneal</button>
         </div>
     </div>
 </template>
@@ -25,6 +26,7 @@ import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import * as AnnealAjax from "../../data/AnnealAjax";
+import * as TeamAnnealState from "../../data/TeamAnnealState";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import ConstraintsEditor from "../ConstraintsEditor.vue";
@@ -38,6 +40,15 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
+
+    get isAnnealButtonDisabled() {
+        // If no constraints, the anneal button is disabled
+        if (!TeamAnnealState.hasConstraints(this.$store.state)) {
+            return true;
+        }
+
+        return false;
+    }
 
     onAnnealButtonClick() {
         // Convert state to anneal request input 
