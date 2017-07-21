@@ -4,7 +4,7 @@
             <h1>Select records file</h1>
             <p>
                 Select a
-                <b>CSV</b> file containing records of persons along with any attributes you would like to apply constraints to.
+                <b>CSV</b> file containing records of persons, along with any attributes you would like to apply constraints to.
                 <a class="more help-link"
                    :class="{'active': showHelp}"
                    href="#"

@@ -39,7 +39,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         next: () => reviewRecords,
     },
     reviewRecords = {
-        label: "Double check data",
+        label: "Review data",
         path: "/anneal/review-records",
         disabled: (state: TAState) => {
             // Disabled when there is no source file data
@@ -85,8 +85,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         next: () => designGroupStructure,
     },
     designGroupStructure = {
-        label: "Design group structure",
-        path: "/anneal/design-group-structure",
+        label: "Define group structure",
+        path: "/anneal/define-group-structure",
         disabled: (state: TAState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
@@ -119,8 +119,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         next: () => configureConstraints,
     },
     configureConstraints = {
-        label: "Configure constraints",
-        path: "/anneal/configure-constraints",
+        label: "Set constraints",
+        path: "/anneal/set-constraints",
         disabled: (state: TAState) => {
             // Disabled when there are no strata (output groups)
             return !(

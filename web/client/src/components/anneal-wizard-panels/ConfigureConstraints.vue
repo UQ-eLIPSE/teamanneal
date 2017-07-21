@@ -1,7 +1,7 @@
 <template>
     <div class="wizard-panel">
         <div class="wizard-panel-content">
-            <h1>Configure constraints</h1>
+            <h1>Set constraints</h1>
             <p>
                 TeamAnneal forms groups with consideration to constraints you provide. Add as many constraints as you need to describe desired properties for each group.
                 <a class="more help-link"
