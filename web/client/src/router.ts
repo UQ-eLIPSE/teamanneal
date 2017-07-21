@@ -74,7 +74,7 @@ export default (store: Vuex.Store<any>) => {
                         },
                     },
                     {
-                        path: "design-group-structure",
+                        path: "define-group-structure",
                         component: Anneal_DesignGroupStructure,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.designGroupStructure,
@@ -88,7 +88,7 @@ export default (store: Vuex.Store<any>) => {
                         },
                     },
                     {
-                        path: "configure-constraints",
+                        path: "set-constraints",
                         component: Anneal_ConfigureConstraints,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.configureConstraints,
