@@ -117,6 +117,12 @@ export function fromRawData(headers: ReadonlyArray<string>, rawData: ReadonlyArr
             // Start off by assuming the column is numeric
             let isNumber = true;
 
+            // Throw on value set size = 0
+            if (valueSet.size === 0) {
+                throw new Error(`Column ${colIndex + 1} does not have any associated values`);
+            }
+
+            // Go through all values
             valueSet.forEach((value) => {
                 // If already not a number, then short circuit for-each
                 if (!isNumber) { return; }
@@ -124,8 +130,11 @@ export function fromRawData(headers: ReadonlyArray<string>, rawData: ReadonlyArr
                 // If the value is a string, we need to check if it'll change
                 // the column type
                 if (typeof value === "string") {
-                    if (value.length === 0) {
-                        // Ignore blank strings
+                    // Ignore blank strings as they don't indicate much
+                    //
+                    // The `valueSet.size > 1` check ensures that blank columns
+                    // get picked up as type "string" rather than "number"
+                    if (value.length === 0 && valueSet.size > 1) {
                         return;
                     }
 
