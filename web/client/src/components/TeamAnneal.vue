@@ -80,9 +80,6 @@ export default class TeamAnneal extends Vue {
     display: block;
     margin: 0;
     padding: 0;
-
-    /** Disabling university logo **/
-    background: rgba(255, 255, 255, 0.1);
 }
 
 
