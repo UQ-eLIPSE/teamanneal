@@ -1,7 +1,8 @@
 {
   "name": "teamanneal",
-  "version": "0.0.1",
-  "description": "",
+  "version": "2.0.0",
+  "description": "A web-based simulated annealing service for forming teams",
+  "homepage": "https://www.elipse.uq.edu.au/",
   "author": "eLIPSE",
   "license": "MIT",
   "main": "index.js",
