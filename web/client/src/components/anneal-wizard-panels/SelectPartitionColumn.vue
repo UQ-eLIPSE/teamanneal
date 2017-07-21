@@ -4,9 +4,93 @@
             <h1>Select partition column</h1>
             <p>
                 If you need teams to be formed within clusters of records, select a column to partition your data over.
-                <a class="more"
-                   href="#">Need help?</a>
+                <a class="more help-link"
+                   :class="{'active': showHelp}"
+                   href="#"
+                   @click.prevent="toggleHelp">Need help?</a>
             </p>
+            <div class="help-box"
+                 v-if="showHelp">
+                <h2>What a partition is</h2>
+                <p>A partition is a subset of your data, such that groups and constraints only apply to each partition subset, rather than the global set of person records.</p>
+    
+                <h2>When a partition should be used, and how to configure the partition column</h2>
+                <p>Partitions are only useful if you have subsets within your entire data set where you require TeamAnneal not to be able to form teams with members from a different subset.</p>
+                <p>Should you decide to partition your data set, select the column that contains values which identifies which partition subset a person belongs to.</p>
+                <p>For example - You have 2 types of project in your course, and you wish to only form groups within each project type, not across them:</p>
+                <table class="example-table">
+                    <thead>
+                        <tr>
+                            <th>StudentID</th>
+                            <th>Last Name</th>
+                            <th>First Name</th>
+                            <th>Project</th>
+                            <th>Discipline</th>
+                            <th>Gender</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>40587853</td>
+                            <td>Lueilwitz</td>
+                            <td>Earnestine</td>
+                            <td>P01</td>
+                            <td>Electrical</td>
+                            <td>Male</td>
+                        </tr>
+                        <tr>
+                            <td>40433178</td>
+                            <td>Heller</td>
+                            <td>Sarah</td>
+                            <td>P01</td>
+                            <td>Mechanical</td>
+                            <td>Female</td>
+                        </tr>
+                        </tr>
+                        <tr>
+                            <td>40341654</td>
+                            <td>Jewess</td>
+                            <td>Corbin</td>
+                            <td>P02</td>
+                            <td>Electrical</td>
+                            <td>Male</td>
+                        </tr>
+                        </tr>
+                        <tr>
+                            <td>40168610</td>
+                            <td>Kutch</td>
+                            <td>Jessica</td>
+                            <td>P01</td>
+                            <td>Mechatronic</td>
+                            <td>Female</td>
+                        </tr>
+                        <tr>
+                            <td>40454557</td>
+                            <td>Bartell</td>
+                            <td>Madilyn</td>
+                            <td>P02</td>
+                            <td>Mechanical</td>
+                            <td>Female</td>
+                        </tr>
+                        </tr>
+                        <tr>
+                            <td>40265742</td>
+                            <td>Ebert</td>
+                            <td>Nicholaus</td>
+                            <td>P02</td>
+                            <td>Software</td>
+                            <td>Male</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>If you were to select "Project" as the partition column, TeamAnneal will run two separate anneals for your constraints: one for the people in "P01", and one for those in "P02".</p>
+                <p>This way, you are guaranteed to have groups which are only formed
+                    <u>within</u> the subsets you select - in this example, you will get groups that have a homogeneous project value "P01" or "P02" but not a mixture of both.</p>
+    
+                <h2>Partition limitations</h2>
+                <p>At present, TeamAnneal only supports up to one column with which to partition your data.</p>
+                <p>If you require finer control over partitioning, you will need to split your data into separate files and perform separate anneals with each of them.</p>
+            </div>
             <p>
                 For example, you may have students in assigned project types - teams may need to be comprised of those in the same project. In this situation, you would set the project column as the partition column.
             </p>
@@ -105,48 +189,16 @@ export default class SelectPartitionColumn extends Mixin<AnnealProcessWizardPane
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
 <style scoped>
-.wizard-panel {
-    display: flex;
-    flex-direction: column;
+.example-table {
+    border-collapse: collapse;
 }
 
-.wizard-panel-content {
-    flex-grow: 0;
-    flex-shrink: 1;
-
-    padding: 1rem 2rem;
-
-    overflow-y: auto;
-}
-
-.wizard-panel-content h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 2.5em;
-    margin: 1rem 0;
-}
-
-.wizard-panel-content p {
-    margin: 1rem 0;
-}
-
-.wizard-panel-bottom-buttons {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
-    background: #e6e6e6;
-    padding: 1rem 2rem;
-
-    margin-bottom: -1px;
-
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.wizard-panel-bottom-buttons>* {
-    margin: 0 0.2em;
+.example-table th,
+.example-table td {
+    border: 1px solid #aaa;
+    padding: 0.1em 0.3em;
 }
 </style>
