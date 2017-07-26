@@ -9,17 +9,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="row in contentRows">
-                    <template v-for="cell in row">
-                        <!-- Don't display any content for NaN cells -->
-                        <td v-if="Number.isNaN(cell)"
-                            class="cell-content nan"></td>
-    
-                        <!-- Normal cell content -->
-                        <td v-else
-                            class="cell-content"
-                            :class="{ 'null': cell === null, }">{{cell}}</td>
-                    </template>
+                <tr v-for="(row, i) in contentRows"
+                    :key="i">
+                    <td v-for="(cell, j) in row"
+                        :key="j"
+                        :class="cellClasses(cell)">
+                        <template v-if="cellContentVisible(cell)">{{ cell }}</template>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -47,6 +43,20 @@ export default class SpreadsheetView extends Vue {
 
     get contentRows() {
         return this.rows.slice(1);
+    }
+
+    cellContentVisible(value: any) {
+        return !Number.isNaN(value);
+    }
+
+    cellClasses(value: any) {
+        const classes = {
+            "cell-content": true,
+            "nan": Number.isNaN(value),
+            "null": value === null,
+        }
+
+        return classes;
     }
 }   
 </script>
