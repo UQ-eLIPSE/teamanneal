@@ -38,6 +38,12 @@
                         <li v-for="msg in stratumSizeErrors"
                             :key="msg">{{ msg }}</li>
                     </ul>
+                    <template v-else>
+                        <h3>Size distribution</h3>
+                        <ul>
+                            <li>x {{ stratum.label }}s with y {{ pluralChildUnitText }}</li>
+                        </ul>
+                    </template>
                 </div>
             </div>
             <div class="stratum-name">
