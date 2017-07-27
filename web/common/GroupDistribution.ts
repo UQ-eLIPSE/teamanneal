@@ -65,7 +65,7 @@ export function generateGroupSizes(numMembers: number, minSize: number, idealSiz
     const numberOfGroups = calculateNumberOfGroups(numMembers, minSize, idealSize, maxSize, favourSmaller);
 
     const minGroupSize = (numMembers / numberOfGroups) >>> 0;
-    let leftOver = numMembers % numberOfGroups;
+    let membersLeftOver = numMembers % numberOfGroups;
 
     // Go through each group and append size value into array
     const groupSizeArray: number[] = [];
@@ -74,9 +74,9 @@ export function generateGroupSizes(numMembers: number, minSize: number, idealSiz
         let groupSize = minGroupSize;
 
         // If there are left overs, add one in to this group
-        if (leftOver > 0) {
+        if (membersLeftOver > 0) {
             ++groupSize;
-            --leftOver;
+            --membersLeftOver;
         }
 
         groupSizeArray.push(groupSize);

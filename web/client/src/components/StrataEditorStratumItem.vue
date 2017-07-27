@@ -7,7 +7,7 @@
              class="stratum-config">
             <div class="stratum-size">
                 <h3>Size
-                    <span class="size-unit-text">({{ pluralChildUnitText }} per {{ stratum.label }})</span>
+                    <span class="size-unit-text">({{ pluralChildUnitTextFirstCharCapitalised }} per {{ stratum.label }})</span>
                 </h3>
                 <div class="size-block">
                     <div class="three-sizes">
@@ -38,13 +38,18 @@
                         <li v-for="msg in stratumSizeErrors"
                             :key="msg">{{ msg }}</li>
                     </ul>
-                    <template v-else>
-                        <h3>Size distribution</h3>
-                        <ul>
-                            <li>x {{ stratum.label }}s with y {{ pluralChildUnitText }}</li>
-                        </ul>
-                    </template>
                 </div>
+                <template v-if="stratumSizeErrors.length === 0">
+                    <h3>{{ stratum.label }} distribution</h3>
+                    <ul class="distribution">
+                        <li v-for="groupSizeInfo in stratumGroupSizes"
+                            :key="groupSizeInfo.size">
+                            {{ groupSizeInfo.count }}
+                            <template v-if="groupSizeInfo.count === 1">{{ stratum.label }}</template>
+                            <template v-else>{{ stratum.label }}s</template> with {{ groupSizeInfo.size }} {{ pluralChildUnitText }}
+                        </li>
+                    </ul>
+                </template>
             </div>
             <div class="stratum-name">
                 <h3>Name</h3>
@@ -119,6 +124,7 @@ export default class StrataEditorStratumItem extends Vue {
     // Props
     @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
+    @Prop groupSizes: { [groupSize: number]: number } = p({ required: false, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
     get childUnitText() {
@@ -127,9 +133,14 @@ export default class StrataEditorStratumItem extends Vue {
 
     get pluralChildUnitText() {
         if (this.childUnitText === "person") {
-            return "People";
+            return "people";
         }
         return this.childUnitText + "s";
+    }
+
+    get pluralChildUnitTextFirstCharCapitalised() {
+        const text = this.pluralChildUnitText;
+        return text.charAt(0).toUpperCase() + text.slice(1);
     }
 
     get randomExampleName() {
@@ -223,6 +234,11 @@ export default class StrataEditorStratumItem extends Vue {
 
         errCheck(Stratum.isSizeMinLessThanOne, "Min size cannot be less than 1");
 
+        // If `groupSizes` is undefined, then the group size calculation failed
+        // to produce a valid set of groups
+        if (this.groupSizes === undefined) {
+            errMsgs.push("Group sizes cannot be met");
+        }
 
         // Return array of error messages
         return errMsgs;
@@ -351,6 +367,22 @@ export default class StrataEditorStratumItem extends Vue {
             },
         });
     }
+
+    get stratumGroupSizes() {
+        // Convert all group size keys into numbers
+        const groupSizes = this.groupSizes;
+        const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
+
+        // Produce group size ordered array with the count for each group size
+        return groupSizeKeys.sort().map((size) => {
+            const count = groupSizes[size];
+
+            return {
+                size,
+                count,
+            }
+        });
+    }
 }
 </script>
 
@@ -389,9 +421,13 @@ export default class StrataEditorStratumItem extends Vue {
 }
 
 .stratum-config h3 {
-    margin: 0 0 0.5em 0;
+    margin: 0.5em 0;
     color: #49075E;
     font-weight: 500;
+}
+
+.stratum-config h3:first-child {
+    margin-top: 0;
 }
 
 .stratum-config>div {
@@ -454,6 +490,11 @@ ul.stratum-size-errors {
     padding-right: 0.2em;
 
     list-style: disc outside;
+}
+
+ul.distribution {
+    padding: 0;
+    padding-left: 1.5em;
 }
 
 .error-msg {
