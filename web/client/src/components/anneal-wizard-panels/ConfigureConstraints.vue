@@ -14,7 +14,7 @@
                 <h2>Significance of constraint order and modal verbs ("should have", etc.)</h2>
                 <p>The order of constraints is
                     <b>not significant</b> to the anneal process.</p>
-                <p>Instead, modal verbs ("weights") that appear at the start of each constraint is used to determine which is more significant compared to others.</p>
+                <p>Instead, modal verbs ("weights") that appear at the start of each constraint are used to determine which is more significant compared to others.</p>
                 <p>The relative weights for each are listed below:</p>
                 <table class="example-table">
                     <thead>
