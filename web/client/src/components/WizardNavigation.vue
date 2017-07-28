@@ -60,7 +60,7 @@ export default class WizardNavigation extends Vue {
 
 
     isEntryActive(entry: WNE) {
-        return this.currentRouterFullPath === entry.path;
+        return this.$route.fullPath === entry.path;
     }
 
     isEntryDisabled(entry: WNE) {
@@ -90,10 +90,6 @@ export default class WizardNavigation extends Vue {
 
     get activeEntry() {
         return this.entries.find(this.isEntryActive.bind(this));
-    }
-
-    get currentRouterFullPath() {
-        return this.$store.state.routerFullPath;
     }
 
 

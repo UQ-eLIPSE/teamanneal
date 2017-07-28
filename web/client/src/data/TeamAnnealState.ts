@@ -15,8 +15,6 @@ export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
 export type AnnealOutput = ReadonlyArray<ResultArray>;
 
 export interface TeamAnnealState {
-    routerFullPath: string,
-
     anneal: {
         ajaxRequest: AxiosPromise | undefined,
         ajaxCancelTokenSource: CancelTokenSource | undefined,
