@@ -9,6 +9,8 @@ import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 import * as TeamAnnealState from "./TeamAnnealState";
 import * as ListCounter from "./ListCounter";
+import * as ColumnInfo from "./ColumnInfo";
+import * as Partition from "./Partition";
 import * as _Stratum from "./Stratum";
 import * as _Constraint from "./Constraint";
 
@@ -291,43 +293,17 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     const cookedData = sourceFile.cookedData;
     const columnInfo = sourceFile.columnInfo;
 
-    // Apply partitioning to data records
     const partitionColumnIndex = constraintsConfig.partitionColumnIndex;
 
-    let partitions: SourceData.PartitionedRecordArray;
+    let partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined;
 
     if (partitionColumnIndex === undefined) {
-        // In the event that there was no partition column set, then we just 
-        // wrap the records with an array to pretend we have one partition of
-        // all records - this has no difference on the outcome of the anneal
-        partitions = [cookedData];
+        partitioningColumnInfo = undefined;
     } else {
-        // Partition over values
-        const partitionColumnInfo = columnInfo[partitionColumnIndex];
-        const columnValueSet: Set<number | string> = partitionColumnInfo.valueSet;
-
-        const tempPartitionSet: any[][] = [];
-
-        // Go through each distinct value to partition
-        columnValueSet.forEach((val) => {
-            const partition: any[] = [];
-
-            // For each (cooked) data row, check if the cell value of the row in
-            // the partition column is equal to the distinct value being cycled 
-            // through in the column value forEach loop
-            cookedData.forEach((row) => {
-                if (row[partitionColumnIndex] === val) {
-                    // If so, push into the rows for this partition
-                    partition.push(row);
-                }
-            });
-
-            // Finally we push the partition into the overall partition set
-            tempPartitionSet.push(partition);
-        });
-
-        partitions = tempPartitionSet;
+        partitioningColumnInfo = columnInfo[partitionColumnIndex];
     }
+
+    const partitions = Partition.createPartitions(cookedData, partitioningColumnInfo);
 
     // Map the column info objects into just what we need for the request
     const columns: SourceDataColumn.ColumnDescArray = columnInfo.map(

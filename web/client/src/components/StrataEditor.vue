@@ -11,6 +11,7 @@
                     :key="stratum._id">
                     <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
+                                             :groupSizes="strataGroupSizes[i]"
                                              :isPartition="false"></StrataEditorStratumItem>
                 </li>
             </ul>
@@ -27,8 +28,12 @@ import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
 import * as UUID from "../data/UUID";
 import * as Stratum from "../data/Stratum";
+import * as Partition from "../data/Partition";
+import * as ColumnInfo from "../data/ColumnInfo";
 import * as SourceFile from "../data/SourceFile";
 import * as ConstraintsConfig from "../data/ConstraintsConfig";
+
+import { concat } from "../util/Array";
 
 @Component({
     components: {
@@ -82,6 +87,68 @@ export default class StrataEditor extends Vue {
         }
 
         return stratumShim;
+    }
+
+    /**
+     * Returns an array of objects which encodes the expected size distribution
+     * of each stratum
+     */
+    get strataGroupSizes() {
+        const strata = this.strata;
+
+        // Splice records up into partitions
+        const cookedData = this.fileInStore.cookedData!;
+        const columnInfo = this.fileInStore.columnInfo!;
+        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
+
+        let partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined;
+
+        if (partitionColumnIndex === undefined) {
+            partitioningColumnInfo = undefined;
+        } else {
+            partitioningColumnInfo = columnInfo[partitionColumnIndex];
+        }
+
+        const partitions = Partition.createPartitions(cookedData, partitioningColumnInfo);
+
+        // Run group sizing in each partition, and merge the distributions at
+        // the end
+        try {
+            const strataGroupSizes =
+                partitions
+                    .map((partition) => {
+                        // Generate group sizes for each partition
+                        const numberOfRecordsInPartition = partition.length;
+                        return Stratum.generateStrataGroupSizes(strata, numberOfRecordsInPartition);
+                    })
+                    .reduce((carry, incomingDistribution) => {
+                        // Merge strata group size distribution arrays
+                        return carry.map((existingDistribution, stratumIndex) => {
+                            const distributionToAppend = incomingDistribution[stratumIndex];
+
+                            return concat<number>([existingDistribution, distributionToAppend]);
+                        });
+                    })
+                    .map((stratumDistribution) => {
+                        // Convert group size distribution array into object that
+                        // maps the group size (key) to the count of that particular
+                        // group size in the stratum (value)
+                        const stratumGroupSizeInfo: { [groupSize: number]: number } = {};
+
+                        stratumDistribution.forEach((groupSize) => {
+                            // Increment the count for this particular group size
+                            stratumGroupSizeInfo[groupSize] = (stratumGroupSizeInfo[groupSize] || 0) + 1;
+                        });
+
+                        return stratumGroupSizeInfo;
+                    });
+
+            return strataGroupSizes;
+
+        } catch (e) {
+            // If error occurs, return blank array
+            return [];
+        }
     }
 }
 </script>
