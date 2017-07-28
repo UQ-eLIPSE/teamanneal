@@ -2,6 +2,8 @@ import * as Record from "../../../common/Record";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 import * as Stratum from "./Stratum";
+import * as Partition from "./Partition";
+import * as ColumnInfo from "./ColumnInfo";
 import * as SourceFile from "./SourceFile";
 import * as ConstraintsConfig from "./ConstraintsConfig";
 
@@ -92,7 +94,10 @@ export function isStrataConfigNamesValid(state: Partial<TeamAnnealState>) {
 }
 
 export function isStrataConfigSizesValid(state: Partial<TeamAnnealState>) {
-    if (state.constraintsConfig === undefined) { return false; }
+    if (state.constraintsConfig === undefined ||
+        state.sourceFile === undefined) {
+        return false;
+    }
 
     const strata = state.constraintsConfig.strata;
 
@@ -121,6 +126,32 @@ export function isStrataConfigSizesValid(state: Partial<TeamAnnealState>) {
         ) {
             return false;
         }
+    }
+
+    // Check that group size calculations are possible over all partitions
+    const cookedData = state.sourceFile.cookedData!;
+    const columnInfo = state.sourceFile.columnInfo!;
+    const partitionColumnIndex = state.constraintsConfig.partitionColumnIndex;
+
+    let partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined;
+
+    if (partitionColumnIndex === undefined) {
+        partitioningColumnInfo = undefined;
+    } else {
+        partitioningColumnInfo = columnInfo[partitionColumnIndex];
+    }
+
+    const partitions = Partition.createPartitions(cookedData, partitioningColumnInfo);
+
+    try {
+        partitions.forEach((partition) => {
+            // Attempt group sizes for each partition
+            const numberOfRecordsInPartition = partition.length;
+            return Stratum.generateStrataGroupSizes(strata, numberOfRecordsInPartition);
+        });
+    } catch (e) {
+        // Group size calculations failed
+        return false;
     }
 
     // Otherwise we're good to go

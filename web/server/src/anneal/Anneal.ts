@@ -3,9 +3,9 @@ import * as SourceData from "../../../common/SourceData";
 import * as Stratum from "../../../common/Stratum";
 import * as Constraint from "../../../common/Constraint";
 import * as Record from "../../../common/Record";
+import * as GroupDistribution from "../../../common/GroupDistribution";
 
 // Data manipulation and structures
-import * as GroupDistribution from "../data/GroupDistribution";
 import * as ColumnInfo from "../data/ColumnInfo";
 // import * as Random from "../data/Random";
 
@@ -330,64 +330,46 @@ function createStrataObjects(recordPointers: AnnealRecordPointerArray, constrain
 
     for (let stratumIndex = 0; stratumIndex < strataDefs.length; ++stratumIndex) {
         const stratumDef = strataDefs[stratumIndex];
+        const { min, ideal, max } = stratumDef.size;
 
         // For the lowest stratum, we take records directly from the store,
         // otherwise we take the previous stratum we generated and directly init
         // a node from that
-        const nodes: AnnealStratumNode[] = [];
+        let nodes: AnnealStratumNode[];
 
         if (stratumIndex === 0) {
             const buffer = recordPointers.workingSet.buffer;
-            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(numberOfRecords, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
-
-            const minGroupSize = (numberOfRecords / numberOfGroups) >>> 0;
-            let leftOver = numberOfRecords % numberOfGroups;
+            const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfRecords, min, ideal, max, false);
 
             let offset: number = 0;
 
-            for (let i = 0; i < numberOfGroups; ++i) {
-                let groupSize = minGroupSize;
-
-                // If there are left overs, add one in to this group
-                if (leftOver > 0) {
-                    ++groupSize;
-                    --leftOver;
-                }
-
-                // Init new node
-                nodes.push(new AnnealStratumNode(buffer, offset, groupSize));
+            nodes = groupSizeArray.map((groupSize) => {
+                const currentOffset = offset;
 
                 // Update `offset` of next round
-                offset = offset + groupSize;
-            }
+                offset += groupSize;
+
+                // Init new node
+                return new AnnealStratumNode(buffer, currentOffset, groupSize);
+            });
         } else {
             const prevStratumNodes = strata[stratumIndex - 1].nodes;
             const numberOfPrevStratumNodes = prevStratumNodes.length;
 
-            const numberOfGroups = GroupDistribution.calculateNumberOfGroups(prevStratumNodes.length, stratumDef.size.min, stratumDef.size.ideal, stratumDef.size.max, false);
-
-            const minGroupSize = (numberOfPrevStratumNodes / numberOfGroups) >>> 0;
-            let leftOver = numberOfPrevStratumNodes % numberOfGroups;
+            const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfPrevStratumNodes, min, ideal, max, false);
 
             let offset: number = 0;
 
-            for (let i = 0; i < numberOfGroups; ++i) {
-                let groupSize = minGroupSize;
-
-                // If there are left overs, add one in to this group
-                if (leftOver > 0) {
-                    ++groupSize;
-                    --leftOver;
-                }
-
-                // Init new node
-                nodes.push(AnnealStratumNode.initFromChildren(prevStratumNodes.slice(offset, offset + groupSize)));
+            nodes = groupSizeArray.map((groupSize) => {
+                const currentOffset = offset;
 
                 // Update `offset` of next round
-                offset = offset + groupSize;
-            }
-        }
+                offset += groupSize;
 
+                // Init new node
+                return AnnealStratumNode.initFromChildren(prevStratumNodes.slice(currentOffset, currentOffset + groupSize));
+            });
+        }
 
         const stratumConstraints = constraints.filter(constraint => constraint.constraintDef.strata === stratumIndex);
 

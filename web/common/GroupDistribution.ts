@@ -1,5 +1,3 @@
-import * as Util from "../core/Util";
-
 /**
  * Calculates the number of groups that should be formed.
  * 
@@ -7,7 +5,7 @@ import * as Util from "../core/Util";
  */
 export function calculateNumberOfGroups(numMembers: number, minSize: number, idealSize: number, maxSize: number, favourSmaller: boolean) {
     // Default value for numTeams may get adjusted as we go
-    let numTeams = Util.uint32(numMembers / idealSize); // number of ideal size teams
+    let numTeams = (numMembers / idealSize) >>> 0;      // number of ideal size teams
     const numLeftOver = numMembers % idealSize;	        // number of people left over
 
     if (numLeftOver == 0) {
@@ -56,4 +54,33 @@ export function calculateNumberOfGroups(numMembers: number, minSize: number, ide
         throw new Error("Can't meet team size contraints");
     }
     return numTeams;
+}
+
+/**
+ * Generates array where each element represents the number of children of a
+ * group.
+ */
+export function generateGroupSizes(numMembers: number, minSize: number, idealSize: number, maxSize: number, favourSmaller: boolean) {
+    // Calculate number of groups to form
+    const numberOfGroups = calculateNumberOfGroups(numMembers, minSize, idealSize, maxSize, favourSmaller);
+
+    const minGroupSize = (numMembers / numberOfGroups) >>> 0;
+    let membersLeftOver = numMembers % numberOfGroups;
+
+    // Go through each group and append size value into array
+    const groupSizeArray: number[] = [];
+
+    for (let i = 0; i < numberOfGroups; ++i) {
+        let groupSize = minGroupSize;
+
+        // If there are left overs, add one in to this group
+        if (membersLeftOver > 0) {
+            ++groupSize;
+            --membersLeftOver;
+        }
+
+        groupSizeArray.push(groupSize);
+    }
+
+    return groupSizeArray;
 }
