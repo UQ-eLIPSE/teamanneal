@@ -1,9 +1,13 @@
 <template>
     <div>
         <ul>
-            <li v-for="entry in entries" :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
+            <li v-for="entry in entries"
+                :key="entry.path"
+                :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
                 <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}</span>
-                <a v-else href="#" @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}</a>
+                <a v-else
+                   href="#"
+                   @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}</a>
             </li>
         </ul>
     </div>
