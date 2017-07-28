@@ -1,74 +1,68 @@
-import * as Stratum from "../../../common/Stratum";
-import * as GroupDistribution from "../../../common/GroupDistribution";
+import * as UUID from "../util/UUID";
 
-import * as ListCounter from "./ListCounter";
+import { ListCounterType } from "./ListCounter";
 
-export interface Stratum extends Stratum.Desc {
+export interface DehydratedData {
     _id: string,
-    counter: ListCounter.ListCounterType | ReadonlyArray<string>,
+
+    label: string,
+    size: Size,
+    counter: ListCounterType | string[],
 }
 
-export interface Update {
-    stratum: Stratum,
+export interface Size {
+    min: number,
+    ideal: number,
+    max: number,
 }
 
-export function isSizeMinGreaterThanIdeal(stratum: Stratum) {
-    return stratum.size.min > stratum.size.ideal;
-}
+export class Stratum {
+    private _id: string = UUID.generate();
 
-export function isSizeIdealGreaterThanMax(stratum: Stratum) {
-    return stratum.size.ideal > stratum.size.max;
-}
+    public label: string;
 
-export function isSizeMinLessThanOne(stratum: Stratum) {
-    return stratum.size.min < 1;
-}
+    public size: Size;
+    public counter: ListCounterType | string[];
 
-export function isSizeMinNotUint32(stratum: Stratum) {
-    const val = stratum.size.min;
-    return val >>> 0 !== val;
-}
 
-export function isSizeIdealNotUint32(stratum: Stratum) {
-    const val = stratum.size.ideal;
-    return val >>> 0 !== val;
-}
 
-export function isSizeMaxNotUint32(stratum: Stratum) {
-    const val = stratum.size.max;
-    return val >>> 0 !== val;
-}
 
-export function isSizeMinEqualToMax(stratum: Stratum) {
-    return stratum.size.min === stratum.size.max;
-}
+    public static Hydrate({ _id, label, size, counter, }: DehydratedData) {
+        const stratum = new Stratum(label, size, counter);
 
-/**
- * Generates array where each element is the group size distribution of each 
- * stratum as provided to the function
- */
-export function generateStrataGroupSizes(strata: ReadonlyArray<Stratum>, numMembersInPartition: number) {
-    const numberOfStrata = strata.length;
+        // Restore internal ID
+        stratum._id = _id;
 
-    // Iterate over strata and build up distribution
-    const strataGroupSizeDistributions: number[][] = [];
-
-    // Initial number of nodes = number of records in partition at first
-    let numberOfStratumNodes = numMembersInPartition;
-
-    // TODO: Fix up the internal strata object order (TA-58)
-    for (let i = numberOfStrata - 1; i >= 0; --i) {
-        const stratum = strata[i];
-        const { min, ideal, max } = stratum.size;
-
-        const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfStratumNodes, min, ideal, max, false);
-
-        strataGroupSizeDistributions.unshift(groupSizeArray);
-
-        // Next stratum up contains the nodes as described by the group size
-        // array above
-        numberOfStratumNodes = groupSizeArray.length;
+        return stratum;
     }
 
-    return strataGroupSizeDistributions;
+    public static Dehydrate({ _id, label, size, counter, }: Stratum) {
+        const dehydratedData: DehydratedData = {
+            _id,
+            label,
+            size,
+            counter,
+        };
+
+        return dehydratedData;
+    }
+
+
+
+
+
+    constructor(label: string, size: Size, counter: ListCounterType | string[] = "decimal") {
+        this.label = label;
+        this.size = size;
+        this.counter = counter;
+    }
+
+    /** JSON.stringify() handler */
+    toJSON() {
+        return Stratum.Dehydrate(this);
+    }
+
+    get id() {
+        return this._id;
+    }
 }

@@ -6,6 +6,11 @@ export interface DehydratedData {
     label: string,
     type: "number" | "string",
 
+    /**
+     * The `null` value that can be stored here is actually representing
+     * `undefined`. This is because JSON objects can't actually store the
+     * undefined literal, and only supports `null`.
+     */
     rawColumnValues: (string | null)[],
 }
 
@@ -29,7 +34,7 @@ export class ColumnData {
     private rawColumnValues: (string | undefined)[];
 
     /** Holds the value sets for ColumnData objects */
-    private static ValueSets: { [type: string]: WeakMap<ColumnData, Set<number | string> | undefined> } =
+    private static ValueSets =
     {
         number: new WeakMap<ColumnData, Set<number>>(),
         string: new WeakMap<ColumnData, Set<string>>(),
@@ -37,8 +42,6 @@ export class ColumnData {
 
     /** Holds numeric stats for numeric ColumnData objects */
     private static NumericStats = new WeakMap<ColumnData, NumericStats>();
-
-
 
 
 
@@ -59,17 +62,16 @@ export class ColumnData {
         return columnData;
     }
 
-    public static Dehydrate(columnData: ColumnData) {
+    public static Dehydrate({ _id, type, label, rawColumnValues, }: ColumnData) {
         const dehydratedData: DehydratedData = {
-            _id: columnData._id,
-
-            label: columnData.label,
-            type: columnData.type,
+            _id,
+            label,
+            type,
 
             // Translate all `undefined` values into `null` for 
             // serialisation/dehydration
-            rawColumnValues: columnData.rawColumnValues.map(x => x === undefined ? null : x),
-        }
+            rawColumnValues: rawColumnValues.map(x => x === undefined ? null : x),
+        };
 
         return dehydratedData;
     }
@@ -114,7 +116,7 @@ export class ColumnData {
         if (valueSet === undefined) {
             const newValueSet = ColumnData.GenerateValueSet(columnData);
             valueSet = newValueSet;
-            ColumnData.ValueSets[columnType].set(columnData, valueSet);
+            (ColumnData.ValueSets[columnType] as WeakMap<ColumnData, Set<number | string>>).set(columnData, valueSet);
         }
 
         return valueSet;
@@ -207,12 +209,6 @@ export class ColumnData {
 
 
 
-
-
-
-
-
-
     constructor(rawColumnValues: (string | undefined)[], label: string, type?: "number" | "string") {
         this.rawColumnValues = rawColumnValues;
         this.label = label;
@@ -233,6 +229,10 @@ export class ColumnData {
     /** JSON.stringify() handler */
     toJSON() {
         return ColumnData.Dehydrate(this);
+    }
+
+    get id() {
+        return this._id;
     }
 
     get valueSet() {

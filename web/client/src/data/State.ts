@@ -1,4 +1,5 @@
 import { ColumnData } from "./ColumnData";
+import { Stratum } from "./Stratum";
 
 export interface State {
     /** Record data */
@@ -15,6 +16,11 @@ export interface State {
 
     annealConfig: {
         // TODO: 
+
+
+        strata: Stratum[],
+
+
     }
 
 }

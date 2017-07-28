@@ -1,6 +1,8 @@
 import * as Papa from "papaparse";
 import * as FileSaver from "file-saver";
 
+import { transpose as arrayTranspose } from "../util/Array";
+
 export async function parseFile(file: File) {
     const parseResult = await new Promise<PapaParse.ParseResult>((resolve, reject) => {
         Papa.parse(file, {
@@ -33,37 +35,6 @@ export async function unparseFile(rows: string[][], filename: string) {
     return undefined;
 }
 
-export function rowsToColumns(rows: string[][]) {
-    // Pick up the maximum length of a row => number of columns to generate
-    let numberOfColumns = 0;
-
-    for (let i = 0; i < rows.length; ++i) {
-        const thisRowLength = rows[i].length;
-
-        if (thisRowLength > numberOfColumns) {
-            numberOfColumns = thisRowLength;
-        }
-    }
-
-    // Initialise the 2D array for columns
-    const columns: (string | undefined)[][] = [];
-
-    for (let i = 0; i < numberOfColumns; ++i) {
-        columns.push([]);
-    }
-
-    // Go into each row again and now append values into each column as
-    // appropriate
-    for (let i = 0; i < rows.length; ++i) {
-        const thisRow = rows[i];
-
-        for (let j = 0; j < numberOfColumns; ++j) {
-            const columnValues = columns[j];
-            const rowElementValue: string | undefined = thisRow[j];
-
-            columnValues.push(rowElementValue);
-        }
-    }
-
-    return columns;
+export function transpose(arr: (string | undefined)[][]) {
+    return arrayTranspose(arr);
 }
