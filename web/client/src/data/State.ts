@@ -4,17 +4,20 @@ import { Data as IStratum } from "./Stratum";
 
 export interface Data {
     /** Record data */
-    data: RecordData,
+    recordData: RecordData,
 
     /** Configuration of the anneal request */
     annealConfig: AnnealConfig,
 }
 
-interface RecordData {
+export interface RecordData {
     /** Data source (file, etc.) */
     source: {
         /** Name of source (file name, etc.) */
         name: string | undefined,
+
+        /** Number of rows in raw file */
+        length: number,
     },
 
     /** Data organised by column */
@@ -24,10 +27,10 @@ interface RecordData {
     idColumn: IColumnData_MinimalDescriptor | undefined,
 
     /** Partitioning column (ColumnData minimal descriptor) */
-    partitioningColumn: IColumnData_MinimalDescriptor | undefined,
+    partitionColumn: IColumnData_MinimalDescriptor | undefined,
 }
 
-interface AnnealConfig {
+export interface AnnealConfig {
     strata: IStratum[],
 
     constraints: IConstraint[],
@@ -36,7 +39,7 @@ interface AnnealConfig {
 export namespace State {
     export function Init() {
         const state: Data = {
-            data: GenerateBlankRecordData(),
+            recordData: GenerateBlankRecordData(),
             annealConfig: GenerateBlankAnnealConfig(),
         };
 
@@ -47,11 +50,12 @@ export namespace State {
         const data: RecordData = {
             source: {
                 name: undefined,
+                length: 0,
             },
 
             columns: [],
             idColumn: undefined,
-            partitioningColumn: undefined,
+            partitionColumn: undefined,
         };
 
         return data;

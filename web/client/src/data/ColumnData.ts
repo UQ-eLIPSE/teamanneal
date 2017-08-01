@@ -248,4 +248,8 @@ export namespace ColumnData {
 
         return columnDescriptor;
     }
+
+    export function Equals(a: Data, b: Data) {
+        return a._id === b._id;
+    }
 }

@@ -3,88 +3,72 @@ import Vuex from "vuex";
 
 import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
 
-import * as Stratum from "./data/Stratum";
-import * as ColumnInfo from "./data/ColumnInfo";
-import * as Constraint from "./data/Constraint";
-import * as AnnealAjax from "./data/AnnealAjax";
-import * as CookedData from "./data/CookedData";
-import * as TeamAnnealState from "./data/TeamAnnealState";
+import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
+import { Stratum, Data as IStratum } from "./data/Stratum";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 Vue.use(Vuex);
 
-const state: TeamAnnealState.TeamAnnealState = {
-    anneal: {
-        ajaxRequest: undefined,
-        ajaxCancelTokenSource: undefined,
-
-        input: undefined,
-        output: undefined,
-        outputTree: undefined,
-        outputSatisfaction: undefined,
-        outputIdNodeMap: undefined,
-
-        outputError: undefined,
-    },
-
-    sourceFile: {},
-    constraintsConfig: {
-        idColumnIndex: undefined,
-        partitionColumnIndex: undefined,
-        strata: [],
-        constraints: [],
-    },
-};
+const state: IState = State.Init();
 
 const store = new Vuex.Store({
     strict: true,
     state,
     mutations: {
-        /// Source file (the current open working file)
-        initialiseSourceFile(state) {
-            state.sourceFile = {};
+        /// General root state mutations
+
+        initialiseState(state) {
+            state = State.Init();
         },
 
-        updateSourceFileName(state, name: string) {
-            Vue.set(state.sourceFile, "name", name);
+        setRecordData(state, recordData: IState_RecordData) {
+            Vue.set(state, "recordData", recordData);
         },
 
-        updateSourceFileRawData(state, data: ReadonlyArray<ReadonlyArray<string | number>>) {
-            Vue.set(state.sourceFile, "rawData", data);
+        setAnnealConfig(state, annealConfig: IState_AnnealConfig) {
+            Vue.set(state, "annealConfig", annealConfig);
         },
 
-        updateSourceFileCookedData(state, data: ReadonlyArray<ReadonlyArray<string | number | null>>) {
-            Vue.set(state.sourceFile, "cookedData", data);
+        /// Strata
+
+        insertStratum(state, stratum: IStratum) {
+            state.annealConfig.strata.push(stratum);
         },
 
-        updateSourceFileColumnInfo(state, columnInfo: ColumnInfo.ColumnInfo[]) {
-            Vue.set(state.sourceFile, "columnInfo", columnInfo);
+        setStratum(state, data: { stratum: IStratum, index: number }) {
+            const { stratum, index } = data;
+            Vue.set(state.annealConfig.strata, index, stratum);
         },
 
-        replaceSourceFileColumnInfo(state, replaceUpdate: ColumnInfo.ReplaceUpdate) {
-            const oldInfo = replaceUpdate.oldColumnInfo;
-            const newInfo = replaceUpdate.newColumnInfo;
-
-            const columnInfo = state.sourceFile.columnInfo!;
-
-            columnInfo.splice(oldInfo.index, 1, newInfo);
+        deleteStratum(state, index: number) {
+            Vue.delete(state.annealConfig.strata, index);
         },
+
+        /// ID column
+
+        setIdColumn(state, idColumn: IColumnData) {
+            const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(idColumn);
+            Vue.set(state.recordData, "idColumn", minimalDescriptor);
+        },
+
+        /// Partition column
+
+        setPartitionColumn(state, partitionColumn: IColumnData | undefined) {
+            let minimalDescriptor: IColumnData_MinimalDescriptor | undefined;
+
+            if (partitionColumn === undefined) {
+                minimalDescriptor = undefined;
+            } else {
+                minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(partitionColumn);
+            }
+
+            Vue.set(state.recordData, "partitionColumn", minimalDescriptor);
+        },
+
 
 
 
         // Incremental constraints configuration build
-        initialiseConstraintsConfig(state) {
-            state.constraintsConfig = {
-                idColumnIndex: undefined,
-                partitionColumnIndex: undefined,
-                strata: [],
-                constraints: [],
-            };
-        },
-
-        updateConstraintsConfigIdColumnIndex(state, i: number) {
-            Vue.set(state.constraintsConfig, "idColumnIndex", i);
-        },
-
         updateConstraintsConfigPartitionColumnIndex(state, i: number) {
             Vue.set(state.constraintsConfig, "partitionColumnIndex", i);
         },
@@ -197,6 +181,102 @@ const store = new Vuex.Store({
         },
     },
     actions: {
+        /**
+         * Initialises state back to a clean slate
+         */
+        initialiseState(context) {
+            context.commit("initialiseState");
+        },
+
+        /**
+         * Performs all actions when clearing record data:
+         * - wipes record data
+         * - wipes anneal configuration (because the anneal config depends on 
+         *   record data set)
+         */
+        clearRecordData(context) {
+            // Wipe record data
+            context.commit("setRecordData", State.GenerateBlankRecordData());
+
+            // Wipe anneal config
+            context.commit("setAnnealConfig", State.GenerateBlankAnnealConfig());
+        },
+
+        /**
+         * Sets new record data and performs all necessary prep work around it
+         */
+        async setNewRecordData(context, recordData: IState_RecordData) {
+            // Wipe record data first
+            await context.dispatch("clearRecordData");
+
+            // Set the record data
+            context.commit("setRecordData", recordData);
+
+            // Add a generic stratum now for users to get started with
+            const stratumLabel = "Team";
+            const stratumSize = {
+                min: 2,
+                ideal: 3,
+                max: 4,
+            };
+
+            const genericStratum = Stratum.Init(stratumLabel, stratumSize);
+
+            await context.dispatch("upsertStratum", genericStratum);
+        },
+
+        /**
+         * Upserts a given stratum
+         */
+        upsertStratum(context, stratum: IStratum) {
+            const strata = context.state.annealConfig.strata;
+
+            // Check if element exists
+            const index = strata.findIndex(s => Stratum.Equals(stratum, s));
+
+            if (index > -1) {
+                // Update
+                return context.commit("setStratum", { stratum, index });
+            } else {
+                // Insert
+                return context.commit("insertStratum", stratum);
+            }
+        },
+
+
+        /**
+         * Sets the ID column to the given column
+         */
+        setIdColumn(context, idColumn: IColumnData) {
+            context.commit("setIdColumn", idColumn);
+        },
+
+        /**
+         * Sets the partition column to the given column
+         */
+        setPartitionColumn(context, partitionColumn: IColumnData) {
+            context.commit("setPartitionColumn", partitionColumn);
+        },
+
+        /**
+         * Deletes the partition column set in state
+         */
+        deletePartitionColumn(context) {
+            context.commit("setPartitionColumn", undefined);
+        },
+
+
+
+
+
+
+
+
+
+
+
+
+
         // Anneal AJAX and result
         newAnnealAjaxRequest(context, data: any) {
             const $state = context.state;

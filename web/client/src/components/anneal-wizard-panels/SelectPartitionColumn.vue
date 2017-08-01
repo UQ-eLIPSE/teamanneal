@@ -102,9 +102,9 @@
                 If you do not need to set a partition or need to unset the partition column, click "Don't partition".
             </p>
             <p>
-                <select v-model="partitionColumnIndex">
+                <select v-model="partitionColumn">
                     <option disabled
-                            value="-1">Please select partition column</option>
+                            :value="undefined">Please select partition column</option>
                     <option v-for="option in possiblePartitionColumns"
                             :key="option.value"
                             :value="option.value">{{ option.text }}</option>
@@ -126,9 +126,10 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import * as SourceFile from "../../data/SourceFile";
-import * as ConstraintsConfig from "../../data/ConstraintsConfig";
+import { Data as IState } from "../../data/State";
+import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -138,58 +139,58 @@ export default class SelectPartitionColumn extends Mixin<AnnealProcessWizardPane
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectPartitionColumn;
 
+    get state() {
+        return this.$store.state as IState;
+    }
+
     setPartitionColumn() {
+        // Partition should already be set reactively; just move on to next step
         this.emitWizardNavNext();
     }
 
-    skipPartitioning() {
-        // Delete partition column index
-        this.$store.commit("deleteConstraintsConfigPartitionColumnIndex");
+    async skipPartitioning() {
+        // Delete partition column
+        await this.$store.dispatch("deletePartitionColumn");
+
         this.emitWizardNavNext();
-    }
-
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
-    }
-
-    get constraintsConfigInStore() {
-        const config: ConstraintsConfig.ConstraintsConfig = this.$store.state.constraintsConfig;
-        return config;
     }
 
     get possiblePartitionColumns() {
-        const allRawData = this.fileInStore.rawData;
-        const columnInfo = this.fileInStore.columnInfo || [];
+        const columns = this.state.recordData.columns;
+        const recordDataRawLength = this.state.recordData.source.length;
 
         // No data to even process
-        if (allRawData === undefined || allRawData.length === 0) { return []; }
+        if (columns.length === 0) { return []; }
 
         // The total number of records is equal to the full raw data array
         // length minus the header (1 row)
-        const numberOfRecords = allRawData.length - 1;
+        const numberOfRecords = recordDataRawLength - 1;
 
         // Filter only those with column values non-unique (i.e. drop ID-like 
         // columns)
-        return columnInfo
-            .filter(info => info.valueSet.size !== numberOfRecords)
-            .map(info => ({ text: info.label, value: columnInfo.indexOf(info) }));
+        return columns
+            .filter((column) => {
+                const valueSet = ColumnData.GetValueSet(column);
+                return valueSet.size !== numberOfRecords;
+            })
+            .map((column) => ({
+                text: column.label,
+                value: ColumnData.ConvertToMinimalDescriptor(column),
+            }));
     }
 
-    get partitionColumnIndex(): string {
-        // NOTE: Returns string as <select> doesn't do numbers
-        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
+    get partitionColumn(): IColumnData_MinimalDescriptor | undefined {
+        const partitionColumn = this.state.recordData.partitionColumn;
 
-        if (partitionColumnIndex === undefined) {
-            return "-1";
+        if (partitionColumn === undefined) {
+            return undefined;
         }
 
-        return partitionColumnIndex.toString();
+        return partitionColumn;
     }
 
-    set partitionColumnIndex(val: string) {
-        const partitionColumnIndex = +val;     // Convert to number 
-        this.$store.commit("updateConstraintsConfigPartitionColumnIndex", partitionColumnIndex);
+    set partitionColumn(val: IColumnData_MinimalDescriptor | undefined) {
+        this.$store.dispatch("setPartitionColumn", val);
     }
 }
 </script>

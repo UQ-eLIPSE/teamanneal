@@ -21,9 +21,9 @@
                 <p>Please ensure that your records file has a column with one unique ID value per record.</p>
             </div>
             <p>
-                <select v-model="idColumnIndex">
+                <select v-model="idColumn">
                     <option disabled
-                            value="-1">Please select ID column</option>
+                            :value="undefined">Please select ID column</option>
                     <option v-for="option in possibleIdColumns"
                             :key="option.value"
                             :value="option.value">{{ option.text }}</option>
@@ -43,8 +43,8 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import * as SourceFile from "../../data/SourceFile";
-import * as ConstraintsConfig from "../../data/ConstraintsConfig";
+import { Data as IState } from "../../data/State";
+import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -55,14 +55,8 @@ export default class SelectIdColumn extends Mixin<AnnealProcessWizardPanel>(Anne
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectIdColumn;
 
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
-    }
-
-    get constraintsConfigInStore() {
-        const config: ConstraintsConfig.ConstraintsConfig = this.$store.state.constraintsConfig;
-        return config;
+    get state() {
+        return this.$store.state as IState;
     }
 
     /**
@@ -70,41 +64,40 @@ export default class SelectIdColumn extends Mixin<AnnealProcessWizardPanel>(Anne
      * from.
      */
     get possibleIdColumns() {
-        const allRawData = this.fileInStore.rawData;
-        const columnInfo = this.fileInStore.columnInfo || [];
+        const columns = this.state.recordData.columns;
+        const recordDataRawLength = this.state.recordData.source.length;
 
         // No data to even process
-        if (allRawData === undefined || allRawData.length === 0) { return []; }
+        if (columns.length === 0) { return []; }
 
         // The total number of records is equal to the full raw data array
         // length minus the header (1 row)
-        const numberOfRecords = allRawData.length - 1;
+        const numberOfRecords = recordDataRawLength - 1;
 
         // Filter only those with column values unique
-        return columnInfo
-            .filter(info => info.valueSet.size === numberOfRecords)
-            .map(info => ({ text: info.label, value: columnInfo.indexOf(info) }));
+        return columns
+            .filter((column) => {
+                const valueSet = ColumnData.GetValueSet(column);
+                return valueSet.size === numberOfRecords;
+            })
+            .map((column) => ({
+                text: column.label,
+                value: ColumnData.ConvertToMinimalDescriptor(column),
+            }));
     }
 
+    get idColumn(): IColumnData_MinimalDescriptor | undefined {
+        const idColumn = this.state.recordData.idColumn;
 
-
-
-
-
-    get idColumnIndex(): string {
-        // NOTE: Returns string as <select> doesn't do numbers
-        const idColumnIndex = this.constraintsConfigInStore.idColumnIndex;
-
-        if (idColumnIndex === undefined) {
-            return "-1";
+        if (idColumn === undefined) {
+            return undefined;
         }
 
-        return idColumnIndex.toString();
+        return idColumn;
     }
 
-    set idColumnIndex(val: string) {
-        const idColumnIndex = +val;     // Convert to number 
-        this.$store.commit("updateConstraintsConfigIdColumnIndex", idColumnIndex);
+    set idColumn(val: IColumnData_MinimalDescriptor | undefined) {
+        this.$store.dispatch("setIdColumn", val);
     }
 }
 </script>

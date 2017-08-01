@@ -167,4 +167,8 @@ export namespace Constraint {
 
         throw new Error("Unknown constraint type");
     }
+
+    export function Equals(a: Data, b: Data) {
+        return a._id === b._id;
+    }
 }

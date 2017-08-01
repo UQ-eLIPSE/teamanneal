@@ -31,4 +31,8 @@ export namespace Stratum {
 
         return data;
     }
+
+    export function Equals(a: Data, b: Data) {
+        return a._id === b._id;
+    }
 }
