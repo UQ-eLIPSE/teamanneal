@@ -13,7 +13,7 @@ export interface Data extends MinimalDescriptor {
      * `undefined`. This is because JSON objects can't actually store the
      * undefined literal, and only supports `null`.
      */
-    rawColumnValues: (string | null)[],
+    rawColumnValues: ReadonlyArray<string | null>,
 }
 
 interface NumericStats {
@@ -33,8 +33,15 @@ export namespace ColumnData {
     /** Holds numeric stats for numeric ColumnData objects */
     const NumericStats = new WeakMap<Data, NumericStats>();
 
+    /** Holds cooked column values for ColumnData objects */
+    const CookedColumnValues =
+        {
+            number: new WeakMap<Data, ReadonlyArray<number | null>>(),
+            string: new WeakMap<Data, ReadonlyArray<string | null>>(),
+        }
+
     export function Init(
-        rawColumnValues: (string | undefined | null)[],
+        rawColumnValues: ReadonlyArray<string | undefined | null>,
         label: string,
         type?: "number" | "string",
     ) {
@@ -65,28 +72,25 @@ export namespace ColumnData {
     }
 
     export function GenerateValueSet(columnData: Data) {
+        // Get cooked column value data
+        const cookedColumnValues = GetCookedColumnValues(columnData);
+
         // Detect type
         switch (columnData.type) {
             case "number": {
-                const set = new Set<number>();
+                // Strip out all `null` values before placing them into 
+                // number set
+                const numberValues =
+                    (cookedColumnValues as ReadonlyArray<number | null>).filter(x => x !== null) as ReadonlyArray<number>;
 
-                columnData.rawColumnValues.forEach((value) => {
-                    // If null or empty string, do not add to value set
-                    if (value === null || value.trim().length === 0) {
-                        return;
-                    }
-
-                    // Add value into set as number
-                    return set.add(+value);
-                });
-
-                return set;
+                return new Set<number>(numberValues);
             }
 
             case "string": {
-                // Strip out all `undefined` values before placing them into 
+                // Strip out all `null` values before placing them into 
                 // string set
-                const stringValues = columnData.rawColumnValues.filter(x => x !== undefined) as string[];
+                const stringValues =
+                    (cookedColumnValues as ReadonlyArray<string | null>).filter(x => x !== null) as ReadonlyArray<string>;
 
                 return new Set<string>(stringValues);
             }
@@ -152,7 +156,49 @@ export namespace ColumnData {
         return stats;
     }
 
-    export function DetectColumnType(rawColumnValues: (string | null)[]) {
+    export function GenerateCookedColumnValues(columnData: Data) {
+        switch (columnData.type) {
+            case "number": {
+                // Convert values into numbers
+                return columnData.rawColumnValues.map((value) => {
+                    // If null or empty string, convert to null
+                    if (value === null || value.trim().length === 0) {
+                        return null;
+                    }
+
+                    // Convert everything else to a number
+                    // NOTE: This may produce NaN, and converts number-like 
+                    // values under ECMAScript rules (e.g. "0xF" => 15)
+                    return +value;
+                });
+            }
+
+            case "string": {
+                // Simply return the raw column values as-is
+                return columnData.rawColumnValues;
+            }
+        }
+
+        throw new Error("Unknown column type");
+    }
+
+    export function GetCookedColumnValues(columnData: Data) {
+        const columnType = columnData.type;
+
+        let cookedColumnValues = CookedColumnValues[columnType].get(columnData);
+
+        // If existing cooked column values do not exist, generate and store in 
+        // cache
+        if (cookedColumnValues === undefined) {
+            const newCookedColumnValues = GenerateCookedColumnValues(columnData);
+            cookedColumnValues = newCookedColumnValues;
+            (CookedColumnValues[columnType] as WeakMap<Data, ReadonlyArray<string | number | null>>).set(columnData, cookedColumnValues);
+        }
+
+        return cookedColumnValues;
+    }
+
+    export function DetectColumnType(rawColumnValues: ReadonlyArray<string | null>) {
         // Keep track of type (start of with number) and emptiness
         let isNumber = true;
         let isEmpty = true;
