@@ -36,7 +36,19 @@
 
         "./src/index.ts",
 
-        "./src/**/*.vue"
+        "./src/**/*.vue",
+
+
+
+
+
+
+
+
+
+
+        "./src/data/State.ts",
+        "./src/data/CSV.ts"
     ],
 
     "exclude": [

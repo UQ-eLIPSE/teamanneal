@@ -1,26 +1,70 @@
-import { ColumnData } from "./ColumnData";
-import { Stratum } from "./Stratum";
+import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
+import { Data as IConstraint } from "./Constraint";
+import { Data as IStratum } from "./Stratum";
 
-export interface State {
+export interface Data {
     /** Record data */
-    data: {
-        /** Data source (file, etc.) */
-        source: {
-            /** Name of source (file name, etc.) */
-            name: string,
-        },
+    data: RecordData,
 
-        /** Data organised by column */
-        columns: ColumnData[],
+    /** Configuration of the anneal request */
+    annealConfig: AnnealConfig,
+}
+
+interface RecordData {
+    /** Data source (file, etc.) */
+    source: {
+        /** Name of source (file name, etc.) */
+        name: string | undefined,
     },
 
-    annealConfig: {
-        // TODO: 
+    /** Data organised by column */
+    columns: IColumnData[],
 
+    /** ID column (ColumnData minimal descriptor) */
+    idColumn: IColumnData_MinimalDescriptor | undefined,
 
-        strata: Stratum[],
+    /** Partitioning column (ColumnData minimal descriptor) */
+    partitioningColumn: IColumnData_MinimalDescriptor | undefined,
+}
 
+interface AnnealConfig {
+    strata: IStratum[],
 
+    constraints: IConstraint[],
+}
+
+export namespace State {
+    export function Init() {
+        const state: Data = {
+            data: GenerateBlankRecordData(),
+            annealConfig: GenerateBlankAnnealConfig(),
+        };
+
+        return state;
+    }
+
+    export function GenerateBlankRecordData() {
+        const data: RecordData = {
+            source: {
+                name: undefined,
+            },
+
+            columns: [],
+            idColumn: undefined,
+            partitioningColumn: undefined,
+        };
+
+        return data;
+    }
+
+    export function GenerateBlankAnnealConfig() {
+        const config: AnnealConfig = {
+            strata: [],
+            constraints: [],
+        };
+
+        return config;
     }
 
 }
+
