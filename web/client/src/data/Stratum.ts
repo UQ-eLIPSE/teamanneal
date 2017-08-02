@@ -1,6 +1,7 @@
 import * as GroupDistribution from "../../../common/GroupDistribution";
 
 import * as UUID from "../util/UUID";
+import { reverse } from "../util/Array";
 
 import { ListCounterType } from "./ListCounter";
 
@@ -74,17 +75,19 @@ export namespace Stratum {
      * stratum as provided to the function
      */
     export function GenerateStrataGroupSizes(strata: ReadonlyArray<Data>, numMembersInPartition: number) {
-        const numberOfStrata = strata.length;
-
         // Iterate over strata and build up distribution
         const strataGroupSizeDistributions: number[][] = [];
 
         // Initial number of nodes = number of records in partition at first
         let numberOfStratumNodes = numMembersInPartition;
 
-        // TODO: Fix up the internal strata object order (TA-58)
-        for (let i = numberOfStrata - 1; i >= 0; --i) {
-            const stratum = strata[i];
+        // We get the strata in reverse order because the internal
+        // strata object is currently ordered:
+        //      [highest, ..., lowest]
+        // rather than:
+        //      [lowest, ..., highest]
+        // which is the order we build up groups from.
+        reverse(strata).forEach((stratum) => {
             const { min, ideal, max } = stratum.size;
 
             const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfStratumNodes, min, ideal, max, false);
@@ -94,7 +97,7 @@ export namespace Stratum {
             // Next stratum up contains the nodes as described by the group size
             // array above
             numberOfStratumNodes = groupSizeArray.length;
-        }
+        });
 
         return strataGroupSizeDistributions;
     }

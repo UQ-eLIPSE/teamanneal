@@ -1,6 +1,7 @@
 import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 import { Data as IConstraint } from "./Constraint";
 import { Stratum, Data as IStratum } from "./Stratum";
+import { Data as IAnnealRequest } from "./AnnealRequest";
 import { Partition } from "./Partition";
 
 export interface Data {
@@ -9,6 +10,9 @@ export interface Data {
 
     /** Configuration of the anneal request */
     annealConfig: AnnealConfig,
+
+    /** Information about request to the annealing server */
+    annealRequest: IAnnealRequest | undefined,
 }
 
 export interface RecordData {
@@ -42,6 +46,7 @@ export namespace State {
         const state: Data = {
             recordData: GenerateBlankRecordData(),
             annealConfig: GenerateBlankAnnealConfig(),
+            annealRequest: undefined,
         };
 
         return state;

@@ -1,11 +1,10 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
-
 import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
 import { Stratum, Data as IStratum } from "./data/Stratum";
 import { Constraint, Data as IConstraint } from "./data/Constraint";
+import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 Vue.use(Vuex);
@@ -85,56 +84,11 @@ const store = new Vuex.Store({
             Vue.set(state.recordData, "partitionColumn", minimalDescriptor);
         },
 
+        /// Anneal request 
 
-
-
-
-
-
-
-
-
-        // Anneal AJAX and result
-        initialiseAnnealAjax(state) {
-            state.anneal.ajaxRequest = undefined;
-            state.anneal.ajaxCancelTokenSource = undefined;
-        },
-
-        initialiseAnnealInputOutput(state) {
-            state.anneal.input = undefined;
-            state.anneal.output = undefined;
-            state.anneal.outputTree = undefined;
-            state.anneal.outputSatisfaction = undefined;
-            state.anneal.outputError = undefined;
-        },
-
-        updateAnnealAjaxRequest(state, request: AxiosPromise) {
-            state.anneal.ajaxRequest = request;
-        },
-
-        updateAnnealAjaxCancelTokenSource(state, cancelTokenSource: CancelTokenSource) {
-            state.anneal.ajaxCancelTokenSource = cancelTokenSource;
-        },
-
-        updateAnnealInput(state, input: any) {
-            state.anneal.input = input;
-        },
-
-        updateAnnealOutput(state, output: TeamAnnealState.AnnealOutput) {
-            state.anneal.output = output;
-        },
-
-        updateAnnealOutputTree(state, node: AnnealAjax.ResultArrayNode) {
-            state.anneal.outputTree = node;
-        },
-
-        updateAnnealOutputIdNodeMap(state, map: Map<string, ReadonlyArray<AnnealAjax.ResultArrayNode>>) {
-            state.anneal.outputIdNodeMap = map;
-        },
-
-        updateAnnealOutputError(state, error: AxiosError) {
-            state.anneal.outputError = error;
-        },
+        setAnnealRequest(state, annealRequest: IAnnealRequest) {
+            Vue.set(state, "annealRequest", annealRequest);
+        }
     },
     actions: {
         /**
@@ -306,69 +260,19 @@ Delete constraints that use this column and try again.`;
             context.commit("setPartitionColumn", undefined);
         },
 
+        /**
+         * Kills old request (if any) and sets the anneal request object
+         */
+        setAnnealRequest(context, annealRequest: IAnnealRequest) {
+            // Kill any existing request
+            const existingAnnealRequest = context.state.annealRequest;
 
-
-
-
-
-
-
-
-
-
-
-
-        // Anneal AJAX and result
-        newAnnealAjaxRequest(context, data: any) {
-            const $state = context.state;
-            const idColumnIndex = $state.constraintsConfig.idColumnIndex;
-
-            // Cancel any existing anneal AJAX request
-            const existingCancelTokenSource = $state.anneal.ajaxCancelTokenSource;
-            AnnealAjax.cancelAnnealAjaxRequest(existingCancelTokenSource);
-
-            // Wipe existing AJAX and anneal request data
-            context.commit("initialiseAnnealAjax");
-            context.commit("initialiseAnnealInputOutput");
-
-            // We need the ID column index for processing later
-            if (idColumnIndex === undefined) {
-                throw new Error("ID column index not defined");
+            if (existingAnnealRequest !== undefined) {
+                AnnealRequest.Cancel(existingAnnealRequest);
             }
 
-            // Cache the input
-            context.commit("updateAnnealInput", data);
-
-            // Create and cache the AJAX request
-            if (data === undefined) {
-                throw new Error("No input data to send to server");
-            }
-
-            const { request, cancelTokenSource } = AnnealAjax.createAnnealAjaxRequest(data);
-            context.commit("updateAnnealAjaxRequest", request);
-            context.commit("updateAnnealAjaxCancelTokenSource", cancelTokenSource);
-
-            // On AJAX success, we save the output to the state store
-            request
-                .then((response) => {
-                    // TODO: Make an interface for response data
-                    const data: any = response.data;
-                    const output = data.output;
-
-                    const tree = AnnealAjax.transformOutputIntoTree(output);
-                    AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
-
-                    const idToNodeHierarchyMap = AnnealAjax.mapRawDataToNodeHierarchy(idColumnIndex, tree);
-
-                    context.commit("updateAnnealOutput", output);
-                    context.commit("updateAnnealOutputTree", tree);
-                    context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
-                })
-                .catch((error: AxiosError) => {
-                    // Store the error into the store so that components can 
-                    // read out the error
-                    context.commit("updateAnnealOutputError", error);
-                });
+            // Set new anneal request
+            context.commit("setAnnealRequest", annealRequest);
         },
     },
 });

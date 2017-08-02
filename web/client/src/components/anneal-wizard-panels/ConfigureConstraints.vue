@@ -71,7 +71,7 @@
 import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import * as AnnealAjax from "../../data/AnnealAjax";
+import { AnnealRequest } from "../../data/AnnealRequest";
 import { State, Data as IState } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -102,10 +102,10 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
 
     async onAnnealButtonClick() {
         // Convert state to anneal request input 
-        const annealInput = AnnealAjax.transformStateToAnnealRequestBody(this.state);
+        const annealRequest = AnnealRequest.InitFromState(this.state);
 
         // Fire off the anneal request
-        await this.$store.dispatch("newAnnealAjaxRequest", annealInput);
+        await this.$store.dispatch("setAnnealRequest", annealRequest);
 
         // Go to next step regardless of what happens at this point
         this.emitWizardNavNext();
