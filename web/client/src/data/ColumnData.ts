@@ -1,4 +1,5 @@
 import * as UUID from "../util/UUID";
+import { transpose } from "../util/Array";
 
 export interface MinimalDescriptor {
     _id: string,
@@ -249,7 +250,35 @@ export namespace ColumnData {
         return columnDescriptor;
     }
 
-    export function Equals(a: Data, b: Data) {
+    export function ConvertToDataObject(columns: ReadonlyArray<Data>, columnDescriptor: MinimalDescriptor) {
+        return columns.find(c => Equals(columnDescriptor, c));
+    }
+
+    export function Equals(a: MinimalDescriptor, b: MinimalDescriptor) {
         return a._id === b._id;
+    }
+
+    export function TransposeIntoRawValueRowArray(columns: ReadonlyArray<Data>, includeLabel: boolean = false) {
+        const columnValues = columns.map((column) => {
+            if (includeLabel) {
+                return [column.label, ...column.rawColumnValues];
+            }
+
+            return [...column.rawColumnValues];
+        });
+
+        return transpose(columnValues);
+    }
+
+    export function TransposeIntoCookedValueRowArray(columns: ReadonlyArray<Data>, includeLabel: boolean = false) {
+        const columnValues = columns.map((column) => {
+            if (includeLabel) {
+                return [column.label, ...GetCookedColumnValues(column)];
+            }
+
+            return [...GetCookedColumnValues(column)];
+        });
+
+        return transpose(columnValues);
     }
 }

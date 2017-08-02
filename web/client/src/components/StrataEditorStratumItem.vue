@@ -93,9 +93,10 @@ import { Vue, Component, Prop, p } from "av-ts";
 import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
-import DynamicWidthInputField from "./DynamicWidthInputField.vue";
-import * as Stratum from "../data/Stratum";
+import { Data as IStratum } from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
+
+import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
 const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
     const list: { value: string, text: string, }[] =
@@ -122,7 +123,7 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 })
 export default class StrataEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
+    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
     @Prop groupSizes: { [groupSize: number]: number } = p({ required: false, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
@@ -218,7 +219,7 @@ export default class StrataEditorStratumItem extends Vue {
          * Runs error check functions, and if true, adds error message to array
          */
         const errCheck =
-            (func: (stratum: Stratum.Stratum) => boolean, msg: string) =>
+            (func: (stratum: IStratum) => boolean, msg: string) =>
                 func(stratum) && errMsgs.push(msg);
 
 
@@ -320,16 +321,11 @@ export default class StrataEditorStratumItem extends Vue {
         return counterValueSet.size !== trimmedCounterStrings.length;
     }
 
-    updateStratum(diff: any) {
+    async updateStratum(diff: any) {
         // Deep copy and merge in diff
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
-        // Commit update
-        const stratumUpdate: Stratum.Update = {
-            stratum: newStratum,
-        }
-
-        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
+        await this.$store.dispatch("upsertStratum", newStratum);
     }
 
     get stratumSizeMin() {

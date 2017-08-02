@@ -96,12 +96,12 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
         return false;
     }
 
-    onAnnealButtonClick() {
+    async onAnnealButtonClick() {
         // Convert state to anneal request input 
         const annealInput = AnnealAjax.transformStateToAnnealRequestBody(this.$store.state);
 
         // Fire off the anneal request
-        this.$store.dispatch("newAnnealAjaxRequest", annealInput);
+        await this.$store.dispatch("newAnnealAjaxRequest", annealInput);
 
         // Go to next step regardless of what happens at this point
         this.emitWizardNavNext();

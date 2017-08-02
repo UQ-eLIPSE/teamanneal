@@ -14,7 +14,7 @@ export function isObject(item: any): item is Object {
 /**
  * Deep merge objects.
  */
-export function deepMerge<T extends Object, U extends keyof T>(target: T, ...sources: U[]): T {
+export function deepMerge<T extends Object, U extends Partial<T>>(target: T, ...sources: U[]): T {
     if (!sources.length) return target;
     const source = sources.shift();
 

@@ -26,15 +26,13 @@ export async function parseFile(file: File) {
     return parseResult;
 }
 
-export async function unparseFile(rows: string[][], filename: string) {
+export async function unparseFile(rows: (string | null)[][], filename: string) {
     const csvString = Papa.unparse(rows);
     const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
 
     FileSaver.saveAs(csvBlob, filename, true);
-
-    return undefined;
 }
 
-export function transpose(arr: (string | undefined)[][]) {
+export function transpose(arr: (string | null)[][]) {
     return arrayTranspose(arr);
 }

@@ -58,20 +58,11 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-// import * as UUID from "../../data/UUID";
-// import * as Stratum from "../../data/Stratum";
-// import * as SourceFile from "../../data/SourceFile";
-// import * as ColumnInfo from "../../data/ColumnInfo";
-// import * as CookedData from "../../data/CookedData";
-// import * as TeamAnnealState from "../../data/TeamAnnealState";
-
 import { parseFile } from "../../data/CSV";
 import { fillGaps, transpose } from "../../util/Array";
 
 import { ColumnData } from "../../data/ColumnData";
 import { State, Data as IState } from "../../data/State";
-import { Stratum } from "../../data/Stratum";
-
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -87,8 +78,8 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
         return this.$store.state as IState;
     }
 
-    clearFile() {
-        this.$store.dispatch("clearRecordData");
+    async clearFile() {
+        await this.$store.dispatch("clearRecordData");
     }
 
     openFilePicker() {
@@ -109,13 +100,17 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
         // Convert rows with strings into columns
         const rows: string[][] = parseResult.data;
         fillGaps(rows);     // Fill gaps in file data array to make it rectangular
+
         const columns =
             transpose(rows)    // Transpose rows into columns
                 .map((columnValues) => {
-                    // First value is always assumed to be the column label (header)
+                    // First value is always assumed to be the column label 
+                    // (the header string)
                     const label = "" + columnValues.shift();
 
                     // Initialise a new ColumnData object
+                    // Remember that the shift pops off the header value from 
+                    // the column values
                     return ColumnData.Init(columnValues, label);
                 });
 

@@ -86,9 +86,9 @@ import { Vue, Component, Prop, p } from "av-ts";
 import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
-import * as Stratum from "../data/Stratum";
-import * as Constraint from "../data/Constraint";
-import * as ColumnInfo from "../data/ColumnInfo";
+import { Data as IStratum } from "../data/Stratum";
+import { Data as IConstraint } from "../data/Constraint";
+import { Data as IState } from "../data/State";
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -212,11 +212,15 @@ const CostWeightList = [
 })
 export default class ConstraintsEditorConstraintItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
-    @Prop constraint: Constraint.Constraint = p({ type: Object, required: true, }) as any;
+    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
+    @Prop constraint: IConstraint = p({ type: Object, required: true, }) as any;
 
     // Private
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
+
+    get state() {
+        return this.$store.state as IState;
+    }
 
     get costWeightList() {
         return CostWeightList;
@@ -238,7 +242,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get columnInfo() {
-        return this.$store.state.sourceFile.columnInfo as ColumnInfo.ColumnInfo[];
+        return this.state.recordData.columns;
     }
 
     get columnInfoList() {
@@ -276,10 +280,6 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
 
-
-    get thisConstraintId() {
-        return this.constraint._id;
-    }
 
     get thisConstraintType() {
         return this.getConstraintType(this.constraintConditionFunction);
@@ -511,20 +511,15 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
 
-    deleteConstraint() {
-        this.$store.commit("deleteConstraintsConfigConstraintOf", this.thisConstraintId);
+    async deleteConstraint() {
+        await this.$store.dispatch("deleteConstraint", this.constraint);
     }
 
-    updateConstraint(diff: any) {
+    async updateConstraint(diff: any) {
         // Deep copy and merge in diff
         const newConstraint = deepMerge(deepCopy(this.constraint), diff);
 
-        // Commit update
-        const constraintUpdate: Constraint.Update = {
-            constraint: newConstraint,
-        }
-
-        this.$store.commit("updateConstraintsConfigConstraint", constraintUpdate);
+        await this.$store.dispatch("upsertConstraint", newConstraint);
     }
 
     get constraintCostWeight() {

@@ -16,28 +16,27 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as ColumnInfo from "../data/ColumnInfo";
+import { deepCopy, deepMerge } from "../util/Object";
+
+import { Data as IColumnData } from "../data/ColumnData";
 
 @Component
 export default class SpreadsheetViewColumnTypeHeader extends Vue {
     // Props
-    @Prop column: ColumnInfo.ColumnInfo = p({ type: Object, required: true, }) as any;
+    @Prop column: IColumnData = p({ type: Object, required: true, }) as any;
 
     get columnType() {
         return this.column.type;
     }
 
-    set columnType(newColumnType: string) {
-        const columnInfo = this.column;
+    set columnType(newColumnType: "number" | "string") {
         const selectElement = this.$el.getElementsByClassName("column-type")[0] as HTMLSelectElement;
 
-        // If the column type changed, then trigger store update action
-        const updateData: ColumnInfo.ChangeTypeUpdate = {
-            columnInfo,
-            newColumnType,
-        }
+        const newColumnData = deepMerge(deepCopy(this.column), {
+            type: newColumnType,
+        });
 
-        this.$store.dispatch("updateColumnType", updateData)
+        this.$store.dispatch("updateColumnData", newColumnData)
             .then(() => {
                 // There is an issue with keeping the <select> element in sync
                 // with the store value when the updates don't go through

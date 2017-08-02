@@ -33,7 +33,7 @@
                      class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
                                          :tree="rootNode"
-                                         :columnInfo="columnInfo"></SpreadsheetTreeView>
+                                         :columnInfo="columns"></SpreadsheetTreeView>
                 </div>
             </div>
             <div v-if="rootNodeAvailable"
@@ -72,10 +72,10 @@
 
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
-import * as Papa from "papaparse";
-import * as FileSaver from "file-saver";
 
-import * as TeamAnnealState from "../../data/TeamAnnealState";
+import { unparseFile } from "../../data/CSV";
+import { Data as IState } from "../../data/State";
+import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -91,52 +91,18 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
-    onExportButtonClick() {
-        const exportCsvRows: ReadonlyArray<string | number>[] = [];
-
-        // Use raw data and append the strata columns to the end of them as necessary
-        const rawData = this.sourceFileRawData!;
-        const strata = this.strata!;
-        const outputIdNodeMap = this.outputIdNodeMap!;
-        const idColumnIndex = this.idColumnIndex!;
-
-        rawData.forEach((originalRow, rowIndex) => {
-            // Row must be copied otherwise we're mutating the stored raw data
-            const row = originalRow.slice();
-
-            if (rowIndex === 0) {
-                // If row is header row, just add the stratum label as part of
-                // column headings
-                strata.forEach((stratum) => {
-                    row.push(stratum.label);
-                });
-            } else {
-                // If normal data row, use the row -> hierarchy map to get label
-                const key = '' + originalRow[idColumnIndex];
-
-                const hierarchy = outputIdNodeMap.get(key);
-
-                if (hierarchy === undefined) {
-                    throw new Error(`Could not find node hierarchy for record ID ${key}`);
-                }
-
-                hierarchy.forEach((node) => {
-                    row.push(node.counterValue!);
-                });
-            }
-
-            // Add new row into export array
-            exportCsvRows.push(row);
-        });
-
-        const csvString = Papa.unparse(exportCsvRows);
-
-        const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" })
-        FileSaver.saveAs(csvBlob, `${this.sourceFileName}.teamanneal.csv`, true);
+    get state() {
+        return this.$store.state as IState;
     }
 
-    get state() {
-        return this.$store.state as TeamAnnealState.TeamAnnealState;
+    onExportButtonClick() {
+        // Get the columns and transform them back into 2D string array for
+        // exporting
+        const rows = ColumnData.TransposeIntoRawValueRowArray(this.state.recordData.columns, true);
+
+        // Export as CSV
+        const sourceFileName = this.state.recordData.source.name;
+        unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
     get isExportButtonDisabled() {
@@ -210,32 +176,12 @@ XMLHttpRequest {
         return this.rootNode!.children;
     }
 
-    get fileInStore() {
-        return this.state.sourceFile;
-    }
-
-    get columnInfo() {
-        return this.fileInStore.columnInfo;
+    get columns() {
+        return this.state.recordData.columns;
     }
 
     get outputIdNodeMap() {
         return this.state.anneal.outputIdNodeMap;
-    }
-
-    get sourceFileRawData() {
-        return this.state.sourceFile.rawData;
-    }
-
-    get sourceFileName() {
-        return this.state.sourceFile.name;
-    }
-
-    get strata() {
-        return this.state.constraintsConfig.strata;
-    }
-
-    get idColumnIndex() {
-        return this.state.constraintsConfig.idColumnIndex;
     }
 }
 </script>

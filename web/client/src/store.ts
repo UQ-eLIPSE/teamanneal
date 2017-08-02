@@ -5,6 +5,7 @@ import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
 
 import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
 import { Stratum, Data as IStratum } from "./data/Stratum";
+import { Constraint, Data as IConstraint } from "./data/Constraint";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 Vue.use(Vuex);
@@ -35,13 +36,32 @@ const store = new Vuex.Store({
             state.annealConfig.strata.push(stratum);
         },
 
-        setStratum(state, data: { stratum: IStratum, index: number }) {
-            const { stratum, index } = data;
+        setStratum(state, { stratum, index }: { stratum: IStratum, index: number }) {
             Vue.set(state.annealConfig.strata, index, stratum);
         },
 
         deleteStratum(state, index: number) {
             Vue.delete(state.annealConfig.strata, index);
+        },
+
+        /// Constraints
+
+        insertConstraint(state, constraint: IConstraint) {
+            state.annealConfig.constraints.push(constraint);
+        },
+
+        setConstraint(state, { constraint, index }: { constraint: IConstraint, index: number }) {
+            Vue.set(state.annealConfig.constraints, index, constraint);
+        },
+
+        deleteConstraint(state, index: number) {
+            Vue.delete(state.annealConfig.constraints, index);
+        },
+
+        /// Column data
+
+        setColumnData(state, { column, index }: { column: IColumnData, index: number }) {
+            Vue.set(state.recordData.columns, index, column);
         },
 
         /// ID column
@@ -68,72 +88,8 @@ const store = new Vuex.Store({
 
 
 
-        // Incremental constraints configuration build
-        updateConstraintsConfigPartitionColumnIndex(state, i: number) {
-            Vue.set(state.constraintsConfig, "partitionColumnIndex", i);
-        },
 
-        deleteConstraintsConfigPartitionColumnIndex(state) {
-            Vue.set(state.constraintsConfig, "partitionColumnIndex", undefined);
-        },
 
-        updateConstraintsConfigStrata(state, stratumUpdate: Stratum.Update) {
-            const strata = state.constraintsConfig.strata;
-            const newStratum = stratumUpdate.stratum;
-
-            const index = strata.findIndex(stratum => stratum._id === newStratum._id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.set(strata, index, newStratum);
-        },
-
-        insertConstraintsConfigStrata(state, stratum: Stratum.Stratum) {
-            state.constraintsConfig.strata.push(stratum);
-        },
-
-        deleteConstraintsConfigStrataOf(state, _id: string) {
-            const strata = state.constraintsConfig.strata;
-
-            const index = strata.findIndex(stratum => stratum._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.delete(strata, index);
-        },
-
-        updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
-            const constraints = state.constraintsConfig.constraints;
-            const updatedConstraint = constraintUpdate.constraint;
-
-            const index = constraints.findIndex(constraint => constraint._id === updatedConstraint._id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.set(constraints, index, updatedConstraint);
-        },
-
-        insertConstraintsConfigConstraint(state, constraint: Constraint.Constraint) {
-            state.constraintsConfig.constraints.push(constraint);
-        },
-
-        deleteConstraintsConfigConstraintOf(state, _id: string) {
-            const constraints = state.constraintsConfig.constraints;
-
-            const index = constraints.findIndex(constraint => constraint._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.delete(constraints, index);
-        },
 
 
 
@@ -243,6 +199,91 @@ const store = new Vuex.Store({
             }
         },
 
+        /**
+         * Deletes supplied stratum, but also asks user to confirm this action
+         * in the event that constraints will also be deleted
+         */
+        deleteStratumConfirmSideEffect(context, stratum: IStratum) {
+            const $state = context.state;
+
+            // Check if there are constraints that depend on this stratum
+            const constraints = $state.annealConfig.constraints || [];
+            const stratumId = stratum._id;
+            const stratumLabel = stratum.label;
+            const dependentConstraints = constraints.filter(c => c.stratum === stratumId);
+
+            if (dependentConstraints.length > 0) {
+                const confirmationMessage =
+                    `Deleting "${stratumLabel}" will also result in dependent constraints being deleted.`;
+
+                const proceed = confirm(confirmationMessage);
+
+                // Stop if the user selected Cancel
+                if (!proceed) {
+                    return;
+                }
+            }
+
+            // Find index of stratum and delete that one
+            const index = $state.annealConfig.strata.findIndex(s => Stratum.Equals(stratum, s));
+            context.commit("deleteStratum", index);
+
+            dependentConstraints.forEach((constraint) => {
+                const index = $state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+                context.commit("deleteConstraint", index);
+            });
+        },
+
+        /**
+         * Upserts a given constraint
+         */
+        upsertConstraint(context, constraint: IConstraint) {
+            const constraints = context.state.annealConfig.constraints;
+
+            // Check if element exists
+            const index = constraints.findIndex(c => Constraint.Equals(constraint, c));
+
+            if (index > -1) {
+                // Update
+                return context.commit("setConstraint", { constraint, index });
+            } else {
+                // Insert
+                return context.commit("insertConstraint", constraint);
+            }
+        },
+
+        /**
+         * Deletes supplied constraint
+         */
+        deleteConstraint(context, constraint: IConstraint) {
+            // Find index of constraint and delete that one
+            const index = context.state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+            context.commit("deleteConstraint", index);
+        },
+
+        /**
+         * Updates supplied column
+         */
+        updateColumnData(context, column: IColumnData) {
+            const $state = context.state;
+
+            // Check that the column isn't used by any constraints
+            const constraints = $state.annealConfig.constraints;
+
+            if (constraints.some(c => ColumnData.Equals(column, c.filter.column))) {
+                const message =
+                    `Column "${column.label}" is currently used by at least one constraint and cannot have its type changed.
+
+Delete constraints that use this column and try again.`;
+
+                alert(message);
+                return;
+            }
+
+            // Find index of column and update it
+            const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
+            context.commit("setColumnData", { column, index });
+        },
 
         /**
          * Sets the ID column to the given column
@@ -329,100 +370,6 @@ const store = new Vuex.Store({
                     context.commit("updateAnnealOutputError", error);
                 });
         },
-
-
-        /**
-         * Deletes supplied stratum, but also asks user to confirm this action
-         * in the event that constraints will also be deleted
-         */
-        deleteStratumConfirmSideEffect(context, stratum: Stratum.Stratum) {
-            const $state = context.state;
-
-            // Check if there are constraints that depend on this stratum
-            const constraints = $state.constraintsConfig.constraints || [];
-            const stratumId = stratum._id;
-            const stratumLabel = stratum.label;
-            const dependentConstraints = constraints.filter(c => c._stratumId === stratumId);
-
-            if (dependentConstraints.length > 0) {
-                const confirmationMessage =
-                    `Deleting "${stratumLabel}" will also result in dependent constraints being deleted.`;
-
-                const proceed = confirm(confirmationMessage);
-
-                // Stop if the user selected Cancel
-                if (!proceed) {
-                    return;
-                }
-            }
-
-            context.commit("deleteConstraintsConfigStrataOf", stratum._id);
-
-            dependentConstraints.forEach((constraint) => {
-                context.commit("deleteConstraintsConfigConstraintOf", constraint._id);
-            });
-        },
-
-        /**
-         * Updates the type of the supplied column info
-         */
-        updateColumnType(context, data: ColumnInfo.ChangeTypeUpdate) {
-            const $state = context.state;
-
-            const oldColumnInfo = data.columnInfo;
-            const newColumnType = data.newColumnType;
-
-            const colIndex = oldColumnInfo.index;
-            const colLabel = oldColumnInfo.label;
-
-            const rawData = $state.sourceFile.rawData!;
-
-            // Check that the column isn't used by any constraints
-            const constraints = $state.constraintsConfig.constraints || [];
-
-            if (constraints.some(c => c.filter.column === colIndex)) {
-                const message =
-                    `Column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
-
-Delete constraints that use this column and try again.`;
-
-                alert(message);
-                return;
-            }
-
-            // Get the column values again and generate new column info objects
-            const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
-
-            let newColumnInfo: ColumnInfo.ColumnInfo;
-            switch (newColumnType) {
-                case "number": {
-                    newColumnInfo = ColumnInfo.createColumnInfoNumber(colLabel, colIndex, valueSet as Set<number>);
-                    break;
-                }
-
-                case "string": {
-                    newColumnInfo = ColumnInfo.createColumnInfoString(colLabel, colIndex, valueSet as Set<string>);
-                    break;
-                }
-
-                default:
-                    throw new Error("Unknown column type");
-            }
-
-            // Update store column info
-            const updateData: ColumnInfo.ReplaceUpdate = {
-                oldColumnInfo,
-                newColumnInfo,
-            }
-            context.commit("replaceSourceFileColumnInfo", updateData);
-
-            // Recook the data with new columns in the store
-            const columnInfoArray = $state.sourceFile.columnInfo!;
-            const cookedData = CookedData.cook(columnInfoArray, rawData, true);
-
-            // Serve freshly cooked data to the stale store
-            context.commit("updateSourceFileCookedData", cookedData);
-        }
     },
 });
 
