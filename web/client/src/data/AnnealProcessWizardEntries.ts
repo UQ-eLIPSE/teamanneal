@@ -21,7 +21,7 @@ export let
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     provideRecordsFile = {
         label: (state: IState) => {
-            if (State.hasSourceFileData(state)) {
+            if (State.HasSourceFileData(state)) {
                 return `${state.recordData.source.name}`;
             } else {
                 return "Select records file";
@@ -31,7 +31,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             return !(
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -43,10 +43,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there is no source file data
             return !(
-                State.hasSourceFileData(state) &&
+                State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -58,10 +58,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there is no source file data
             return !(
-                State.hasSourceFileData(state) &&
+                State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -73,11 +73,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                State.hasSourceFileData(state) &&
-                State.hasValidIdColumnIndex(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -89,11 +89,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                State.hasSourceFileData(state) &&
-                State.hasValidIdColumnIndex(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -105,13 +105,13 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.hasSourceFileData(state) &&
-                State.hasValidIdColumnIndex(state) &&
-                State.hasStrata(state) &&
-                State.isStrataConfigNamesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -123,14 +123,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.hasSourceFileData(state) &&
-                State.hasValidIdColumnIndex(state) &&
-                State.hasStrata(state) &&
-                State.isStrataConfigNamesValid(state) &&
-                State.isStrataConfigSizesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
+                State.IsStrataConfigSizesValid(state) &&
 
                 // Disable when processing request
-                !State.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -142,14 +142,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.hasSourceFileData(state) &&
-                State.hasValidIdColumnIndex(state) &&
-                State.hasStrata(state) &&
-                State.isStrataConfigNamesValid(state) &&
-                State.isStrataConfigSizesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
+                State.IsStrataConfigSizesValid(state) &&
 
                 // Enable only when the anneal request is actually created
-                State.isAnnealRequestCreated(state)
+                State.IsAnnealRequestCreated(state)
             );
         },
     },

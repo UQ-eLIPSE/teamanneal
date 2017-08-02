@@ -9,7 +9,7 @@
                 </div>
             </div>
         </template>
-        <template v-else-if="isAnnealSuccessful">
+        <template v-else-if="IsAnnealSuccessful">
             <div class="wizard-panel-content">
                 <div class="desc-text">
                     <h1>View result</h1>
@@ -110,11 +110,11 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     }
 
     get isRequestInProgress() {
-        return State.isAnnealRequestInProgress(this.state);
+        return State.IsAnnealRequestInProgress(this.state);
     }
 
-    get isAnnealSuccessful() {
-        return State.isAnnealSuccessful(this.state);
+    get IsAnnealSuccessful() {
+        return State.IsAnnealSuccessful(this.state);
     }
 
     get annealError() {

@@ -71,36 +71,23 @@ export namespace State {
         return config;
     }
 
-
-
-
-
-
-
-
-    /// TODO: Rename these static functions with capitalised first char
-
-
-
-
-
-    export function hasSourceFileData(state: Data) {
+    export function HasSourceFileData(state: Data) {
         return state.recordData.source.length > 0;
     }
 
-    export function hasValidIdColumnIndex(state: Data) {
+    export function HasValidIdColumnIndex(state: Data) {
         return state.recordData.idColumn !== undefined;
     }
 
-    export function hasStrata(state: Data) {
+    export function HasStrata(state: Data) {
         return state.annealConfig.strata.length > 0;
     }
 
-    export function hasConstraints(state: Data) {
+    export function HasConstraints(state: Data) {
         return state.annealConfig.constraints.length > 0;
     }
 
-    export function isStrataConfigNamesValid(state: Data) {
+    export function IsStrataConfigNamesValid(state: Data) {
         const strata = state.annealConfig.strata;
 
         const strataNameSet = new Set<string>();
@@ -124,7 +111,7 @@ export namespace State {
         return true;
     }
 
-    export function isStrataConfigSizesValid(state: Data) {
+    export function IsStrataConfigSizesValid(state: Data) {
         const strata = state.annealConfig.strata;
 
         if (strata === undefined) { return false; }
@@ -175,7 +162,7 @@ export namespace State {
         return true;
     }
 
-    export function isAnnealRequestInProgress(state: Data) {
+    export function IsAnnealRequestInProgress(state: Data) {
         return (
             state.anneal &&
             state.anneal.input &&                   // Has an input anneal request
@@ -185,14 +172,14 @@ export namespace State {
         );
     }
 
-    export function isAnnealRequestCreated(state: Data) {
+    export function IsAnnealRequestCreated(state: Data) {
         return (
             state.anneal &&
             state.anneal.ajaxCancelTokenSource
         );
     }
 
-    export function isAnnealSuccessful(state: Data) {
+    export function IsAnnealSuccessful(state: Data) {
         return (
             state.anneal &&
             state.anneal.output &&

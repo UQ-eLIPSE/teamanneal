@@ -64,8 +64,8 @@ export default class ConfigureGroups extends Mixin<AnnealProcessWizardPanel>(Ann
         return this.$store.state as IState;
     }
 
-    get isStrataConfigSizesValid() {
-        return State.isStrataConfigSizesValid(this.state);
+    get IsStrataConfigSizesValid() {
+        return State.IsStrataConfigSizesValid(this.state);
     }
 }
 </script>

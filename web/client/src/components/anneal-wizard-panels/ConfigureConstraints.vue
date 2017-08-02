@@ -93,7 +93,7 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
 
     get isAnnealButtonDisabled() {
         // If no constraints, the anneal button is disabled
-        if (!State.hasConstraints(this.state)) {
+        if (!State.HasConstraints(this.state)) {
             return true;
         }
 

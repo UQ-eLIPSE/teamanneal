@@ -38,38 +38,6 @@ export namespace Stratum {
         return a._id === b._id;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     export function IsSizeMinGreaterThanIdeal(stratum: Data) {
         return stratum.size.min > stratum.size.ideal;
     }
@@ -130,31 +98,4 @@ export namespace Stratum {
 
         return strataGroupSizeDistributions;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
