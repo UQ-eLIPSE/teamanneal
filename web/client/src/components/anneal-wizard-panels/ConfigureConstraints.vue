@@ -73,6 +73,7 @@ import { Component, Mixin } from "av-ts";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import * as AnnealAjax from "../../data/AnnealAjax";
 import * as TeamAnnealState from "../../data/TeamAnnealState";
+import { Data as IState } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import ConstraintsEditor from "../ConstraintsEditor.vue";
@@ -87,9 +88,13 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
 
+    get state() {
+        return this.$store.state as IState;
+    }
+
     get isAnnealButtonDisabled() {
         // If no constraints, the anneal button is disabled
-        if (!TeamAnnealState.hasConstraints(this.$store.state)) {
+        if (!TeamAnnealState.hasConstraints(this.state)) {
             return true;
         }
 
@@ -98,7 +103,7 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
 
     async onAnnealButtonClick() {
         // Convert state to anneal request input 
-        const annealInput = AnnealAjax.transformStateToAnnealRequestBody(this.$store.state);
+        const annealInput = AnnealAjax.transformStateToAnnealRequestBody(this.state);
 
         // Fire off the anneal request
         await this.$store.dispatch("newAnnealAjaxRequest", annealInput);

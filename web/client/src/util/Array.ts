@@ -89,3 +89,33 @@ export function transpose<T>(rows: T[][]) {
 
     return columns;
 }
+
+/**
+ * Finds all indices where searchElement is found in array.
+ * 
+ * From https://stackoverflow.com/a/20798567
+ */
+export function allIndexOf<T>(array: ReadonlyArray<T>, searchElement: T) {
+    const indices = [];
+
+    for (let i = 0; i < array.length; ++i) {
+        if (array[i] === searchElement) {
+            indices.push(i);
+        }
+    }
+
+    return indices;
+}
+
+/**
+ * Filters an array by passing through only elements at the given indices.
+ */
+export function indexFilter<T>(array: ReadonlyArray<T>, indices: ReadonlyArray<number>) {
+    const filteredArray: T[] = [];
+
+    for (let i = 0; i < indices.length; ++i) {
+        filteredArray.push(array[indices[i]]);
+    }
+
+    return filteredArray;
+}

@@ -44,6 +44,7 @@
 import { Component, Mixin } from "av-ts";
 
 import * as TeamAnnealState from "../../data/TeamAnnealState";
+import { Data as IState } from "../../data/State";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -60,8 +61,12 @@ export default class ConfigureGroups extends Mixin<AnnealProcessWizardPanel>(Ann
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureGroups;
 
+    get state() {
+        return this.$store.state as IState;
+    }
+
     get isStrataConfigSizesValid() {
-        return TeamAnnealState.isStrataConfigSizesValid(this.$store.state);
+        return TeamAnnealState.isStrataConfigSizesValid(this.state);
     }
 }
 </script>

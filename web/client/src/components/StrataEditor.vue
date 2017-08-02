@@ -27,14 +27,8 @@ import { Vue, Component } from "av-ts";
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
 import { Data as IState } from "../data/State";
-import { Stratum, Data as IStratum } from "../data/Stratum";
-import { ColumnData } from "../data/ColumnData";
-
-import * as Stratum from "../data/Stratum";
-import * as Partition from "../data/Partition";
-import * as ColumnInfo from "../data/ColumnInfo";
-import * as SourceFile from "../data/SourceFile";
-import * as ConstraintsConfig from "../data/ConstraintsConfig";
+import { Stratum } from "../data/Stratum";
+import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
 
@@ -88,22 +82,7 @@ export default class StrataEditor extends Vue {
         const columns = this.state.recordData.columns;
         const partitionColumnDescriptor = this.state.recordData.partitionColumn;
 
-
-
-        // Splice records up into partitions
-        const cookedData = this.fileInStore.cookedData!;
-        const columnInfo = this.fileInStore.columnInfo!;
-        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
-
-        let partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined;
-
-        if (partitionColumnIndex === undefined) {
-            partitioningColumnInfo = undefined;
-        } else {
-            partitioningColumnInfo = columnInfo[partitionColumnIndex];
-        }
-
-        const partitions = Partition.createPartitions(cookedData, partitioningColumnInfo);
+        const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
         // Run group sizing in each partition, and merge the distributions at
         // the end
@@ -112,7 +91,7 @@ export default class StrataEditor extends Vue {
                 partitions
                     .map((partition) => {
                         // Generate group sizes for each partition
-                        const numberOfRecordsInPartition = partition.length;
+                        const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
                         return Stratum.generateStrataGroupSizes(strata, numberOfRecordsInPartition);
                     })
                     .reduce((carry, incomingDistribution) => {

@@ -43,8 +43,6 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { transpose } from "../../util/Array";
-
 import { Data as IState } from "../../data/State";
 import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
@@ -71,12 +69,7 @@ export default class ReviewRecords extends Mixin<AnnealProcessWizardPanel>(Annea
     }
 
     get cookedDataWithHeader() {
-        const columns = this.columns;
-
-        const columnsWithCookedValues = columns.map(c => [c.label, ...ColumnData.GetCookedColumnValues(c)]);
-        const rowsWithCookedValues = transpose(columnsWithCookedValues);
-
-        return rowsWithCookedValues;
+        return ColumnData.TransposeIntoCookedValueRowArray(this.columns, true);
     }
 }
 </script>
