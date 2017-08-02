@@ -72,8 +72,7 @@ import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import * as AnnealAjax from "../../data/AnnealAjax";
-import * as TeamAnnealState from "../../data/TeamAnnealState";
-import { Data as IState } from "../../data/State";
+import { State, Data as IState } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import ConstraintsEditor from "../ConstraintsEditor.vue";
@@ -94,7 +93,7 @@ export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel
 
     get isAnnealButtonDisabled() {
         // If no constraints, the anneal button is disabled
-        if (!TeamAnnealState.hasConstraints(this.state)) {
+        if (!State.hasConstraints(this.state)) {
             return true;
         }
 

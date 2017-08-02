@@ -33,7 +33,7 @@
                      class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
                                          :tree="rootNode"
-                                         :columnInfo="columns"></SpreadsheetTreeView>
+                                         :columnData="columns"></SpreadsheetTreeView>
                 </div>
             </div>
             <div v-if="rootNodeAvailable"
@@ -74,8 +74,8 @@
 import { Component, Mixin } from "av-ts";
 
 import { unparseFile } from "../../data/CSV";
-import { Data as IState } from "../../data/State";
 import { ColumnData } from "../../data/ColumnData";
+import { State, Data as IState } from "../../data/State";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -110,11 +110,11 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     }
 
     get isRequestInProgress() {
-        return TeamAnnealState.isAnnealRequestInProgress(this.state);
+        return State.isAnnealRequestInProgress(this.state);
     }
 
     get isAnnealSuccessful() {
-        return TeamAnnealState.isAnnealSuccessful(this.state);
+        return State.isAnnealSuccessful(this.state);
     }
 
     get annealError() {

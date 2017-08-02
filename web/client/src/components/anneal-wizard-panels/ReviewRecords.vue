@@ -28,7 +28,7 @@
             <div class="spreadsheet">
                 <SpreadsheetView class="viewer"
                                  :rows="cookedDataWithHeader"
-                                 :columnInfo="columns"></SpreadsheetView>
+                                 :columnData="columns"></SpreadsheetView>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">

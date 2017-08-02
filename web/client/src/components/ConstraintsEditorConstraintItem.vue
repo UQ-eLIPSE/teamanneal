@@ -20,8 +20,8 @@
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
             <DynamicWidthSelect class="select filter-column"
-                                v-model="constraintFilterColumnInfo"
-                                :list="columnInfoList"></DynamicWidthSelect>
+                                v-model="constraintFilterColumnData"
+                                :list="columnDataList"></DynamicWidthSelect>
     
             <DynamicWidthSelect class="select filter-function"
                                 v-if="showFilterFunction"
@@ -89,6 +89,7 @@ import { deepCopy, deepMerge } from "../util/Object";
 import { Data as IStratum } from "../data/Stratum";
 import { Data as IConstraint } from "../data/Constraint";
 import { Data as IState } from "../data/State";
+import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -231,7 +232,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get filterFunctionList() {
-        switch (this.constraintFilterColumnInfo.type) {
+        switch (this.constraintFilterColumnData.type) {
             case "number":
                 return NumberFilterFunctionList;
             case "string":
@@ -241,14 +242,14 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown column type");
     }
 
-    get columnInfo() {
+    get columnData() {
         return this.state.recordData.columns;
     }
 
-    get columnInfoList() {
-        return this.columnInfo.map(columnInfo => ({
-            value: columnInfo,
-            text: columnInfo.label,
+    get columnDataList() {
+        return this.columnData.map(columnData => ({
+            value: columnData,
+            text: columnData.label,
         }));
     }
 
@@ -290,14 +291,14 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             case "count":
             case "limit":
                 return {
-                    column: this.constraintFilterColumnInfo!,
+                    column: this.constraintFilterColumnData!,
                     function: this.constraintFilterFunction!,
                     values: [this.constraintFilterValues!],
                 }
 
             case "similarity":
                 return {
-                    column: this.constraintFilterColumnInfo!,
+                    column: this.constraintFilterColumnData!,
                 }
         }
 
@@ -328,11 +329,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
 
     get filterValueAsSelectList() {
-        const columnInfo = this.constraintFilterColumnInfo;
-        return Array.from(columnInfo.valueSet as Set<number | string>)
+        const columnData = this.constraintFilterColumnData;
+        return Array.from(ColumnData.GetValueSet(columnData) as Set<number | string>)
             .sort()
             .map(value => {
-                switch (columnInfo.type) {
+                switch (columnData.type) {
                     case "number": {
                         return {
                             value: +value,
@@ -380,14 +381,14 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     get showFilterValueAsInput() {
         return (
             this.showFilterFunction &&
-            this.constraintFilterColumnInfo.type === "number"
+            this.constraintFilterColumnData.type === "number"
         );
     }
 
     get showFilterValueAsSelect() {
         return (
             this.showFilterFunction &&
-            this.constraintFilterColumnInfo.type === "string"
+            this.constraintFilterColumnData.type === "string"
         );
     }
 
@@ -557,18 +558,17 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         });
     }
 
-    get constraintFilterColumnInfo() {
-        return this.columnInfo[this.constraint.filter.column];
+    get constraintFilterColumnData() {
+        return ColumnData.ConvertToDataObject(this.state.recordData.columns, this.constraint.filter.column)!;
     }
 
-    set constraintFilterColumnInfo(newValue: ColumnInfo.ColumnInfo) {
-        const oldColumnInfo = this.constraintFilterColumnInfo;
+    set constraintFilterColumnData(newColumnData: IColumnData) {
+        const oldColumnData = this.constraintFilterColumnData;
         const oldFilterValue = this.constraintFilterValues;
-        const newColumnInfo = newValue;
 
         this.updateConstraint({
             filter: {
-                column: newColumnInfo.index,
+                column: ColumnData.ConvertToMinimalDescriptor(newColumnData),
             },
         });
 
@@ -579,11 +579,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // This can only happen after the above column change has been
         // reconciled and hence sits within a Vue.nextTick().
         Vue.nextTick(() => {
-            const oldColumnType = oldColumnInfo.type;
-            const newColumnType = newValue.type;
+            const oldColumnType = oldColumnData.type;
+            const newColumnType = newColumnData.type;
 
             if (oldColumnType !== newColumnType ||
-                oldColumnInfo.index !== newColumnInfo.index) {
+                !ColumnData.Equals(oldColumnData, newColumnData)) {
                 switch (newColumnType) {
                     case "number": {
                         this.constraintFilterValues = +oldFilterValue || 0;
@@ -632,7 +632,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
         let newFilterValue: string | number;
 
-        switch (this.constraintFilterColumnInfo.type) {
+        switch (this.constraintFilterColumnData.type) {
             case "number": {
                 const oldValue = this.constraintFilterValues;
 

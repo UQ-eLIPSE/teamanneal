@@ -93,7 +93,7 @@ import { Vue, Component, Prop, p } from "av-ts";
 import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
-import { Data as IStratum } from "../data/Stratum";
+import { Stratum, Data as IStratum } from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -177,10 +177,10 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeMinClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeMinNotUint32(this.stratum) ||
-                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
-                Stratum.isSizeMinEqualToMax(this.stratum) ||
-                Stratum.isSizeMinLessThanOne(this.stratum)
+                Stratum.IsSizeMinNotUint32(this.stratum) ||
+                Stratum.IsSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.IsSizeMinEqualToMax(this.stratum) ||
+                Stratum.IsSizeMinLessThanOne(this.stratum)
             ),
         }
 
@@ -190,9 +190,9 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeIdealClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeIdealNotUint32(this.stratum) ||
-                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
-                Stratum.isSizeIdealGreaterThanMax(this.stratum)
+                Stratum.IsSizeIdealNotUint32(this.stratum) ||
+                Stratum.IsSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.IsSizeIdealGreaterThanMax(this.stratum)
             ),
         }
 
@@ -202,9 +202,9 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeMaxClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeMaxNotUint32(this.stratum) ||
-                Stratum.isSizeIdealGreaterThanMax(this.stratum) ||
-                Stratum.isSizeMinEqualToMax(this.stratum)
+                Stratum.IsSizeMaxNotUint32(this.stratum) ||
+                Stratum.IsSizeIdealGreaterThanMax(this.stratum) ||
+                Stratum.IsSizeMinEqualToMax(this.stratum)
             ),
         }
 
@@ -224,16 +224,16 @@ export default class StrataEditorStratumItem extends Vue {
 
 
         // Run checks
-        errCheck(Stratum.isSizeMinNotUint32, "Min size is not an integer");
-        errCheck(Stratum.isSizeIdealNotUint32, "Ideal size is not an integer");
-        errCheck(Stratum.isSizeMaxNotUint32, "Max size is not an integer");
+        errCheck(Stratum.IsSizeMinNotUint32, "Min size is not an integer");
+        errCheck(Stratum.IsSizeIdealNotUint32, "Ideal size is not an integer");
+        errCheck(Stratum.IsSizeMaxNotUint32, "Max size is not an integer");
 
-        errCheck(Stratum.isSizeMinGreaterThanIdeal, "Min size cannot be greater than ideal size");
-        errCheck(Stratum.isSizeIdealGreaterThanMax, "Ideal size cannot be greater than max size");
+        errCheck(Stratum.IsSizeMinGreaterThanIdeal, "Min size cannot be greater than ideal size");
+        errCheck(Stratum.IsSizeIdealGreaterThanMax, "Ideal size cannot be greater than max size");
 
-        errCheck(Stratum.isSizeMinEqualToMax, "Min size cannot be equal to max size");
+        errCheck(Stratum.IsSizeMinEqualToMax, "Min size cannot be equal to max size");
 
-        errCheck(Stratum.isSizeMinLessThanOne, "Min size cannot be less than 1");
+        errCheck(Stratum.IsSizeMinLessThanOne, "Min size cannot be less than 1");
 
         // If `groupSizes` is undefined, then the group size calculation failed
         // to produce a valid set of groups

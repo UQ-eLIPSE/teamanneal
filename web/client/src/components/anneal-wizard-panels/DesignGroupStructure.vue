@@ -44,8 +44,7 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import * as TeamAnnealState from "../../data/TeamAnnealState";
-import { Data as IState } from "../../data/State";
+import { State, Data as IState } from "../../data/State";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -67,7 +66,7 @@ export default class DesignGroupStructure extends Mixin<AnnealProcessWizardPanel
     }
 
     get isStrataConfigNamesValid() {
-        return TeamAnnealState.isStrataConfigNamesValid(this.state);
+        return State.isStrataConfigNamesValid(this.state);
     }
 }
 </script>

@@ -65,17 +65,17 @@ export default class ConstraintsEditorStratum extends Vue {
     }
 
     async addNewConstraint() {
-        const columnInfo = this.state.recordData.columns;
+        const columnData = this.state.recordData.columns;
 
         // Pick random column and random default value
-        const defaultColumnIndex = (Math.random() * columnInfo.length) >>> 0;
-        const defaultColumnInfo = columnInfo[defaultColumnIndex];
+        const defaultColumnIndex = (Math.random() * columnData.length) >>> 0;
+        const defaultColumnData = columnData[defaultColumnIndex];
 
-        const valueSetArray = Array.from(ColumnData.GetValueSet(defaultColumnInfo) as Set<string | number>);
+        const valueSetArray = Array.from(ColumnData.GetValueSet(defaultColumnData) as Set<string | number>);
         let defaultFilterValue = valueSetArray[(Math.random() * valueSetArray.length) >>> 0];
 
         // Ensure that the default filter value is of the appropriate type
-        switch (defaultColumnInfo.type) {
+        switch (defaultColumnData.type) {
             case "number": {
                 defaultFilterValue = +defaultFilterValue || 0;
                 break;
@@ -93,7 +93,7 @@ export default class ConstraintsEditorStratum extends Vue {
         const constraintWeight = 50;    // "should have"
         const constraintStratum = this.stratum._id; // Stratum object ID
         const constraintFilter: IConstraint_CountFilter = {
-            column: ColumnData.ConvertToMinimalDescriptor(defaultColumnInfo),
+            column: ColumnData.ConvertToMinimalDescriptor(defaultColumnData),
             function: "eq",
             values: [
                 defaultFilterValue,

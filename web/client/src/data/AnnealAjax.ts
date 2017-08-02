@@ -9,7 +9,7 @@ import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 import * as TeamAnnealState from "./TeamAnnealState";
 import * as ListCounter from "./ListCounter";
-import * as ColumnInfo from "./ColumnInfo";
+import * as ColumnData from "./ColumnData";
 import * as Partition from "./Partition";
 import * as _Stratum from "./Stratum";
 import * as _Constraint from "./Constraint";
@@ -269,7 +269,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
         throw new Error("No cooked data representation");
     }
 
-    if (sourceFile.columnInfo === undefined) {
+    if (sourceFile.columnData === undefined) {
         throw new Error("No column information");
     }
 
@@ -291,22 +291,22 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
     // We use the cooked representation not the raw data to send to the server
     // as the values and types are normalised by the client beforehand
     const cookedData = sourceFile.cookedData;
-    const columnInfo = sourceFile.columnInfo;
+    const columnData = sourceFile.columnData;
 
     const partitionColumnIndex = constraintsConfig.partitionColumnIndex;
 
-    let partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined;
+    let partitioningColumnData: ColumnData.ColumnData | undefined;
 
     if (partitionColumnIndex === undefined) {
-        partitioningColumnInfo = undefined;
+        partitioningColumnData = undefined;
     } else {
-        partitioningColumnInfo = columnInfo[partitionColumnIndex];
+        partitioningColumnData = columnData[partitionColumnIndex];
     }
 
-    const partitions = Partition.createPartitions(cookedData, partitioningColumnInfo);
+    const partitions = Partition.createPartitions(cookedData, partitioningColumnData);
 
     // Map the column info objects into just what we need for the request
-    const columns: SourceDataColumn.ColumnDescArray = columnInfo.map(
+    const columns: SourceDataColumn.ColumnDescArray = columnData.map(
         (column, i) => ({
             label: column.label,
             type: column.type,
@@ -364,7 +364,7 @@ export function transformStateToAnnealRequestBody($state: Partial<TeamAnnealStat
         // If the value is a string that falls under a numeric column, then
         // convert it to a number
         if (typeof value === "string" &&
-            columnInfo[columnIndex].type === "number") {
+            columnData[columnIndex].type === "number") {
             return +value;
         }
 

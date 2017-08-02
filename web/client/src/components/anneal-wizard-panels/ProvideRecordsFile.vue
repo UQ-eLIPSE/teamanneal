@@ -87,7 +87,7 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
     }
 
     get isFileSetInStore() {
-        return TeamAnnealState.hasSourceFileData(this.state);
+        return State.hasSourceFileData(this.state);
     }
 
     async onFileInputChanged($event: Event) {

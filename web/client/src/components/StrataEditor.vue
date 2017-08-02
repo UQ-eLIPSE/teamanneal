@@ -92,7 +92,7 @@ export default class StrataEditor extends Vue {
                     .map((partition) => {
                         // Generate group sizes for each partition
                         const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
-                        return Stratum.generateStrataGroupSizes(strata, numberOfRecordsInPartition);
+                        return Stratum.GenerateStrataGroupSizes(strata, numberOfRecordsInPartition);
                     })
                     .reduce((carry, incomingDistribution) => {
                         // Merge strata group size distribution arrays

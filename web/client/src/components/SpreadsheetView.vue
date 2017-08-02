@@ -3,7 +3,7 @@
         <table>
             <thead>
                 <tr class="header">
-                    <SpreadsheetViewColumnTypeHeader v-for="column in columnInfo"
+                    <SpreadsheetViewColumnTypeHeader v-for="column in columnData"
                                                      :key="column.index"
                                                      :column="column"></SpreadsheetViewColumnTypeHeader>
                 </tr>
@@ -27,7 +27,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as ColumnInfo from "../data/ColumnInfo";
+import { Data as IColumnData } from "../data/ColumnData";
 
 import SpreadsheetViewColumnTypeHeader from "./SpreadsheetViewColumnTypeHeader.vue";
 
@@ -38,8 +38,8 @@ import SpreadsheetViewColumnTypeHeader from "./SpreadsheetViewColumnTypeHeader.v
 })
 export default class SpreadsheetView extends Vue {
     // Props
-    @Prop rows: ReadonlyArray<string | number | null> = p(Array) as any;
-    @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
+    @Prop rows: ReadonlyArray<string | number | null> = p({ type: Array, required: true, }) as any;
+    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
 
     get contentRows() {
         return this.rows.slice(1);
