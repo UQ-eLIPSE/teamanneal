@@ -22,7 +22,7 @@
                 <h2>Group limitations</h2>
                 <p>At present, groups can be created up to two levels deep (excluding partitions.)</p>
             </div>
-            <div v-if="!IsStrataConfigNamesValid"
+            <div v-if="!isStrataConfigNamesValid"
                  class="error-msg">
                 <h3>Group structure is not valid</h3>
                 <p>You have groups with blank or conflicting names. Please correct this before continuing.</p>
@@ -65,7 +65,7 @@ export default class DesignGroupStructure extends Mixin<AnnealProcessWizardPanel
         return this.$store.state as IState;
     }
 
-    get IsStrataConfigNamesValid() {
+    get isStrataConfigNamesValid() {
         return State.IsStrataConfigNamesValid(this.state);
     }
 }

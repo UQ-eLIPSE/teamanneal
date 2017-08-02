@@ -9,7 +9,7 @@
                 </div>
             </div>
         </template>
-        <template v-else-if="IsAnnealSuccessful">
+        <template v-else-if="isAnnealSuccessful">
             <div class="wizard-panel-content">
                 <div class="desc-text">
                     <h1>View result</h1>
@@ -113,7 +113,7 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
         return State.IsAnnealRequestInProgress(this.state);
     }
 
-    get IsAnnealSuccessful() {
+    get isAnnealSuccessful() {
         return State.IsAnnealSuccessful(this.state);
     }
 
