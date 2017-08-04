@@ -10,7 +10,26 @@ export interface Data {
 
     label: string,
     size: Size,
-    counter: ListCounterType | string[],
+
+    namingConfig: {
+        /** Definition of the list used for naming nodes in stratum */
+        counter: ListCounterType | string[],
+
+        /** 
+         * The context under which names are generated
+         * 
+         * For example:
+         * - if set to the global context, names are unique globally
+         * - if set to some the parent stratum, names are unique only within the 
+         *   parent stratum
+         * 
+         * Values are either:
+         * - stratum object ID (to identify a stratum)
+         * - "_PARTITION" literal
+         * - "_GLOBAL" literal
+         */
+        context: string | "_PARTITION" | "_GLOBAL",
+    },
 }
 
 export interface Size {
@@ -27,9 +46,14 @@ export namespace Stratum {
     ) {
         const data: Data = {
             _id: UUID.generate(),
+
             label,
             size,
-            counter,
+
+            namingConfig: {
+                counter,
+                context: "_GLOBAL",     // TODO: Implement adjustable contexts for naming
+            },
         };
 
         return data;

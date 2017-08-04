@@ -145,7 +145,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get randomExampleName() {
-        const counter = this.stratum.counter;
+        const counter = this.stratum.namingConfig.counter;
 
         // Generate a random value for an example name
         // Random index is up to the 20th index
@@ -166,7 +166,7 @@ export default class StrataEditorStratumItem extends Vue {
 
             // Generate sequence of 20 elements, and pick a random one from that
             const randomIndex = ((Math.random() * 20) >>> 0);
-            return counterDesc.generator(20)[randomIndex];
+            return counterDesc.generator(randomIndex, 20);
         }
     }
 
@@ -246,17 +246,17 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get counterType() {
-        const counterValue = this.stratum.counter;
+        const counter = this.stratum.namingConfig.counter;
 
-        if (Array.isArray(counterValue)) {
+        if (Array.isArray(counter)) {
             return "custom";
         } else {
-            return counterValue as string;
+            return counter as string;
         }
     }
 
     set counterType(newValue: string) {
-        const oldCounterValue = this.stratum.counter;
+        const oldCounterValue = this.stratum.namingConfig.counter;
 
         if (newValue === "custom") {
             // If already a custom array, do nothing
@@ -277,11 +277,11 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get isCounterCustomList() {
-        return Array.isArray(this.stratum.counter);
+        return Array.isArray(this.stratum.namingConfig.counter);
     }
 
     get customCounterList() {
-        const counterValue = this.stratum.counter;
+        const counterValue = this.stratum.namingConfig.counter;
 
         if (!Array.isArray(counterValue)) {
             throw new Error("Not custom counter list");
@@ -305,7 +305,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get doesCounterCustomListContainDuplicates() {
-        const counterValue = this.stratum.counter;
+        const counterValue = this.stratum.namingConfig.counter;
 
         if (!Array.isArray(counterValue)) {
             throw new Error("Not custom counter list");

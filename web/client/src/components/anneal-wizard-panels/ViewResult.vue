@@ -29,15 +29,13 @@
                                target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
-                <div v-if="rootNodeAvailable"
-                     class="spreadsheet">
+                <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
                                          :tree="rootNode"
                                          :columnData="columns"></SpreadsheetTreeView>
                 </div>
             </div>
-            <div v-if="rootNodeAvailable"
-                 class="wizard-panel-bottom-buttons">
+            <div class="wizard-panel-bottom-buttons">
                 <button class="button export-button"
                         @click="onExportButtonClick"
                         :disabled="isExportButtonDisabled">Export as CSV</button>
@@ -75,6 +73,7 @@ import { Component, Mixin } from "av-ts";
 
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
+import { AnnealRequest, AxiosError } from "../../data/AnnealRequest";
 import { State, Data as IState } from "../../data/State";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -117,17 +116,16 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
         return State.IsAnnealSuccessful(this.state);
     }
 
-    get annealError() {
-        return this.state.anneal.outputError;
-    }
-
     get annealErrorMessage() {
-        const error = this.annealError;
+        const request = this.state.annealRequest;
 
-        // No error 
-        if (error === undefined) {
+        // No request or no error
+        if (request === undefined || AnnealRequest.IsRequestSuccessful(request)) {
             return undefined;
         }
+
+        // Response here is now the error
+        const error = AnnealRequest.GetResponse(request) as AxiosError;
 
         // Error was returned from server
         const errResponse = error.response;
@@ -162,10 +160,6 @@ XMLHttpRequest {
 
         // Unknown error
         return "Error: Unknown error occurred";
-    }
-
-    get rootNodeAvailable() {
-        return this.state.anneal.outputTree && this.state.anneal.outputTree.children!.length > 0;
     }
 
     get rootNode() {

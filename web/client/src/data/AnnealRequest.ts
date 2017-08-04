@@ -1,4 +1,4 @@
-import axios, { AxiosPromise, CancelTokenSource } from "axios";
+import axios, { AxiosPromise, AxiosResponse, AxiosError, CancelTokenSource } from "axios";
 
 import { reverse } from "../util/Array";
 
@@ -13,10 +13,6 @@ import { Data as IState } from "./State";
 import { Partition } from "./Partition";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
-type ResultArrayContent = ResultArray | Record.RecordSet;
-export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
-export type AnnealOutput = ReadonlyArray<ResultArray>;
-
 export interface Data {
     request: {
         time: number,
@@ -28,26 +24,48 @@ export interface Data {
     },
 }
 
+export type AxiosResponse = AxiosResponse;
+export type AxiosError = AxiosError;
+
 export namespace AnnealRequest {
-    export function InitFromState(state: IState) {
-        // Translate state into request body
-        const body = ConvertStateToAnnealRequestBody(state);
+    /** Holds the "request completed" flag for each AnnealRequest */
+    const RequestCompletionTable = new WeakMap<Data, boolean>();
 
-        // Create AJAX request
-        const { request, cancelTokenSource } = CreateAnnealAjaxRequest(body);
+    /** Holds the AJAX response for each AnnealRequest */
+    const RequestResponseStore = new WeakMap<Data, AxiosResponse | AxiosError>();
 
-        const output: Data = {
+    function Init(
+        requestObject: AxiosPromise,
+        cancelTokenSource: CancelTokenSource,
+        requestBody: ToServerAnnealRequest.Root) {
+        const annealRequestObject: Data = {
             request: {
                 time: Date.now(),
 
-                object: request,
+                object: requestObject,
                 cancelTokenSource,
 
-                body,
+                body: requestBody,
             },
         };
 
-        return output;
+        return annealRequestObject;
+    }
+
+    export function InitFromState(state: IState) {
+        // Translate state into request body and create AJAX request
+        const body = ConvertStateToAnnealRequestBody(state);
+        const { request, cancelTokenSource } = CreateAnnealAjaxRequest(body);
+
+        // Create AnnealRequest object
+        const annealRequestObject = Init(request, cancelTokenSource, body);
+
+        // Manage the completion flag (initially false; handler manages it when
+        // complete)
+        SetCompleted(annealRequestObject, false);
+        AttachCompletionHandler(annealRequestObject);
+
+        return annealRequestObject;
     }
 
     export function ConvertStateToAnnealRequestBody(state: IState) {
@@ -232,7 +250,7 @@ export namespace AnnealRequest {
         return request;
     }
 
-    export function CreateAnnealAjaxRequest(data: any) {
+    function CreateAnnealAjaxRequest(data: any) {
         // Create a cancellation token
         // This is used in event of overlapping requests
         const cancelTokenSource = axios.CancelToken.source();
@@ -249,5 +267,65 @@ export namespace AnnealRequest {
 
     export function Cancel(annealRequest: Data, message?: string) {
         return annealRequest.request.cancelTokenSource.cancel(message);
+    }
+
+    /**
+     * Returns a Promise which is satisfied when the request completes (either 
+     * success or error)
+     */
+    export function WaitForCompletion(annealRequest: Data) {
+        return new Promise<AxiosResponse | AxiosError>((resolve) => {
+            annealRequest.request.object
+                .then(resolve)
+                .catch(resolve);
+        });
+    }
+
+    function AttachCompletionHandler(annealRequest: Data) {
+        // When the AJAX request completes, set the completion flag to true
+        WaitForCompletion(annealRequest)
+            .then((response) => {
+                SetCompleted(annealRequest, true);
+                SetResponse(annealRequest, response);
+            });
+    }
+
+    function SetCompleted(annealRequest: Data, completed: boolean) {
+        return RequestCompletionTable.set(annealRequest, completed);
+    }
+
+    export function GetCompleted(annealRequest: Data) {
+        const completed = RequestCompletionTable.get(annealRequest);
+
+        if (completed === undefined) {
+            throw new Error("Completion flag entry was not found");
+        }
+
+        return completed;
+    }
+
+    function SetResponse(annealRequest: Data, response: AxiosResponse | AxiosError) {
+        return RequestResponseStore.set(annealRequest, response);
+    }
+
+    export function GetResponse(annealRequest: Data) {
+        return RequestResponseStore.get(annealRequest);
+    }
+
+    export function IsRequestSuccessful(annealRequest: Data) {
+        const response = GetResponse(annealRequest);
+
+        // Not yet received response, or unknown request
+        if (response === undefined) {
+            return false;
+        }
+
+        // If the "response" is an Error/AxiosError object
+        if (response instanceof Error) {
+            return false;
+        }
+
+        // Otherwise okay
+        return true;
     }
 }

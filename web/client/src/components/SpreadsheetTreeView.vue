@@ -26,8 +26,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as AnnealAjax from "../data/AnnealAjax";
-import * as ColumnData from "../data/ColumnData";
+import { Data as IColumnData } from "../data/ColumnData";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
@@ -71,7 +70,7 @@ function flatten(flattenedArray: FlattenedTreeItem[], depth: number, node: Annea
 export default class SpreadsheetTreeView extends Vue {
     // Props
     @Prop tree: AnnealAjax.ResultArrayNode = p({ type: Object, required: true, }) as any;
-    @Prop columnData: ReadonlyArray<ColumnData.ColumnData> = p({ type: Array, required: true, }) as any;
+    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
 
     get flattenedTree() {
         return flatten([], 0, this.tree);

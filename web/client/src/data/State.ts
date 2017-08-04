@@ -1,7 +1,7 @@
 import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 import { Data as IConstraint } from "./Constraint";
 import { Stratum, Data as IStratum } from "./Stratum";
-import { Data as IAnnealRequest } from "./AnnealRequest";
+import { AnnealRequest, Data as IAnnealRequest } from "./AnnealRequest";
 import { Partition } from "./Partition";
 
 export interface Data {
@@ -169,26 +169,19 @@ export namespace State {
 
     export function IsAnnealRequestInProgress(state: Data) {
         return (
-            state.anneal &&
-            state.anneal.input &&                   // Has an input anneal request
-            state.anneal.ajaxCancelTokenSource &&   // Has a cancel token set up
-            !state.anneal.output &&                 // But doesn't have a output or error yet
-            !state.anneal.outputError
+            state.annealRequest !== undefined &&
+            !AnnealRequest.GetCompleted(state.annealRequest)    // Is not completed
         );
     }
 
     export function IsAnnealRequestCreated(state: Data) {
-        return (
-            state.anneal &&
-            state.anneal.ajaxCancelTokenSource
-        );
+        return state.annealRequest !== undefined;
     }
 
     export function IsAnnealSuccessful(state: Data) {
         return (
-            state.anneal &&
-            state.anneal.output &&
-            !state.anneal.outputError
+            state.annealRequest !== undefined &&
+            AnnealRequest.IsRequestSuccessful(state.annealRequest)
         );
     }
 

@@ -23,14 +23,14 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as ColumnData from "../data/ColumnData";
+import { Data as IColumnData } from "../data/ColumnData";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 @Component
 export default class SpreadsheetTreeViewItem extends Vue {
     // Props
     @Prop item: FlattenedTreeItem = p({ type: Object, required: true, }) as any;
-    @Prop columnData: ReadonlyArray<ColumnData.ColumnData> = p({ type: Array, required: true, }) as any;
+    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
 
     get numberOfColumns() {
         return this.columnData.length;
