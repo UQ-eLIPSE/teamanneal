@@ -266,12 +266,15 @@ export default class StrataEditorStratumItem extends Vue {
 
             // Otherwise set the counter to a default array
             this.updateStratum({
-                // Default custom list is "Red", "Green", "Blue"
-                counter: ["Red", "Green", "Blue"],
+                namingConfig: {// Default custom list is "Red", "Green", "Blue"
+                    counter: ["Red", "Green", "Blue"],
+                }
             });
         } else {
             this.updateStratum({
-                counter: newValue,
+                namingConfig: {
+                    counter: newValue,
+                }
             });
         }
     }
@@ -294,7 +297,9 @@ export default class StrataEditorStratumItem extends Vue {
         const customCounterList = newValue.split("\n");
 
         this.updateStratum({
-            counter: customCounterList,
+            namingConfig: {
+                counter: customCounterList,
+            }
         });
     }
 
