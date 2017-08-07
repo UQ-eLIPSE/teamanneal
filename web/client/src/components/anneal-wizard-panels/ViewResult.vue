@@ -31,7 +31,7 @@
                 </div>
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :tree="rootNode"
+                                         :annealResultTreeNodeArray="annealResultTreeNodeArray"
                                          :columnData="columns"></SpreadsheetTreeView>
                 </div>
             </div>
@@ -73,8 +73,9 @@ import { Component, Mixin } from "av-ts";
 
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
-import { AnnealRequest, AxiosError } from "../../data/AnnealRequest";
+import { ResultTree, AnnealOutput } from "../../data/ResultTree";
 import { State, Data as IState } from "../../data/State";
+import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -94,10 +95,14 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
         return this.$store.state as IState;
     }
 
+    get columns() {
+        return this.state.recordData.columns;
+    }
+
     onExportButtonClick() {
         // Get the columns and transform them back into 2D string array for
         // exporting
-        const rows = ColumnData.TransposeIntoRawValueRowArray(this.state.recordData.columns, true);
+        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
 
         // Export as CSV
         const sourceFileName = this.state.recordData.source.name;
@@ -162,20 +167,24 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get rootNode() {
-        return this.state.anneal.outputTree;
-    }
+    get annealResultTreeNodeArray() {
+        const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
+        const responseData = response.data as AnnealOutput;
 
-    get rootNodeChildren() {
-        return this.rootNode!.children;
-    }
+        // Collapse all partitions back together as one large array
+        //
+        // NOTE: Currently this does not rearrange nodes such that partitions
+        // are properly dealt with for naming purposes - currently all names
+        // are global (see "client/data/Stratum.ts") so we can do this for now
+        //
+        // TODO: Support handling partitions so that they can be used properly
+        // for naming contexts
+        const resultArray = responseData.reduce((c, x) => [...c, ...x], []);
 
-    get columns() {
-        return this.state.recordData.columns;
-    }
+        // Generate nodes
+        const nodes = ResultTree.InitNodesFromResultArray(this.state, resultArray);
 
-    get outputIdNodeMap() {
-        return this.state.anneal.outputIdNodeMap;
+        return nodes;
     }
 }
 </script>

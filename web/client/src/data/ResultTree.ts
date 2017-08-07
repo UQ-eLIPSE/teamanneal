@@ -29,26 +29,38 @@ interface NodeBase {
     // _id: string,
 }
 
-interface StratumNode extends NodeBase {
+export type StratumNode = StratumNodeWithRecordChildren | StratumNodeWithStrataChildren;
+
+export interface StratumNodeWithRecordChildren extends NodeBase {
     type: "stratum",
 
     stratum: IStratum,
 
-    children: Node[],
+    children: RecordNode[],
+    childrenAreRecords: true,
 }
 
-interface RecordNode extends NodeBase {
+export interface StratumNodeWithStrataChildren extends NodeBase {
+    type: "stratum",
+
+    stratum: IStratum,
+
+    children: StratumNode[],
+    childrenAreRecords: false,
+}
+
+export interface RecordNode extends NodeBase {
     type: "record",
 
     /** Index of this record in original record data set */
     index: number,
 }
 
-type NodeNameMap = WeakMap<StratumNode, NodeNameDescription>;
-type NodeNameMapNameGenerated = WeakMap<StratumNode, NodeNameDescriptionNameGenerated>;
-type NodeNameMapNameNotGenerated = WeakMap<StratumNode, NodeNameDescriptionNameNotGenerated>;
+export type NodeNameMap = WeakMap<StratumNode, NodeNameDescription>;
+export type NodeNameMapNameGenerated = WeakMap<StratumNode, NodeNameDescriptionNameGenerated>;
+export type NodeNameMapNameNotGenerated = WeakMap<StratumNode, NodeNameDescriptionNameNotGenerated>;
 
-interface NodeNameContextMap {
+export interface NodeNameContextMap {
     [context: string]: NodeNameContextMapStratumCountTrack,
 }
 
@@ -93,6 +105,10 @@ interface NodeNameDescriptionNameGenerated {
 
 export namespace ResultTree {
     export function InitNodesFromResultArray(state: IState, resultArray: ResultArray) {
+        // TODO: Move away from reading the state object because the state may
+        // be subject to change between the time the anneal request was made and
+        // when the result array is available
+
         const { columns, idColumn } = state.recordData;
         const { strata } = state.annealConfig;
 
@@ -146,6 +162,7 @@ export namespace ResultTree {
                 type: "stratum",
                 stratum: currentStratum,
                 children,
+                childrenAreRecords: true,
             };
 
             return stratumNode;
@@ -162,6 +179,7 @@ export namespace ResultTree {
                 type: "stratum",
                 stratum: currentStratum,
                 children,
+                childrenAreRecords: false,
             };
 
             return stratumNode;
@@ -212,14 +230,12 @@ export namespace ResultTree {
             //
             // This check is done by inspecting the first child's type:
             // if this is yet another stratum, then we can go deeper
-            const firstChild = node.children[0];
-
-            if (firstChild === undefined) {
+            if (node.children.length === 0) {
                 // Can't continue further if stratum has no children
                 return;
             }
 
-            if (firstChild.type === "stratum") {
+            if (!node.childrenAreRecords) {
                 // Recurse into child strata
                 SetNodeNameDescObjectsRecursive(nameMap, contextMap, node.children as StratumNode[]);
             }
@@ -272,14 +288,12 @@ export namespace ResultTree {
             //
             // This check is done by inspecting the first child's type:
             // if this is yet another stratum, then we can go deeper
-            const firstChild = node.children[0];
-
-            if (firstChild === undefined) {
+            if (node.children.length === 0) {
                 // Can't continue further if stratum has no children
                 return;
             }
 
-            if (firstChild.type === "stratum") {
+            if (!node.childrenAreRecords) {
                 // Recurse into child strata
                 UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap, contextMap, node.children as StratumNode[]);
             }
