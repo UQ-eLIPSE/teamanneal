@@ -90,7 +90,7 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props
-    @Prop annealResultTreeNodeArray: IResultTree_StratumNode[] = p({ type: Object, required: true, }) as any;
+    @Prop annealResultTreeNodeArray: IResultTree_StratumNode[] = p({ type: Array, required: true, }) as any;
     @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
 
     get flattenedTree() {
