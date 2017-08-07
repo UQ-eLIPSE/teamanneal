@@ -69,7 +69,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin, Lifecycle } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
@@ -91,9 +91,6 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
-    private isRequestInProgress: boolean = false;
-    private isAnnealSuccessful: boolean = false;
-
     get state() {
         return this.$store.state as IState;
     }
@@ -114,6 +111,14 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
 
     get isExportButtonDisabled() {
         return this.isRequestInProgress;
+    }
+
+    get isRequestInProgress() {
+        return State.IsAnnealRequestInProgress(this.state);
+    }
+
+    get isAnnealSuccessful() {
+        return State.IsAnnealSuccessful(this.state);
     }
 
     get annealErrorMessage() {
@@ -180,29 +185,6 @@ XMLHttpRequest {
         const nodes = ResultTree.InitNodesFromResultArray(this.state, resultArray);
 
         return nodes;
-    }
-
-    @Lifecycle created() {
-        // Update with state information on creation
-        this.isRequestInProgress = State.IsAnnealRequestInProgress(this.state);
-        this.isAnnealSuccessful = State.IsAnnealSuccessful(this.state);
-
-        // Get anneal request object
-        const annealRequest = this.state.annealRequest;
-        if (annealRequest === undefined) {
-            // No anneal request was generated beforehand at this point, so
-            // we can't listen to it
-            console.log("Anneal request object not found; not listening for request completion");
-            return;
-        }
-
-        // Need to listen to the anneal request object
-        AnnealRequest.WaitForCompletion(annealRequest)
-            .then(() => {
-                // Update again
-                this.isRequestInProgress = State.IsAnnealRequestInProgress(this.state);
-                this.isAnnealSuccessful = State.IsAnnealSuccessful(this.state);
-            });
     }
 }
 </script>

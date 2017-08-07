@@ -84,9 +84,9 @@ export namespace DecimalIndexZeroLeadingZero {
 }
 
 namespace Base26 {
-    export function Generate(index: number): ReadonlyArray<number> {
+    export function Generate(number: number): ReadonlyArray<number> {
         // Based off https://github.com/alexfeseto/hexavigesimal
-        let n = index;                      // Working number
+        let n = number;                     // Working number
         let thisNumArr: number[] = [];      // Number to be built up
 
         while (n > 0) {
@@ -117,7 +117,7 @@ export namespace LowerLatin {
     const startCharCode = 97;       // "a"
 
     export function Generate(index: number): string {
-        return Base26.Generate(index).map((base26Number) => {
+        return Base26.Generate(index + 1).map((base26Number) => {
             return String.fromCharCode(startCharCode + base26Number);
         }).join("");
     }
@@ -135,7 +135,7 @@ export namespace UpperLatin {
     const startCharCode = 65;       // "A"
 
     export function Generate(index: number): string {
-        return Base26.Generate(index).map((base26Number) => {
+        return Base26.Generate(index + 1).map((base26Number) => {
             return String.fromCharCode(startCharCode + base26Number);
         }).join("");
     }

@@ -28,9 +28,6 @@ export type AxiosResponse = AxiosResponse;
 export type AxiosError = AxiosError;
 
 export namespace AnnealRequest {
-    /** Holds the "request completed" flag for each AnnealRequest */
-    const RequestCompletionTable = new WeakMap<Data, boolean>();
-
     /** Holds the AJAX response for each AnnealRequest */
     const RequestResponseStore = new WeakMap<Data, AxiosResponse | AxiosError>();
 
@@ -60,9 +57,8 @@ export namespace AnnealRequest {
         // Create AnnealRequest object
         const annealRequestObject = Init(request, cancelTokenSource, body);
 
-        // Manage the completion flag (initially false; handler manages it when
-        // complete)
-        SetCompleted(annealRequestObject, false);
+        // Attach completion handler so that the response is handled 
+        // appropriately
         AttachCompletionHandler(annealRequestObject);
 
         return annealRequestObject;
@@ -285,23 +281,12 @@ export namespace AnnealRequest {
         // When the AJAX request completes, set the completion flag to true
         WaitForCompletion(annealRequest)
             .then((response) => {
-                SetCompleted(annealRequest, true);
                 SetResponse(annealRequest, response);
             });
     }
 
-    function SetCompleted(annealRequest: Data, completed: boolean) {
-        return RequestCompletionTable.set(annealRequest, completed);
-    }
-
     export function GetCompleted(annealRequest: Data) {
-        const completed = RequestCompletionTable.get(annealRequest);
-
-        if (completed === undefined) {
-            throw new Error("Completion flag entry was not found");
-        }
-
-        return completed;
+        return GetResponse(annealRequest) !== undefined;
     }
 
     function SetResponse(annealRequest: Data, response: AxiosResponse | AxiosError) {

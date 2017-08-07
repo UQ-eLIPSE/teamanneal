@@ -273,6 +273,16 @@ Delete constraints that use this column and try again.`;
 
             // Set new anneal request
             context.commit("setAnnealRequest", annealRequest);
+
+            // On completion, the state object doesn't actually know that the 
+            // underlying object has changed
+            AnnealRequest.WaitForCompletion(annealRequest)
+                .then(() => {
+                    // Force an update by running through a change to invalid
+                    // then to valid object
+                    context.commit("setAnnealRequest", undefined);
+                    Vue.nextTick(() => context.commit("setAnnealRequest", annealRequest));
+                });
         },
     },
 });

@@ -38,9 +38,26 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  */
 function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: IResultTree_StratumNode[]) {
     nodes.forEach((node) => {
+        // Fetch name
+        const nameDesc = nameMap.get(node);
+        if (nameDesc === undefined) {
+            throw new Error("Could not find name description object for node");
+        }
+        const { stratumLabel, nodeGeneratedName } = nameDesc;
+
         if (node.childrenAreRecords) {
             // Node is terminal; contains records, not more strata
 
+            // Create flattened tree item
+            const flattenedTreeItem: FlattenedTreeItem = {
+                content: `${stratumLabel} ${nodeGeneratedName}`,
+                depth,
+            };
+
+            // Push the label of this node (which is an actual group) in
+            flattenedArray.push(flattenedTreeItem);
+
+            // Push records
             node.children.forEach((recordNode) => {
                 // Fetch record
                 const record = recordRows[recordNode.index];
@@ -58,25 +75,17 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
         } else {
             // Node contains further strata underneath
 
-            const nameDesc = nameMap.get(node);
-
-            if (nameDesc === undefined) {
-                throw new Error("Could not find name description object for node");
-            }
-
-            const { stratumLabel, nodeGeneratedName } = nameDesc;
-
             // Create flattened tree item
             const flattenedTreeItem: FlattenedTreeItem = {
                 content: `${stratumLabel} ${nodeGeneratedName}`,
-                depth: depth++,     // Increment depth while we're at it
+                depth,
             };
 
-            // Add basic label at this level
+            // Push stratum label
             flattenedArray.push(flattenedTreeItem);
 
-            // Recurse into children
-            flatten(recordRows, nameMap, flattenedArray, depth, node.children);
+            // Recurse into children (depth increments by one down the tree)
+            flatten(recordRows, nameMap, flattenedArray, depth + 1, node.children);
         }
     });
 
