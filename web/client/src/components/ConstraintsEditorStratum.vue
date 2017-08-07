@@ -44,10 +44,10 @@ import { Vue, Component, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
-import * as UUID from "../data/UUID";
-import * as Stratum from "../data/Stratum";
-import * as Constraint from "../data/Constraint";
-import * as SourceFile from "../data/SourceFile";
+import { Data as IStratum } from "../data/Stratum";
+import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter, CountCondition as IConstraint_CountCondition } from "../data/Constraint";
+import { ColumnData } from "../data/ColumnData";
+import { Data as IState } from "../data/State";
 
 @Component({
     components: {
@@ -56,37 +56,32 @@ import * as SourceFile from "../data/SourceFile";
 })
 export default class ConstraintsEditorStratum extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
-    @Prop stratumConstraints: ReadonlyArray<Constraint.Constraint> = p({ type: Array, required: true, }) as any;
+    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
+    @Prop stratumConstraints: ReadonlyArray<IConstraint> = p({ type: Array, required: true, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
 
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
+    get state() {
+        return this.$store.state as IState;
     }
 
-    get columnInfo() {
-        return this.fileInStore.columnInfo;
-    }
-
-    addNewConstraint() {
-        const columnInfo = this.columnInfo!;
+    async addNewConstraint() {
+        const columnData = this.state.recordData.columns;
 
         // Pick random column and random default value
-        const defaultColumnIndex = (Math.random() * columnInfo.length) >>> 0;
-        const defaultColumnInfo = columnInfo[defaultColumnIndex];
+        const defaultColumnIndex = (Math.random() * columnData.length) >>> 0;
+        const defaultColumnData = columnData[defaultColumnIndex];
 
-        const valueSetArray = Array.from(defaultColumnInfo.valueSet as Set<string | number>);
+        const valueSetArray = Array.from(ColumnData.GetValueSet(defaultColumnData) as Set<string | number>);
         let defaultFilterValue = valueSetArray[(Math.random() * valueSetArray.length) >>> 0];
 
         // Ensure that the default filter value is of the appropriate type
-        switch (defaultColumnInfo.type) {
+        switch (defaultColumnData.type) {
             case "number": {
                 defaultFilterValue = +defaultFilterValue || 0;
                 break;
             }
             case "string": {
-                defaultFilterValue = '' + defaultFilterValue;
+                defaultFilterValue = "" + defaultFilterValue;
                 break;
             }
             default: {
@@ -94,27 +89,24 @@ export default class ConstraintsEditorStratum extends Vue {
             }
         }
 
-        const constraint: Constraint.Constraint = {
-            _id: UUID.generate(),
-            _stratumId: this.stratum._id,
-            strata: Number.NaN,     // We don't use the "strata" property in the internal state
-            weight: 50,
-            type: "count",
-            filter: {
-                column: defaultColumnIndex,
-                function: "eq",
-                values: [
-                    defaultFilterValue,
-                ]
-            },
-            condition: {
-                function: "eq",
-                value: 1
-            },
-            applicability: []
-        }
+        const constraintType = "count";
+        const constraintWeight = 50;    // "should have"
+        const constraintStratum = this.stratum._id; // Stratum object ID
+        const constraintFilter: IConstraint_CountFilter = {
+            column: ColumnData.ConvertToMinimalDescriptor(defaultColumnData),
+            function: "eq",
+            values: [
+                defaultFilterValue,
+            ],
+        };
+        const constraintCondition: IConstraint_CountCondition = {
+            function: "eq",
+            value: 1,
+        };
 
-        this.$store.commit("insertConstraintsConfigConstraint", constraint);
+        const newConstraint = Constraint.Init(constraintType, constraintWeight, constraintStratum, constraintFilter, constraintCondition);
+
+        await this.$store.dispatch("upsertConstraint", newConstraint);
     }
 }
 </script>

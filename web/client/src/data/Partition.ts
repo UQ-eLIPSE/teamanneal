@@ -1,36 +1,74 @@
-import * as SourceData from "../../../common/SourceData";
+import { allIndexOf, indexFilter } from "../util/Array";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
-import * as ColumnInfo from "./ColumnInfo";
+export interface Data {
+    columns: ReadonlyArray<IColumnData>,
+}
 
-export function createPartitions(cookedData: ReadonlyArray<ReadonlyArray<string | number | null>>, partitioningColumnInfo: ColumnInfo.ColumnInfo | undefined): SourceData.PartitionedRecordArray {
-    if (partitioningColumnInfo === undefined) {
-        // In the event that there was no partition column set, then we just 
-        // wrap the records with an array to pretend we have one partition of
-        // all records - this has no difference on the outcome of the anneal
-        return [cookedData];
-    } else {
-        const { index, valueSet } = partitioningColumnInfo;
+export namespace Partition {
+    export function Init(columns: ReadonlyArray<IColumnData>) {
+        const partition: Data = {
+            columns,
+        }
 
-        const tempPartitionSet: any[][] = [];
+        return partition;
+    }
 
-        // Go through each distinct column value to partition
-        (valueSet as Set<number | string>).forEach((val) => {
-            const partition: any[] = [];
+    export function InitManyFromPartitionColumnDescriptor(columns: ReadonlyArray<IColumnData>, partitionColumnDescriptor: IColumnData_MinimalDescriptor | undefined) {
+        if (partitionColumnDescriptor === undefined) {
+            // No partition = return all columns as-is in one partition
+            return [Init(columns)];
+        }
 
-            // For each (cooked) data row, check if the cell value of the row in
-            // the partition column is equal to the distinct value being cycled 
-            // through in the column value forEach loop
-            cookedData.forEach((row) => {
-                if (row[index] === val) {
-                    // If so, push into the rows for this partition
-                    partition.push(row);
-                }
-            });
+        const partitionColumn = ColumnData.ConvertToDataObject(columns, partitionColumnDescriptor);
 
-            // Finally we push the partition into the overall partition set
-            tempPartitionSet.push(partition);
+        if (partitionColumn === undefined) {
+            throw new Error("Could not convert partition column descriptor into data object");
+        }
+
+        // Use the value set of the partition column to split the data up
+        const partitionColumnCookedValues: ReadonlyArray<number | string | null> = ColumnData.GetCookedColumnValues(partitionColumn);
+        const partitionColumnValueSet: Set<number | string> = ColumnData.GetValueSet(partitionColumn);
+
+        // Go through each distinct column value in the partition value set and
+        // convert them into mapping indices
+        const allPartitionIndices: number[][] = [];
+
+        partitionColumnValueSet.forEach((val) => {
+            allPartitionIndices.push(allIndexOf(partitionColumnCookedValues, val));
         });
 
-        return tempPartitionSet;
+        // If the partition column also contains a `null` value, also create a
+        // partition to cover nulls as well
+        if (partitionColumnCookedValues.indexOf(null) > -1) {
+            allPartitionIndices.push(allIndexOf(partitionColumnCookedValues, null));
+        }
+
+        // For each partition, map out a new set of smaller partitioned columns
+        const partitions =
+            allPartitionIndices.map((partitionIndices) => {
+                const columnsForPartition = columns.map(({ rawColumnValues, label, type }) => {
+                    // Extract only the raw column values relevant for this 
+                    // partition
+                    const partitionedRawColumnValues = indexFilter(rawColumnValues, partitionIndices);
+
+                    // Create a new smaller, partitioned column data object
+                    return ColumnData.Init(partitionedRawColumnValues, label, type);
+                });
+
+                return Init(columnsForPartition);
+            });
+
+        return partitions;
+    }
+
+    export function GetNumberOfRecords(partition: Data) {
+        const column: IColumnData | undefined = partition.columns[0];
+
+        if (column === undefined) {
+            throw new Error("No columns in partition");
+        }
+
+        return column.rawColumnValues.length;
     }
 }

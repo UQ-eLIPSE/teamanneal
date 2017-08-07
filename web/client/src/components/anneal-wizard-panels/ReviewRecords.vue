@@ -28,7 +28,7 @@
             <div class="spreadsheet">
                 <SpreadsheetView class="viewer"
                                  :rows="cookedDataWithHeader"
-                                 :columnInfo="columnInfo"></SpreadsheetView>
+                                 :columnData="columns"></SpreadsheetView>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
@@ -43,7 +43,8 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import * as SourceFile from "../../data/SourceFile";
+import { Data as IState } from "../../data/State";
+import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -59,24 +60,16 @@ export default class ReviewRecords extends Mixin<AnnealProcessWizardPanel>(Annea
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
 
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
+    get state() {
+        return this.$store.state as IState;
     }
 
-    get columnInfo() {
-        return this.fileInStore.columnInfo;
+    get columns() {
+        return this.state.recordData.columns;
     }
 
     get cookedDataWithHeader() {
-        const columnInfo = this.columnInfo;
-        const cookedData = this.fileInStore.cookedData;
-
-        if (columnInfo === undefined || cookedData === undefined) {
-            return [];
-        }
-
-        return [columnInfo.map(x => x.label), ...cookedData];
+        return ColumnData.TransposeIntoCookedValueRowArray(this.columns, true);
     }
 }
 </script>

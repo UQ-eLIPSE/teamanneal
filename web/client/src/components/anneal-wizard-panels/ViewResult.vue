@@ -29,15 +29,13 @@
                                target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
-                <div v-if="rootNodeAvailable"
-                     class="spreadsheet">
+                <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :tree="rootNode"
-                                         :columnInfo="columnInfo"></SpreadsheetTreeView>
+                                         :annealResultTreeNodeArray="annealResultTreeNodeArray"
+                                         :columnData="columns"></SpreadsheetTreeView>
                 </div>
             </div>
-            <div v-if="rootNodeAvailable"
-                 class="wizard-panel-bottom-buttons">
+            <div class="wizard-panel-bottom-buttons">
                 <button class="button export-button"
                         @click="onExportButtonClick"
                         :disabled="isExportButtonDisabled">Export as CSV</button>
@@ -72,10 +70,12 @@
 
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
-import * as Papa from "papaparse";
-import * as FileSaver from "file-saver";
 
-import * as TeamAnnealState from "../../data/TeamAnnealState";
+import { unparseFile } from "../../data/CSV";
+import { ColumnData } from "../../data/ColumnData";
+import { ResultTree, AnnealOutput } from "../../data/ResultTree";
+import { State, Data as IState } from "../../data/State";
+import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -91,52 +91,61 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
-    onExportButtonClick() {
-        const exportCsvRows: ReadonlyArray<string | number>[] = [];
-
-        // Use raw data and append the strata columns to the end of them as necessary
-        const rawData = this.sourceFileRawData!;
-        const strata = this.strata!;
-        const outputIdNodeMap = this.outputIdNodeMap!;
-        const idColumnIndex = this.idColumnIndex!;
-
-        rawData.forEach((originalRow, rowIndex) => {
-            // Row must be copied otherwise we're mutating the stored raw data
-            const row = originalRow.slice();
-
-            if (rowIndex === 0) {
-                // If row is header row, just add the stratum label as part of
-                // column headings
-                strata.forEach((stratum) => {
-                    row.push(stratum.label);
-                });
-            } else {
-                // If normal data row, use the row -> hierarchy map to get label
-                const key = '' + originalRow[idColumnIndex];
-
-                const hierarchy = outputIdNodeMap.get(key);
-
-                if (hierarchy === undefined) {
-                    throw new Error(`Could not find node hierarchy for record ID ${key}`);
-                }
-
-                hierarchy.forEach((node) => {
-                    row.push(node.counterValue!);
-                });
-            }
-
-            // Add new row into export array
-            exportCsvRows.push(row);
-        });
-
-        const csvString = Papa.unparse(exportCsvRows);
-
-        const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" })
-        FileSaver.saveAs(csvBlob, `${this.sourceFileName}.teamanneal.csv`, true);
+    get state() {
+        return this.$store.state as IState;
     }
 
-    get state() {
-        return this.$store.state as TeamAnnealState.TeamAnnealState;
+    get columns() {
+        return this.state.recordData.columns;
+    }
+
+    onExportButtonClick() {
+        // Get stratum node name map
+        const nodes = this.annealResultTreeNodeArray;
+        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+
+        // Convert into record node name map
+        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);
+
+        // Extract all record nodes
+        const recordNodes = ResultTree.ExtractRecordNodes(nodes);
+
+        // Get the columns and transform them back into 2D string array for
+        // exporting
+        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
+
+        // Add stratum labels to the header rows
+        const headerRow = rows[0];
+        this.state.annealConfig.strata.forEach((stratum) => {
+            headerRow.push(stratum.label);
+        });
+
+        // Append record names to rows
+        recordNodes.forEach((recordNode) => {
+            // When fetching row to modify, note that record node indices are
+            // not inclusive of the header row; in this instance, we have to +1 
+            // all indices because the `rows` 2D array does contain the header
+            // row (indicated by the `true` flag in the row array transposition 
+            // function)
+            const row = rows[recordNode.index + 1];
+
+            // Get name object array
+            const name = recordNameMap.get(recordNode);
+
+            if (name === undefined) {
+                throw new Error("Name for record node not found");
+            }
+
+            // For the purposes of CSV exports, we only want the generated name 
+            // value and not the stratum label for each record
+            name.forEach((nameObj) => {
+                row.push(nameObj.nodeGeneratedName);
+            });
+        });
+
+        // Export as CSV
+        const sourceFileName = this.state.recordData.source.name;
+        unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
     get isExportButtonDisabled() {
@@ -144,24 +153,23 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     }
 
     get isRequestInProgress() {
-        return TeamAnnealState.isAnnealRequestInProgress(this.state);
+        return State.IsAnnealRequestInProgress(this.state);
     }
 
     get isAnnealSuccessful() {
-        return TeamAnnealState.isAnnealSuccessful(this.state);
-    }
-
-    get annealError() {
-        return this.state.anneal.outputError;
+        return State.IsAnnealSuccessful(this.state);
     }
 
     get annealErrorMessage() {
-        const error = this.annealError;
+        const request = this.state.annealRequest;
 
-        // No error 
-        if (error === undefined) {
+        // No request or no error
+        if (request === undefined || AnnealRequest.IsRequestSuccessful(request)) {
             return undefined;
         }
+
+        // Response here is now the error
+        const error = AnnealRequest.GetResponse(request) as AxiosError;
 
         // Error was returned from server
         const errResponse = error.response;
@@ -198,44 +206,24 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get rootNodeAvailable() {
-        return this.state.anneal.outputTree && this.state.anneal.outputTree.children!.length > 0;
-    }
+    get annealResultTreeNodeArray() {
+        const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
+        const responseData = response.data.output as AnnealOutput;
 
-    get rootNode() {
-        return this.state.anneal.outputTree;
-    }
+        // Collapse all partitions back together as one large array
+        //
+        // NOTE: Currently this does not rearrange nodes such that partitions
+        // are properly dealt with for naming purposes - currently all names
+        // are global (see "client/data/Stratum.ts") so we can do this for now
+        //
+        // TODO: Support handling partitions so that they can be used properly
+        // for naming contexts
+        const resultArray = responseData.reduce((c, x) => [...c, ...x], []);
 
-    get rootNodeChildren() {
-        return this.rootNode!.children;
-    }
+        // Generate nodes
+        const nodes = ResultTree.InitNodesFromResultArray(this.state, resultArray);
 
-    get fileInStore() {
-        return this.state.sourceFile;
-    }
-
-    get columnInfo() {
-        return this.fileInStore.columnInfo;
-    }
-
-    get outputIdNodeMap() {
-        return this.state.anneal.outputIdNodeMap;
-    }
-
-    get sourceFileRawData() {
-        return this.state.sourceFile.rawData;
-    }
-
-    get sourceFileName() {
-        return this.state.sourceFile.name;
-    }
-
-    get strata() {
-        return this.state.constraintsConfig.strata;
-    }
-
-    get idColumnIndex() {
-        return this.state.constraintsConfig.idColumnIndex;
+        return nodes;
     }
 }
 </script>

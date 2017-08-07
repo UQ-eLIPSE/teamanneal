@@ -1,8 +1,7 @@
+import { State, Data as IState } from "../data/State";
 import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
-import * as TeamAnnealState from "../data/TeamAnnealState";
 
 type WNE = WizardNavigationEntry.WizardNavigationEntry;
-type TAState = Partial<TeamAnnealState.TeamAnnealState>;
 
 // These currently undefined variable placeholders are used in the entries
 // objects below to refer to each other at runtime
@@ -21,18 +20,18 @@ export let
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     provideRecordsFile = {
-        label: (state: TAState) => {
-            if (TeamAnnealState.hasSourceFileData(state)) {
-                return `${state.sourceFile!.name}`;
+        label: (state: IState) => {
+            if (State.HasSourceFileData(state)) {
+                return `${state.recordData.source.name}`;
             } else {
                 return "Select records file";
             }
         },
         path: "/anneal/provide-records-file",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             return !(
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -41,13 +40,13 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     reviewRecords = {
         label: "Review data",
         path: "/anneal/review-records",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there is no source file data
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
+                State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -56,13 +55,13 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectIdColumn = {
         label: "Select ID column",
         path: "/anneal/select-id-column",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there is no source file data
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
+                State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -71,14 +70,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectPartitionColumn = {
         label: "Select partition column",
         path: "/anneal/select-partition-column",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -87,14 +86,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     designGroupStructure = {
         label: "Define group structure",
         path: "/anneal/define-group-structure",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -103,16 +102,16 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureGroups = {
         label: "Configure groups",
         path: "/anneal/configure-groups",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigNamesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -121,17 +120,17 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureConstraints = {
         label: "Set constraints",
         path: "/anneal/set-constraints",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigNamesValid(state) &&
-                TeamAnnealState.isStrataConfigSizesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
+                State.IsStrataConfigSizesValid(state) &&
 
                 // Disable when processing request
-                !TeamAnnealState.isAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state)
             );
         },
 
@@ -140,17 +139,17 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     viewResult = {
         label: "View result",
         path: "/anneal/view-result",
-        disabled: (state: TAState) => {
+        disabled: (state: IState) => {
             // Disabled when there are no strata (output groups)
             return !(
-                TeamAnnealState.hasSourceFileData(state) &&
-                TeamAnnealState.hasValidIdColumnIndex(state) &&
-                TeamAnnealState.hasStrata(state) &&
-                TeamAnnealState.isStrataConfigNamesValid(state) &&
-                TeamAnnealState.isStrataConfigSizesValid(state) &&
+                State.HasSourceFileData(state) &&
+                State.HasValidIdColumnIndex(state) &&
+                State.HasStrata(state) &&
+                State.IsStrataConfigNamesValid(state) &&
+                State.IsStrataConfigSizesValid(state) &&
 
                 // Enable only when the anneal request is actually created
-                TeamAnnealState.isAnnealRequestCreated(state)
+                State.IsAnnealRequestCreated(state)
             );
         },
     },

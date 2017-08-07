@@ -1,282 +1,170 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { AxiosError, AxiosPromise, CancelTokenSource } from "axios";
-
-import * as Stratum from "./data/Stratum";
-import * as ColumnInfo from "./data/ColumnInfo";
-import * as Constraint from "./data/Constraint";
-import * as AnnealAjax from "./data/AnnealAjax";
-import * as CookedData from "./data/CookedData";
-import * as TeamAnnealState from "./data/TeamAnnealState";
+import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
+import { Stratum, Data as IStratum } from "./data/Stratum";
+import { Constraint, Data as IConstraint } from "./data/Constraint";
+import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 Vue.use(Vuex);
 
-const state: TeamAnnealState.TeamAnnealState = {
-    /**
-     * Stores a copy of the vue-router's full route path
-     * 
-     * This is updated by the router on "afterEach".
-     */
-    routerFullPath: "",
-
-    anneal: {
-        ajaxRequest: undefined,
-        ajaxCancelTokenSource: undefined,
-
-        input: undefined,
-        output: undefined,
-        outputTree: undefined,
-        outputSatisfaction: undefined,
-        outputIdNodeMap: undefined,
-
-        outputError: undefined,
-    },
-
-    sourceFile: {},
-    constraintsConfig: {
-        idColumnIndex: undefined,
-        partitionColumnIndex: undefined,
-        strata: [],
-        constraints: [],
-    },
-};
+const state: IState = State.Init();
 
 const store = new Vuex.Store({
     strict: true,
     state,
     mutations: {
-        /// Router
-        updateRouterFullPath(state, path: string) {
-            state.routerFullPath = path;
+        /// General root state mutations
+
+        initialiseState(state) {
+            state = State.Init();
         },
 
-
-
-        /// Source file (the current open working file)
-        initialiseSourceFile(state) {
-            state.sourceFile = {};
+        setRecordData(state, recordData: IState_RecordData) {
+            Vue.set(state, "recordData", recordData);
         },
 
-        updateSourceFileName(state, name: string) {
-            Vue.set(state.sourceFile, "name", name);
+        setAnnealConfig(state, annealConfig: IState_AnnealConfig) {
+            Vue.set(state, "annealConfig", annealConfig);
         },
 
-        updateSourceFileRawData(state, data: ReadonlyArray<ReadonlyArray<string | number>>) {
-            Vue.set(state.sourceFile, "rawData", data);
+        /// Strata
+
+        insertStratum(state, stratum: IStratum) {
+            state.annealConfig.strata.push(stratum);
         },
 
-        updateSourceFileCookedData(state, data: ReadonlyArray<ReadonlyArray<string | number | null>>) {
-            Vue.set(state.sourceFile, "cookedData", data);
+        setStratum(state, { stratum, index }: { stratum: IStratum, index: number }) {
+            Vue.set(state.annealConfig.strata, index, stratum);
         },
 
-        updateSourceFileColumnInfo(state, columnInfo: ColumnInfo.ColumnInfo[]) {
-            Vue.set(state.sourceFile, "columnInfo", columnInfo);
+        deleteStratum(state, index: number) {
+            Vue.delete(state.annealConfig.strata, index);
         },
 
-        replaceSourceFileColumnInfo(state, replaceUpdate: ColumnInfo.ReplaceUpdate) {
-            const oldInfo = replaceUpdate.oldColumnInfo;
-            const newInfo = replaceUpdate.newColumnInfo;
+        /// Constraints
 
-            const columnInfo = state.sourceFile.columnInfo!;
-
-            columnInfo.splice(oldInfo.index, 1, newInfo);
+        insertConstraint(state, constraint: IConstraint) {
+            state.annealConfig.constraints.push(constraint);
         },
 
-
-
-        // Incremental constraints configuration build
-        initialiseConstraintsConfig(state) {
-            state.constraintsConfig = {
-                idColumnIndex: undefined,
-                partitionColumnIndex: undefined,
-                strata: [],
-                constraints: [],
-            };
+        setConstraint(state, { constraint, index }: { constraint: IConstraint, index: number }) {
+            Vue.set(state.annealConfig.constraints, index, constraint);
         },
 
-        updateConstraintsConfigIdColumnIndex(state, i: number) {
-            Vue.set(state.constraintsConfig, "idColumnIndex", i);
+        deleteConstraint(state, index: number) {
+            Vue.delete(state.annealConfig.constraints, index);
         },
 
-        updateConstraintsConfigPartitionColumnIndex(state, i: number) {
-            Vue.set(state.constraintsConfig, "partitionColumnIndex", i);
+        /// Column data
+
+        setColumnData(state, { column, index }: { column: IColumnData, index: number }) {
+            Vue.set(state.recordData.columns, index, column);
         },
 
-        deleteConstraintsConfigPartitionColumnIndex(state) {
-            Vue.set(state.constraintsConfig, "partitionColumnIndex", undefined);
+        /// ID column
+
+        setIdColumn(state, idColumn: IColumnData) {
+            const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(idColumn);
+            Vue.set(state.recordData, "idColumn", minimalDescriptor);
         },
 
-        updateConstraintsConfigStrata(state, stratumUpdate: Stratum.Update) {
-            const strata = state.constraintsConfig.strata;
-            const newStratum = stratumUpdate.stratum;
+        /// Partition column
 
-            const index = strata.findIndex(stratum => stratum._id === newStratum._id);
+        setPartitionColumn(state, partitionColumn: IColumnData | undefined) {
+            let minimalDescriptor: IColumnData_MinimalDescriptor | undefined;
 
-            if (index < 0) {
-                return;
+            if (partitionColumn === undefined) {
+                minimalDescriptor = undefined;
+            } else {
+                minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(partitionColumn);
             }
 
-            Vue.set(strata, index, newStratum);
+            Vue.set(state.recordData, "partitionColumn", minimalDescriptor);
         },
 
-        insertConstraintsConfigStrata(state, stratum: Stratum.Stratum) {
-            state.constraintsConfig.strata.push(stratum);
-        },
+        /// Anneal request 
 
-        deleteConstraintsConfigStrataOf(state, _id: string) {
-            const strata = state.constraintsConfig.strata;
-
-            const index = strata.findIndex(stratum => stratum._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.delete(strata, index);
-        },
-
-        updateConstraintsConfigConstraint(state, constraintUpdate: Constraint.Update) {
-            const constraints = state.constraintsConfig.constraints;
-            const updatedConstraint = constraintUpdate.constraint;
-
-            const index = constraints.findIndex(constraint => constraint._id === updatedConstraint._id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.set(constraints, index, updatedConstraint);
-        },
-
-        insertConstraintsConfigConstraint(state, constraint: Constraint.Constraint) {
-            state.constraintsConfig.constraints.push(constraint);
-        },
-
-        deleteConstraintsConfigConstraintOf(state, _id: string) {
-            const constraints = state.constraintsConfig.constraints;
-
-            const index = constraints.findIndex(constraint => constraint._id === _id);
-
-            if (index < 0) {
-                return;
-            }
-
-            Vue.delete(constraints, index);
-        },
-
-
-
-
-        // Anneal AJAX and result
-        initialiseAnnealAjax(state) {
-            state.anneal.ajaxRequest = undefined;
-            state.anneal.ajaxCancelTokenSource = undefined;
-        },
-
-        initialiseAnnealInputOutput(state) {
-            state.anneal.input = undefined;
-            state.anneal.output = undefined;
-            state.anneal.outputTree = undefined;
-            state.anneal.outputSatisfaction = undefined;
-            state.anneal.outputError = undefined;
-        },
-
-        updateAnnealAjaxRequest(state, request: AxiosPromise) {
-            state.anneal.ajaxRequest = request;
-        },
-
-        updateAnnealAjaxCancelTokenSource(state, cancelTokenSource: CancelTokenSource) {
-            state.anneal.ajaxCancelTokenSource = cancelTokenSource;
-        },
-
-        updateAnnealInput(state, input: any) {
-            state.anneal.input = input;
-        },
-
-        updateAnnealOutput(state, output: TeamAnnealState.AnnealOutput) {
-            state.anneal.output = output;
-        },
-
-        updateAnnealOutputTree(state, node: AnnealAjax.ResultArrayNode) {
-            state.anneal.outputTree = node;
-        },
-
-        updateAnnealOutputIdNodeMap(state, map: Map<string, ReadonlyArray<AnnealAjax.ResultArrayNode>>) {
-            state.anneal.outputIdNodeMap = map;
-        },
-
-        updateAnnealOutputError(state, error: AxiosError) {
-            state.anneal.outputError = error;
-        },
+        setAnnealRequest(state, annealRequest: IAnnealRequest) {
+            Vue.set(state, "annealRequest", annealRequest);
+        }
     },
     actions: {
-        // Anneal AJAX and result
-        newAnnealAjaxRequest(context, data: any) {
-            const $state = context.state;
-            const idColumnIndex = $state.constraintsConfig.idColumnIndex;
-
-            // Cancel any existing anneal AJAX request
-            const existingCancelTokenSource = $state.anneal.ajaxCancelTokenSource;
-            AnnealAjax.cancelAnnealAjaxRequest(existingCancelTokenSource);
-
-            // Wipe existing AJAX and anneal request data
-            context.commit("initialiseAnnealAjax");
-            context.commit("initialiseAnnealInputOutput");
-
-            // We need the ID column index for processing later
-            if (idColumnIndex === undefined) {
-                throw new Error("ID column index not defined");
-            }
-
-            // Cache the input
-            context.commit("updateAnnealInput", data);
-
-            // Create and cache the AJAX request
-            if (data === undefined) {
-                throw new Error("No input data to send to server");
-            }
-
-            const { request, cancelTokenSource } = AnnealAjax.createAnnealAjaxRequest(data);
-            context.commit("updateAnnealAjaxRequest", request);
-            context.commit("updateAnnealAjaxCancelTokenSource", cancelTokenSource);
-
-            // On AJAX success, we save the output to the state store
-            request
-                .then((response) => {
-                    // TODO: Make an interface for response data
-                    const data: any = response.data;
-                    const output = data.output;
-
-                    const tree = AnnealAjax.transformOutputIntoTree(output);
-                    AnnealAjax.labelTree(tree, context.state.constraintsConfig.strata!);
-
-                    const idToNodeHierarchyMap = AnnealAjax.mapRawDataToNodeHierarchy(idColumnIndex, tree);
-
-                    context.commit("updateAnnealOutput", output);
-                    context.commit("updateAnnealOutputTree", tree);
-                    context.commit("updateAnnealOutputIdNodeMap", idToNodeHierarchyMap);
-                })
-                .catch((error: AxiosError) => {
-                    // Store the error into the store so that components can 
-                    // read out the error
-                    context.commit("updateAnnealOutputError", error);
-                });
+        /**
+         * Initialises state back to a clean slate
+         */
+        initialiseState(context) {
+            context.commit("initialiseState");
         },
 
+        /**
+         * Performs all actions when clearing record data:
+         * - wipes record data
+         * - wipes anneal configuration (because the anneal config depends on 
+         *   record data set)
+         */
+        clearRecordData(context) {
+            // Wipe record data
+            context.commit("setRecordData", State.GenerateBlankRecordData());
+
+            // Wipe anneal config
+            context.commit("setAnnealConfig", State.GenerateBlankAnnealConfig());
+        },
+
+        /**
+         * Sets new record data and performs all necessary prep work around it
+         */
+        async setNewRecordData(context, recordData: IState_RecordData) {
+            // Wipe record data first
+            await context.dispatch("clearRecordData");
+
+            // Set the record data
+            context.commit("setRecordData", recordData);
+
+            // Add a generic stratum now for users to get started with
+            const stratumLabel = "Team";
+            const stratumSize = {
+                min: 2,
+                ideal: 3,
+                max: 4,
+            };
+
+            const genericStratum = Stratum.Init(stratumLabel, stratumSize);
+
+            await context.dispatch("upsertStratum", genericStratum);
+        },
+
+        /**
+         * Upserts a given stratum
+         */
+        upsertStratum(context, stratum: IStratum) {
+            const strata = context.state.annealConfig.strata;
+
+            // Check if element exists
+            const index = strata.findIndex(s => Stratum.Equals(stratum, s));
+
+            if (index > -1) {
+                // Update
+                return context.commit("setStratum", { stratum, index });
+            } else {
+                // Insert
+                return context.commit("insertStratum", stratum);
+            }
+        },
 
         /**
          * Deletes supplied stratum, but also asks user to confirm this action
          * in the event that constraints will also be deleted
          */
-        deleteStratumConfirmSideEffect(context, stratum: Stratum.Stratum) {
+        deleteStratumConfirmSideEffect(context, stratum: IStratum) {
             const $state = context.state;
 
             // Check if there are constraints that depend on this stratum
-            const constraints = $state.constraintsConfig.constraints || [];
+            const constraints = $state.annealConfig.constraints || [];
             const stratumId = stratum._id;
             const stratumLabel = stratum.label;
-            const dependentConstraints = constraints.filter(c => c._stratumId === stratumId);
+            const dependentConstraints = constraints.filter(c => c.stratum === stratumId);
 
             if (dependentConstraints.length > 0) {
                 const confirmationMessage =
@@ -290,33 +178,55 @@ const store = new Vuex.Store({
                 }
             }
 
-            context.commit("deleteConstraintsConfigStrataOf", stratum._id);
+            // Find index of stratum and delete that one
+            const index = $state.annealConfig.strata.findIndex(s => Stratum.Equals(stratum, s));
+            context.commit("deleteStratum", index);
 
             dependentConstraints.forEach((constraint) => {
-                context.commit("deleteConstraintsConfigConstraintOf", constraint._id);
+                const index = $state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+                context.commit("deleteConstraint", index);
             });
         },
 
         /**
-         * Updates the type of the supplied column info
+         * Upserts a given constraint
          */
-        updateColumnType(context, data: ColumnInfo.ChangeTypeUpdate) {
+        upsertConstraint(context, constraint: IConstraint) {
+            const constraints = context.state.annealConfig.constraints;
+
+            // Check if element exists
+            const index = constraints.findIndex(c => Constraint.Equals(constraint, c));
+
+            if (index > -1) {
+                // Update
+                return context.commit("setConstraint", { constraint, index });
+            } else {
+                // Insert
+                return context.commit("insertConstraint", constraint);
+            }
+        },
+
+        /**
+         * Deletes supplied constraint
+         */
+        deleteConstraint(context, constraint: IConstraint) {
+            // Find index of constraint and delete that one
+            const index = context.state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+            context.commit("deleteConstraint", index);
+        },
+
+        /**
+         * Updates supplied column
+         */
+        updateColumnData(context, column: IColumnData) {
             const $state = context.state;
 
-            const oldColumnInfo = data.columnInfo;
-            const newColumnType = data.newColumnType;
-
-            const colIndex = oldColumnInfo.index;
-            const colLabel = oldColumnInfo.label;
-
-            const rawData = $state.sourceFile.rawData!;
-
             // Check that the column isn't used by any constraints
-            const constraints = $state.constraintsConfig.constraints || [];
+            const constraints = $state.annealConfig.constraints;
 
-            if (constraints.some(c => c.filter.column === colIndex)) {
+            if (constraints.some(c => ColumnData.Equals(column, c.filter.column))) {
                 const message =
-                    `Column "${colLabel}" is currently used by at least one constraint and cannot have its type changed.
+                    `Column "${column.label}" is currently used by at least one constraint and cannot have its type changed.
 
 Delete constraints that use this column and try again.`;
 
@@ -324,39 +234,56 @@ Delete constraints that use this column and try again.`;
                 return;
             }
 
-            // Get the column values again and generate new column info objects
-            const valueSet = ColumnInfo.extractColumnValues(rawData, colIndex, true);
+            // Find index of column and update it
+            const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
+            context.commit("setColumnData", { column, index });
+        },
 
-            let newColumnInfo: ColumnInfo.ColumnInfo;
-            switch (newColumnType) {
-                case "number": {
-                    newColumnInfo = ColumnInfo.createColumnInfoNumber(colLabel, colIndex, valueSet as Set<number>);
-                    break;
-                }
+        /**
+         * Sets the ID column to the given column
+         */
+        setIdColumn(context, idColumn: IColumnData) {
+            context.commit("setIdColumn", idColumn);
+        },
 
-                case "string": {
-                    newColumnInfo = ColumnInfo.createColumnInfoString(colLabel, colIndex, valueSet as Set<string>);
-                    break;
-                }
+        /**
+         * Sets the partition column to the given column
+         */
+        setPartitionColumn(context, partitionColumn: IColumnData) {
+            context.commit("setPartitionColumn", partitionColumn);
+        },
 
-                default:
-                    throw new Error("Unknown column type");
+        /**
+         * Deletes the partition column set in state
+         */
+        deletePartitionColumn(context) {
+            context.commit("setPartitionColumn", undefined);
+        },
+
+        /**
+         * Kills old request (if any) and sets the anneal request object
+         */
+        setAnnealRequest(context, annealRequest: IAnnealRequest) {
+            // Kill any existing request
+            const existingAnnealRequest = context.state.annealRequest;
+
+            if (existingAnnealRequest !== undefined) {
+                AnnealRequest.Cancel(existingAnnealRequest);
             }
 
-            // Update store column info
-            const updateData: ColumnInfo.ReplaceUpdate = {
-                oldColumnInfo,
-                newColumnInfo,
-            }
-            context.commit("replaceSourceFileColumnInfo", updateData);
+            // Set new anneal request
+            context.commit("setAnnealRequest", annealRequest);
 
-            // Recook the data with new columns in the store
-            const columnInfoArray = $state.sourceFile.columnInfo!;
-            const cookedData = CookedData.cook(columnInfoArray, rawData, true);
-
-            // Serve freshly cooked data to the stale store
-            context.commit("updateSourceFileCookedData", cookedData);
-        }
+            // On completion, the state object doesn't actually know that the 
+            // underlying object has changed
+            AnnealRequest.WaitForCompletion(annealRequest)
+                .then(() => {
+                    // Force an update by running through a change to invalid
+                    // then to valid object
+                    context.commit("setAnnealRequest", undefined);
+                    Vue.nextTick(() => context.commit("setAnnealRequest", annealRequest));
+                });
+        },
     },
 });
 

@@ -93,9 +93,10 @@ import { Vue, Component, Prop, p } from "av-ts";
 import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
-import DynamicWidthInputField from "./DynamicWidthInputField.vue";
-import * as Stratum from "../data/Stratum";
+import { Stratum, Data as IStratum } from "../data/Stratum";
 import * as ListCounter from "../data/ListCounter";
+
+import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
 const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
     const list: { value: string, text: string, }[] =
@@ -122,7 +123,7 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 })
 export default class StrataEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
+    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
     @Prop groupSizes: { [groupSize: number]: number } = p({ required: false, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
@@ -144,7 +145,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get randomExampleName() {
-        const counter = this.stratum.counter;
+        const counter = this.stratum.namingConfig.counter;
 
         // Generate a random value for an example name
         // Random index is up to the 20th index
@@ -165,7 +166,7 @@ export default class StrataEditorStratumItem extends Vue {
 
             // Generate sequence of 20 elements, and pick a random one from that
             const randomIndex = ((Math.random() * 20) >>> 0);
-            return counterDesc.generator(20)[randomIndex];
+            return counterDesc.generator(randomIndex, 20);
         }
     }
 
@@ -176,10 +177,10 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeMinClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeMinNotUint32(this.stratum) ||
-                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
-                Stratum.isSizeMinEqualToMax(this.stratum) ||
-                Stratum.isSizeMinLessThanOne(this.stratum)
+                Stratum.IsSizeMinNotUint32(this.stratum) ||
+                Stratum.IsSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.IsSizeMinEqualToMax(this.stratum) ||
+                Stratum.IsSizeMinLessThanOne(this.stratum)
             ),
         }
 
@@ -189,9 +190,9 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeIdealClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeIdealNotUint32(this.stratum) ||
-                Stratum.isSizeMinGreaterThanIdeal(this.stratum) ||
-                Stratum.isSizeIdealGreaterThanMax(this.stratum)
+                Stratum.IsSizeIdealNotUint32(this.stratum) ||
+                Stratum.IsSizeMinGreaterThanIdeal(this.stratum) ||
+                Stratum.IsSizeIdealGreaterThanMax(this.stratum)
             ),
         }
 
@@ -201,9 +202,9 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumSizeMaxClasses() {
         const classes = {
             "invalid-size": (
-                Stratum.isSizeMaxNotUint32(this.stratum) ||
-                Stratum.isSizeIdealGreaterThanMax(this.stratum) ||
-                Stratum.isSizeMinEqualToMax(this.stratum)
+                Stratum.IsSizeMaxNotUint32(this.stratum) ||
+                Stratum.IsSizeIdealGreaterThanMax(this.stratum) ||
+                Stratum.IsSizeMinEqualToMax(this.stratum)
             ),
         }
 
@@ -218,21 +219,21 @@ export default class StrataEditorStratumItem extends Vue {
          * Runs error check functions, and if true, adds error message to array
          */
         const errCheck =
-            (func: (stratum: Stratum.Stratum) => boolean, msg: string) =>
+            (func: (stratum: IStratum) => boolean, msg: string) =>
                 func(stratum) && errMsgs.push(msg);
 
 
         // Run checks
-        errCheck(Stratum.isSizeMinNotUint32, "Min size is not an integer");
-        errCheck(Stratum.isSizeIdealNotUint32, "Ideal size is not an integer");
-        errCheck(Stratum.isSizeMaxNotUint32, "Max size is not an integer");
+        errCheck(Stratum.IsSizeMinNotUint32, "Min size is not an integer");
+        errCheck(Stratum.IsSizeIdealNotUint32, "Ideal size is not an integer");
+        errCheck(Stratum.IsSizeMaxNotUint32, "Max size is not an integer");
 
-        errCheck(Stratum.isSizeMinGreaterThanIdeal, "Min size cannot be greater than ideal size");
-        errCheck(Stratum.isSizeIdealGreaterThanMax, "Ideal size cannot be greater than max size");
+        errCheck(Stratum.IsSizeMinGreaterThanIdeal, "Min size cannot be greater than ideal size");
+        errCheck(Stratum.IsSizeIdealGreaterThanMax, "Ideal size cannot be greater than max size");
 
-        errCheck(Stratum.isSizeMinEqualToMax, "Min size cannot be equal to max size");
+        errCheck(Stratum.IsSizeMinEqualToMax, "Min size cannot be equal to max size");
 
-        errCheck(Stratum.isSizeMinLessThanOne, "Min size cannot be less than 1");
+        errCheck(Stratum.IsSizeMinLessThanOne, "Min size cannot be less than 1");
 
         // If `groupSizes` is undefined, then the group size calculation failed
         // to produce a valid set of groups
@@ -245,17 +246,17 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get counterType() {
-        const counterValue = this.stratum.counter;
+        const counter = this.stratum.namingConfig.counter;
 
-        if (Array.isArray(counterValue)) {
+        if (Array.isArray(counter)) {
             return "custom";
         } else {
-            return counterValue as string;
+            return counter as string;
         }
     }
 
     set counterType(newValue: string) {
-        const oldCounterValue = this.stratum.counter;
+        const oldCounterValue = this.stratum.namingConfig.counter;
 
         if (newValue === "custom") {
             // If already a custom array, do nothing
@@ -265,22 +266,25 @@ export default class StrataEditorStratumItem extends Vue {
 
             // Otherwise set the counter to a default array
             this.updateStratum({
-                // Default custom list is "Red", "Green", "Blue"
-                counter: ["Red", "Green", "Blue"],
+                namingConfig: {// Default custom list is "Red", "Green", "Blue"
+                    counter: ["Red", "Green", "Blue"],
+                }
             });
         } else {
             this.updateStratum({
-                counter: newValue,
+                namingConfig: {
+                    counter: newValue,
+                }
             });
         }
     }
 
     get isCounterCustomList() {
-        return Array.isArray(this.stratum.counter);
+        return Array.isArray(this.stratum.namingConfig.counter);
     }
 
     get customCounterList() {
-        const counterValue = this.stratum.counter;
+        const counterValue = this.stratum.namingConfig.counter;
 
         if (!Array.isArray(counterValue)) {
             throw new Error("Not custom counter list");
@@ -293,7 +297,9 @@ export default class StrataEditorStratumItem extends Vue {
         const customCounterList = newValue.split("\n");
 
         this.updateStratum({
-            counter: customCounterList,
+            namingConfig: {
+                counter: customCounterList,
+            }
         });
     }
 
@@ -304,7 +310,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get doesCounterCustomListContainDuplicates() {
-        const counterValue = this.stratum.counter;
+        const counterValue = this.stratum.namingConfig.counter;
 
         if (!Array.isArray(counterValue)) {
             throw new Error("Not custom counter list");
@@ -320,16 +326,11 @@ export default class StrataEditorStratumItem extends Vue {
         return counterValueSet.size !== trimmedCounterStrings.length;
     }
 
-    updateStratum(diff: any) {
+    async updateStratum(diff: any) {
         // Deep copy and merge in diff
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
-        // Commit update
-        const stratumUpdate: Stratum.Update = {
-            stratum: newStratum,
-        }
-
-        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
+        await this.$store.dispatch("upsertStratum", newStratum);
     }
 
     get stratumSizeMin() {
