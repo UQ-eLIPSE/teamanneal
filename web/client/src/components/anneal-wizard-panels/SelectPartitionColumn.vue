@@ -114,7 +114,7 @@
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
                     @click="setPartitionColumn"
-                    :disabled="partitionColumnIndex === '-1'">Set partition column</button>
+                    :disabled="partitionColumn !== undefined">Set partition column</button>
             <button class="button gold"
                     @click="skipPartitioning">Don't partition</button>
         </div>

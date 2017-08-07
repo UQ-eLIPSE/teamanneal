@@ -99,7 +99,7 @@ export default class StrataStructureEditor extends Vue {
             throw new Error("No partition column set");
         }
 
-        const shimLabel = partitionColumn.label;
+        const shimLabel = `Partition (${partitionColumn.label})`;
         const shimSize = {
             min: 0,
             ideal: 0,
