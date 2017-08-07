@@ -60,6 +60,9 @@ export type NodeNameMap = WeakMap<StratumNode, NodeNameDescription>;
 export type NodeNameMapNameGenerated = WeakMap<StratumNode, NodeNameDescriptionNameGenerated>;
 export type NodeNameMapNameNotGenerated = WeakMap<StratumNode, NodeNameDescriptionNameNotGenerated>;
 
+export type RecordNodeNameAccumulatedArray = ReadonlyArray<{ stratumLabel: string, nodeGeneratedName: string, }>;
+export type RecordNodeNameMap = WeakMap<RecordNode, RecordNodeNameAccumulatedArray>;
+
 export interface NodeNameContextMap {
     [context: string]: NodeNameContextMapStratumCountTrack,
 }
@@ -387,6 +390,69 @@ export namespace ResultTree {
 
             nodeNameDescObj.nodeGeneratedName = counterDesc.generator(nameContextNodeIndex, contextNameGenerationCount);
         }
+
+        // Do not return a value - this indicates it operates in place
+        return;
+    }
+
+    export function GenerateRecordNodeNameMap(stratumNodeNameMap: NodeNameMap, nodes: StratumNode[]) {
+        const recordNodeNameMap: RecordNodeNameMap = new WeakMap();
+
+        // Walk nodes to build up names for records
+        SetRecordNodeNamesRecursive(stratumNodeNameMap, recordNodeNameMap, [], nodes);
+
+        return recordNodeNameMap;
+    }
+
+    function SetRecordNodeNamesRecursive(stratumNodeNameMap: NodeNameMap, recordNodeNameMap: RecordNodeNameMap, accumulatedName: RecordNodeNameAccumulatedArray, nodes: StratumNode[]) {
+        nodes.forEach((node) => {
+            // Fetch stratum node name
+            const nameDesc = stratumNodeNameMap.get(node);
+            if (nameDesc === undefined) {
+                throw new Error("Could not find name description object for node");
+            }
+            const { stratumLabel, nodeGeneratedName } = nameDesc;
+
+            if (nodeGeneratedName === undefined) {
+                throw new Error("No generated name found for record node");
+            }
+
+            // Accumulate name
+            const name = [...accumulatedName, { stratumLabel, nodeGeneratedName }];
+
+            if (node.childrenAreRecords) {
+                // For each child (record) we map the record to the accumulated 
+                // array (name)
+                node.children.forEach((recordNode) => {
+                    recordNodeNameMap.set(recordNode, name);
+                });
+
+            } else if (node.childrenAreRecords === false) {
+                // Recurse down
+                SetRecordNodeNamesRecursive(stratumNodeNameMap, recordNodeNameMap, name, node.children);
+            }
+        });
+
+        // Do not return a value - this indicates it operates in place
+        return;
+    }
+
+    export function ExtractRecordNodes(nodes: StratumNode[]) {
+        const records: RecordNode[] = [];
+        ExtractRecordNodesRecursive(records, nodes);
+        return records;
+    }
+
+    function ExtractRecordNodesRecursive(accumulatedRecords: RecordNode[], nodes: StratumNode[]) {
+        nodes.forEach((node) => {
+            if (node.childrenAreRecords) {
+                node.children.forEach((recordNode) => {
+                    accumulatedRecords.push(recordNode);
+                });
+            } else if (node.childrenAreRecords === false) {
+                ExtractRecordNodesRecursive(accumulatedRecords, node.children);
+            }
+        });
 
         // Do not return a value - this indicates it operates in place
         return;

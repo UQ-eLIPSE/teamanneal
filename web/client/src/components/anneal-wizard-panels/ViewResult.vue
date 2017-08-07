@@ -100,9 +100,48 @@ export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealPr
     }
 
     onExportButtonClick() {
+        // Get stratum node name map
+        const nodes = this.annealResultTreeNodeArray;
+        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+
+        // Convert into record node name map
+        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);
+
+        // Extract all record nodes
+        const recordNodes = ResultTree.ExtractRecordNodes(nodes);
+
         // Get the columns and transform them back into 2D string array for
         // exporting
         const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
+
+        // Add stratum labels to the header rows
+        const headerRow = rows[0];
+        this.state.annealConfig.strata.forEach((stratum) => {
+            headerRow.push(stratum.label);
+        });
+
+        // Append record names to rows
+        recordNodes.forEach((recordNode) => {
+            // When fetching row to modify, note that record node indices are
+            // not inclusive of the header row; in this instance, we have to +1 
+            // all indices because the `rows` 2D array does contain the header
+            // row (indicated by the `true` flag in the row array transposition 
+            // function)
+            const row = rows[recordNode.index + 1];
+
+            // Get name object array
+            const name = recordNameMap.get(recordNode);
+
+            if (name === undefined) {
+                throw new Error("Name for record node not found");
+            }
+
+            // For the purposes of CSV exports, we only want the generated name 
+            // value and not the stratum label for each record
+            name.forEach((nameObj) => {
+                row.push(nameObj.nodeGeneratedName);
+            });
+        });
 
         // Export as CSV
         const sourceFileName = this.state.recordData.source.name;
