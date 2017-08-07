@@ -74,6 +74,13 @@
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
+                <p>Naming context:
+                    <select v-model="namingContext">
+                        <option v-for="namingContextOption in namingContextOptionList"
+                                :key="namingContextOption.value"
+                                :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                    </select>
+                </p>
             </div>
         </div>
         <div v-else
@@ -127,6 +134,7 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit: string = p({ type: String, required: true, }) as any;
     @Prop groupSizes: { [groupSize: number]: number } = p({ required: false, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
+    @Prop namingContexts: IStratum[] = p({ type: Array, required: false, default: [], }) as any;
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -324,6 +332,35 @@ export default class StrataEditorStratumItem extends Vue {
         const counterValueSet = new Set(trimmedCounterStrings);
 
         return counterValueSet.size !== trimmedCounterStrings.length;
+    }
+
+    get namingContext() {
+        return this.stratum.namingConfig.context;
+    }
+
+    set namingContext(newValue: string) {
+        this.updateStratum({
+            namingConfig: {
+                context: newValue,
+            },
+        });
+    }
+
+    get namingContextOptionList() {
+        const list = this.namingContexts.map((stratum) => {
+            return {
+                value: stratum._id,
+                text: stratum.label,
+            };
+        });
+
+        // Global is always available
+        list.unshift({
+            value: "_GLOBAL",
+            text: "<Global>",
+        });
+
+        return list;
     }
 
     async updateStratum(diff: any) {
