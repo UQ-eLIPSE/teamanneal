@@ -7,11 +7,12 @@
                                               :stratumConstraints="[]"
                                               :isPartition="true"></ConstraintsEditorStratum>
                 </li>
-                <li v-for="stratum in strata"
+                <li v-for="(stratum, i) in strata"
                     :key="stratum._id">
                     <ConstraintsEditorStratum :stratum="stratum"
                                               :stratumConstraints="getStratumConstraints(stratum)"
-                                              :isPartition="false"></ConstraintsEditorStratum>
+                                              :isPartition="false"
+                                              :groupSizes="strataGroupSizes[i]"></ConstraintsEditorStratum>
                 </li>
             </ul>
         </div>
