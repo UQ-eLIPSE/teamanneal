@@ -1,72 +1,47 @@
 <template>
     <div class="constraint-item">
         <div class="constraint-content">
-            <DynamicWidthSelect class="select cost-weight"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintCostWeight"
                                 :list="costWeightList"></DynamicWidthSelect>
     
             <span v-if="!personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
-            <DynamicWidthSelect class="select condition-function"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintConditionFunction"
                                 :list="conditionFunctionList"></DynamicWidthSelect>
     
-            <DynamicWidthInputField class="input condition-count"
+            <DynamicWidthInputField class="input"
                                     v-if="showConditionCount"
                                     v-model="constraintConditionCount"></DynamicWidthInputField>
     
             <span v-if="personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
-            <DynamicWidthSelect class="select filter-column"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintFilterColumnData"
                                 :list="columnDataList"></DynamicWidthSelect>
     
-            <DynamicWidthSelect class="select filter-function"
+            <DynamicWidthSelect class="select"
                                 v-if="showFilterFunction"
                                 v-model="constraintFilterFunction"
                                 :list="filterFunctionList"></DynamicWidthSelect>
     
-            <DynamicWidthInputField class="input filter-value"
+            <DynamicWidthInputField class="input"
                                     v-if="showFilterValueAsInput"
                                     v-model="constraintFilterValues"></DynamicWidthInputField>
     
-            <DynamicWidthSelect class="select filter-value"
+            <DynamicWidthSelect class="select"
                                 v-if="showFilterValueAsSelect"
                                 v-model="constraintFilterValues"
                                 :list="filterValueAsSelectList"></DynamicWidthSelect>
     
-            <span class="group-size-applicability-condition-fragment"
-                  :class="groupSizeApplicabilityConditionFragmentClasses">when {{ stratum.label }} has
-                <span class="popover-link-area">
-                    <a href="#"
-                       @click.prevent="onGroupSizeApplicabilityConditionValueClick">{{ groupSizeApplicabilityConditionDisplayedValue }} {{ groupSizeApplicabilityConditionPersonUnitNoun }}</a>
-                    <div class="popover"
-                         v-if="groupSizeApplicabilityConditionPopoverVisible">
-                        <ul>
-                            <li>
-                                <label>
-                                    <input type="radio"
-                                           name="groupSizeApplicabilityConditionPresence"
-                                           value="not-specified"
-                                           v-model="groupSizeApplicabilityConditionPresence"> any number of people</label>
-                            </li>
-                            <li @click="onGroupSizeApplicabilityConditionValueInputFieldClick">
-                                <label>
-                                    <input type="radio"
-                                           name="groupSizeApplicabilityConditionPresence"
-                                           value="specified"
-                                           v-model="groupSizeApplicabilityConditionPresence">
-                                    <DynamicWidthInputField class="input"
-                                                            :minWidth="5"
-                                                            :disabled="constraintGroupSizeApplicabilityCondition === undefined"
-                                                            v-model="groupSizeApplicabilityConditionValue"></DynamicWidthInputField> {{ groupSizeApplicabilityConditionPersonUnitNoun }}</label>
-                            </li>
-                        </ul>
-                    </div>
-                </span>
-            </span>
+            <span>when {{ stratum.label }} has
+                <DynamicWidthSelect class="select"
+                                    v-model="groupSizeApplicabilityConditionValue"
+                                    :list="filterValueAsSelectList"></DynamicWidthSelect>
+                people</span>
         </div>
         <div class="action-buttons">
             <button class="button delete"
@@ -240,6 +215,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         }
 
         throw new Error("Unknown column type");
+    }
+
+    get groupSizeApplicabilityConditionList() {
+        throw new Error("Not implemented");
     }
 
     get columnData() {
@@ -898,54 +877,5 @@ button.delete:active::before {
      * License: CC BY 3.0 US
      */
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
-}
-
-.group-size-applicability-condition-fragment .popover-link-area {
-    display: inline-block;
-}
-
-.group-size-applicability-condition-fragment .popover-link-area a {
-    background: none;
-    text-decoration: none;
-
-    display: block;
-
-    border: 0;
-    border-bottom: 1px dotted;
-
-    padding: 0 0.2em;
-
-    color: inherit;
-
-    cursor: pointer;
-}
-
-.group-size-applicability-condition-fragment.popover-active .popover-link-area a {
-    outline: 2px solid #608;
-    border-bottom-color: transparent;
-}
-
-.group-size-applicability-condition-fragment .popover {
-    position: absolute;
-    display: inline-block;
-
-    background: #fff;
-    padding: 0.5em;
-
-    min-width: 13em;
-    font-size: 0.7em;
-
-    margin-left: -2px;
-
-    border: 2px solid #608;
-}
-
-.group-size-applicability-condition-fragment .popover ul {
-    padding: 0;
-    list-style: none;
-}
-
-.group-size-applicability-condition-fragment .popover .input[disabled] {
-    padding: 0;
 }
 </style>
