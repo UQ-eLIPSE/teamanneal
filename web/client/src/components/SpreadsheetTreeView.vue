@@ -108,7 +108,7 @@ export default class SpreadsheetTreeView extends Vue {
 
         // Get name map
         const nodes = this.annealResultTreeNodeArray;
-        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+        const nameMap = ResultTree.GenerateNodeNameMap(nodes);
 
         return flatten(recordRows, nameMap, [], 0, nodes);
     }

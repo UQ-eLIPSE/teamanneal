@@ -99,7 +99,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
     onExportButtonClick() {
         // Get stratum node name map
         const nodes = this.annealResultTreeNodeArray;
-        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+        const nameMap = ResultTree.GenerateNodeNameMap(nodes);
 
         // Convert into record node name map
         const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);

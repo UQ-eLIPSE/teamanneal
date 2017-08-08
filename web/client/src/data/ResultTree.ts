@@ -26,7 +26,7 @@ export type AnnealOutput = ReadonlyArray<ResultArray>;
 export type Node = StratumNode | RecordNode;
 
 interface NodeBase {
-    // _id: string,
+    parent: Node | undefined,
 }
 
 export type StratumNode = StratumNodeWithRecordChildren | StratumNodeWithStrataChildren;
@@ -49,6 +49,12 @@ export interface StratumNodeWithStrataChildren extends NodeBase {
     childrenAreRecords: false,
 }
 
+export interface ContextShimNode {
+    type: "context-shim",
+
+    context: "_PARTITION" | "_GLOBAL",
+}
+
 export interface RecordNode extends NodeBase {
     type: "record",
 
@@ -63,9 +69,7 @@ export type NodeNameMapNameNotGenerated = WeakMap<StratumNode, NodeNameDescripti
 export type RecordNodeNameAccumulatedArray = ReadonlyArray<{ stratumLabel: string, nodeGeneratedName: string, }>;
 export type RecordNodeNameMap = WeakMap<RecordNode, RecordNodeNameAccumulatedArray>;
 
-export interface NodeNameContextMap {
-    [context: string]: NodeNameContextMapStratumCountTrack,
-}
+export type NodeNameContextMap = WeakMap<ContextShimNode | StratumNode, NodeNameContextMapStratumCountTrack>;
 
 interface NodeNameContextMapStratumCountTrack {
     /** 
@@ -107,6 +111,12 @@ interface NodeNameDescriptionNameGenerated {
 }
 
 export namespace ResultTree {
+    // Shim for global node
+    const _GLOBAL_NODE: ContextShimNode = {
+        type: "context-shim",
+        context: "_GLOBAL",
+    };
+
     export function InitNodesFromResultArray(state: IState, resultArray: ResultArray) {
         // TODO: Move away from reading the state object because the state may
         // be subject to change between the time the anneal request was made and
@@ -126,11 +136,11 @@ export namespace ResultTree {
         }
 
         return resultArray.map((resultArrayContent) =>
-            InitNodeRecursive(columns[idColumnIndex], idColumnIndex, strata, resultArrayContent)
+            InitNodeRecursive(columns[idColumnIndex], idColumnIndex, strata, undefined, resultArrayContent)
         );
     }
 
-    function InitNodeRecursive(idColumnData: IColumnData, idColumnIndex: number, [currentStratum, ...remainingStrata]: ReadonlyArray<IStratum>, resultArrayContent: ResultArrayContent): StratumNode {
+    function InitNodeRecursive(idColumnData: IColumnData, idColumnIndex: number, [currentStratum, ...remainingStrata]: ReadonlyArray<IStratum>, parentNode: Node | undefined, resultArrayContent: ResultArrayContent): StratumNode {
         if (currentStratum === undefined) {
             throw new Error("No stratum information provided");
         }
@@ -141,49 +151,59 @@ export namespace ResultTree {
             const records = resultArrayContent as Record.RecordSet;
             const idColumnCookedValues: ReadonlyArray<number | string | null> = ColumnData.GetCookedColumnValues(idColumnData);
 
-            // Map out record nodes for children
-            const children =
-                records.map((record) => {
-                    // Get the cooked ID column value from the returned records
-                    // and find their indices in the original record data set
-                    const recordIndex = idColumnCookedValues.indexOf(record[idColumnIndex]);
-
-                    if (recordIndex < 0) {
-                        throw new Error("Record not found");
-                    }
-
-                    const node: RecordNode = {
-                        type: "record",
-                        index: recordIndex,
-                    };
-
-                    return node;
-                });
-
             // Create stratum node
             const stratumNode: StratumNode = {
                 type: "stratum",
+                parent: parentNode,
                 stratum: currentStratum,
-                children,
+                children: [],                   // Temporarily blank, see below
                 childrenAreRecords: true,
             };
+
+            // Children are done only AFTER `stratumNode` has been created so
+            // that we can properly use the reference to `stratumNode` as the
+            // parent node of the record nodes
+            stratumNode.children = records.map((record) => {
+                // Map out record nodes for children
+
+                // Get the cooked ID column value from the returned records
+                // and find their indices in the original record data set
+                const recordIndex = idColumnCookedValues.indexOf(record[idColumnIndex]);
+
+                if (recordIndex < 0) {
+                    throw new Error("Record not found");
+                }
+
+                const node: RecordNode = {
+                    type: "record",
+                    parent: stratumNode,
+                    index: recordIndex,
+                };
+
+                return node;
+            })
 
             return stratumNode;
 
         } else {
+            // Create stratum node
+            const stratumNode: StratumNode = {
+                type: "stratum",
+                parent: parentNode,
+                stratum: currentStratum,
+                children: [],                   // Temporarily blank, see below
+                childrenAreRecords: false,
+            };
+
             // If we still have more than one stratum, then we create stratum
             // nodes that nest other nodes
             const nestedResultArray = resultArrayContent as ResultArray;
 
-            const children = nestedResultArray.map(content => InitNodeRecursive(idColumnData, idColumnIndex, remainingStrata, content));
-
-            // Create stratum node
-            const stratumNode: StratumNode = {
-                type: "stratum",
-                stratum: currentStratum,
-                children,
-                childrenAreRecords: false,
-            };
+            // Children are done only AFTER `stratumNode` has been created so
+            // that we can properly use the reference to `stratumNode` as the
+            // parent node of the next recursive call
+            stratumNode.children =
+                nestedResultArray.map(content => InitNodeRecursive(idColumnData, idColumnIndex, remainingStrata, stratumNode, content));
 
             return stratumNode;
         }
@@ -191,7 +211,7 @@ export namespace ResultTree {
 
     export function GenerateNodeNameMap(nodes: ReadonlyArray<StratumNode>) {
         const nameMap: NodeNameMapNameNotGenerated = new WeakMap();
-        const contextMap: NodeNameContextMap = {};
+        const contextMap: NodeNameContextMap = new WeakMap();
 
         // For each stratum node, recursively walk down and generate the 
         // unapplied description objects for them
@@ -213,12 +233,9 @@ export namespace ResultTree {
         // Apply second pass where names are actually generated and applied
         UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap, contextMap, nodes);
 
-        return {
-            // At this point the names should have been successfully attached to
-            // the description objects
-            nameMap: nameMap as NodeNameMap as NodeNameMapNameGenerated,    // Type assertion up then down
-            contextMap,
-        };
+        // At this point the names should have been successfully attached to
+        // the description objects
+        return nameMap as NodeNameMap as NodeNameMapNameGenerated;  // Type assertion up then down
     }
 
     /**
@@ -256,10 +273,17 @@ export namespace ResultTree {
         // Get the context tracking object
         const stratumNamingContext = node.stratum.namingConfig.context;
 
+        // Find the node that is responsible for that context
+        const namingContextNode = FindParentContextNode(stratumNamingContext, node);
+
+        if (namingContextNode === undefined) {
+            throw new Error(`Context "${stratumNamingContext}" not found`);
+        }
+
         // Create a new tracking object if it does not exist for that context
         // and set it into the contextMap
         const contextNameCountTrackingObject =
-            contextMap[stratumNamingContext] || (contextMap[stratumNamingContext] = {});
+            contextMap.get(namingContextNode) || contextMap.set(namingContextNode, {}).get(namingContextNode)!;
 
         // Get the name generation index count for that particular stratum under 
         // this context
@@ -281,6 +305,34 @@ export namespace ResultTree {
 
         // Do not return a value - this indicates it operates in place
         return;
+    }
+
+    function FindParentContextNode(contextOrStratumId: string | "_PARTITION" | "_GLOBAL", node: Node): ContextShimNode | StratumNode | undefined {
+        if (contextOrStratumId === "_GLOBAL") {
+            return _GLOBAL_NODE;
+        }
+
+        if (contextOrStratumId === "_PARTITION") {
+            // TODO: Partition context support is not yet implemented
+            throw new Error("Not implemented");
+        }
+
+        // Go up to parent nodes recursively
+        const parent = node.parent;
+
+        if (parent === undefined) {
+            return undefined;
+        }
+
+        if (parent.type === "stratum") {
+            if (parent.stratum._id === contextOrStratumId) {
+                return parent;
+            } else {
+                return FindParentContextNode(contextOrStratumId, parent);
+            }
+        }
+
+        throw new Error("Cannot find parent stratum node object");
     }
 
     function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, nodes: ReadonlyArray<StratumNode>) {
@@ -312,7 +364,13 @@ export namespace ResultTree {
         const stratumNamingContext = stratumNamingConfig.context;
 
         // Get context name generation count
-        const contextNameCountTrackingObject = contextMap[stratumNamingContext];
+        const namingContextNode = FindParentContextNode(stratumNamingContext, node);
+
+        if (namingContextNode === undefined) {
+            throw new Error(`Context "${stratumNamingContext}" not found`);
+        }
+
+        const contextNameCountTrackingObject = contextMap.get(namingContextNode);
 
         if (contextNameCountTrackingObject === undefined) {
             throw new Error(`Missing stratum naming context "${stratumNamingContext}" in provided context map`);
