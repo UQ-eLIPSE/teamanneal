@@ -134,7 +134,7 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit = p({ type: String, required: true, });
     @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
-    @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: [], });
+    @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
 
     get childUnitText() {
         return this.childUnit || "<group>";
