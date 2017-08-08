@@ -13,6 +13,7 @@
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupSizes[i]"
                                              :isPartition="false"
+                                             :partitionColumnData="state.recordData.partitionColumn"
                                              :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
             </ul>

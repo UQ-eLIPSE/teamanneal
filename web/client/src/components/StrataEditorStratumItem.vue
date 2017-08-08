@@ -101,6 +101,7 @@ import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
+import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -134,6 +135,7 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit = p({ type: String, required: true, });
     @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
+    @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
 
     get childUnitText() {
@@ -353,6 +355,14 @@ export default class StrataEditorStratumItem extends Vue {
                 text: stratum.label,
             };
         });
+
+        // Add partition option where set
+        if (this.partitionColumnData !== undefined) {
+            list.unshift({
+                value: "_PARTITION",
+                text: `Partition (${this.partitionColumnData.label})`,
+            });
+        }
 
         // Global is always available
         list.unshift({

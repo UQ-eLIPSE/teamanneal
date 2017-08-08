@@ -23,7 +23,7 @@ export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
 /** The full array that the anneal response comes back with */
 export type AnnealOutput = ReadonlyArray<ResultArray>;
 
-export type Node = StratumNode | RecordNode;
+export type Node = StratumNode | RecordNode | GlobalContextShimNode | PartitionContextShimNode;
 
 interface NodeBase {
     parent: Node | undefined,
@@ -49,10 +49,16 @@ export interface StratumNodeWithStrataChildren extends NodeBase {
     childrenAreRecords: false,
 }
 
-export interface ContextShimNode {
-    type: "context-shim",
+export interface GlobalContextShimNode extends NodeBase {
+    type: "_GLOBAL",
 
-    context: "_PARTITION" | "_GLOBAL",
+    children: undefined,
+}
+
+export interface PartitionContextShimNode extends NodeBase {
+    type: "_PARTITION",
+
+    children: StratumNode[],
 }
 
 export interface RecordNode extends NodeBase {
@@ -69,7 +75,7 @@ export type NodeNameMapNameNotGenerated = WeakMap<StratumNode, NodeNameDescripti
 export type RecordNodeNameAccumulatedArray = ReadonlyArray<{ stratumLabel: string, nodeGeneratedName: string, }>;
 export type RecordNodeNameMap = WeakMap<RecordNode, RecordNodeNameAccumulatedArray>;
 
-export type NodeNameContextMap = WeakMap<ContextShimNode | StratumNode, NodeNameContextMapStratumCountTrack>;
+export type NodeNameContextMap = WeakMap<GlobalContextShimNode | PartitionContextShimNode | StratumNode, NodeNameContextMapStratumCountTrack>;
 
 interface NodeNameContextMapStratumCountTrack {
     /** 
@@ -112,12 +118,13 @@ interface NodeNameDescriptionNameGenerated {
 
 export namespace ResultTree {
     // Shim for global node
-    const _GLOBAL_NODE: ContextShimNode = {
-        type: "context-shim",
-        context: "_GLOBAL",
+    const _GLOBAL_NODE: GlobalContextShimNode = {
+        type: "_GLOBAL",
+        parent: undefined,
+        children: undefined,
     };
 
-    export function InitNodesFromResultArray(state: IState, resultArray: ResultArray) {
+    export function InitNodesFromAnnealOutput(state: IState, annealOutput: AnnealOutput) {
         // TODO: Move away from reading the state object because the state may
         // be subject to change between the time the anneal request was made and
         // when the result array is available
@@ -135,9 +142,27 @@ export namespace ResultTree {
             throw new Error("ID column not found");
         }
 
-        return resultArray.map((resultArrayContent) =>
-            InitNodeRecursive(columns[idColumnIndex], idColumnIndex, strata, undefined, resultArrayContent)
-        );
+        // Map all of the first level output children (partitions) with context 
+        // shim nodes
+        const nodes = annealOutput.map((partition) => {
+            const partitionNode: PartitionContextShimNode = {
+                type: "_PARTITION",
+                parent: _GLOBAL_NODE,
+                children: [],                   // Temporarily blank, see below
+            };
+
+            // Children are done only AFTER `partitionNode` has been created so
+            // that we can properly use the reference to `partitionNode` as the
+            // parent node
+            partitionNode.children =
+                partition.map((resultArrayContent) =>
+                    InitNodeRecursive(columns[idColumnIndex], idColumnIndex, strata, partitionNode, resultArrayContent)
+                );
+
+            return partitionNode;
+        });
+
+        return nodes;
     }
 
     function InitNodeRecursive(idColumnData: IColumnData, idColumnIndex: number, [currentStratum, ...remainingStrata]: ReadonlyArray<IStratum>, parentNode: Node | undefined, resultArrayContent: ResultArrayContent): StratumNode {
@@ -209,7 +234,7 @@ export namespace ResultTree {
         }
     }
 
-    export function GenerateNodeNameMap(nodes: ReadonlyArray<StratumNode>) {
+    export function GenerateNodeNameMap(nodes: ReadonlyArray<PartitionContextShimNode>) {
         const nameMap: NodeNameMapNameNotGenerated = new WeakMap();
         const contextMap: NodeNameContextMap = new WeakMap();
 
@@ -242,8 +267,20 @@ export namespace ResultTree {
      * Recursive function that sets `NodeNameDescriptionNameNotGenerated` name
      * description objects on stratum nodes 
      */
-    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, nodes: ReadonlyArray<StratumNode>) {
+    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, nodes: ReadonlyArray<PartitionContextShimNode | StratumNode>) {
         nodes.forEach((node) => {
+            // If we're presented with a partition shim node
+            if (node.type === "_PARTITION") {
+                // Go into children immediately - there is currently no need to 
+                // name partitions
+
+                // Recurse into child strata
+                SetNodeNameDescObjectsRecursive(nameMap, contextMap, node.children);
+
+                return;
+            }
+
+            // Set name description object for this stratum node
             SetNodeNameDescObject(nameMap, contextMap, node);
 
             // We will only recurse if there are more strata underneath
@@ -257,7 +294,7 @@ export namespace ResultTree {
 
             if (!node.childrenAreRecords) {
                 // Recurse into child strata
-                SetNodeNameDescObjectsRecursive(nameMap, contextMap, node.children as StratumNode[]);
+                SetNodeNameDescObjectsRecursive(nameMap, contextMap, node.children as ReadonlyArray<StratumNode>);
             }
         });
 
@@ -307,14 +344,9 @@ export namespace ResultTree {
         return;
     }
 
-    function FindParentContextNode(contextOrStratumId: string | "_PARTITION" | "_GLOBAL", node: Node): ContextShimNode | StratumNode | undefined {
+    function FindParentContextNode(contextOrStratumId: string | "_PARTITION" | "_GLOBAL", node: Node): GlobalContextShimNode | PartitionContextShimNode | StratumNode | undefined {
         if (contextOrStratumId === "_GLOBAL") {
             return _GLOBAL_NODE;
-        }
-
-        if (contextOrStratumId === "_PARTITION") {
-            // TODO: Partition context support is not yet implemented
-            throw new Error("Not implemented");
         }
 
         // Go up to parent nodes recursively
@@ -324,6 +356,13 @@ export namespace ResultTree {
             return undefined;
         }
 
+        // If we're looking for a partition
+        if (parent.type === "_PARTITION" &&
+            contextOrStratumId === "_PARTITION") {
+            return parent;
+        }
+
+        // If we get a parent which is a stratum node
         if (parent.type === "stratum") {
             if (parent.stratum._id === contextOrStratumId) {
                 return parent;
@@ -335,8 +374,20 @@ export namespace ResultTree {
         throw new Error("Cannot find parent stratum node object");
     }
 
-    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, nodes: ReadonlyArray<StratumNode>) {
+    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, nodes: ReadonlyArray<PartitionContextShimNode | StratumNode>) {
         nodes.forEach((node) => {
+            // If we're presented with a partition shim node
+            if (node.type === "_PARTITION") {
+                // Go into children immediately - there is currently no need to 
+                // name partitions
+
+                // Recurse into child strata
+                UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap, contextMap, node.children);
+
+                return;
+            }
+
+            // Fill in generated name for this stratum node
             UpdateNodeNameDescObjectWithGeneratedName(nameMap, contextMap, node);
 
             // We will only recurse if there are more strata underneath
@@ -453,7 +504,7 @@ export namespace ResultTree {
         return;
     }
 
-    export function GenerateRecordNodeNameMap(stratumNodeNameMap: NodeNameMap, nodes: StratumNode[]) {
+    export function GenerateRecordNodeNameMap(stratumNodeNameMap: NodeNameMap, nodes: ReadonlyArray<PartitionContextShimNode>) {
         const recordNodeNameMap: RecordNodeNameMap = new WeakMap();
 
         // Walk nodes to build up names for records
@@ -462,8 +513,24 @@ export namespace ResultTree {
         return recordNodeNameMap;
     }
 
-    function SetRecordNodeNamesRecursive(stratumNodeNameMap: NodeNameMap, recordNodeNameMap: RecordNodeNameMap, accumulatedName: RecordNodeNameAccumulatedArray, nodes: StratumNode[]) {
+    function SetRecordNodeNamesRecursive(stratumNodeNameMap: NodeNameMap, recordNodeNameMap: RecordNodeNameMap, accumulatedName: RecordNodeNameAccumulatedArray, nodes: ReadonlyArray<PartitionContextShimNode | StratumNode>) {
         nodes.forEach((node) => {
+            // If we're presented with a partition shim node
+            if (node.type === "_PARTITION") {
+                // Go into children immediately - there is currently no need to 
+                // name partitions
+
+                // TODO: When it comes down to making consolidated names, having
+                // the name of the partition may be necessary, in which case
+                // `accumulatedName` will have the partition name accumulated 
+                // onto it
+
+                // Recurse down
+                SetRecordNodeNamesRecursive(stratumNodeNameMap, recordNodeNameMap, accumulatedName, node.children);
+
+                return;
+            }
+
             // Fetch stratum node name
             const nameDesc = stratumNodeNameMap.get(node);
             if (nameDesc === undefined) {
@@ -495,14 +562,24 @@ export namespace ResultTree {
         return;
     }
 
-    export function ExtractRecordNodes(nodes: StratumNode[]) {
+    export function ExtractRecordNodes(nodes: ReadonlyArray<PartitionContextShimNode>) {
         const records: RecordNode[] = [];
         ExtractRecordNodesRecursive(records, nodes);
         return records;
     }
 
-    function ExtractRecordNodesRecursive(accumulatedRecords: RecordNode[], nodes: StratumNode[]) {
+    function ExtractRecordNodesRecursive(accumulatedRecords: RecordNode[], nodes: ReadonlyArray<PartitionContextShimNode | StratumNode>) {
         nodes.forEach((node) => {
+            // If we're presented with a partition shim node
+            if (node.type === "_PARTITION") {
+                // Ignore and go deeper
+
+                // Recurse down
+                ExtractRecordNodesRecursive(accumulatedRecords, node.children);
+
+                return;
+            }
+
             if (node.childrenAreRecords) {
                 node.children.forEach((recordNode) => {
                     accumulatedRecords.push(recordNode);
@@ -514,5 +591,12 @@ export namespace ResultTree {
 
         // Do not return a value - this indicates it operates in place
         return;
+    }
+
+    /**
+     * Flattens an array of partition nodes into an array of stratum nodes
+     */
+    export function FlattenPartitionNodes(nodes: ReadonlyArray<PartitionContextShimNode>) {
+        return nodes.map(x => x.children).reduce((c, x) => [...c, ...x], []);
     }
 }
