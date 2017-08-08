@@ -23,7 +23,7 @@ import { Data as IColumnData } from "../data/ColumnData";
 @Component
 export default class SpreadsheetViewColumnTypeHeader extends Vue {
     // Props
-    @Prop column: IColumnData = p({ type: Object, required: true, }) as any;
+    @Prop column = p<IColumnData>({ required: true, });
 
     get columnType() {
         return this.column.type;
