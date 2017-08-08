@@ -57,7 +57,7 @@ import { StoreState } from "./StoreState";
 })
 export default class ConstraintsEditorStratum extends Mixin(StoreState) {
     // Props
-    @Prop stratum = p<IStratum>({ required: true, }) as any;
+    @Prop stratum = p<IStratum>({ required: true, });
     @Prop stratumConstraints = p<ReadonlyArray<IConstraint>>({ type: Array, required: true, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
 
