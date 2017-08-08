@@ -34,12 +34,12 @@ import SpreadsheetViewColumnTypeHeader from "./SpreadsheetViewColumnTypeHeader.v
 @Component({
     components: {
         SpreadsheetViewColumnTypeHeader,
-    }
+    },
 })
 export default class SpreadsheetView extends Vue {
     // Props
-    @Prop rows: ReadonlyArray<string | number | null> = p({ type: Array, required: true, }) as any;
-    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
+    @Prop rows = p<ReadonlyArray<string | number | null>>({ type: Array, required: true, });
+    @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
 
     get contentRows() {
         return this.rows.slice(1);
