@@ -34,7 +34,7 @@ import { StoreState } from "./StoreState";
         ConstraintsEditorStratum: ConstraintsEditorStratum as Vue.Component,
     },
 })
-export default class ConstraintsEditor extends Mixin<StoreState>(StoreState) {
+export default class ConstraintsEditor extends Mixin(StoreState) {
     get strata() {
         return this.state.annealConfig.strata;
     }

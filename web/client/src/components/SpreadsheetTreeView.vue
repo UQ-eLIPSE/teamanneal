@@ -36,7 +36,7 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  * Flattens the result tree into a form that can be used to construct table rows
  * for SpreadsheetTreeView* components
  */
-function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: IResultTree_StratumNode[]) {
+function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: ReadonlyArray<IResultTree_StratumNode>) {
     nodes.forEach((node) => {
         // Fetch name
         const nameDesc = nameMap.get(node);
@@ -99,8 +99,8 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props
-    @Prop annealResultTreeNodeArray: IResultTree_StratumNode[] = p({ type: Array, required: true, }) as any;
-    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
+    @Prop annealResultTreeNodeArray = p<ReadonlyArray<IResultTree_StratumNode>>({ type: Array, required: true, });
+    @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
 
     get flattenedTree() {
         // Get record rows

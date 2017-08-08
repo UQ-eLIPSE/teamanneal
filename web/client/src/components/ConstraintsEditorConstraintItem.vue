@@ -212,10 +212,10 @@ const CostWeightList = [
         DynamicWidthInputField,
     },
 })
-export default class ConstraintsEditorConstraintItem extends Mixin<StoreState>(StoreState) {
+export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
     // Props
-    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
-    @Prop constraint: IConstraint = p({ type: Object, required: true, }) as any;
+    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop constraint = p<IConstraint>({ required: true, });
 
     // Private
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
@@ -306,17 +306,17 @@ export default class ConstraintsEditorConstraintItem extends Mixin<StoreState>(S
         switch (this.thisConstraintType) {
             case "count":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                     value: this.constraintConditionCount!,
                 }
             case "limit":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                 }
 
             case "similarity":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                 }
         }
 

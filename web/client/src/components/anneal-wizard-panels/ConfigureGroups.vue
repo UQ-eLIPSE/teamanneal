@@ -55,7 +55,7 @@ import StrataEditor from "../StrataEditor.vue";
         StrataEditor: StrataEditor as Vue.Component,
     },
 })
-export default class ConfigureGroups extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class ConfigureGroups extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureGroups;

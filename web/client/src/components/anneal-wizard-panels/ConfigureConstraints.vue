@@ -84,7 +84,7 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
         ConstraintsEditor: ConstraintsEditor as Vue.Component,
     },
 })
-export default class ConfigureConstraints extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class ConfigureConstraints extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;

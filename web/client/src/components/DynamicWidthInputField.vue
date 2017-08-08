@@ -19,9 +19,9 @@ const widthTestElement = document.createElement("span");
 })
 export default class DynamicWidthInputField extends Vue {
     // Props
-    @Prop value: any = p({ required: true, }) as any;
-    @Prop minWidth: number = p({ type: Number, required: false, default: 1, }) as any;
-    @Prop disabled: boolean = p({ type: Boolean, required: false, default: false, }) as any;
+    @Prop value = p<any>({ required: true, });
+    @Prop minWidth = p({ type: Number, required: false, default: 1, });
+    @Prop disabled = p({ type: Boolean, required: false, default: false, });
 
     // Private
     elWidth: string = "0px";

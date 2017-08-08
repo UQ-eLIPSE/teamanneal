@@ -38,7 +38,7 @@ import { StoreState } from "./StoreState";
         StrataEditorStratumItem,
     },
 })
-export default class StrataEditor extends Mixin<StoreState>(StoreState) {
+export default class StrataEditor extends Mixin(StoreState) {
     get strata() {
         return this.state.annealConfig.strata;
     }

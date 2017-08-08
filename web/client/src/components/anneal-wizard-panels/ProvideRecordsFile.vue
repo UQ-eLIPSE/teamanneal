@@ -70,7 +70,7 @@ import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
 
 @Component
-export default class ProvideRecordsFile extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class ProvideRecordsFile extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;

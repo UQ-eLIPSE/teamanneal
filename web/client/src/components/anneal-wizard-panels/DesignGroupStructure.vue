@@ -58,7 +58,7 @@ import StrataStructureEditor from "../StrataStructureEditor.vue";
         StrataStructureEditor: StrataStructureEditor as Vue.Component,
     },
 })
-export default class DesignGroupStructure extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class DesignGroupStructure extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.designGroupStructure;

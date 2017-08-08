@@ -56,7 +56,7 @@ import SpreadsheetView from "../SpreadsheetView.vue";
         SpreadsheetView,
     },
 })
-export default class ReviewRecords extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;

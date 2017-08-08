@@ -87,7 +87,7 @@ import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
         SpreadsheetTreeView,
     },
 })
-export default class ViewResult extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
+export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;

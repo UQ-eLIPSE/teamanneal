@@ -55,11 +55,11 @@ import { StoreState } from "./StoreState";
         ConstraintsEditorConstraintItem: ConstraintsEditorConstraintItem as Vue.Component,
     },
 })
-export default class ConstraintsEditorStratum extends Mixin<StoreState>(StoreState) {
+export default class ConstraintsEditorStratum extends Mixin(StoreState) {
     // Props
-    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
-    @Prop stratumConstraints: ReadonlyArray<IConstraint> = p({ type: Array, required: true, }) as any;
-    @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
+    @Prop stratum = p<IStratum>({ required: true, }) as any;
+    @Prop stratumConstraints = p<ReadonlyArray<IConstraint>>({ type: Array, required: true, });
+    @Prop isPartition = p({ type: Boolean, required: false, default: false, });
 
     async addNewConstraint() {
         const columnData = this.state.recordData.columns;
