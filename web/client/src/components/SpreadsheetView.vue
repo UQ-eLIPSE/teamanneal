@@ -34,7 +34,7 @@ import SpreadsheetViewColumnTypeHeader from "./SpreadsheetViewColumnTypeHeader.v
 @Component({
     components: {
         SpreadsheetViewColumnTypeHeader,
-    }
+    },
 })
 export default class SpreadsheetView extends Vue {
     // Props

@@ -22,26 +22,23 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
-import { Data as IState } from "../data/State";
 import { Stratum } from "../data/Stratum";
 import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
+
+import { StoreState } from "./StoreState";
 
 @Component({
     components: {
         StrataEditorStratumItem,
     },
 })
-export default class StrataEditor extends Vue {
-    get state() {
-        return this.$store.state as IState;
-    }
-
+export default class StrataEditor extends Mixin<StoreState>(StoreState) {
     get strata() {
         return this.state.annealConfig.strata;
     }

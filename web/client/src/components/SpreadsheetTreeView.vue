@@ -95,7 +95,7 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
 @Component({
     components: {
         SpreadsheetTreeViewItem,
-    }
+    },
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props

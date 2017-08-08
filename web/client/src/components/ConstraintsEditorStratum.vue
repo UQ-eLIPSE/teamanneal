@@ -40,29 +40,26 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component, Mixin, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
 import { Data as IStratum } from "../data/Stratum";
 import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter, CountCondition as IConstraint_CountCondition } from "../data/Constraint";
 import { ColumnData } from "../data/ColumnData";
-import { Data as IState } from "../data/State";
+
+import { StoreState } from "./StoreState";
 
 @Component({
     components: {
-        ConstraintsEditorConstraintItem,
+        ConstraintsEditorConstraintItem: ConstraintsEditorConstraintItem as Vue.Component,
     },
 })
-export default class ConstraintsEditorStratum extends Vue {
+export default class ConstraintsEditorStratum extends Mixin<StoreState>(StoreState) {
     // Props
     @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
     @Prop stratumConstraints: ReadonlyArray<IConstraint> = p({ type: Array, required: true, }) as any;
     @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     async addNewConstraint() {
         const columnData = this.state.recordData.columns;

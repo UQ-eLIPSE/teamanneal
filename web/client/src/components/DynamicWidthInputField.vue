@@ -15,7 +15,7 @@ const widthTestElement = document.createElement("span");
     model: {
         event: "change",
         prop: "value",
-    }
+    },
 })
 export default class DynamicWidthInputField extends Vue {
     // Props

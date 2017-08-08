@@ -74,26 +74,23 @@ import { Component, Mixin } from "av-ts";
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree, AnnealOutput } from "../../data/ResultTree";
-import { State, Data as IState } from "../../data/State";
+import { State } from "../../data/State";
 import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 @Component({
     components: {
         SpreadsheetTreeView,
-    }
+    },
 })
-export default class ViewResult extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class ViewResult extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     get columns() {
         return this.state.recordData.columns;

@@ -43,11 +43,12 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { Data as IState } from "../../data/State";
 import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
+
 import SpreadsheetView from "../SpreadsheetView.vue";
 
 @Component({
@@ -55,14 +56,10 @@ import SpreadsheetView from "../SpreadsheetView.vue";
         SpreadsheetView,
     },
 })
-export default class ReviewRecords extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class ReviewRecords extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     get columns() {
         return this.state.recordData.columns;

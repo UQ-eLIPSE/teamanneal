@@ -68,28 +68,26 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Vue, Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { AnnealRequest } from "../../data/AnnealRequest";
-import { State, Data as IState } from "../../data/State";
+import { State } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
+
 import ConstraintsEditor from "../ConstraintsEditor.vue";
 
 @Component({
     components: {
-        ConstraintsEditor,
+        ConstraintsEditor: ConstraintsEditor as Vue.Component,
     },
 })
-export default class ConfigureConstraints extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class ConfigureConstraints extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     get isAnnealButtonDisabled() {
         // If no constraints, the anneal button is disabled

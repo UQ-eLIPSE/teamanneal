@@ -1,6 +1,7 @@
 import * as store from "../store";
 
 import { Vue, Trait } from "av-ts";
+
 import { WizardNavigationEntry } from "../data/WizardNavigationEntry";
 
 @Trait

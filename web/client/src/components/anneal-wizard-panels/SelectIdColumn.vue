@@ -43,21 +43,17 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { Data as IState } from "../../data/State";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
 
 @Component
-export default class SelectIdColumn extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class SelectIdColumn extends Mixin<StoreState & AnnealProcessWizardPanel>(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectIdColumn;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     /**
      * An array for the <select /> menu of all the possible ID columns to choose 
