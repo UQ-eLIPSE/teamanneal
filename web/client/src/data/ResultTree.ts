@@ -189,7 +189,7 @@ export namespace ResultTree {
         }
     }
 
-    export function GenerateNodeNameMap(nodes: StratumNode[]) {
+    export function GenerateNodeNameMap(nodes: ReadonlyArray<StratumNode>) {
         const nameMap: NodeNameMapNameNotGenerated = new WeakMap();
         const contextMap: NodeNameContextMap = {};
 
@@ -225,7 +225,7 @@ export namespace ResultTree {
      * Recursive function that sets `NodeNameDescriptionNameNotGenerated` name
      * description objects on stratum nodes 
      */
-    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, nodes: StratumNode[]) {
+    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, nodes: ReadonlyArray<StratumNode>) {
         nodes.forEach((node) => {
             SetNodeNameDescObject(nameMap, contextMap, node);
 
@@ -283,7 +283,7 @@ export namespace ResultTree {
         return;
     }
 
-    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, nodes: StratumNode[]) {
+    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, nodes: ReadonlyArray<StratumNode>) {
         nodes.forEach((node) => {
             UpdateNodeNameDescObjectWithGeneratedName(nameMap, contextMap, node);
 
@@ -298,7 +298,7 @@ export namespace ResultTree {
 
             if (!node.childrenAreRecords) {
                 // Recurse into child strata
-                UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap, contextMap, node.children as StratumNode[]);
+                UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap, contextMap, node.children as ReadonlyArray<StratumNode>);
             }
         });
 

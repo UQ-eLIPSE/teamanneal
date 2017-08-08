@@ -130,11 +130,11 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 })
 export default class StrataEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
-    @Prop childUnit: string = p({ type: String, required: true, }) as any;
-    @Prop groupSizes: { [groupSize: number]: number } = p({ required: false, }) as any;
-    @Prop isPartition: boolean = p({ type: Boolean, required: false, default: false, }) as any;
-    @Prop namingContexts: IStratum[] = p({ type: Array, required: false, default: [], }) as any;
+    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop childUnit = p({ type: String, required: true, });
+    @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
+    @Prop isPartition = p({ type: Boolean, required: false, default: false, });
+    @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: [], });
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -410,6 +410,10 @@ export default class StrataEditorStratumItem extends Vue {
         // Convert all group size keys into numbers
         const groupSizes = this.groupSizes;
         const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
+
+        if (groupSizes === undefined) {
+            throw new Error("Group sizes do not exist");
+        }
 
         // Produce group size ordered array with the count for each group size
         return groupSizeKeys.sort().map((size) => {

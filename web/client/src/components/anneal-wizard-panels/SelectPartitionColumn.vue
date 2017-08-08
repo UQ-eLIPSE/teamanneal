@@ -126,22 +126,17 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { Data as IState } from "../../data/State";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
-
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
 
 @Component
-export default class SelectPartitionColumn extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class SelectPartitionColumn extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectPartitionColumn;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     setPartitionColumn() {
         // Partition should already be set reactively; just move on to next step
