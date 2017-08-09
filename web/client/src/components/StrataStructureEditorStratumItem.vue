@@ -38,10 +38,10 @@ import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 })
 export default class StrataStructureEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
-    @Prop childUnit: string = p({ type: String, required: false, default: "<group>" }) as any;
-    @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
-    @Prop editable: boolean = p({ type: Boolean, required: false, default: true, }) as any;
+    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop childUnit = p({ type: String, required: false, default: "<group>" });
+    @Prop deletable = p({ type: Boolean, required: true, });
+    @Prop editable = p({ type: Boolean, required: false, default: true, });
 
     async updateStratum(diff: any) {
         // Deep copy and merge in diff

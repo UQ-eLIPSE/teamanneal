@@ -25,8 +25,8 @@ type WNE = WizardNavigationEntry.WizardNavigationEntry;
 @Component
 export default class WizardNavigation extends Vue {
     // Props
-    @Prop entries: ReadonlyArray<Readonly<WNE>> = p(Array) as any;
-    @Prop bus: Vue = p(Object) as any;
+    @Prop entries = p<ReadonlyArray<Readonly<WNE>>>({ type: Array, required: true, });
+    @Prop bus = p<Vue>({ required: true, });
 
     /**
      * Commands vue-router to move to the given entry's path

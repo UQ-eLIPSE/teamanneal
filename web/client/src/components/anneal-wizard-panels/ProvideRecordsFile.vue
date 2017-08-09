@@ -62,21 +62,18 @@ import { parseFile } from "../../data/CSV";
 import { fillGaps, transpose } from "../../util/Array";
 
 import { ColumnData } from "../../data/ColumnData";
-import { State, Data as IState } from "../../data/State";
+import { State } from "../../data/State";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
 
 @Component
-export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class ProvideRecordsFile extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     async clearFile() {
         await this.$store.dispatch("clearRecordData");

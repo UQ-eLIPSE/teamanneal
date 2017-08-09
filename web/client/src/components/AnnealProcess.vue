@@ -23,7 +23,7 @@ import WizardNavigation from "./WizardNavigation.vue";
 @Component({
     components: {
         WizardNavigation,
-    }
+    },
 })
 export default class AnnealProcess extends Vue {
     processWizardEntries = AnnealProcessWizardEntries.entries;
