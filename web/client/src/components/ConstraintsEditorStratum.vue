@@ -17,7 +17,8 @@
                         v-for="constraint in stratumConstraints"
                         :key="constraint._id">
                         <ConstraintsEditorConstraintItem :stratum="stratum"
-                                                         :constraint="constraint"></ConstraintsEditorConstraintItem>
+                                                         :constraint="constraint"
+                                                         :groupSizes="groupSizes"></ConstraintsEditorConstraintItem>
                     </li>
                     <li>
                         <button class="button add-constraint"
@@ -60,6 +61,7 @@ export default class ConstraintsEditorStratum extends Mixin(StoreState) {
     @Prop stratum = p<IStratum>({ required: true, });
     @Prop stratumConstraints = p<ReadonlyArray<IConstraint>>({ type: Array, required: true, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
+    @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: false, default: () => [] });
 
     async addNewConstraint() {
         const columnData = this.state.recordData.columns;

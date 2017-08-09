@@ -56,9 +56,9 @@ export namespace ColumnData {
             // Detect type and overwrite input value of `undefined`
             type = DetectColumnType(columnValues);
 
-            // If type is still undefined, throw an error
+            // If type is still undefined, just say it's a string
             if (type === undefined) {
-                throw new Error("Could not detect the type of the provided column values");
+                type = "string";
             }
         }
 
