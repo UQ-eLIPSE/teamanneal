@@ -74,6 +74,13 @@
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
+                <p>Naming context:
+                    <select v-model="namingContext">
+                        <option v-for="namingContextOption in namingContextOptionList"
+                                :key="namingContextOption.value"
+                                :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                    </select>
+                </p>
             </div>
         </div>
         <div v-else
@@ -94,6 +101,7 @@ import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
+import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -127,6 +135,8 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit = p({ type: String, required: true, });
     @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
+    @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
+    @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -324,6 +334,43 @@ export default class StrataEditorStratumItem extends Vue {
         const counterValueSet = new Set(trimmedCounterStrings);
 
         return counterValueSet.size !== trimmedCounterStrings.length;
+    }
+
+    get namingContext() {
+        return this.stratum.namingConfig.context;
+    }
+
+    set namingContext(newValue: string) {
+        this.updateStratum({
+            namingConfig: {
+                context: newValue,
+            },
+        });
+    }
+
+    get namingContextOptionList() {
+        const list = this.namingContexts.map((stratum) => {
+            return {
+                value: stratum._id,
+                text: stratum.label,
+            };
+        });
+
+        // Add partition option where set
+        if (this.partitionColumnData !== undefined) {
+            list.unshift({
+                value: "_PARTITION",
+                text: `Partition (${this.partitionColumnData.label})`,
+            });
+        }
+
+        // Global is always available
+        list.unshift({
+            value: "_GLOBAL",
+            text: "<Global>",
+        });
+
+        return list;
     }
 
     async updateStratum(diff: any) {

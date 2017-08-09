@@ -31,7 +31,7 @@
                 </div>
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :annealResultTreeNodeArray="annealResultTreeNodeArray"
+                                         :annealResultTreePartitionNodeArray="annealResultTreePartitionNodeArray"
                                          :columnData="columns"></SpreadsheetTreeView>
                 </div>
             </div>
@@ -98,14 +98,14 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
 
     onExportButtonClick() {
         // Get stratum node name map
-        const nodes = this.annealResultTreeNodeArray;
-        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+        const partitionNodes = this.annealResultTreePartitionNodeArray;
+        const nameMap = ResultTree.GenerateNodeNameMap(partitionNodes);
 
         // Convert into record node name map
-        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);
+        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, partitionNodes);
 
         // Extract all record nodes
-        const recordNodes = ResultTree.ExtractRecordNodes(nodes);
+        const recordNodes = ResultTree.ExtractRecordNodes(partitionNodes);
 
         // Get the columns and transform them back into 2D string array for
         // exporting
@@ -203,22 +203,12 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get annealResultTreeNodeArray() {
+    get annealResultTreePartitionNodeArray() {
         const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
         const responseData = response.data.output as AnnealOutput;
 
-        // Collapse all partitions back together as one large array
-        //
-        // NOTE: Currently this does not rearrange nodes such that partitions
-        // are properly dealt with for naming purposes - currently all names
-        // are global (see "client/data/Stratum.ts") so we can do this for now
-        //
-        // TODO: Support handling partitions so that they can be used properly
-        // for naming contexts
-        const resultArray = responseData.reduce((c, x) => [...c, ...x], []);
-
         // Generate nodes
-        const nodes = ResultTree.InitNodesFromResultArray(this.state, resultArray);
+        const nodes = ResultTree.InitNodesFromAnnealOutput(this.state, responseData);
 
         return nodes;
     }

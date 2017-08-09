@@ -27,7 +27,7 @@
 import { Vue, Component, Prop, p } from "av-ts";
 
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
-import { ResultTree, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode } from "../data/ResultTree";
+import { ResultTree, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode, PartitionContextShimNode as IResultTree_PartitionContextShimNode } from "../data/ResultTree";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
@@ -99,7 +99,7 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props
-    @Prop annealResultTreeNodeArray = p<ReadonlyArray<IResultTree_StratumNode>>({ type: Array, required: true, });
+    @Prop annealResultTreePartitionNodeArray = p<ReadonlyArray<IResultTree_PartitionContextShimNode>>({ type: Array, required: true, });
     @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
 
     get flattenedTree() {
@@ -107,8 +107,11 @@ export default class SpreadsheetTreeView extends Vue {
         const recordRows = ColumnData.TransposeIntoCookedValueRowArray(this.columnData);
 
         // Get name map
-        const nodes = this.annealResultTreeNodeArray;
-        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+        const partitionNodes = this.annealResultTreePartitionNodeArray;
+        const nameMap = ResultTree.GenerateNodeNameMap(partitionNodes);
+
+        // Flatten partitions into one large array before passing to `flatten()`
+        const nodes = ResultTree.FlattenPartitionNodes(partitionNodes);
 
         return flatten(recordRows, nameMap, [], 0, nodes);
     }

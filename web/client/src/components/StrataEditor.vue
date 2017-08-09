@@ -12,7 +12,9 @@
                     <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupDistribution[i]"
-                                             :isPartition="false"></StrataEditorStratumItem>
+                                             :isPartition="false"
+                                             :partitionColumnData="state.recordData.partitionColumn"
+                                             :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
             </ul>
         </div>
@@ -26,7 +28,7 @@ import { Component, Mixin } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
-import { Stratum } from "../data/Stratum";
+import { Stratum, Data as IStratum } from "../data/Stratum";
 import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
@@ -119,6 +121,28 @@ export default class StrataEditor extends Mixin(StoreState) {
             // If error occurs, return blank array
             return [];
         }
+    }
+
+    /**
+     * Returns an array of possible naming context contexts for each stratum at
+     * the ith index
+     */
+    get strataNamingContexts() {
+        const strata = this.strata;
+
+        const accumulatedStrata: IStratum[] = [];
+        const outputList: IStratum[][] = [];
+
+        strata.forEach((stratum) => {
+            // Copy the accumulated strata array into the output list
+            outputList.push([...accumulatedStrata]);
+
+            // Accumulate this stratum
+            accumulatedStrata.push(stratum);
+
+        });
+
+        return outputList;
     }
 }
 </script>

@@ -52,7 +52,7 @@ export namespace Stratum {
 
             namingConfig: {
                 counter,
-                context: "_GLOBAL",     // TODO: Implement adjustable contexts for naming
+                context: "_GLOBAL",
             },
         };
 
