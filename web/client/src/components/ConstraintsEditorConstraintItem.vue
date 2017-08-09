@@ -1,72 +1,48 @@
 <template>
     <div class="constraint-item">
         <div class="constraint-content">
-            <DynamicWidthSelect class="select cost-weight"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintCostWeight"
                                 :list="costWeightList"></DynamicWidthSelect>
     
             <span v-if="!personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
-            <DynamicWidthSelect class="select condition-function"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintConditionFunction"
                                 :list="conditionFunctionList"></DynamicWidthSelect>
     
-            <DynamicWidthInputField class="input condition-count"
+            <DynamicWidthInputField class="input"
                                     v-if="showConditionCount"
                                     v-model="constraintConditionCount"></DynamicWidthInputField>
     
             <span v-if="personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
     
-            <DynamicWidthSelect class="select filter-column"
+            <DynamicWidthSelect class="select"
                                 v-model="constraintFilterColumnData"
                                 :list="columnDataList"></DynamicWidthSelect>
     
-            <DynamicWidthSelect class="select filter-function"
+            <DynamicWidthSelect class="select"
                                 v-if="showFilterFunction"
                                 v-model="constraintFilterFunction"
                                 :list="filterFunctionList"></DynamicWidthSelect>
     
-            <DynamicWidthInputField class="input filter-value"
+            <DynamicWidthInputField class="input"
                                     v-if="showFilterValueAsInput"
                                     v-model="constraintFilterValues"></DynamicWidthInputField>
     
-            <DynamicWidthSelect class="select filter-value"
+            <DynamicWidthSelect class="select"
                                 v-if="showFilterValueAsSelect"
                                 v-model="constraintFilterValues"
                                 :list="filterValueAsSelectList"></DynamicWidthSelect>
     
-            <span class="group-size-applicability-condition-fragment"
-                  :class="groupSizeApplicabilityConditionFragmentClasses">when {{ stratum.label }} has
-                <span class="popover-link-area">
-                    <a href="#"
-                       @click.prevent="onGroupSizeApplicabilityConditionValueClick">{{ groupSizeApplicabilityConditionDisplayedValue }} {{ groupSizeApplicabilityConditionPersonUnitNoun }}</a>
-                    <div class="popover"
-                         v-if="groupSizeApplicabilityConditionPopoverVisible">
-                        <ul>
-                            <li>
-                                <label>
-                                    <input type="radio"
-                                           name="groupSizeApplicabilityConditionPresence"
-                                           value="not-specified"
-                                           v-model="groupSizeApplicabilityConditionPresence"> any number of people</label>
-                            </li>
-                            <li @click="onGroupSizeApplicabilityConditionValueInputFieldClick">
-                                <label>
-                                    <input type="radio"
-                                           name="groupSizeApplicabilityConditionPresence"
-                                           value="specified"
-                                           v-model="groupSizeApplicabilityConditionPresence">
-                                    <DynamicWidthInputField class="input"
-                                                            :minWidth="5"
-                                                            :disabled="constraintGroupSizeApplicabilityCondition === undefined"
-                                                            v-model="groupSizeApplicabilityConditionValue"></DynamicWidthInputField> {{ groupSizeApplicabilityConditionPersonUnitNoun }}</label>
-                            </li>
-                        </ul>
-                    </div>
-                </span>
-            </span>
+            <span>when {{ stratum.label }} has
+                <DynamicWidthSelect class="select"
+                                    v-model="groupSizeApplicabilityConditionValue"
+                                    :list="groupSizeApplicabilityConditionList"
+                                    :minWidth="1"></DynamicWidthSelect>
+                {{ groupSizeApplicabilityConditionPersonUnitNoun }}</span>
         </div>
         <div class="action-buttons">
             <button class="button delete"
@@ -87,7 +63,7 @@ import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Data as IStratum } from "../data/Stratum";
-import { Data as IConstraint } from "../data/Constraint";
+import { Data as IConstraint, ApplicabilityGroupSizeCondition as IConstraint_ApplicabilityGroupSizeCondition } from "../data/Constraint";
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
@@ -216,6 +192,7 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
     // Props
     @Prop stratum = p<IStratum>({ required: true, });
     @Prop constraint = p<IConstraint>({ required: true, });
+    @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: true, });
 
     // Private
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
@@ -237,6 +214,21 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
         }
 
         throw new Error("Unknown column type");
+    }
+
+    get groupSizeApplicabilityConditionList() {
+        const list: { value: number | undefined, text: string }[] =
+            this.groupSizes.map((size) => ({
+                value: size,
+                text: "" + size,
+            }));
+
+        list.unshift({
+            value: undefined,
+            text: "any number of",
+        });
+
+        return list;
     }
 
     get columnData() {
@@ -415,99 +407,6 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
 
         return true;
     }
-
-
-
-
-
-
-
-
-    get groupSizeApplicabilityConditionFragmentClasses() {
-        return {
-            "group-size-specified": this.constraintGroupSizeApplicabilityCondition !== undefined,
-            "popover-active": this.groupSizeApplicabilityConditionPopoverVisible,
-        }
-    }
-
-    get groupSizeApplicabilityConditionDisplayedValue() {
-        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
-            return "any number of";
-        } else {
-            return "" + this.constraintGroupSizeApplicabilityCondition.value;
-        }
-    }
-
-    onGroupSizeApplicabilityConditionValueClick() {
-        const newVisibleState = !this.groupSizeApplicabilityConditionPopoverVisible;
-        this.groupSizeApplicabilityConditionPopoverVisible = newVisibleState;
-
-        // When menu is now open...
-        if (newVisibleState) {
-            // Get the element that wraps the fragment
-            const groupSizeMenuElement: HTMLSpanElement | null =
-                this.$el.querySelector("span.group-size-applicability-condition-fragment") as HTMLSpanElement;
-
-            if (groupSizeMenuElement === null) {
-                // No element to work with
-                return;
-            }
-
-            // Focus on radio buttons after Vue updates
-            this.$nextTick(() => {
-                const checkedPresenceOption: HTMLInputElement | null =
-                    groupSizeMenuElement.querySelector("input[name=groupSizeApplicabilityConditionPresence]:checked") as HTMLInputElement;
-
-                if (checkedPresenceOption !== null) {
-                    checkedPresenceOption.focus();
-                }
-            });
-
-            // Attach blur handler for menu
-            const blurHandlerDocumentEvents = [
-                "click",
-                "focusin",
-            ];
-
-            const isDescendantOfGroupSizeMenu = (child: Node) => {
-                var node = child.parentNode;
-                while (node != null) {
-                    if (node === groupSizeMenuElement) {
-                        return true;
-                    }
-                    node = node.parentNode;
-                }
-                return false;
-            }
-
-            const blurHandler = (e: Event) => {
-                if (isDescendantOfGroupSizeMenu(e.target as Node)) {
-                    // Ignore if event occurred within group size menu
-                    return;
-                }
-
-                // Close menu on blur
-                this.groupSizeApplicabilityConditionPopoverVisible = false;
-
-                // Clean up after blurring by detaching handlers
-                blurHandlerDocumentEvents.forEach(type => document.removeEventListener(type, blurHandler));
-            }
-
-            // Attach blur handler
-            blurHandlerDocumentEvents.forEach(type => document.addEventListener(type, blurHandler));
-        }
-    }
-
-    onGroupSizeApplicabilityConditionValueInputFieldClick() {
-        // Always activate the input field when clicked on
-        this.groupSizeApplicabilityConditionPresence = "specified";
-    }
-
-
-
-
-
-
 
     async deleteConstraint() {
         await this.$store.dispatch("deleteConstraint", this.constraint);
@@ -694,14 +593,13 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
         return this.constraint.applicability.find(condition => condition.type === "group-size");
     }
 
-    set constraintGroupSizeApplicabilityCondition(newValue: any | undefined) {
+    set constraintGroupSizeApplicabilityCondition(newValue: IConstraint_ApplicabilityGroupSizeCondition | undefined) {
         // Copy applicability array with group size applicability conditions 
         // filtered out
         const applicabilityArray =
             this.constraint.applicability
                 .slice()
                 .filter(condition => condition.type !== "group-size");
-
 
         // When we have a new group size applicability condition, insert that in
         if (newValue !== undefined) {
@@ -711,34 +609,6 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
         this.updateConstraint({
             applicability: applicabilityArray,
         });
-    }
-
-    get groupSizeApplicabilityConditionPresence() {
-        if (this.constraintGroupSizeApplicabilityCondition === undefined) {
-            return "not-specified";
-        } else {
-            return "specified";
-        }
-    }
-
-    set groupSizeApplicabilityConditionPresence(newValue: string) {
-        switch (newValue) {
-            case "not-specified": {
-                // Delete the group size applicability condition
-                this.constraintGroupSizeApplicabilityCondition = undefined;
-                return;
-            }
-            case "specified": {
-                // Default to 2 if condition not previously set
-                if (this.groupSizeApplicabilityConditionPresence !== "specified") {
-                    this.groupSizeApplicabilityConditionValue = "2";
-                }
-
-                return;
-            }
-        }
-
-        throw new Error("Group size applicability presence value invalid");
     }
 
     get groupSizeApplicabilityConditionPersonUnitNoun() {
@@ -755,22 +625,23 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
 
     get groupSizeApplicabilityConditionValue() {
         if (this.constraintGroupSizeApplicabilityCondition === undefined) {
-            return "some number of";
+            return undefined;
         } else {
-            return "" + this.constraintGroupSizeApplicabilityCondition.value;
+            return this.constraintGroupSizeApplicabilityCondition.value;
         }
     }
 
-    set groupSizeApplicabilityConditionValue(newValue: string) {
-        const existingGroupSizeApplicabilityCondition = this.constraintGroupSizeApplicabilityCondition;
-
-        const groupSizeValue = parseUint32(newValue, (existingGroupSizeApplicabilityCondition || {}).value || 0);
+    set groupSizeApplicabilityConditionValue(newValue: number | undefined) {
+        if (newValue === undefined) {
+            this.constraintGroupSizeApplicabilityCondition = undefined;
+            return;
+        }
 
         // Update constraint applicability condition
         this.constraintGroupSizeApplicabilityCondition = {
             type: "group-size",
             function: "eq",
-            value: groupSizeValue,
+            value: newValue,
         };
     }
 
@@ -895,54 +766,5 @@ button.delete:active::before {
      * License: CC BY 3.0 US
      */
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
-}
-
-.group-size-applicability-condition-fragment .popover-link-area {
-    display: inline-block;
-}
-
-.group-size-applicability-condition-fragment .popover-link-area a {
-    background: none;
-    text-decoration: none;
-
-    display: block;
-
-    border: 0;
-    border-bottom: 1px dotted;
-
-    padding: 0 0.2em;
-
-    color: inherit;
-
-    cursor: pointer;
-}
-
-.group-size-applicability-condition-fragment.popover-active .popover-link-area a {
-    outline: 2px solid #608;
-    border-bottom-color: transparent;
-}
-
-.group-size-applicability-condition-fragment .popover {
-    position: absolute;
-    display: inline-block;
-
-    background: #fff;
-    padding: 0.5em;
-
-    min-width: 13em;
-    font-size: 0.7em;
-
-    margin-left: -2px;
-
-    border: 2px solid #608;
-}
-
-.group-size-applicability-condition-fragment .popover ul {
-    padding: 0;
-    list-style: none;
-}
-
-.group-size-applicability-condition-fragment .popover .input[disabled] {
-    padding: 0;
 }
 </style>

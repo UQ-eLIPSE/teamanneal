@@ -16,7 +16,7 @@ type SimilarityFunction = "similar" | "different";
 type ApplicabilityCondition =
     ApplicabilityGroupSizeCondition;
 
-interface ApplicabilityGroupSizeCondition {
+export interface ApplicabilityGroupSizeCondition {
     type: "group-size",
     function: ComparisonFunction,
     value: number,
