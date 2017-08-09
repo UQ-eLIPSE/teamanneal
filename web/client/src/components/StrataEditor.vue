@@ -16,6 +16,10 @@
                                              :partitionColumnData="state.recordData.partitionColumn"
                                              :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
+                <li>
+                    <h3>Consolidated group name format</h3>
+                    <input v-model="groupConsolidatedNameFormat"></input>
+                </li>
             </ul>
         </div>
     </div>
@@ -143,6 +147,33 @@ export default class StrataEditor extends Mixin(StoreState) {
         });
 
         return outputList;
+    }
+
+
+
+
+
+
+
+
+
+    get groupConsolidatedNameFormat() {
+        const format = this.state.annealConfig.namingConfig.consolidated.format;
+
+        if (format === undefined) {
+            return undefined;
+        }
+
+        return format;
+    }
+
+    set groupConsolidatedNameFormat(newValue: string | undefined) {
+        if (newValue === undefined || newValue.trim().length === 0) {
+            this.$store.dispatch("setConsolidatedNameFormat", undefined);
+            return;
+        }
+
+        this.$store.dispatch("setConsolidatedNameFormat", newValue);
     }
 }
 </script>

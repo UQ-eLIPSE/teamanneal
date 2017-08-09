@@ -38,6 +38,20 @@ export interface RecordData {
 export interface AnnealConfig {
     strata: IStratum[],
 
+    namingConfig: {
+        consolidated: {
+            /**
+             * Describes the format with which to generate consolidated group
+             * names
+             * 
+             * Formatting is done by using the stratum label in moustaches,
+             * for example:
+             * "Group {{Table}}-{{Team}}" might look like: "Group 2-C"
+             */
+            format: string | undefined,
+        },
+    },
+
     constraints: IConstraint[],
 }
 
@@ -70,6 +84,11 @@ export namespace State {
     export function GenerateBlankAnnealConfig() {
         const config: AnnealConfig = {
             strata: [],
+            namingConfig: {
+                consolidated: {
+                    format: undefined,
+                },
+            },
             constraints: [],
         };
 

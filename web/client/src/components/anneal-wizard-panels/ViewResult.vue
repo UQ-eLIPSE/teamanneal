@@ -32,7 +32,8 @@
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
                                          :annealResultTreePartitionNodeArray="annealResultTreePartitionNodeArray"
-                                         :columnData="columns"></SpreadsheetTreeView>
+                                         :columnData="columns"
+                                         :consolidatedNameFormat="consolidatedNameFormat"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -117,6 +118,14 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
             headerRow.push(stratum.label);
         });
 
+        // Set up consolidated name format column at end of the row
+        const consolidatedNameFormat =
+            this.state.annealConfig.namingConfig.consolidated.format;
+
+        if (consolidatedNameFormat !== undefined) {
+            headerRow.push("Consolidated group name");
+        }
+
         // Append record names to rows
         recordNodes.forEach((recordNode) => {
             // When fetching row to modify, note that record node indices are
@@ -138,6 +147,16 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
             name.forEach((nameObj) => {
                 row.push(nameObj.nodeGeneratedName);
             });
+
+            // Push in consolidated name as well
+            if (consolidatedNameFormat !== undefined) {
+                let consolidatedName = consolidatedNameFormat;
+                name.forEach(({ stratumLabel, nodeGeneratedName }) => {
+                    consolidatedName = consolidatedName.replace(`{{${stratumLabel}}}`, nodeGeneratedName);
+                });
+
+                row.push(consolidatedName);
+            }
         });
 
         // Export as CSV
@@ -211,6 +230,10 @@ XMLHttpRequest {
         const nodes = ResultTree.InitNodesFromAnnealOutput(this.state, responseData);
 
         return nodes;
+    }
+
+    get consolidatedNameFormat() {
+        return this.state.annealConfig.namingConfig.consolidated.format;
     }
 }
 </script>

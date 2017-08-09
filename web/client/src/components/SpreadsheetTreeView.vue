@@ -27,7 +27,7 @@
 import { Vue, Component, Prop, p } from "av-ts";
 
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
-import { ResultTree, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode, PartitionContextShimNode as IResultTree_PartitionContextShimNode } from "../data/ResultTree";
+import { ResultTree, Node as IResultTree_Node, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode, PartitionContextShimNode as IResultTree_PartitionContextShimNode } from "../data/ResultTree";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
@@ -36,7 +36,10 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  * Flattens the result tree into a form that can be used to construct table rows
  * for SpreadsheetTreeView* components
  */
-function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: ReadonlyArray<IResultTree_StratumNode>) {
+function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, consolidatedNameFormat: string | undefined, treeWalkAccumulator: IResultTree_Node[], nodes: ReadonlyArray<IResultTree_StratumNode>, flattenedArray: FlattenedTreeItem[]) {
+    // How deep have we walked this tree so far?
+    const depth = treeWalkAccumulator.length;
+
     nodes.forEach((node) => {
         // Fetch name
         const nameDesc = nameMap.get(node);
@@ -45,7 +48,7 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
         }
         const { stratumLabel, nodeGeneratedName } = nameDesc;
 
-        if (node.childrenAreRecords) {
+        if (node.childrenAreRecords === true) {
             // Node is terminal; contains records, not more strata
 
             // Create flattened tree item
@@ -53,6 +56,31 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
                 content: `${stratumLabel} ${nodeGeneratedName}`,
                 depth,
             };
+
+            // If a consolidated name format is supplied, then gather up all 
+            // generated names by walking up
+            if (consolidatedNameFormat !== undefined) {
+                // Get the generated name for this stratum label and 
+                // replace it in the consolidated name string
+                let consolidatedName = consolidatedNameFormat;
+
+                [...treeWalkAccumulator, node].forEach((node) => {
+                    if (node.type === "stratum") {
+                        const nameDesc = nameMap.get(node);
+                        let generatedName: string;
+
+                        if (nameDesc === undefined) {
+                            generatedName = "[?]";
+                        } else {
+                            generatedName = nameDesc.nodeGeneratedName;
+                        }
+
+                        consolidatedName = consolidatedName.replace(`{{${node.stratum.label}}}`, generatedName);
+                    }
+                });
+
+                flattenedTreeItem.content += ` (${consolidatedName})`;
+            }
 
             // Push the label of this node (which is an actual group) in
             flattenedArray.push(flattenedTreeItem);
@@ -84,12 +112,10 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
             // Push stratum label
             flattenedArray.push(flattenedTreeItem);
 
-            // Recurse into children (depth increments by one down the tree)
-            flatten(recordRows, nameMap, flattenedArray, depth + 1, node.children);
+            // Recurse into children
+            flatten(recordRows, nameMap, consolidatedNameFormat, [...treeWalkAccumulator, node], node.children, flattenedArray);
         }
     });
-
-    return flattenedArray;
 }
 
 @Component({
@@ -101,6 +127,7 @@ export default class SpreadsheetTreeView extends Vue {
     // Props
     @Prop annealResultTreePartitionNodeArray = p<ReadonlyArray<IResultTree_PartitionContextShimNode>>({ type: Array, required: true, });
     @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
+    @Prop consolidatedNameFormat = p<string | undefined>({ type: String, required: false, default: undefined });
 
     get flattenedTree() {
         // Get record rows
@@ -113,7 +140,10 @@ export default class SpreadsheetTreeView extends Vue {
         // Flatten partitions into one large array before passing to `flatten()`
         const nodes = ResultTree.FlattenPartitionNodes(partitionNodes);
 
-        return flatten(recordRows, nameMap, [], 0, nodes);
+        const flattenedArray: FlattenedTreeItem[] = [];
+        flatten(recordRows, nameMap, this.consolidatedNameFormat, [], nodes, flattenedArray);
+
+        return flattenedArray;
     }
 }   
 </script>

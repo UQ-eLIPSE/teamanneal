@@ -88,7 +88,13 @@ const store = new Vuex.Store({
 
         setAnnealRequest(state, annealRequest: IAnnealRequest) {
             Vue.set(state, "annealRequest", annealRequest);
-        }
+        },
+
+        /// Consolidated name format
+
+        setConsolidatedNameFormat(state, nameFormat: string | undefined) {
+            Vue.set(state.annealConfig.namingConfig.consolidated, "format", nameFormat);
+        },
     },
     actions: {
         /**
@@ -283,6 +289,13 @@ Delete constraints that use this column and try again.`;
                     context.commit("setAnnealRequest", undefined);
                     Vue.nextTick(() => context.commit("setAnnealRequest", annealRequest));
                 });
+        },
+
+        /**
+         * Sets consolidated name format
+         */
+        setConsolidatedNameFormat(context, nameFormat: string | undefined) {
+            context.commit("setConsolidatedNameFormat", nameFormat);
         },
     },
 });

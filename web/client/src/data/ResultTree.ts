@@ -545,14 +545,14 @@ export namespace ResultTree {
             // Accumulate name
             const name = [...accumulatedName, { stratumLabel, nodeGeneratedName }];
 
-            if (node.childrenAreRecords) {
+            if (node.childrenAreRecords === true) {
                 // For each child (record) we map the record to the accumulated 
                 // array (name)
                 node.children.forEach((recordNode) => {
                     recordNodeNameMap.set(recordNode, name);
                 });
 
-            } else if (node.childrenAreRecords === false) {
+            } else {
                 // Recurse down
                 SetRecordNodeNamesRecursive(stratumNodeNameMap, recordNodeNameMap, name, node.children);
             }
@@ -580,11 +580,11 @@ export namespace ResultTree {
                 return;
             }
 
-            if (node.childrenAreRecords) {
+            if (node.childrenAreRecords === true) {
                 node.children.forEach((recordNode) => {
                     accumulatedRecords.push(recordNode);
                 });
-            } else if (node.childrenAreRecords === false) {
+            } else {
                 ExtractRecordNodesRecursive(accumulatedRecords, node.children);
             }
         });
@@ -599,4 +599,20 @@ export namespace ResultTree {
     export function FlattenPartitionNodes(nodes: ReadonlyArray<PartitionContextShimNode>) {
         return nodes.map(x => x.children).reduce((c, x) => [...c, ...x], []);
     }
+
+    export function ExtractThisAndParentNodes(accumulatedNodes: Node[], node: Node) {
+        // Capture this node
+        accumulatedNodes.push(node);
+
+        // Recurse up if parent exists
+        const parent = node.parent;
+        if (parent !== undefined) {
+            ExtractThisAndParentNodes(accumulatedNodes, parent);
+        }
+
+        // Do not return a value - this indicates it operates in place
+        return;
+    }
+
+
 }
