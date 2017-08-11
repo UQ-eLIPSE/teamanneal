@@ -3,7 +3,7 @@
         <table>
             <thead>
                 <tr class="header">
-                    <th v-for="(column, i) in columnInfo"
+                    <th v-for="(column, i) in columnData"
                         :key="i">
                         <template>
                             <span class="cell-content">{{ column.label }}</span>
@@ -15,7 +15,7 @@
                 <SpreadsheetTreeViewItem v-for="(item, i) in flattenedTree"
                                          :key="i"
                                          :item="item"
-                                         :columnInfo="columnInfo"></SpreadsheetTreeViewItem>
+                                         :columnData="columnData"></SpreadsheetTreeViewItem>
             </tbody>
         </table>
     </div>
@@ -26,8 +26,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as AnnealAjax from "../data/AnnealAjax";
-import * as ColumnInfo from "../data/ColumnInfo";
+import { ColumnData, Data as IColumnData } from "../data/ColumnData";
+import { ResultTree, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode } from "../data/ResultTree";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
@@ -36,29 +36,58 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  * Flattens the result tree into a form that can be used to construct table rows
  * for SpreadsheetTreeView* components
  */
-function flatten(flattenedArray: FlattenedTreeItem[], depth: number, node: AnnealAjax.ResultArrayNode) {
-    if (node.children !== undefined) {
-        // Push in group heading if not root
-        if (!node.isRoot) {
+function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: IResultTree_StratumNode[]) {
+    nodes.forEach((node) => {
+        // Fetch name
+        const nameDesc = nameMap.get(node);
+        if (nameDesc === undefined) {
+            throw new Error("Could not find name description object for node");
+        }
+        const { stratumLabel, nodeGeneratedName } = nameDesc;
+
+        if (node.childrenAreRecords) {
+            // Node is terminal; contains records, not more strata
+
+            // Create flattened tree item
             const flattenedTreeItem: FlattenedTreeItem = {
-                content: `${node.stratumLabel} ${node.counterValue}`,
-                depth: depth++,     // Increment depth while we're at it
+                content: `${stratumLabel} ${nodeGeneratedName}`,
+                depth,
             };
 
+            // Push the label of this node (which is an actual group) in
             flattenedArray.push(flattenedTreeItem);
+
+            // Push records
+            node.children.forEach((recordNode) => {
+                // Fetch record
+                const record = recordRows[recordNode.index];
+
+                // Create flattened tree item
+                const flattenedTreeItem: FlattenedTreeItem = {
+                    content: record,
+                    depth,
+                };
+
+                // Insert records
+                flattenedArray.push(flattenedTreeItem);
+            });
+
+        } else {
+            // Node contains further strata underneath
+
+            // Create flattened tree item
+            const flattenedTreeItem: FlattenedTreeItem = {
+                content: `${stratumLabel} ${nodeGeneratedName}`,
+                depth,
+            };
+
+            // Push stratum label
+            flattenedArray.push(flattenedTreeItem);
+
+            // Recurse into children (depth increments by one down the tree)
+            flatten(recordRows, nameMap, flattenedArray, depth + 1, node.children);
         }
-
-        // Recurse into children
-        node.children.forEach((childNode) => flatten(flattenedArray, depth, childNode));
-    } else {
-        // Insert record
-        const flattenedTreeItem: FlattenedTreeItem = {
-            content: node.content!,
-            depth,
-        };
-
-        flattenedArray.push(flattenedTreeItem);
-    }
+    });
 
     return flattenedArray;
 }
@@ -70,11 +99,18 @@ function flatten(flattenedArray: FlattenedTreeItem[], depth: number, node: Annea
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props
-    @Prop tree: AnnealAjax.ResultArrayNode = p({ type: Object, required: true, }) as any;
-    @Prop columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo> = p({ type: Array, required: true, }) as any;
+    @Prop annealResultTreeNodeArray: IResultTree_StratumNode[] = p({ type: Array, required: true, }) as any;
+    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
 
     get flattenedTree() {
-        return flatten([], 0, this.tree);
+        // Get record rows
+        const recordRows = ColumnData.TransposeIntoCookedValueRowArray(this.columnData);
+
+        // Get name map
+        const nodes = this.annealResultTreeNodeArray;
+        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
+
+        return flatten(recordRows, nameMap, [], 0, nodes);
     }
 }   
 </script>

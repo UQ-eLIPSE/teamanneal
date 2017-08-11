@@ -45,7 +45,7 @@
             </label>
             <button class="button"
                     @click="emitWizardNavNext"
-                    v-if="isFileSetInStore">Use "{{fileInStore.name}}"</button>
+                    v-if="isFileSetInStore">Use "{{state.recordData.source.name}}"</button>
             <button class="button gold"
                     @click="clearFile"
                     v-if="isFileSetInStore">Clear file</button>
@@ -58,12 +58,12 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import * as UUID from "../../data/UUID";
-import * as Stratum from "../../data/Stratum";
-import * as SourceFile from "../../data/SourceFile";
-import * as ColumnInfo from "../../data/ColumnInfo";
-import * as CookedData from "../../data/CookedData";
-import * as TeamAnnealState from "../../data/TeamAnnealState";
+import { parseFile } from "../../data/CSV";
+import { fillGaps, transpose } from "../../util/Array";
+
+import { ColumnData } from "../../data/ColumnData";
+import { State, Data as IState } from "../../data/State";
+
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -74,10 +74,12 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
-    clearFile() {
-        // Wipe all working file/config
-        this.$store.commit("initialiseSourceFile");
-        this.$store.commit("initialiseConstraintsConfig");
+    get state() {
+        return this.$store.state as IState;
+    }
+
+    async clearFile() {
+        await this.$store.dispatch("clearRecordData");
     }
 
     openFilePicker() {
@@ -85,12 +87,7 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
     }
 
     get isFileSetInStore() {
-        return TeamAnnealState.hasSourceFileData(this.$store.state);
-    }
-
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
+        return State.HasSourceFileData(this.state);
     }
 
     async onFileInputChanged($event: Event) {
@@ -98,50 +95,33 @@ export default class ProvideRecordsFile extends Mixin<AnnealProcessWizardPanel>(
 
         // Parse
         const file = fileElement.files![0];
-        const parseResult = await SourceFile.parseCsvFile(file);
-        const fileData: ReadonlyArray<ReadonlyArray<string | number>> = parseResult.data;
+        const parseResult = await parseFile(file);
 
-        // Compute column info
-        // TODO: Check for header-ness/stringiness
-        const headers = fileData[0] as string[];
-        let columnInfo: ReadonlyArray<ColumnInfo.ColumnInfo>;
+        // Convert rows with strings into columns
+        const rows: string[][] = parseResult.data;
+        fillGaps(rows);     // Fill gaps in file data array to make it rectangular
 
-        try {
-            columnInfo = ColumnInfo.fromRawData(headers, fileData, true);
-        } catch (e) {
-            // Show error to user
-            alert(e.toString());
-            return;
-        }
+        const columns =
+            transpose(rows)    // Transpose rows into columns
+                .map((columnValues) => {
+                    // First value is always assumed to be the column label 
+                    // (the header string)
+                    const label = "" + columnValues.shift();
 
+                    // Initialise a new ColumnData object
+                    // Remember that the shift pops off the header value from 
+                    // the column values
+                    return ColumnData.Init(columnValues, label);
+                });
 
-        // Shorthand for this.$store.commit
-        const c = this.$store.commit;
+        // Generate record data to store into state
+        const recordData = State.GenerateBlankRecordData();
+        recordData.source.name = file.name;
+        recordData.source.length = rows.length;
+        recordData.columns = columns;
 
-        // Set CSV file data in store
-        c("initialiseSourceFile");
-        c("updateSourceFileName", file.name);
-        c("updateSourceFileRawData", fileData);
-        c("updateSourceFileCookedData", CookedData.cook(columnInfo, fileData, true));
-        c("updateSourceFileColumnInfo", columnInfo);
-
-        // Wipe existing data
-        c("initialiseConstraintsConfig");
-        c("initialiseAnnealAjax");
-        c("initialiseAnnealInputOutput");
-
-        // Add a generic stratum now for users to get started with
-        const genericStratum: Stratum.Stratum = {
-            _id: UUID.generate(),
-            label: "Team",
-            size: {
-                min: 2,
-                ideal: 3,
-                max: 4,
-            },
-            counter: "decimal",
-        }
-        c("insertConstraintsConfigStrata", genericStratum);
+        // Save to state
+        await this.$store.dispatch("setNewRecordData", recordData);
 
         // Move on to the next step
         this.emitWizardNavNext();

@@ -27,8 +27,9 @@ import { Vue, Component, Prop, p } from "av-ts";
 
 import { deepCopy, deepMerge } from "../util/Object";
 
+import { Data as IStratum } from "../data/Stratum";
+
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
-import * as Stratum from "../data/Stratum";
 
 @Component({
     components: {
@@ -37,25 +38,20 @@ import * as Stratum from "../data/Stratum";
 })
 export default class StrataStructureEditorStratumItem extends Vue {
     // Props
-    @Prop stratum: Stratum.Stratum = p({ type: Object, required: true, }) as any;
+    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
     @Prop childUnit: string = p({ type: String, required: false, default: "<group>" }) as any;
     @Prop deletable: boolean = p({ type: Boolean, required: true, }) as any;
     @Prop editable: boolean = p({ type: Boolean, required: false, default: true, }) as any;
 
-    updateStratum(diff: any) {
+    async updateStratum(diff: any) {
         // Deep copy and merge in diff
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
-        // Commit update
-        const stratumUpdate: Stratum.Update = {
-            stratum: newStratum,
-        }
-
-        this.$store.commit("updateConstraintsConfigStrata", stratumUpdate);
+        await this.$store.dispatch("upsertStratum", newStratum);
     }
 
-    deleteStratum() {
-        this.$store.dispatch("deleteStratumConfirmSideEffect", this.stratum);
+    async deleteStratum() {
+        await this.$store.dispatch("deleteStratumConfirmSideEffect", this.stratum);
     }
 
     get stratumLabel() {

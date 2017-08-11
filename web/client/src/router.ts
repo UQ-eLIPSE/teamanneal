@@ -132,10 +132,5 @@ export default (store: Vuex.Store<any>) => {
         return next();
     });
 
-    router.afterEach((to, _from) => {
-        // Update current router path in store
-        store.commit("updateRouterFullPath", to.fullPath);
-    });
-
     return router;
 }

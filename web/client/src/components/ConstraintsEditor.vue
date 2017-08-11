@@ -23,10 +23,8 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import * as UUID from "../data/UUID";
-import * as Stratum from "../data/Stratum";
-import * as SourceFile from "../data/SourceFile";
-import * as ConstraintsConfig from "../data/ConstraintsConfig";
+import { Data as IState } from "../data/State";
+import { Stratum, Data as IStratum } from "../data/Stratum";
 
 import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
@@ -36,61 +34,48 @@ import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
     },
 })
 export default class ConstraintsEditor extends Vue {
-    get fileInStore() {
-        const file: Partial<SourceFile.SourceFile> = this.$store.state.sourceFile;
-        return file;
-    }
-
-    get constraintsConfigInStore() {
-        const config: ConstraintsConfig.ConstraintsConfig = this.$store.state.constraintsConfig;
-        return config;
+    get state() {
+        return this.$store.state as IState;
     }
 
     get strata() {
-        return this.constraintsConfigInStore.strata!;
+        return this.state.annealConfig.strata;
     }
 
     get constraints() {
-        return this.constraintsConfigInStore.constraints;
+        return this.state.annealConfig.constraints;
     }
 
     /**
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return this.constraintsConfigInStore.partitionColumnIndex !== undefined;
+        return this.state.recordData.partitionColumn !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const columnInfo = this.fileInStore.columnInfo || [];
-        const partitionColumnIndex = this.constraintsConfigInStore.partitionColumnIndex;
+        const partitionColumn = this.state.recordData.partitionColumn;
 
-        if (partitionColumnIndex === undefined) {
+        if (partitionColumn === undefined) {
             throw new Error("No partition column set");
         }
 
-        const partitionColumnLabel = columnInfo[partitionColumnIndex].label;
+        const shimLabel = `Partition (${partitionColumn.label})`;
+        const shimSize = {
+            min: 0,
+            ideal: 0,
+            max: 0,
+        };
 
-        const stratumShim: Stratum.Stratum = {
-            _id: UUID.generate(),
-            label: `Partition (${partitionColumnLabel})`,
-            size: {
-                min: 0,
-                ideal: 0,
-                max: 0,
-            },
-            counter: [],
-        }
-
-        return stratumShim;
+        return Stratum.Init(shimLabel, shimSize);
     }
 
-    getStratumConstraints(stratum: Stratum.Stratum) {
+    getStratumConstraints(stratum: IStratum) {
         const stratumId = stratum._id;
-        return this.constraints.filter(constraint => constraint._stratumId === stratumId);
+        return this.constraints.filter(constraint => constraint.stratum === stratumId);
     }
 }
 </script>
