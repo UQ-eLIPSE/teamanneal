@@ -1,7 +1,8 @@
 // Interfaces
 import * as SourceData from "../../../common/SourceData";
-import * as Stratum from "../../../common/Stratum";
 import * as Constraint from "../../../common/Constraint";
+import * as AnnealNode from "../../../common/AnnealNode";
+import * as Stratum from "../../../common/Stratum";
 import * as Record from "../../../common/Record";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 
@@ -27,7 +28,7 @@ import { AnnealRecordPointerArray } from "./AnnealRecordPointerArray";
 import { AnnealStratum } from "./AnnealStratum";
 import { AnnealStratumNode } from "./AnnealStratumNode";
 
-export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
+export function anneal(annealNodes: ReadonlyArray<AnnealNode.NodeRoot>, , strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
     // Generate column information objects
     const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
 

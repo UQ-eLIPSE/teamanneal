@@ -14,11 +14,11 @@ export function init(workerId: string) {
             console.log(`Anneal worker ${workerId} - Start`);
 
             try {
-                const { strata, constraints, sourceData } = data.annealRequest;
+                const { strata, constraints, recordData, annealNodes } = data.annealRequest;
 
-                // Convert sourceData description to that which uses partitioned record
-                // arrays, if records are not already partitioned
-                const convertedSourceData = SourceData.convertToPartitionedRecordArrayDesc(sourceData);
+                // // Convert sourceData description to that which uses partitioned record
+                // // arrays, if records are not already partitioned
+                // const convertedSourceData = SourceData.convertToPartitionedRecordArrayDesc(sourceData);
 
                 // Run anneal
                 const result = Anneal.anneal(convertedSourceData, strata, constraints);
