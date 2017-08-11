@@ -42,28 +42,26 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Vue, Component, Mixin } from "av-ts";
 
-import { State, Data as IState } from "../../data/State";
+import { State } from "../../data/State";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+import { StoreState } from "../StoreState";
+
 import StrataStructureEditor from "../StrataStructureEditor.vue";
 
 @Component({
     components: {
-        StrataStructureEditor,
-    }
+        StrataStructureEditor: StrataStructureEditor as Vue.Component,
+    },
 })
-export default class DesignGroupStructure extends Mixin<AnnealProcessWizardPanel>(AnnealProcessWizardPanel) {
+export default class DesignGroupStructure extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.designGroupStructure;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     get isStrataConfigNamesValid() {
         return State.IsStrataConfigNamesValid(this.state);

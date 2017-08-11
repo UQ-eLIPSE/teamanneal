@@ -29,8 +29,8 @@ import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 @Component
 export default class SpreadsheetTreeViewItem extends Vue {
     // Props
-    @Prop item: FlattenedTreeItem = p({ type: Object, required: true, }) as any;
-    @Prop columnData: ReadonlyArray<IColumnData> = p({ type: Array, required: true, }) as any;
+    @Prop item = p<FlattenedTreeItem>({ required: true, });
+    @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
 
     get numberOfColumns() {
         return this.columnData.length;

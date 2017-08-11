@@ -81,18 +81,19 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Component, Mixin, Prop, p } from "av-ts";
 
 import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Data as IStratum } from "../data/Stratum";
 import { Data as IConstraint } from "../data/Constraint";
-import { Data as IState } from "../data/State";
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
+
+import { StoreState } from "./StoreState";
 
 /*
  * Example sentence structures
@@ -211,17 +212,13 @@ const CostWeightList = [
         DynamicWidthInputField,
     },
 })
-export default class ConstraintsEditorConstraintItem extends Vue {
+export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
     // Props
-    @Prop stratum: IStratum = p({ type: Object, required: true, }) as any;
-    @Prop constraint: IConstraint = p({ type: Object, required: true, }) as any;
+    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop constraint = p<IConstraint>({ required: true, });
 
     // Private
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
-
-    get state() {
-        return this.$store.state as IState;
-    }
 
     get costWeightList() {
         return CostWeightList;
@@ -309,17 +306,17 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         switch (this.thisConstraintType) {
             case "count":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                     value: this.constraintConditionCount!,
                 }
             case "limit":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                 }
 
             case "similarity":
                 return {
-                    function: this.constraintConditionFunction! as any,
+                    function: this.constraintConditionFunction,
                 }
         }
 
@@ -457,7 +454,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             }
 
             // Focus on radio buttons after Vue updates
-            Vue.nextTick(() => {
+            this.$nextTick(() => {
                 const checkedPresenceOption: HTMLInputElement | null =
                     groupSizeMenuElement.querySelector("input[name=groupSizeApplicabilityConditionPresence]:checked") as HTMLInputElement;
 
@@ -578,7 +575,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // 
         // This can only happen after the above column change has been
         // reconciled and hence sits within a Vue.nextTick().
-        Vue.nextTick(() => {
+        this.$nextTick(() => {
             const oldColumnType = oldColumnData.type;
             const newColumnType = newColumnData.type;
 

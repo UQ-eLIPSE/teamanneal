@@ -21,23 +21,20 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Mixin } from "av-ts";
 
-import { Data as IState } from "../data/State";
 import { Stratum, Data as IStratum } from "../data/Stratum";
 
 import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
+import { StoreState } from "./StoreState";
+
 @Component({
     components: {
-        ConstraintsEditorStratum,
+        ConstraintsEditorStratum: ConstraintsEditorStratum as Vue.Component,
     },
 })
-export default class ConstraintsEditor extends Vue {
-    get state() {
-        return this.$store.state as IState;
-    }
-
+export default class ConstraintsEditor extends Mixin(StoreState) {
     get strata() {
         return this.state.annealConfig.strata;
     }
