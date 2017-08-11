@@ -11,7 +11,7 @@
                     :key="stratum._id">
                     <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
-                                             :groupSizes="strataGroupSizes[i]"
+                                             :groupSizes="strataGroupDistribution[i]"
                                              :isPartition="false"></StrataEditorStratumItem>
                 </li>
             </ul>
@@ -74,7 +74,7 @@ export default class StrataEditor extends Mixin(StoreState) {
      * Returns an array of objects which encodes the expected size distribution
      * of each stratum
      */
-    get strataGroupSizes() {
+    get strataGroupDistribution() {
         const strata = this.strata;
         const columns = this.state.recordData.columns;
         const partitionColumnDescriptor = this.state.recordData.partitionColumn;
@@ -84,7 +84,7 @@ export default class StrataEditor extends Mixin(StoreState) {
         // Run group sizing in each partition, and merge the distributions at
         // the end
         try {
-            const strataGroupSizes =
+            const strataGroupDistribution =
                 partitions
                     .map((partition) => {
                         // Generate group sizes for each partition
@@ -113,7 +113,7 @@ export default class StrataEditor extends Mixin(StoreState) {
                         return stratumGroupSizeInfo;
                     });
 
-            return strataGroupSizes;
+            return strataGroupDistribution;
 
         } catch (e) {
             // If error occurs, return blank array
