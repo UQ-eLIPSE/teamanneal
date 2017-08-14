@@ -30,25 +30,49 @@ import { AnnealStratumNode } from "./AnnealStratumNode";
 
 export function anneal(annealNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
     // Generate column information objects
-    const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
+    const { records, columns } = recordData;
+    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(records, i, column));
 
     // Check that constraints array is not empty
     if (constraints.length === 0) {
         throw new Error("Constraints array is empty; aborting anneal");
     }
 
-    // Operate per partition (isolated data sets - can be parallelised)
-    console.log(`Starting anneal`);
+    // Compile array of ID values which sit under this node
+    //
+    // TODO: Note that should be temporary as the newer API structure should 
+    //       utilise the tree structure that is already given rather than
+    //       regenerating the tree again in the `annealPartition()` function 
+    const thisNodeIdValues: Record.RecordElement[] = [];
 
-    const partitions = sourceData.records;
-    const output = partitions.map((partition, i) => {
-        console.log(`Annealing partition ${i + 1}`);
-        return annealPartition(partition, columnInfos, strata, constraints);
+    const collectIdValues =
+        (node: AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren) => {
+            if (node.type === "stratum-records") {
+                thisNodeIdValues.push(...node.recordIds);
+            } else {
+                node.children.forEach(collectIdValues);
+            }
+        }
+
+    annealNode.children.forEach(collectIdValues);
+
+    // Find the ID column
+    const idColumnIndex = columns.findIndex(x => x.isId);
+
+    if (idColumnIndex < 0) {
+        throw new Error("No ID column found");
+    }
+
+    // Retrieve only records that are contained in this anneal node (partition)
+    const thisNodeRecords = records.filter((record) => {
+        const idValue = record[idColumnIndex];
+        return thisNodeIdValues.indexOf(idValue) > -1;
     });
 
-    console.log(`Finished anneal`);
+    // TODO: Satisfaction information to be delivered to client in TA-93
+    const { result, /* satisfaction,*/ } = annealPartition(thisNodeRecords, columnInfos, strata, constraints);
 
-    return output;
+    return result;
 }
 
 function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strataDefs: ReadonlyArray<Stratum.Desc>, constraintDefs: ReadonlyArray<Constraint.Desc>) {
@@ -97,16 +121,14 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
 
     console.log("Iterating...");
     annealOuterLoop(recordPointers, strata, startTemp);
+    console.log("Anneal complete");
 
 
 
-    // Output constraint satisfaction
-    const satisfaction = generateSatisfactionArray(constraints, strata);
-
-    console.log(`Satisfaction
-${JSON.stringify(satisfaction)}`);
-
-    return convertStrataToArray(strata, partition);
+    return {
+        satisfaction: generateSatisfactionArray(constraints, strata),
+        result: convertStrataToArray(strata, partition),
+    };
 }
 
 /**

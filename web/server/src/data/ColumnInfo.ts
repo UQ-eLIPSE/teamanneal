@@ -1,6 +1,5 @@
 import * as Record from "../../../common/Record";
 import * as SourceDataColumn from "../../../common/SourceDataColumn";
-import * as SourceData from "../../../common/SourceData";
 
 import * as Util from "../core/Util";
 
@@ -94,15 +93,4 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
     }
 
     throw new Error("Unrecognised column type");
-}
-
-export function initManyFromSourceData(sourceData: SourceData.DescBase & SourceData.Partitioned) {
-    const partitions = sourceData.records;
-
-    // An array of all records in the data set
-    const allRecords = Util.concatArrays(partitions);
-
-    return sourceData.columns.map((column, i) => {
-        return initFromColumnIndex(allRecords, i, column);
-    });
 }
