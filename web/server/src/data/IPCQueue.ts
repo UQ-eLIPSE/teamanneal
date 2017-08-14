@@ -2,10 +2,10 @@ import * as kue from "kue";
 
 export const openQueue = kue.createQueue;
 
-export const queueMessage = (type: string, data: any) => {
+export const queueMessage = (type: string, data: any, removeOnComplete: boolean = true) => {
     const queue = openQueue();
     return queue
         .create(type, data)
-        .removeOnComplete(true)
+        .removeOnComplete(removeOnComplete)
         .save();
 }

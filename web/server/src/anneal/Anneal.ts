@@ -1,5 +1,5 @@
 // Interfaces
-import * as SourceData from "../../../common/SourceData";
+import * as RecordData from "../../../common/RecordData";
 import * as Constraint from "../../../common/Constraint";
 import * as AnnealNode from "../../../common/AnnealNode";
 import * as Stratum from "../../../common/Stratum";
@@ -28,7 +28,7 @@ import { AnnealRecordPointerArray } from "./AnnealRecordPointerArray";
 import { AnnealStratum } from "./AnnealStratum";
 import { AnnealStratumNode } from "./AnnealStratumNode";
 
-export function anneal(annealNodes: ReadonlyArray<AnnealNode.NodeRoot>, , strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
+export function anneal(annealNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
     // Generate column information objects
     const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
 

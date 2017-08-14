@@ -29,21 +29,25 @@ module.exports = () => {
 
 
 const anneal: express.RequestHandler =
-    (req, res, _next) => {
+    (req, res) => {
         const annealRequest: ToServerAnnealRequest.Root = req.body;
 
         // Add request to store
         const serverResponseId = PendingResponseStore.add(res);
-        console.log(`Anneal response tagged with ID ${serverResponseId}`);
+        console.log(`Anneal request to server worker received; response tagged with ID ${serverResponseId}`);
 
-        const annealJobData: IPCData.AnnealJobData = {
+        const annealJobData: IPCData.AnnealRequestMessageData = {
+            _meta: {
+                serverResponseId,
+            },
+
             annealRequest,
-            serverResponseId,
         }
 
-        // Queue job
-        IPCQueue.queueMessage("anneal", annealJobData);
+        // Queue request data now to reduce server blocking
+        IPCQueue.queueMessage("anneal-request", annealJobData);
 
         // There is no response yet; the anneal job has been sent and will be
-        // responded to by the "anneal-result" message handler
+        // responded to by the "anneal-response" message handler that's also run
+        // in the main server process
     };
