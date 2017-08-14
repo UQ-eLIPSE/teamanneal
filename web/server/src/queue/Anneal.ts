@@ -10,7 +10,7 @@ export function init(workerId: string) {
             const { _meta, annealNode, constraints, recordData, strata } = data;
 
             // Start processing job
-            const tag = `[${_meta.annealNode.index} of ${_meta.serverResponseId}]`;
+            const tag = `[${_meta.annealNode.index} of ID = ${_meta.serverResponseId}]`;
             console.log(`Anneal worker ${workerId} - Starting anneal for ${tag}...`);
 
             try {
