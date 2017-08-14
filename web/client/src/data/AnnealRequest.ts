@@ -1,11 +1,13 @@
 import axios, { AxiosPromise, AxiosResponse, AxiosError, CancelTokenSource } from "axios";
 
 import { reverse } from "../util/Array";
+import * as UUID from "../util/UUID";
 
 import * as Record from "../../../common/Record";
 import * as Stratum from "../../../common/Stratum";
+import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
-import * as SourceData from "../../../common/SourceData";
+import * as RecordData from "../../../common/RecordData";
 import * as SourceDataColumn from "../../../common/SourceDataColumn";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
@@ -66,18 +68,12 @@ export namespace AnnealRequest {
 
     export function ConvertStateToAnnealRequestBody(state: IState) {
         // =====================================================================
-        // Source data (Partitions and columns)
+        // Record data
         // =====================================================================
 
-        // Form partitions
-        const stateStrata = state.annealConfig.strata;
         const stateColumns = state.recordData.columns;
-        const partitionColumnDescriptor = state.recordData.partitionColumn;
-
-        const statePartitions = Partition.InitManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
-
         // Convert columns into rows
-        const records = statePartitions.map(partition => ColumnData.TransposeIntoCookedValueRowArray(partition.columns));
+        const records = ColumnData.TransposeIntoCookedValueRowArray(stateColumns);
 
         // Map the column info objects into just what we need for the request
         const idColumn = state.recordData.idColumn;
@@ -86,22 +82,75 @@ export namespace AnnealRequest {
             throw new Error("No ID column set");
         }
 
-        const columns = stateColumns.map((column) => {
+        // Keep track of the ID column
+        let idColumnIndex: number | undefined = undefined;
+
+        const columns = stateColumns.map((column, i) => {
+            const isId = ColumnData.Equals(idColumn, column);
+
+            if (isId) {
+                if (idColumnIndex === undefined) {
+                    idColumnIndex = i;
+                } else {
+                    throw new Error("Two or more ID columns found");
+                }
+            }
+
             const columnDesc: SourceDataColumn.ColumnDesc = {
                 label: column.label,
                 type: column.type,
-                isId: ColumnData.Equals(idColumn, column),
+                isId,
             }
 
             return columnDesc;
         });
 
-        // Compile the source data object
-        const sourceData: SourceData.Desc = {
+        if (idColumnIndex === undefined) {
+            throw new Error("No ID columns found");
+        }
+
+        // Create record data object
+        const recordData: RecordData.Desc = {
             columns,
             records,
-            isPartitioned: true,    // We have partitioned the data above regardless
         };
+
+        // =====================================================================
+        // Anneal nodes
+        // =====================================================================
+
+        // Each node represents each partition to anneal over
+        const partitionColumnDescriptor = state.recordData.partitionColumn;
+        const statePartitions = Partition.InitManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
+
+        // Create anneal nodes from the ID values of each partition
+        const annealNodes =
+            statePartitions.map((partition) => {
+                const recordIds = ColumnData.GenerateCookedColumnValues(partition.columns[idColumnIndex!]);
+
+                // NOTE: This is not yet fully developed as the server-side code 
+                // does not use the node tree structure just yet, so we're just 
+                // encoding the partition nodes one level down with a node that
+                // holds records as an immediate child rather than fully 
+                // representing the real tree
+
+                const recordsNode: AnnealNode.NodeStratumWithRecordChildren =
+                    {
+                        _id: UUID.generate(),
+                        type: "stratum-records",
+                        recordIds,
+                    };
+
+                const rootNode: AnnealNode.NodeRoot =
+                    {
+                        _id: UUID.generate(),
+                        type: "root",
+                        children: [recordsNode],
+                    };
+
+                return rootNode;
+            });
+
 
         // =====================================================================
         // Strata
@@ -113,6 +162,7 @@ export namespace AnnealRequest {
         // rather than:
         //      [lowest, ..., highest]
         // which is what the server receives as input to the anneal endpoint.
+        const stateStrata = state.annealConfig.strata;
         const strataServerOrder = reverse(stateStrata);
 
         const strata =
@@ -232,15 +282,10 @@ export namespace AnnealRequest {
         // =====================================================================
 
         const request: ToServerAnnealRequest.Root = {
-            sourceData,
+            recordData,
+            annealNodes,
             strata,
             constraints,
-            config: {
-                // TODO: This entire block is dummy data;
-                // The config parameters are currently unused and will be cleaned up in TA-52
-                iterations: 0,
-                returnAllData: true,
-            },
         }
 
         return request;

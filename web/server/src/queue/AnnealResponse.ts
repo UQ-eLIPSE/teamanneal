@@ -11,10 +11,23 @@ export function init() {
         .process("anneal-response", 1, (job, done) => {
             const responseMessageData: IPCData.AnnealResponseMessageData = job.data;
 
-            const { error, result, _meta } = responseMessageData;
+            const { error, results, _meta } = responseMessageData;
             const { serverResponseId } = _meta;
 
             const res = PendingResponseStore.get(serverResponseId);
+
+            // Sort results array by node index
+            if (results !== undefined) {
+                results.sort((a, b) => {
+                    const indexA = a._meta.annealNode.index;
+                    const indexB = b._meta.annealNode.index;
+
+                    if (indexA < indexB) return -1;
+                    if (indexA > indexB) return 1;
+
+                    return 0;
+                });
+            }
 
             console.log(`Anneal response incoming message for response ID ${serverResponseId}`);
 
@@ -32,7 +45,7 @@ export function init() {
                 res
                     .status(HTTPResponseCode.SUCCESS.OK)
                     .json({
-                        output: result,
+                        results,
                     });
             }
 
