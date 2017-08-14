@@ -16,8 +16,8 @@ export function init() {
 
             const res = PendingResponseStore.get(serverResponseId);
 
-            // Sort results array by node index
             if (results !== undefined) {
+                // Sort results array by node index
                 results.sort((a, b) => {
                     const indexA = a._meta.annealNode.index;
                     const indexB = b._meta.annealNode.index;
@@ -26,6 +26,11 @@ export function init() {
                     if (indexA > indexB) return 1;
 
                     return 0;
+                });
+
+                // Strip _meta
+                results.forEach((result) => {
+                    delete result["_meta"];
                 });
             }
 
