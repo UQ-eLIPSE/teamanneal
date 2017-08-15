@@ -26,15 +26,34 @@ export class AnnealRecordPointerArray {
         // This shares the same array buffer as the above `pointerArray`
         const workingSet = new Uint32Array(memory.buffer, 0, numberOfRecords);
 
-        // Initialise individual pointer values in working set
-        for (let i = 0; i < numberOfRecords; ++i) {
-            workingSet[i] = i;
-        }
-
         // Store to this object
         this.memory = memory;
         this.workingSet = workingSet;
         this.numberOfRecords = numberOfRecords;
+    }
+
+    public initialise(recordPointers: ReadonlyArray<number>) {
+        // Check length is equal
+        if (recordPointers.length !== this.numberOfRecords) {
+            throw new Error("Set of pointers must equal expected number of records");
+        }
+
+        // Check that record pointers are unique and the set is contiguous
+        //
+        // Must copy first before sorting as it is a mutating method
+        const pointerCheckSet = [...recordPointers].sort();
+
+        let lastPointerValue = pointerCheckSet[0];
+        for (let i = 1; i < pointerCheckSet.length; ++i) {
+            if (pointerCheckSet[i] !== lastPointerValue + 1) {
+                throw new Error("Pointers not contiguous or not unique");
+            }
+        }
+
+        // Initialise individual pointer values in working set
+        for (let i = 0; i < recordPointers.length; ++i) {
+            this.workingSet[i] = recordPointers[i];
+        }
     }
 
     public shuffle() {

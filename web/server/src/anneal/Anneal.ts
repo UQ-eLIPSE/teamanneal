@@ -70,7 +70,7 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
 
     // A linear array store that holds pointers to records in the partition
     console.log("Creating record pointers...");
-    const recordPointers = createAnnealRecordPointerArray();
+    const recordPointers = new AnnealRecordPointerArray(thisNodeRecords.length);
 
     // !!!!!!!!!!!!!!!!
     // TODO: Actually, the record pointer array needs to have pointers encoded
@@ -450,14 +450,14 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
 //     return previousStratumArray;
 // }
 
-function createAnnealRecordPointerArray(numberOfRecords: number) {
-    const recordPointers = new AnnealRecordPointerArray(numberOfRecords);
+// function createAnnealRecordPointerArray(numberOfRecords: number) {
+//     const recordPointers = new AnnealRecordPointerArray(numberOfRecords);
 
-    // Give records a shuffle before we start
-    recordPointers.shuffle();
+//     // Give records a shuffle before we start
+//     recordPointers.shuffle();
 
-    return recordPointers;
-}
+//     return recordPointers;
+// }
 
 function createConstraintObjects(records: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, constraintDefs: ReadonlyArray<Constraint.Desc>): ReadonlyArray<AbstractConstraint> {
     // Convert each constraint definition into constraint objects
