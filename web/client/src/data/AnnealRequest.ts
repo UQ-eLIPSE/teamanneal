@@ -166,8 +166,9 @@ export namespace AnnealRequest {
         const strataServerOrder = reverse(stateStrata);
 
         const strata =
-            strataServerOrder.map(({ label, size }) => {
+            strataServerOrder.map(({ _id, label, size }) => {
                 const stratum: Stratum.Desc = {
+                    _id,
                     label,
                     size,
                 };
@@ -217,7 +218,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,
@@ -238,7 +239,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,
@@ -259,7 +260,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,

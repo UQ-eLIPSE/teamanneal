@@ -37,8 +37,8 @@ export interface ApplicabilityGroupSizeCondition {
 }
 
 export interface Base {
-    /** The i-th strata that this constraint applies to */
-    readonly strata: number,
+    /** The stratum object ID that this constraint applies to */
+    readonly stratum: string,
     /** Weight applied to this constraint in the annealing algorithm */
     readonly weight: number,
     /**

@@ -1,4 +1,6 @@
 export class AnnealStratumNode {
+    private readonly id: string;
+
     private readonly workingSetView: Uint32Array;
     private readonly cost: Float64Array;
 
@@ -6,21 +8,29 @@ export class AnnealStratumNode {
     private size: number;   // In uint32 units (not bytes)
 
 
-    constructor(buffer: ArrayBuffer, offset: number, size: number) {
+    constructor(id: string, buffer: ArrayBuffer, offset: number, size: number) {
         // Create an array buffer view specifically for this node
-        // The offset is multiplied by 4 because there are 4 bytes per uint32
-        this.workingSetView = new Uint32Array(buffer, offset * 4, size);
+        // NOTE: The offset is a normal element unit count, but the Uint32Array 
+        //       constructor uses bytes!
+        //       BYTES_PER_ELEMENT is used as the multiplier and its value 
+        //       should be 4.
+        this.workingSetView = new Uint32Array(buffer, offset * Uint32Array.BYTES_PER_ELEMENT, size);
 
         // Using Float64Array to store cost value for performance reasons
         this.cost = new Float64Array(1);
         this.wipeCost();
 
+        this.id = id;
         this.offset = offset;
         this.size = size;
     }
 
     public getRecordPointers() {
         return this.workingSetView;
+    }
+
+    public getId() {
+        return this.id;
     }
 
     public getOffset() {
@@ -53,7 +63,7 @@ export class AnnealStratumNode {
      * 
      * A check is performed that the nodes are indeed contiguous and ordered.
      */
-    public static initFromChildren(nodes: ReadonlyArray<AnnealStratumNode>) {
+    public static initFromChildren(id: string, nodes: ReadonlyArray<AnnealStratumNode>) {
         let offset: number = 0;
         let size: number = 0;
         let buffer: ArrayBuffer | undefined;
@@ -82,7 +92,7 @@ export class AnnealStratumNode {
             throw new Error("No buffer was extracted; possibly nodes array is empty");
         }
 
-        return new AnnealStratumNode(buffer, offset, size);
+        return new AnnealStratumNode(id, buffer, offset, size);
     }
 
     /**
