@@ -71,9 +71,11 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
+import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
+
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
-import { ResultTree, AnnealOutput } from "../../data/ResultTree";
+import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
 import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
@@ -160,8 +162,50 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
     get annealErrorMessage() {
         const request = this.state.annealRequest;
 
-        // No request or no error
-        if (request === undefined || AnnealRequest.IsRequestSuccessful(request)) {
+        // No request
+        if (request === undefined) {
+            return undefined;
+        }
+
+        // No **request** error
+        // This is not the same as "no anneal error"!
+        if (AnnealRequest.IsRequestSuccessful(request)) {
+            const response = AnnealRequest.GetResponse(request) as AxiosResponse;
+            const responseData = response.data as ToClientAnnealResponse.Root;
+
+            // Return error now if it encompasses entire response
+            if (responseData.error !== undefined) {
+                return `Error: ${responseData.error}`;
+            }
+
+
+            // We still need to check if there was an error in one of the 
+            // individual anneal node results
+            if (responseData.results !== undefined) {
+                const annealNodesWithErrors: { index: number, error: string }[] = [];
+
+                // Accumulate errors if present
+                responseData.results.forEach((result, index) => {
+                    if (result.error !== undefined) {
+                        annealNodesWithErrors.push({
+                            index,
+                            error: result.error,
+                        });
+                    }
+                });
+
+                // Return error if there is a node which suffered a failure
+                if (annealNodesWithErrors.length > 0) {
+                    let message = "Error: Partial anneal failure:\n";
+                    annealNodesWithErrors.forEach(({ index, error, }) => {
+                        message += `  at node index ${index}: ${error}\n`;
+                    });
+
+                    return message;
+                }
+            }
+
+            // No problems
             return undefined;
         }
 
@@ -205,22 +249,15 @@ XMLHttpRequest {
 
     get annealResultTreeNodeArray() {
         const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
-        const responseData = response.data.output as AnnealOutput;
+        const responseData = response.data as ToClientAnnealResponse.Root;
 
-        // Collapse all partitions back together as one large array
-        //
-        // NOTE: Currently this does not rearrange nodes such that partitions
-        // are properly dealt with for naming purposes - currently all names
-        // are global (see "client/data/Stratum.ts") so we can do this for now
-        //
-        // TODO: Support handling partitions so that they can be used properly
-        // for naming contexts
-        const resultArray = responseData.reduce((c, x) => [...c, ...x], []);
+        // We're working on the presumption that we definitely have results
+        const partitionResults = responseData.results!;
 
-        // Generate nodes
-        const nodes = ResultTree.InitNodesFromResultArray(this.state, resultArray);
+        // TODO: Create nodes from returned anneal result nodes
+        partitionResults;
 
-        return nodes;
+        // return nodes;
     }
 }
 </script>

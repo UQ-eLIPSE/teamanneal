@@ -21,7 +21,7 @@ type ResultArrayContent = ResultArray | Record.RecordSet;
 export interface ResultArray extends ReadonlyArray<ResultArrayContent> { }
 
 /** The full array that the anneal response comes back with */
-export type AnnealOutput = ReadonlyArray<ResultArray>;
+// export type AnnealOutput = ReadonlyArray<ResultArray>;
 
 export type Node = StratumNode | RecordNode;
 

@@ -155,7 +155,7 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
 
     const output = {
         // satisfaction: generateSatisfactionArray(constraints, strata),
-        result: generateOutputTree(thisNodeRecords, annealNodeToStratumNodeMap, annealRootNode),
+        result: generateOutputTree(thisNodeRecords, idColumnIndex, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
     };
 
     // TODO: Satisfaction information to be delivered to client in TA-93
@@ -309,12 +309,16 @@ function generateStratumNodes(pointerArrayWorkingSet: Uint32Array, recordIdColum
     });
 }
 
-interface OutputTree { _id: string, records?: Record.RecordSet, children?: OutputTree[] }
-
-function generateOutputTree(records: Record.RecordSet, annealNodeToStratumNodeMap: WeakMap<AnnealNode.Node, AnnealStratumNode>, node: AnnealNode.Node): OutputTree {
+/**
+ * Generates output tree to send back to client.
+ * 
+ * @param records Array of records
+ * @param idColumnIndex Column index of record with ID values
+ * @param annealNodeToStratumNodeMap Map between anneal node (from the request) to stratum node (used internally in the anneal)
+ * @param node The node being operated on
+ */
+function generateOutputTree(records: Record.RecordSet, idColumnIndex: number, annealNodeToStratumNodeMap: WeakMap<AnnealNode.Node, AnnealStratumNode>, node: AnnealNode.Node): AnnealNode.Node {
     // Output full records for leaf nodes
-    //
-    // TODO: This will change to only return record IDs
     if (node.type === "stratum-records") {
         const stratumNode = annealNodeToStratumNodeMap.get(node);
 
@@ -324,16 +328,38 @@ function generateOutputTree(records: Record.RecordSet, annealNodeToStratumNodeMa
 
         const recordPointers = Array.from(stratumNode.getRecordPointers());
 
-        return {
+        const outputNode: AnnealNode.NodeStratumWithRecordChildren = {
             _id: node._id,
-            records: recordPointers.map(pointer => records[pointer]),
+            type: node.type,
+            recordIds: recordPointers.map(pointer => records[pointer][idColumnIndex]),
         };
+
+        return outputNode;
     }
 
-    return {
-        _id: node._id,
-        children: node.children.map(childNode => generateOutputTree(records, annealNodeToStratumNodeMap, childNode)),
-    };
+    // Map stratum-stratum nodes
+    if (node.type === "stratum-stratum") {
+        const outputNode: AnnealNode.NodeStratumWithStratumChildren = {
+            _id: node._id,
+            type: node.type,
+            children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren | AnnealNode.NodeStratumWithRecordChildren),
+        };
+
+        return outputNode;
+    }
+
+    // Map root nodes
+    if (node.type === "root") {
+        const outputNode: AnnealNode.NodeRoot = {
+            _id: node._id,
+            type: node.type,
+            children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren),
+        };
+
+        return outputNode;
+    }
+
+    throw new Error("Unknown node type");
 }
 
 /**

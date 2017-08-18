@@ -34,13 +34,13 @@ export interface AnnealJobData {
 export interface AnnealResultMessageData {
     _meta: InternalAnnealMeta & InternalAnnealNodeMeta,
 
-    result?: any,
-    error?: any,
+    result?: AnnealNode.NodeRoot,
+    error?: string,
 }
 
 export interface AnnealResponseMessageData {
     _meta: InternalAnnealMeta,
 
     results?: AnnealResultMessageData[],
-    error?: any,
+    error?: string,
 }
