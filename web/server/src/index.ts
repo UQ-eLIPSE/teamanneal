@@ -35,7 +35,7 @@ if (cluster.isMaster) {
     // TODO: The maximum should be configurable
 
     const numberOfCpus = os.cpus().length;
-    const numberOfAnnealWorkers = Math.min(20, Math.max(2, numberOfCpus - 1));
+    const numberOfAnnealWorkers = Math.min(2, Math.max(2, numberOfCpus - 1));
 
     // Start up anneal workers
     console.log(`Creating ${numberOfAnnealWorkers} anneal workers...`);

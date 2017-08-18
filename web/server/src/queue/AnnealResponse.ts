@@ -1,3 +1,5 @@
+import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse";
+
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
@@ -40,18 +42,23 @@ export function init() {
                 throw new Error(`No response object found for ID ${serverResponseId}`);
             }
 
-            if (error) {
+            if (error !== undefined) {
+                const response: ToClientAnnealResponse.Root = {
+                    error,
+                };
+
                 res
                     .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                    .json({
-                        error,
-                    });
+                    .json(response);
+
             } else {
+                const response: ToClientAnnealResponse.Root = {
+                    results,
+                };
+
                 res
                     .status(HTTPResponseCode.SUCCESS.OK)
-                    .json({
-                        results,
-                    });
+                    .json(response);
             }
 
             // Clean up response from the map
