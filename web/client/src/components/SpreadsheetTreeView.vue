@@ -3,10 +3,10 @@
         <table>
             <thead>
                 <tr class="header">
-                    <th v-for="(column, i) in columnData"
+                    <th v-for="(label, i) in headerRow"
                         :key="i">
                         <template>
-                            <span class="cell-content">{{ column.label }}</span>
+                            <span class="cell-content">{{ label }}</span>
                         </template>
                     </th>
                 </tr>
@@ -15,7 +15,7 @@
                 <SpreadsheetTreeViewItem v-for="(item, i) in flattenedTree"
                                          :key="i"
                                          :item="item"
-                                         :columnData="columnData"></SpreadsheetTreeViewItem>
+                                         :numberOfColumns="numberOfColumns"></SpreadsheetTreeViewItem>
             </tbody>
         </table>
     </div>
@@ -26,8 +26,9 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import { ColumnData, Data as IColumnData } from "../data/ColumnData";
-import { ResultTree, NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated, StratumNode as IResultTree_StratumNode } from "../data/ResultTree";
+import * as AnnealNode from "../../../common/AnnealNode";
+
+import { NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated } from "../data/ResultTree";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
@@ -36,16 +37,16 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  * Flattens the result tree into a form that can be used to construct table rows
  * for SpreadsheetTreeView* components
  */
-function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: ReadonlyArray<IResultTree_StratumNode>) {
+function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>>, idColumnIndex: number, nameMap: IResultTree_NodeNameMapNameGenerated, flattenedArray: FlattenedTreeItem[], depth: number, nodes: ReadonlyArray<AnnealNode.Node>) {
     nodes.forEach((node) => {
         // Fetch name
         const nameDesc = nameMap.get(node);
         if (nameDesc === undefined) {
             throw new Error("Could not find name description object for node");
         }
-        const { stratumLabel, nodeGeneratedName } = nameDesc;
+        const { type, stratumLabel, nodeGeneratedName } = nameDesc;
 
-        if (node.childrenAreRecords) {
+        if (node.type === "stratum-records") {
             // Node is terminal; contains records, not more strata
 
             // Create flattened tree item
@@ -58,9 +59,13 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
             flattenedArray.push(flattenedTreeItem);
 
             // Push records
-            node.children.forEach((recordNode) => {
+            node.recordIds.forEach((recordId) => {
                 // Fetch record
-                const record = recordRows[recordNode.index];
+                const record = recordRows.find(row => row[idColumnIndex] === recordId);
+
+                if (record === undefined) {
+                    throw new Error(`Record "${recordId}" not found`);
+                }
 
                 // Create flattened tree item
                 const flattenedTreeItem: FlattenedTreeItem = {
@@ -75,17 +80,29 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
         } else {
             // Node contains further strata underneath
 
-            // Create flattened tree item
-            const flattenedTreeItem: FlattenedTreeItem = {
-                content: `${stratumLabel} ${nodeGeneratedName}`,
-                depth,
-            };
+            let depthIncrement: number = 0;
 
-            // Push stratum label
-            flattenedArray.push(flattenedTreeItem);
+            // We ignore partitions for now because there is no clear way of 
+            // handling how to show partitions
+            //
+            // TODO: Work out how to encode partitions properly as part of the
+            // the naming process
+            if (type !== "partition") {
+                // Create flattened tree item
+                const flattenedTreeItem: FlattenedTreeItem = {
+                    content: `${stratumLabel} ${nodeGeneratedName}`,
+                    depth,
+                };
 
-            // Recurse into children (depth increments by one down the tree)
-            flatten(recordRows, nameMap, flattenedArray, depth + 1, node.children);
+                // Push stratum label
+                flattenedArray.push(flattenedTreeItem);
+
+                // Depth increments by one down the tree
+                depthIncrement = 1;
+            }
+
+            // Recurse into children 
+            flatten(recordRows, idColumnIndex, nameMap, flattenedArray, depth + depthIncrement, node.children);
         }
     });
 
@@ -99,18 +116,15 @@ function flatten(recordRows: (number | string | null)[][], nameMap: IResultTree_
 })
 export default class SpreadsheetTreeView extends Vue {
     // Props
-    @Prop annealResultTreeNodeArray = p<ReadonlyArray<IResultTree_StratumNode>>({ type: Array, required: true, });
-    @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
+    @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
+    @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
+    @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
+    @Prop nameMap = p<IResultTree_NodeNameMapNameGenerated>({ required: true, });
+    @Prop idColumnIndex = p<number>({ type: Number, required: true, });
+    @Prop numberOfColumns = p<number>({ type: Number, required: true, });
 
     get flattenedTree() {
-        // Get record rows
-        const recordRows = ColumnData.TransposeIntoCookedValueRowArray(this.columnData);
-
-        // Get name map
-        const nodes = this.annealResultTreeNodeArray;
-        const { nameMap } = ResultTree.GenerateNodeNameMap(nodes);
-
-        return flatten(recordRows, nameMap, [], 0, nodes);
+        return flatten(this.recordRows, this.idColumnIndex, this.nameMap, [], 0, this.annealNodeRoots);
     }
 }   
 </script>

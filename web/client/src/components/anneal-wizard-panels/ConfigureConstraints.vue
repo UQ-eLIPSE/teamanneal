@@ -101,7 +101,7 @@ export default class ConfigureConstraints extends Mixin(StoreState, AnnealProces
     async onAnnealButtonClick() {
         // Convert state to anneal request input 
         const annealRequest = AnnealRequest.InitFromState(this.state);
-
+    
         // Fire off the anneal request
         await this.$store.dispatch("setAnnealRequest", annealRequest);
 

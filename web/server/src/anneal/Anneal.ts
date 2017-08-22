@@ -331,6 +331,7 @@ function generateOutputTree(records: Record.RecordSet, idColumnIndex: number, an
         const outputNode: AnnealNode.NodeStratumWithRecordChildren = {
             _id: node._id,
             type: node.type,
+            stratum: node.stratum,
             recordIds: recordPointers.map(pointer => records[pointer][idColumnIndex]),
         };
 
@@ -342,6 +343,7 @@ function generateOutputTree(records: Record.RecordSet, idColumnIndex: number, an
         const outputNode: AnnealNode.NodeStratumWithStratumChildren = {
             _id: node._id,
             type: node.type,
+            stratum: node.stratum,
             children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren | AnnealNode.NodeStratumWithRecordChildren),
         };
 
@@ -353,6 +355,7 @@ function generateOutputTree(records: Record.RecordSet, idColumnIndex: number, an
         const outputNode: AnnealNode.NodeRoot = {
             _id: node._id,
             type: node.type,
+            partitionValue: node.partitionValue,
             children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren),
         };
 

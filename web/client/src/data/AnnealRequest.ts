@@ -182,6 +182,7 @@ export namespace AnnealRequest {
                             const stratumRecordNode: AnnealNode.NodeStratumWithRecordChildren = {
                                 _id: UUID.generate(),
                                 type: "stratum-records",
+                                stratum: strata[serverStratumIndex]._id,
                                 recordIds: shuffledRecordIdValues.splice(0, groupSize), // "Pop off" the relevant record IDs for this node
                             };
 
@@ -198,7 +199,7 @@ export namespace AnnealRequest {
                         // Intermediate nodes simply nest other children nodes
 
                         if (prevStratumNodes === undefined) {
-                            throw new Error("No children stratum nodes found");
+                            throw new Error("No child nodes found");
                         }
 
                         const numberOfPrevStratumNodes = prevStratumNodes.length;
@@ -210,6 +211,7 @@ export namespace AnnealRequest {
                             const stratumNode: AnnealNode.NodeStratumWithStratumChildren = {
                                 _id: UUID.generate(),
                                 type: "stratum-stratum",
+                                stratum: strata[serverStratumIndex]._id,
                                 children: prevStratumNodes!.splice(0, groupSize),
                             };
 
@@ -231,6 +233,7 @@ export namespace AnnealRequest {
                 const rootNode: AnnealNode.NodeRoot = {
                     _id: UUID.generate(),
                     type: "root",
+                    partitionValue: "" + partition.value,
                     children: rootChildren,
                 }
 
@@ -369,7 +372,7 @@ export namespace AnnealRequest {
         return {
             cancelTokenSource,
             request,
-        }
+        };
     }
 
     export function Cancel(annealRequest: Data, message?: string) {
