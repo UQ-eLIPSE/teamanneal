@@ -8,7 +8,7 @@ import * as Stratum from "../../../common/Stratum";
 import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
-import * as SourceDataColumn from "../../../common/SourceDataColumn";
+import * as RecordDataColumn from "../../../common/RecordDataColumn";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
@@ -97,7 +97,7 @@ export namespace AnnealRequest {
                 }
             }
 
-            const columnDesc: SourceDataColumn.ColumnDesc = {
+            const columnDesc: RecordDataColumn.ColumnDesc = {
                 label: column.label,
                 type: column.type,
                 isId,

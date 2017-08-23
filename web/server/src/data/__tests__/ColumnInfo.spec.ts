@@ -1,5 +1,5 @@
 import * as SourceData from "../../../../common/SourceData";
-import * as SourceDataColumn from "../../../../common/SourceDataColumn";
+import * as RecordDataColumn from "../../../../common/RecordDataColumn";
 import * as Record from "../../../../common/Record";
 
 import * as ColumnInfo from "../ColumnInfo";
@@ -26,7 +26,7 @@ describe("`init`", () => {
             -48.97,
         ];
 
-        const column: SourceDataColumn.ColumnDesc = {
+        const column: RecordDataColumn.ColumnDesc = {
             label: "number column",
             type: "number",
             isId: false,
@@ -64,7 +64,7 @@ describe("`init`", () => {
             "-48.97",
         ];
 
-        const column: SourceDataColumn.ColumnDesc = {
+        const column: RecordDataColumn.ColumnDesc = {
             label: "string column",
             type: "string",
             isId: true,
@@ -103,7 +103,7 @@ describe("`init`", () => {
 
 
 
-        const column: SourceDataColumn.ColumnDesc = {
+        const column: RecordDataColumn.ColumnDesc = {
             label: "number column",
             type: "number",
             isId: false,
@@ -144,7 +144,7 @@ describe("`initFromColumnIndex`", () => {
 
         const index = 4;    // The 5th column
 
-        const column: SourceDataColumn.ColumnDesc = {
+        const column: RecordDataColumn.ColumnDesc = {
             label: "the 5th column",
             type: "number",
             isId: false,

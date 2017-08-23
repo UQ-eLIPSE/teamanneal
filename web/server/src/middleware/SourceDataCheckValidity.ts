@@ -1,22 +1,22 @@
-import * as SourceData from "../../../common/SourceData";
+import * as RecordData from "../../../common/RecordData";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 
 import * as express from "express";
 
-import * as Data_SourceData from "../data/SourceData";
+import * as Data_RecordData from "../data/RecordData";
 
-type DataExtractionFunction = (req: express.Request) => SourceData.Desc;
+type DataExtractionFunction = (req: express.Request) => RecordData.Desc;
 
 export function generate(dataExtractFn: DataExtractionFunction) {
     const middleware: express.RequestHandler = (req, res, next) => {
-        // Check `sourceData`
-        const sourceData = dataExtractFn(req);
-        const sourceDataValid = Data_SourceData.checkValidity(sourceData);
+        // Check `recordData`
+        const recordData = dataExtractFn(req);
+        const recordDataValid = Data_RecordData.checkValidity(recordData);
 
-        if (!sourceDataValid.value) {
+        if (!recordDataValid.value) {
             return res.status(HTTPResponseCode.CLIENT_ERROR.BAD_REQUEST)
                 .json({
-                    message: sourceDataValid.message,
+                    message: recordDataValid.message,
                 });
         }
 

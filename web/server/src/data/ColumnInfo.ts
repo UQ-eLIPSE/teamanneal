@@ -1,5 +1,5 @@
 import * as Record from "../../../common/Record";
-import * as SourceDataColumn from "../../../common/SourceDataColumn";
+import * as RecordDataColumn from "../../../common/RecordDataColumn";
 
 import * as Util from "../core/Util";
 
@@ -11,11 +11,11 @@ export type ColumnInfo =
     ColumnInfoNumber |
     ColumnInfoString;
 
-interface ColumnInfoNumber extends SourceDataColumn.ColumnDesc, ColumnInfoNumberDetails {
+interface ColumnInfoNumber extends RecordDataColumn.ColumnDesc, ColumnInfoNumberDetails {
     readonly type: "number",
 }
 
-interface ColumnInfoString extends SourceDataColumn.ColumnDesc, ColumnInfoStringDetails {
+interface ColumnInfoString extends RecordDataColumn.ColumnDesc, ColumnInfoStringDetails {
     readonly type: "string",
 }
 
@@ -40,12 +40,12 @@ interface ColumnInfoStringDetails {
 
 
 
-export function initFromColumnIndex(records: Record.RecordSet, index: number, column: SourceDataColumn.ColumnDesc) {
+export function initFromColumnIndex(records: Record.RecordSet, index: number, column: RecordDataColumn.ColumnDesc) {
     const recordElements = records.map(record => record[index]);
     return init(recordElements, column);
 }
 
-export function init(recordElements: ReadonlyArray<Record.RecordElement>, column: SourceDataColumn.ColumnDesc): ColumnInfo {
+export function init(recordElements: ReadonlyArray<Record.RecordElement>, column: RecordDataColumn.ColumnDesc): ColumnInfo {
     switch (column.type) {
         case "number": {
             let min: number = Number.POSITIVE_INFINITY;

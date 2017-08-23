@@ -5,8 +5,8 @@ import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResponseStore from "../data/PendingResponseStore";
 
-// import * as SourceDataCheckValidity from "../middleware/SourceDataCheckValidity";
-// import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
+import * as RecordDataCheckValidity from "../middleware/SourceDataCheckValidity";
+import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
@@ -16,10 +16,8 @@ module.exports = () => {
         .post(
         // Validation middleware
         // TODO: More input validation
-
-        // NOTE: Temporarily disabled during development of TA-52
-        // SourceDataCheckValidity.generate(req => req.body.sourceData),
-        // ConstraintCheckValidity.generate(req => req.body.constraints),
+        RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
+        ConstraintCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).constraints),
 
         // Run anneal
         anneal,
