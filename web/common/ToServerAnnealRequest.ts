@@ -28,7 +28,4 @@ export interface Root {
 
     /** Describes constraints */
     readonly constraints: ReadonlyArray<Constraint.Desc>,
-
-    /** Describes anneal configuration (currently not used) */
-    readonly config?: undefined,
 }

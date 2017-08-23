@@ -5,7 +5,7 @@ import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResponseStore from "../data/PendingResponseStore";
 
-import * as RecordDataCheckValidity from "../middleware/SourceDataCheckValidity";
+import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
 
 // Signature of exported function must not be altered for all routers
