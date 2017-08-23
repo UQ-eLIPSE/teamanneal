@@ -44,7 +44,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
         if (nameDesc === undefined) {
             throw new Error("Could not find name description object for node");
         }
-        const { type, stratumLabel, nodeGeneratedName } = nameDesc;
+        const { stratumId, stratumLabel, nodeGeneratedName } = nameDesc;
 
         if (node.type === "stratum-records") {
             // Node is terminal; contains records, not more strata
@@ -87,7 +87,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
             //
             // TODO: Work out how to encode partitions properly as part of the
             // the naming process
-            if (type !== "partition") {
+            if (stratumId !== "_PARTITION") {
                 // Create flattened tree item
                 const flattenedTreeItem: FlattenedTreeItem = {
                     content: `${stratumLabel} ${nodeGeneratedName}`,

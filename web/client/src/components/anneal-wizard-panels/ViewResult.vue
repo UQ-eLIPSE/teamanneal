@@ -200,9 +200,9 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
             // The filter here removes partition info from the output as it'll
             // duplicate the existing partition column
             name
-                .filter(nameObj => nameObj.type !== "partition")
+                .filter(nameObj => nameObj.stratumId !== "_PARTITION")
                 .forEach((nameObj) => {
-                    row.push(nameObj.nodeGeneratedName);
+                    row.push("" + nameObj.nodeGeneratedName);
                 });
         });
 

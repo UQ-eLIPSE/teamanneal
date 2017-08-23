@@ -10,7 +10,7 @@ export type NodeNameMap = WeakMap<AnnealNode.Node, NodeNameDescription>;
 export type NodeNameMapNameGenerated = WeakMap<AnnealNode.Node, NodeNameDescriptionNameGenerated>;
 export type NodeNameMapNameNotGenerated = WeakMap<AnnealNode.Node, NodeNameDescriptionNameNotGenerated>;
 
-export type RecordNodeNameAccumulatedArray = ReadonlyArray<{ type: "partition" | "ordinary", stratumLabel: string, nodeGeneratedName: string, }>;
+export type RecordNodeNameAccumulatedArray = ReadonlyArray<NodeNameDescriptionBase>;
 export type RecordNodeNameMap = Map<Record.RecordElement, RecordNodeNameAccumulatedArray>;
 
 export interface NodeNameContextMap {
@@ -28,15 +28,19 @@ interface NodeNameContextMapStratumCountTrack {
 
 type NodeNameDescription = NodeNameDescriptionNameNotGenerated | NodeNameDescriptionNameGenerated;
 
-interface NodeNameDescriptionNameNotGenerated {
-    type: "partition" | "ordinary",
+interface NodeNameDescriptionBase {
+    /** Stratum object ID */
+    stratumId: string,
 
     /** Label of the stratum associated to this node */
-    stratumLabel: string,
+    // Label not necessarily generated at this point
+    stratumLabel: string | undefined,
 
     /** Generated name for this node is not yet generated */
     nodeGeneratedName: string | undefined,
+}
 
+interface NodeNameDescriptionNameNotGenerated extends NodeNameDescriptionBase {
     /** 
      * The index of this node in the naming context; used to indicate what 
      * position the node is in the context
@@ -44,14 +48,9 @@ interface NodeNameDescriptionNameNotGenerated {
     nodeNameContextIndex: number,
 }
 
-interface NodeNameDescriptionNameGenerated {
-    type: "partition" | "ordinary",
-
-    /** Label of the stratum associated to this node */
+interface NodeNameDescriptionNameGenerated extends NodeNameDescriptionBase {
+    // Label generated, definitely string
     stratumLabel: string,
-
-    /** Generated name for this node */
-    nodeGeneratedName: string,
 
     /** 
      * The index of this node in the naming context; used to indicate what 
@@ -118,7 +117,6 @@ export namespace ResultTree {
      * description object for one node
      */
     function SetNodeNameDescObject(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, node: AnnealNode.Node) {
-        let nodeNameType: "partition" | "ordinary";
         let stratumNamingContext: string;
         let nodeStratumId: string;
         let nodeStratumLabel: string;
@@ -127,7 +125,6 @@ export namespace ResultTree {
         if (node.type === "root") {
             // Partitions (which only exist on "root") are handled as higher
             // level strata, unique globally
-            nodeNameType = "partition";
             stratumNamingContext = "_GLOBAL";
             nodeStratumId = "_PARTITION";
             nodeStratumLabel = "";
@@ -141,7 +138,6 @@ export namespace ResultTree {
                 throw new Error(`Stratum "${node.stratum}" not found`);
             }
 
-            nodeNameType = "ordinary";
             stratumNamingContext = nodeStratum.namingConfig.context;
             nodeStratumId = nodeStratum._id;
             nodeStratumLabel = nodeStratum.label;
@@ -159,7 +155,7 @@ export namespace ResultTree {
 
         // Wrap up info
         const nodeNameDesc: NodeNameDescriptionNameNotGenerated = {
-            type: nodeNameType,
+            stratumId: nodeStratumId,
             stratumLabel: nodeStratumLabel,
             nodeGeneratedName,
             nodeNameContextIndex: nameGenerationIndex,
@@ -309,14 +305,14 @@ export namespace ResultTree {
             if (nameDesc === undefined) {
                 throw new Error("Could not find name description object for node");
             }
-            const { type, stratumLabel, nodeGeneratedName } = nameDesc;
+            const { stratumId, stratumLabel, nodeGeneratedName } = nameDesc;
 
             if (nodeGeneratedName === undefined) {
                 throw new Error("No generated name found for record node");
             }
 
             // Accumulate name
-            const name = [...accumulatedName, { type, stratumLabel, nodeGeneratedName }];
+            const name = [...accumulatedName, { stratumId, stratumLabel, nodeGeneratedName }];
 
             if (node.type === "stratum-records") {
                 // For each child (record) we map the record to the accumulated 
