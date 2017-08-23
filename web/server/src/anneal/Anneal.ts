@@ -1,9 +1,9 @@
 // Interfaces
-import * as SourceData from "../../../common/SourceData";
-import * as Stratum from "../../../common/Stratum";
+import * as RecordData from "../../../common/RecordData";
 import * as Constraint from "../../../common/Constraint";
+import * as AnnealNode from "../../../common/AnnealNode";
+import * as Stratum from "../../../common/Stratum";
 import * as Record from "../../../common/Record";
-import * as GroupDistribution from "../../../common/GroupDistribution";
 
 // Data manipulation and structures
 import * as ColumnInfo from "../data/ColumnInfo";
@@ -15,7 +15,7 @@ import * as MutationOperation from "./MutationOperation";
 import * as Iteration from "./Iteration";
 import * as UphillTracker from "./UphillTracker";
 import * as TemperatureDerivation from "./TemperatureDerivation";
-import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
+// import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
 import { AbstractConstraint } from "./AbstractConstraint";
 import { CountConstraint } from "./CountConstraint";
@@ -26,41 +26,45 @@ import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
 import { AnnealRecordPointerArray } from "./AnnealRecordPointerArray";
 import { AnnealStratum } from "./AnnealStratum";
 import { AnnealStratumNode } from "./AnnealStratumNode";
+// import { AnnealStratumNodeStub } from "./AnnealStratumNodeStub";
 
-export function anneal(sourceData: SourceData.DescBase & SourceData.Partitioned, strata: ReadonlyArray<Stratum.Desc>, constraints: ReadonlyArray<Constraint.Desc>) {
-    // Generate column information objects
-    const columnInfos = ColumnInfo.initManyFromSourceData(sourceData);
-
-    // Check that constraints array is not empty
-    if (constraints.length === 0) {
-        throw new Error("Constraints array is empty; aborting anneal");
-    }
-
-    // Operate per partition (isolated data sets - can be parallelised)
-    console.log(`Starting anneal`);
-
-    const partitions = sourceData.records;
-    const output = partitions.map((partition, i) => {
-        console.log(`Annealing partition ${i + 1}`);
-        return annealPartition(partition, columnInfos, strata, constraints);
-    });
-
-    console.log(`Finished anneal`);
-
-    return output;
-}
-
-function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, strataDefs: ReadonlyArray<Stratum.Desc>, constraintDefs: ReadonlyArray<Constraint.Desc>) {
+export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     // Fix random seed for debugging
     // Random.setSeed(0xDEADBEEF);
 
-    /// ============================================
-    /// Structuring the data into views over records
-    /// ============================================
+    // Check that constraints array is not empty
+    if (constraintDefinitions.length === 0) {
+        throw new Error("Constraints array is empty; aborting anneal");
+    }
 
-    // A linear array store that holds pointers to records in the partition
-    console.log("Creating record pointers...");
-    const recordPointers = createAnnealRecordPointerArray(partition.length);
+
+
+    /// ==================
+    /// Processing records
+    /// ==================
+
+    const { records, columns } = recordData;
+
+    // Generate column information objects
+    //
+    // Note that this uses information from the WHOLE set of records, not just
+    // filtered records
+    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(records, i, column));
+
+    // Find the ID column
+    const idColumnIndex = columns.findIndex(x => x.isId);
+
+    if (idColumnIndex < 0) {
+        throw new Error("No ID column found");
+    }
+
+    // Filter records so that we are only working with records for this anneal 
+    // node
+    const thisNodeRecords = filterRecordData(annealRootNode, idColumnIndex, records);
+
+    // Extract ID values from each record
+    const thisNodeRecordsIdColumn = thisNodeRecords.map(record => record[idColumnIndex]);
+
 
 
     /// =======================
@@ -68,16 +72,58 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
     /// =======================
 
     console.log("Creating constraint obj...");
-    const constraints = createConstraintObjects(partition, columnInfos, constraintDefs);
+    const constraints = createConstraintObjects(thisNodeRecords, columnInfos, constraintDefinitions);
 
 
 
-    /// ===================
-    /// Constructing strata
-    /// ===================
+    /// =====================================================
+    /// Processing nodes, creating record pointers and strata
+    /// =====================================================
 
-    console.log("Creating strata obj...");
-    const strata = createStrataObjects(recordPointers, constraints, strataDefs);
+    // Maps node to a number which represents the total number of records that
+    // sit under it
+    const nodeSizeMap = new WeakMap<AnnealNode.Node, number>();
+
+    // Maps node to respective stratum node
+    const annealNodeToStratumNodeMap = new WeakMap<AnnealNode.Node, AnnealStratumNode>();
+
+    // Run through all nodes to calculate their sizes
+    const numberOfRecordsInStubs = calculateAnnealNodeSizes(nodeSizeMap, annealRootNode);
+
+    // Quick sanity check to make sure that we do indeed have the correct number
+    // of records in stub tree
+    if (numberOfRecordsInStubs !== thisNodeRecords.length) {
+        throw new Error("Number of records in stratum node stubs do not match length of filtered records");
+    }
+
+    // Store stratum nodes into linear array where each element is one "level";
+    // - index 0 is the lowest level = leaf nodes containing the records,
+    // - index (end) is the highest level
+    const nodesPerStratum: AnnealStratumNode[][] = [];
+
+    // Prepopulate blank strata node arrays
+    for (let i = 0; i < strataDefinitions.length; ++i) {
+        nodesPerStratum.push([]);
+    }
+
+    // Create record pointer array
+    console.log("Creating record pointers...");
+    const recordPointers = new AnnealRecordPointerArray(thisNodeRecords.length);
+
+    // Function does three things:
+    // - Generate the stratum nodes,
+    // - Set stratum nodes into the node to stratum node map,
+    // - Sets record pointers into record pointer array
+    generateStratumNodes(recordPointers.workingSet, thisNodeRecordsIdColumn, nodeSizeMap, annealNodeToStratumNodeMap, nodesPerStratum, annealRootNode, strataDefinitions.length - 1, 0);
+
+    // Bundle the stratum nodes into AnnealStratum objects
+    console.log("Bundling stratum nodes into strata...");
+
+    const strata = nodesPerStratum.map((nodes, i) => {
+        const stratumId = strataDefinitions[i]._id;
+        const stratumConstraints = constraints.filter(c => c.constraintDef.stratum === stratumId);
+        return new AnnealStratum(stratumId, nodes, stratumConstraints);
+    });
 
 
 
@@ -96,22 +142,235 @@ function annealPartition(partition: Record.RecordSet, columnInfos: ReadonlyArray
 
     console.log("Iterating...");
     annealOuterLoop(recordPointers, strata, startTemp);
+    console.log("Anneal complete");
 
 
 
-    // Output constraint satisfaction
-    const satisfaction = generateSatisfactionArray(constraints, strata);
+    /// ===============
+    /// Generate output
+    /// ===============
 
-    console.log(`Satisfaction
-${JSON.stringify(satisfaction)}`);
+    // Walk anneal node tree again and read out the stratum node record pointers
 
-    return convertStrataToArray(strata, partition);
+
+    const output = {
+        // satisfaction: generateSatisfactionArray(constraints, strata),
+        result: generateOutputTree(thisNodeRecords, idColumnIndex, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
+    };
+
+    // TODO: Satisfaction information to be delivered to client in TA-93
+    const { result, /* satisfaction,*/ } = output;
+
+    return result;
+}
+
+/**
+ * Filters records down to those which actually sit under the given root node.
+ * 
+ * @param rootNode Root node
+ * @param idColumnIndex Index of the ID column in each record row
+ * @param records Set of records
+ */
+function filterRecordData(rootNode: AnnealNode.NodeRoot, idColumnIndex: number, records: Record.RecordSet) {
+    // Get records which have an ID that is specified in some node's set of 
+    // record children
+    const idValues = extractRecordIdsFromNode(rootNode);
+
+    // Retrieve only records that are contained in this anneal node
+    const filteredRecords = records.filter((record) => {
+        const idValue = record[idColumnIndex];
+        return idValues.indexOf(idValue) > -1;
+    });
+
+    // Also check that record IDs have not been used twice or that records were
+    // not found
+    if (filteredRecords.length !== idValues.length) {
+        throw new Error("Duplicate or invalid record ID references under anneal node");
+    }
+
+    return filteredRecords;
+}
+
+/**
+ * Extracts all record IDs that are described leaf nodes. May contain duplicate
+ * record IDs if the nodes don't uniquely specify IDs.
+ * 
+ * @param rootNode Root node
+ */
+function extractRecordIdsFromNode(rootNode: AnnealNode.NodeRoot) {
+    // Compile array of ID values which sit under this node
+    const thisNodeIdValues: Record.RecordElement[] = [];
+
+    const collectIdValues =
+        (node: AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren) => {
+            if (node.type === "stratum-records") {
+                thisNodeIdValues.push(...node.recordIds);
+            } else {
+                node.children.forEach(collectIdValues);
+            }
+        }
+
+    rootNode.children.forEach(collectIdValues);
+
+    return thisNodeIdValues;
+}
+
+/**
+ * Calculates size of anneal nodes given and all child nodes. Sets this
+ * information into supplied size map.
+ * 
+ * @param sizeMap Map of anneal node to number (size)
+ * @param node Node to calculate size on
+ */
+function calculateAnnealNodeSizes(sizeMap: WeakMap<AnnealNode.Node, number>, node: AnnealNode.Node): number {
+    // For the leaf nodes with records attached to them, return the number of records
+    if (node.type === "stratum-records") {
+        const size = node.recordIds.length;
+        sizeMap.set(node, size);
+        return size;
+    }
+
+    // For general nodes with children, sum up the sizes of all children
+    const children = node.children;
+    const totalSize = children.reduce((carry, child) => carry + calculateAnnealNodeSizes(sizeMap, child), 0);
+    sizeMap.set(node, totalSize);
+
+    return totalSize;
+}
+
+/**
+ * Function does three things:
+ * - Generate the stratum nodes,
+ * - Set stratum nodes into the node to stratum node map,
+ * - Sets record pointers into record pointer array.
+ * 
+ * You must supply an empty map for `sizeMap`, `annealNodeToStratumNodeMap`, and
+ * empty nested arrays for `nodesPerStratum`.
+ * 
+ * @param pointerArrayWorkingSet The working set Uint32Array typed array
+ * @param recordIdColumn Array with just the ID values of the records, in the order that the records appear
+ * @param sizeMap Map between node and its size (will be filled after running this function)
+ * @param annealNodeToStratumNodeMap Map between anneal node (from the request) to stratum node (used internally in the anneal) (will be filled after running this function)
+ * @param nodesPerStratum Array holding the stratum nodes per stratum (will be filled after running this function)
+ * @param node The node being operated on
+ * @param stratumNumber The stratum number of the node being operated on
+ * @param offset The pointer array offset being kept track of
+ */
+function generateStratumNodes(pointerArrayWorkingSet: Uint32Array, recordIdColumn: ReadonlyArray<Record.RecordElement>, sizeMap: WeakMap<AnnealNode.Node, number>, annealNodeToStratumNodeMap: WeakMap<AnnealNode.Node, AnnealStratumNode>, nodesPerStratum: ReadonlyArray<AnnealStratumNode[]>, node: AnnealNode.Node, stratumNumber: number, offset: number) {
+    // Terminal case when no children are present
+    if (node.type === "stratum-records") {
+        // Convert records to their respective pointer values
+        const recordPointers =
+            node.recordIds.map((recordId) => {
+                // Pointer value is just the index of this particular record in
+                // the larger set of records
+                const pointerValue = recordIdColumn.indexOf(recordId);
+
+                if (pointerValue < 0) {
+                    throw new Error(`Could not find node child record ID "${recordId}" in provided record ID column array`);
+                }
+
+                return pointerValue;
+            });
+
+        // Write the pointers for the above records into pointer array at offset
+        pointerArrayWorkingSet.set(recordPointers, offset);
+
+        return;
+    }
+
+    // Copy out working copy of offset for the children loop
+    let workingOffset = offset;
+
+    const children = node.children;
+
+    children.forEach((childNode) => {
+        // Get the precalculated sizes of each node from the given map
+        const size = sizeMap.get(childNode);
+
+        if (size === undefined) {
+            throw new Error("Node size not found in precalculated map");
+        }
+
+        // Generate stratum node, put into map, and push into array
+        const stratumNode = new AnnealStratumNode(childNode._id, pointerArrayWorkingSet.buffer, workingOffset, size);
+        annealNodeToStratumNodeMap.set(childNode, stratumNode);
+        nodesPerStratum[stratumNumber].push(stratumNode);
+
+        // Recurse down
+        //
+        // Note that stratum number value goes down because strata are arranged 
+        // [lowest, ..., highest] while we're recursing down a tree in
+        // [highest, ..., lowest] order;
+        generateStratumNodes(pointerArrayWorkingSet, recordIdColumn, sizeMap, annealNodeToStratumNodeMap, nodesPerStratum, childNode, stratumNumber - 1, workingOffset);
+
+        // Update offset for next child
+        workingOffset += size;
+    });
+}
+
+/**
+ * Generates output tree to send back to client.
+ * 
+ * @param records Array of records
+ * @param idColumnIndex Column index of record with ID values
+ * @param annealNodeToStratumNodeMap Map between anneal node (from the request) to stratum node (used internally in the anneal)
+ * @param node The node being operated on
+ */
+function generateOutputTree(records: Record.RecordSet, idColumnIndex: number, annealNodeToStratumNodeMap: WeakMap<AnnealNode.Node, AnnealStratumNode>, node: AnnealNode.Node): AnnealNode.Node {
+    // Output full records for leaf nodes
+    if (node.type === "stratum-records") {
+        const stratumNode = annealNodeToStratumNodeMap.get(node);
+
+        if (stratumNode === undefined) {
+            throw new Error(`Could not find stratum node for anneal node ${node._id}`);
+        }
+
+        const recordPointers = Array.from(stratumNode.getRecordPointers());
+
+        const outputNode: AnnealNode.NodeStratumWithRecordChildren = {
+            _id: node._id,
+            type: node.type,
+            stratum: node.stratum,
+            recordIds: recordPointers.map(pointer => records[pointer][idColumnIndex]),
+        };
+
+        return outputNode;
+    }
+
+    // Map stratum-stratum nodes
+    if (node.type === "stratum-stratum") {
+        const outputNode: AnnealNode.NodeStratumWithStratumChildren = {
+            _id: node._id,
+            type: node.type,
+            stratum: node.stratum,
+            children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren | AnnealNode.NodeStratumWithRecordChildren),
+        };
+
+        return outputNode;
+    }
+
+    // Map root nodes
+    if (node.type === "root") {
+        const outputNode: AnnealNode.NodeRoot = {
+            _id: node._id,
+            type: node.type,
+            partitionValue: node.partitionValue,
+            children: node.children.map(childNode => generateOutputTree(records, idColumnIndex, annealNodeToStratumNodeMap, childNode) as AnnealNode.NodeStratumWithStratumChildren),
+        };
+
+        return outputNode;
+    }
+
+    throw new Error("Unknown node type");
 }
 
 /**
  * Derives starting temperature.
  */
 function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>) {
+    // TODO: Make `tempDerSamples` and `maximumLoopIterations` configurable in 
+    // TA-79
     const tempDerSamples = 200;
 
     // We define a maximum number of iterations to run for deriving the starting
@@ -184,117 +443,6 @@ function deriveStartingTemperature(recordPointers: AnnealRecordPointerArray, str
     return startTemp;
 }
 
-
-
-
-/**
- * Creates nested arrays that represent the strata structure
- * 
- * e.g.:
- * 
- *      [                            // All top level nodes
- *          [                        // Stratum 1 node
- *              [                    // Stratum 0 node
- *                  [record data],
- *                  [record data],
- *                  [record data],
- *                  [record data]
- *              ],
- *              [                    // Stratum 0 node
- *                  [record data],
- *                  [record data],
- *                  [record data],
- *                  [record data]
- *              ]
- *          ],
- *          ...
- *      ]
- */
-function convertStrataToArray(strata: ReadonlyArray<AnnealStratum>, records: Record.RecordSet) {
-    // TODO: Need to better describe nested arrays of unknown depth
-    type UnknownDepthNestedArray = any[];
-
-    const numberOfStrata = strata.length;
-
-    // Nothing to process if there aren't strata
-    if (numberOfStrata < 1) {
-        return [];
-    }
-
-    // Map out the lowest stratum first
-    const lowestStratumArray = strata[0].nodes.map(
-        (node) => {
-            const recordDataArray: Record.Record[] = [];
-
-            node.getRecordPointers().forEach((recordPointer) => {
-                const recordData = records[recordPointer];
-                recordDataArray.push(recordData);
-            });
-
-            return recordDataArray;
-        }
-    );
-
-    // We now go up strata one by one and nest the previous stratum's nodes
-    let previousStratumArray: UnknownDepthNestedArray = lowestStratumArray;
-
-    for (let i = 1; i < numberOfStrata; ++i) {
-        const previousStratumNodes = strata[i - 1].nodes;
-        const thisStratumNodes = strata[i].nodes;
-
-        const currentStratumArray: UnknownDepthNestedArray = [];
-
-        // Go through each of this stratum's nodes, and bundle up previous 
-        // stratum nodes
-        let previousStratumNodeIndex = 0;
-
-        for (let j = 0; j < thisStratumNodes.length; ++j) {
-            const thisStratumNode = thisStratumNodes[j];
-            const thisStratumNodeDataArray: UnknownDepthNestedArray = [];
-
-            while (true) {
-                const previousStratumNode: AnnealStratumNode | undefined = previousStratumNodes[previousStratumNodeIndex];
-
-                // If we get `undefined`, we have hit the end; or
-                // if we hit substratum nodes which are no longer within
-                // this stratum node's range, we move on to the next node
-                if ((previousStratumNode === undefined) || !thisStratumNode.isNodeInRange(previousStratumNode)) {
-                    break;
-                }
-
-                // If the previous stratum node being pointed to falls under
-                // the current stratum node, we push in the array that is held
-                // in `previousStratumArray`
-                thisStratumNodeDataArray.push(previousStratumArray[previousStratumNodeIndex]);
-
-                // Move on to the next substratum node
-                ++previousStratumNodeIndex;
-            }
-
-            // Push in this stratum node's array of substrata data arrays
-            currentStratumArray.push(thisStratumNodeDataArray);
-        }
-
-        // We have now finished with all of this stratum's nodes;
-        // prepare for next stratum iteration
-        previousStratumArray = currentStratumArray;
-    }
-
-    // The output is the array last set by the top stratum:
-    //      `previousStratumArray` points to the `currentStratumArray` at the
-    //      end of the last iteration
-    return previousStratumArray;
-}
-
-function createAnnealRecordPointerArray(numberOfRecords: number) {
-    const recordPointers = new AnnealRecordPointerArray(numberOfRecords);
-
-    // Give records a shuffle before we start
-    recordPointers.shuffle();
-
-    return recordPointers;
-}
-
 function createConstraintObjects(records: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, constraintDefs: ReadonlyArray<Constraint.Desc>): ReadonlyArray<AbstractConstraint> {
     // Convert each constraint definition into constraint objects
     const constraints =
@@ -322,85 +470,30 @@ function createConstraintObjects(records: Record.RecordSet, columnInfos: Readonl
     return constraints;
 }
 
-function createStrataObjects(recordPointers: AnnealRecordPointerArray, constraints: ReadonlyArray<AbstractConstraint>, strataDefs: ReadonlyArray<Stratum.Desc>): ReadonlyArray<AnnealStratum> {
-    // Go through each stratum and create nodes that refer to views on record
-    // pointers in the record store
-    const strata: AnnealStratum[] = [];
-    const numberOfRecords = recordPointers.numberOfRecords;
+// function generateSatisfactionArray(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>): ReadonlyArray<ReadonlyArray<ReadonlyArray<number | undefined>>> {
+//     const satisfaction =
+//         strata.map((stratum) => {                       // For each stratum,
+//             const stratumId = stratum.id;
+//             return stratum.nodes.map(node => {          // and for each node in that stratum,
+//                 return constraints.map(constraint => {  // go through all constraints
 
-    for (let stratumIndex = 0; stratumIndex < strataDefs.length; ++stratumIndex) {
-        const stratumDef = strataDefs[stratumIndex];
-        const { min, ideal, max } = stratumDef.size;
+//                     // If this constraint does not apply to the stratum, return
+//                     // undefined
+//                     if (constraint.constraintDef.stratum !== stratumId) {
+//                         return undefined;
+//                     }
 
-        // For the lowest stratum, we take records directly from the store,
-        // otherwise we take the previous stratum we generated and directly init
-        // a node from that
-        let nodes: AnnealStratumNode[];
+//                     // Return the actual satisfaction value (in range [0,1])
+//                     return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
+//                 });
+//             });
+//         });
 
-        if (stratumIndex === 0) {
-            const buffer = recordPointers.workingSet.buffer;
-            const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfRecords, min, ideal, max, false);
-
-            let offset: number = 0;
-
-            nodes = groupSizeArray.map((groupSize) => {
-                const currentOffset = offset;
-
-                // Update `offset` of next round
-                offset += groupSize;
-
-                // Init new node
-                return new AnnealStratumNode(buffer, currentOffset, groupSize);
-            });
-        } else {
-            const prevStratumNodes = strata[stratumIndex - 1].nodes;
-            const numberOfPrevStratumNodes = prevStratumNodes.length;
-
-            const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfPrevStratumNodes, min, ideal, max, false);
-
-            let offset: number = 0;
-
-            nodes = groupSizeArray.map((groupSize) => {
-                const currentOffset = offset;
-
-                // Update `offset` of next round
-                offset += groupSize;
-
-                // Init new node
-                return AnnealStratumNode.initFromChildren(prevStratumNodes.slice(currentOffset, currentOffset + groupSize));
-            });
-        }
-
-        const stratumConstraints = constraints.filter(constraint => constraint.constraintDef.strata === stratumIndex);
-
-        strata.push(new AnnealStratum(nodes, stratumConstraints));
-    }
-
-    return strata;
-}
-
-function generateSatisfactionArray(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>): ReadonlyArray<ReadonlyArray<ReadonlyArray<number | undefined>>> {
-    const satisfaction =
-        strata.map((stratum, stratumIndex) => {         // For each stratum,
-            return stratum.nodes.map(node => {          // and for each node in that stratum,
-                return constraints.map(constraint => {  // go through all constraints
-
-                    // If this constraint does not apply to the stratum, return
-                    // undefined
-                    if (constraint.constraintDef.strata !== stratumIndex) {
-                        return undefined;
-                    }
-
-                    // Return the actual satisfaction value (in range [0,1])
-                    return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
-                });
-            });
-        });
-
-    return satisfaction;
-}
+//     return satisfaction;
+// }
 
 function annealOuterLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, startTemp: number) {
+    // TODO: Make parameters configurable in TA-79
     const defaultBranchIterationScalar: number = 4;
     const defaultAvgUphillProbabilityThreshold: number = 0.0025;
 

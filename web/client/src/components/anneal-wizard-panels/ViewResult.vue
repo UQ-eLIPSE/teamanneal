@@ -31,8 +31,12 @@
                 </div>
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :annealResultTreePartitionNodeArray="annealResultTreePartitionNodeArray"
-                                         :columnData="columns"
+                                         :annealNodeRoots="annealNodeRoots"
+                                         :headerRow="headerRow"
+                                         :recordRows="recordRows"
+                                         :nameMap="nameMap"
+                                         :idColumnIndex="idColumnIndex"
+                                         :numberOfColumns="columns.length"
                                          :consolidatedNameFormat="consolidatedNameFormat"></SpreadsheetTreeView>
                 </div>
             </div>
@@ -72,9 +76,11 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
+import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
+
 import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
-import { ResultTree, AnnealOutput } from "../../data/ResultTree";
+import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
 import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
@@ -97,46 +103,93 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         return this.state.recordData.columns;
     }
 
-    onExportButtonClick() {
-        // Get stratum node name map
-        const partitionNodes = this.annealResultTreePartitionNodeArray;
-        const nameMap = ResultTree.GenerateNodeNameMap(partitionNodes);
+    get strata() {
+        return this.state.annealConfig.strata;
+    }
 
-        // Convert into record node name map
-        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, partitionNodes);
+    get partitionColumn() {
+        const partitionColumnDesc = this.state.recordData.partitionColumn;
 
-        // Extract all record nodes
-        const recordNodes = ResultTree.ExtractRecordNodes(partitionNodes);
-
-        // Get the columns and transform them back into 2D string array for
-        // exporting
-        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
-
-        // Add stratum labels to the header rows
-        const headerRow = rows[0];
-        this.state.annealConfig.strata.forEach((stratum) => {
-            headerRow.push(stratum.label);
-        });
-
-        // Set up consolidated name format column at end of the row
-        const consolidatedNameFormat =
-            this.state.annealConfig.namingConfig.consolidated.format;
-
-        if (consolidatedNameFormat !== undefined) {
-            headerRow.push("Consolidated group name");
+        if (partitionColumnDesc === undefined) {
+            return undefined;
         }
 
-        // Append record names to rows
-        recordNodes.forEach((recordNode) => {
-            // When fetching row to modify, note that record node indices are
-            // not inclusive of the header row; in this instance, we have to +1 
-            // all indices because the `rows` 2D array does contain the header
-            // row (indicated by the `true` flag in the row array transposition 
-            // function)
-            const row = rows[recordNode.index + 1];
+        return ColumnData.ConvertToDataObject(this.columns, partitionColumnDesc);
+    }
+
+    get headerRow() {
+        return this.columns.map(col => col.label);
+    }
+
+    get recordRows() {
+        return ColumnData.TransposeIntoCookedValueRowArray(this.columns);
+    }
+
+    get nameMap() {
+        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
+    }
+
+    get idColumn() {
+        const idColumnDesc = this.state.recordData.idColumn;
+
+        if (idColumnDesc === undefined) {
+            throw new Error("No ID column set");
+        }
+
+        const idColumn = this.columns.find(col => ColumnData.Equals(idColumnDesc, col));
+
+        if (idColumn === undefined) {
+            throw new Error("No ID column set");
+        }
+
+        return idColumn;
+    }
+
+    get idColumnIndex() {
+        const idColumn = this.idColumn;
+        const idColumnIndex = this.columns.indexOf(idColumn);
+
+        return idColumnIndex;
+    }
+
+    onExportButtonClick() {
+        // Get node name map
+        const nodes = this.annealNodeRoots;
+        const strata = this.state.annealConfig.strata;
+        const nameMap = this.nameMap;
+
+        // Convert into record node name map
+        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);
+
+        // Get the columns and transform them back into 2D string array for
+        // exporting, and include the headers in the output while we're at it
+        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
+
+        // We use cooked values for the record ID columns for referencing
+        const idColumnValues = ColumnData.GenerateCookedColumnValues(this.idColumn);
+
+        const consolidatedNameFormat = this.consolidatedNameFormat;
+
+        rows.forEach((row, i) => {
+            // Add stratum labels to the header rows
+            if (i === 0) {
+                const headerRow = row;
+                strata.forEach((stratum) => {
+                    headerRow.push(stratum.label);
+                });
+
+                return;
+            }
+
+            // Append name values to end of ordinary row
+
+            // Note that this is not the same as row[idColumnIndex] as the row
+            // is always the raw value (string[]), while the record ID values in
+            // the name map are cooked values
+            const recordId = idColumnValues[i - 1]; // Remember that `i = 0` is the header row
 
             // Get name object array
-            const name = recordNameMap.get(recordNode);
+            const name = recordNameMap.get(recordId);
 
             if (name === undefined) {
                 throw new Error("Name for record node not found");
@@ -144,15 +197,21 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
 
             // For the purposes of CSV exports, we only want the generated name 
             // value and not the stratum label for each record
-            name.forEach((nameObj) => {
-                row.push(nameObj.nodeGeneratedName);
-            });
+            //
+            // The filter here removes partition info from the output as it'll
+            // duplicate the existing partition column
+            name
+                .filter(nameObj => nameObj.stratumId !== "_PARTITION")
+                .forEach((nameObj) => {
+                    row.push("" + nameObj.nodeGeneratedName);
+                });
 
             // Push in consolidated name as well
             if (consolidatedNameFormat !== undefined) {
                 let consolidatedName = consolidatedNameFormat;
                 name.forEach(({ stratumLabel, nodeGeneratedName }) => {
-                    consolidatedName = consolidatedName.replace(`{{${stratumLabel}}}`, nodeGeneratedName);
+                    const template = `{{${stratumLabel}}}`;
+                    consolidatedName = consolidatedName.replace(template, "" + nodeGeneratedName);
                 });
 
                 row.push(consolidatedName);
@@ -179,8 +238,50 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
     get annealErrorMessage() {
         const request = this.state.annealRequest;
 
-        // No request or no error
-        if (request === undefined || AnnealRequest.IsRequestSuccessful(request)) {
+        // No request
+        if (request === undefined) {
+            return undefined;
+        }
+
+        // No **request** error
+        // This is not the same as "no anneal error"!
+        if (AnnealRequest.IsRequestSuccessful(request)) {
+            const response = AnnealRequest.GetResponse(request) as AxiosResponse;
+            const responseData = response.data as ToClientAnnealResponse.Root;
+
+            // Return error now if it encompasses entire response
+            if (responseData.error !== undefined) {
+                return `Error: ${responseData.error}`;
+            }
+
+
+            // We still need to check if there was an error in one of the 
+            // individual anneal node results
+            if (responseData.results !== undefined) {
+                const annealNodesWithErrors: { index: number, error: string }[] = [];
+
+                // Accumulate errors if present
+                responseData.results.forEach((result, index) => {
+                    if (result.error !== undefined) {
+                        annealNodesWithErrors.push({
+                            index,
+                            error: result.error,
+                        });
+                    }
+                });
+
+                // Return error if there is a node which suffered a failure
+                if (annealNodesWithErrors.length > 0) {
+                    let message = "Error: Partial anneal failure:\n";
+                    annealNodesWithErrors.forEach(({ index, error, }) => {
+                        message += `  at node index ${index}: ${error}\n`;
+                    });
+
+                    return message;
+                }
+            }
+
+            // No problems
             return undefined;
         }
 
@@ -222,14 +323,15 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get annealResultTreePartitionNodeArray() {
+    get annealNodeRoots() {
         const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
-        const responseData = response.data.output as AnnealOutput;
+        const responseData = response.data as ToClientAnnealResponse.Root;
 
-        // Generate nodes
-        const nodes = ResultTree.InitNodesFromAnnealOutput(this.state, responseData);
+        // We're working on the presumption that we definitely have results
+        const results = responseData.results!;
+        const annealNodeRoots = results.map(res => res.result!);
 
-        return nodes;
+        return annealNodeRoots;
     }
 
     get consolidatedNameFormat() {

@@ -157,7 +157,7 @@ export namespace ColumnData {
         return stats;
     }
 
-    export function GenerateCookedColumnValues(columnData: Data) {
+    export function GenerateCookedColumnValues(columnData: Data): ReadonlyArray<number | null> | ReadonlyArray<string | null> {
         switch (columnData.type) {
             case "number": {
                 // Convert values into numbers

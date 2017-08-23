@@ -1,7 +1,7 @@
 import * as Application from "../core/Application";
 import * as Router from "../core/Router";
 
-import * as AnnealResultMessageHandler from "../queue/AnnealResult";
+import * as AnnealResponseHandler from "../queue/AnnealResponse";
 
 // TODO: Move configuration into config file
 
@@ -27,9 +27,9 @@ export function init() {
     console.log(`Initialising static file delivery`);
     Application.enableStaticFileServing(app, `${__dirname}/../../../client`);
 
-    // Set up anneal result handling
-    console.log(`Initialising anneal result message handler`);
-    AnnealResultMessageHandler.init();
+    // Set up anneal response delivery handler
+    console.log(`Initialising anneal response handler`);
+    AnnealResponseHandler.init();
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);

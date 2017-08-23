@@ -5,10 +5,12 @@ import { AnnealStratumNode } from "./AnnealStratumNode";
 import { AbstractConstraint } from "./AbstractConstraint";
 
 export class AnnealStratum {
+    public readonly id: string;
     public readonly nodes: ReadonlyArray<AnnealStratumNode>;
     public readonly constraints: ReadonlyArray<AbstractConstraint>;
 
-    constructor(nodes: ReadonlyArray<AnnealStratumNode>, constraints: ReadonlyArray<AbstractConstraint>) {
+    constructor(id: string, nodes: ReadonlyArray<AnnealStratumNode>, constraints: ReadonlyArray<AbstractConstraint>) {
+        this.id = id;
         this.nodes = nodes;
         this.constraints = constraints;
     }

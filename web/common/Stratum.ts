@@ -1,4 +1,5 @@
 export interface Desc {
+    readonly _id: string,
     /** Label */
     readonly label: string,
     /** Size allocation */
