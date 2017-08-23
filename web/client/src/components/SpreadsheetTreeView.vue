@@ -65,11 +65,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                 // replace it in the consolidated name string
                 let consolidatedName = consolidatedNameFormat;
 
-                // Note we don't need to add `node` to the for-each loop as:
-                //  1. `node` is of type "stratum-records" (a leaf node)
-                //  2. Generated names for leaf nodes can't be used because
-                //     there's no way of using them anyway
-                treeWalkAccumulator.forEach((accumulatedNode) => {
+                [...treeWalkAccumulator, node].forEach((accumulatedNode) => {
                     const nameDesc = nameMap.get(accumulatedNode);
                     let generatedName: string;
 
@@ -79,6 +75,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                         generatedName = nameDesc.nodeGeneratedName || "[?]";
                     }
 
+                    // Get the stratum ID to be used for replacement template
                     let stratumId: string;
 
                     if (accumulatedNode.type === "root") {
@@ -95,7 +92,6 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                     // and so the templating part is not generally intended 
                     // to be constructed by hand
                     consolidatedName = consolidatedName.replace(`{{${stratumId}}}`, generatedName);
-
                 });
 
                 flattenedTreeItem.content += ` (${consolidatedName})`;
