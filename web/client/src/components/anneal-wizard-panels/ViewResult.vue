@@ -37,7 +37,8 @@
                                          :nameMap="nameMap"
                                          :idColumnIndex="idColumnIndex"
                                          :numberOfColumns="columns.length"
-                                         :consolidatedNameFormat="consolidatedNameFormat"></SpreadsheetTreeView>
+                                         :consolidatedNameFormat="consolidatedNameFormat"
+                                         :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -178,6 +179,12 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
                     headerRow.push(stratum.label);
                 });
 
+                // Add one more column header for consolidated group names if 
+                // they are present
+                if (consolidatedNameFormat !== undefined) {
+                    headerRow.push("Consolidated group name");
+                }
+
                 return;
             }
 
@@ -209,8 +216,8 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
             // Push in consolidated name as well
             if (consolidatedNameFormat !== undefined) {
                 let consolidatedName = consolidatedNameFormat;
-                name.forEach(({ stratumLabel, nodeGeneratedName }) => {
-                    const template = `{{${stratumLabel}}}`;
+                name.forEach(({ stratumId, nodeGeneratedName }) => {
+                    const template = `{{${stratumId}}}`;
                     consolidatedName = consolidatedName.replace(template, "" + nodeGeneratedName);
                 });
 
@@ -335,7 +342,21 @@ XMLHttpRequest {
     }
 
     get consolidatedNameFormat() {
-        return this.state.annealConfig.namingConfig.consolidated.format;
+        let consolidatedNameFormat = this.state.annealConfig.namingConfig.consolidated.format;
+
+        if (consolidatedNameFormat === undefined) {
+            return undefined;
+        }
+
+        // Replace stratum labels with stratum IDs because internally we use IDs
+        //
+        // TODO: Figure out whether we would like to stick with readable 
+        // templates or use stratum IDs here instead
+        this.strata.forEach(({ _id, label, }) => {
+            consolidatedNameFormat = consolidatedNameFormat!.replace(`{{${label}}}`, `{{${_id}}}`);
+        });
+
+        return consolidatedNameFormat;
     }
 }
 </script>

@@ -108,7 +108,7 @@ export namespace ResultTree {
         childNodes.forEach((node) => {
             // Go down into each child node and set name description objects
             const deeperNodePath = [...nodePath, node];
-            SetNodeNameDescObject(nameMap, contextMap, strata, deeperNodePath);
+            SetNodeNameDescObject(nameMap, contextMap, strata, partitionColumn, deeperNodePath);
 
             // Can't continue further for record-only leaf nodes
             if (node.type === "stratum-records") {
@@ -126,7 +126,7 @@ export namespace ResultTree {
      * Function that sets `NodeNameDescriptionNameNotGenerated` name
      * description object for one node
      */
-    function SetNodeNameDescObject(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, nodePath: ReadonlyArray<AnnealNode.Node>) {
+    function SetNodeNameDescObject(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, partitionColumn: IColumnData | undefined, nodePath: ReadonlyArray<AnnealNode.Node>) {
         let stratumNamingContext: string;
         let nodeStratumId: string;
         let nodeStratumLabel: string;
@@ -139,8 +139,13 @@ export namespace ResultTree {
             // level strata, unique globally
             stratumNamingContext = "_GLOBAL";
             nodeStratumId = "_PARTITION";
-            nodeStratumLabel = "";
             nodeGeneratedName = node.partitionValue;
+
+            if (partitionColumn === undefined) {
+                nodeStratumLabel = "";
+            } else {
+                nodeStratumLabel = partitionColumn.label;
+            }
 
         } else {
             // Get back the original stratum object
@@ -258,7 +263,9 @@ export namespace ResultTree {
     }
 
     /**
-     * 
+     * Updates node name description object by writing in the generated name
+     * for the given node at the node path.
+     *
      * @param nameMap 
      * @param contextMap 
      * @param strata 
