@@ -17,36 +17,26 @@ import { Partition } from "./Partition";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
 export interface Data {
-    request: {
-        time: number,
+    time: number,
 
-        object: AxiosPromise,
-        cancelTokenSource: CancelTokenSource,
+    object: AxiosPromise,
+    cancelTokenSource: CancelTokenSource,
 
-        body: ToServerAnnealRequest.Root,
-    },
+    body: ToServerAnnealRequest.Root,
 }
 
-export type AxiosResponse = AxiosResponse;
-export type AxiosError = AxiosError;
-
 export namespace AnnealRequest {
-    /** Holds the AJAX response for each AnnealRequest */
-    const RequestResponseStore = new WeakMap<Data, AxiosResponse | AxiosError>();
-
     function Init(
         requestObject: AxiosPromise,
         cancelTokenSource: CancelTokenSource,
         requestBody: ToServerAnnealRequest.Root) {
         const annealRequestObject: Data = {
-            request: {
-                time: Date.now(),
+            time: Date.now(),
 
-                object: requestObject,
-                cancelTokenSource,
+            object: requestObject,
+            cancelTokenSource,
 
-                body: requestBody,
-            },
+            body: requestBody,
         };
 
         return annealRequestObject;
@@ -59,10 +49,6 @@ export namespace AnnealRequest {
 
         // Create AnnealRequest object
         const annealRequestObject = Init(request, cancelTokenSource, body);
-
-        // Attach completion handler so that the response is handled 
-        // appropriately
-        AttachCompletionHandler(annealRequestObject);
 
         return annealRequestObject;
     }
@@ -376,7 +362,7 @@ export namespace AnnealRequest {
     }
 
     export function Cancel(annealRequest: Data, message?: string) {
-        return annealRequest.request.cancelTokenSource.cancel(message);
+        return annealRequest.cancelTokenSource.cancel(message);
     }
 
     /**
@@ -385,46 +371,9 @@ export namespace AnnealRequest {
      */
     export function WaitForCompletion(annealRequest: Data) {
         return new Promise<AxiosResponse | AxiosError>((resolve) => {
-            annealRequest.request.object
+            annealRequest.object
                 .then(resolve)
                 .catch(resolve);
         });
-    }
-
-    function AttachCompletionHandler(annealRequest: Data) {
-        // When the AJAX request completes, set the completion flag to true
-        WaitForCompletion(annealRequest)
-            .then((response) => {
-                SetResponse(annealRequest, response);
-            });
-    }
-
-    export function GetCompleted(annealRequest: Data) {
-        return GetResponse(annealRequest) !== undefined;
-    }
-
-    function SetResponse(annealRequest: Data, response: AxiosResponse | AxiosError) {
-        return RequestResponseStore.set(annealRequest, response);
-    }
-
-    export function GetResponse(annealRequest: Data) {
-        return RequestResponseStore.get(annealRequest);
-    }
-
-    export function IsRequestSuccessful(annealRequest: Data) {
-        const response = GetResponse(annealRequest);
-
-        // Not yet received response, or unknown request
-        if (response === undefined) {
-            return false;
-        }
-
-        // If the "response" is an Error/AxiosError object
-        if (response instanceof Error) {
-            return false;
-        }
-
-        // Otherwise okay
-        return true;
     }
 }
