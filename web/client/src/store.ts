@@ -8,6 +8,8 @@ import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
 import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
+import { deepMerge } from "./util/Object";
+
 Vue.use(Vuex);
 
 const state: IState = State.Init();
@@ -185,8 +187,9 @@ const store = new Vuex.Store({
          * Deletes supplied stratum, but also asks user to confirm this action
          * in the event that constraints will also be deleted
          */
-        deleteStratumConfirmSideEffect(context, stratum: IStratum) {
+        async deleteStratumConfirmSideEffect(context, stratum: IStratum) {
             const $state = context.state;
+            const strata = $state.annealConfig.strata;
 
             // Check if there are constraints that depend on this stratum
             const constraints = $state.annealConfig.constraints || [];
@@ -207,13 +210,34 @@ const store = new Vuex.Store({
             }
 
             // Find index of stratum and delete that one
-            const index = $state.annealConfig.strata.findIndex(s => Stratum.Equals(stratum, s));
+            const index = strata.findIndex(s => Stratum.Equals(stratum, s));
             context.commit("deleteStratum", index);
 
             dependentConstraints.forEach((constraint) => {
-                const index = $state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+                const index = constraints.findIndex(c => Constraint.Equals(constraint, c));
                 context.commit("deleteConstraint", index);
             });
+
+            // Check if there are stratum naming contexts which used this 
+            // stratum ID; if so, move to parent stratum or _GLOBAL
+            const parentStratumId = index === 0 ? "_GLOBAL" : strata[index - 1]._id;
+
+            for (let stratum of strata) {
+                if (stratum.namingConfig.context === stratumId) {
+                    // We need to copy out the object and merge in the naming 
+                    // context because we can't do direct object mutations as 
+                    // the object sits in the state store and non-tracked 
+                    // mutations are a big no-no
+                    await context.dispatch("upsertStratum",
+                        // TODO: Figure out how to best handle the types for this
+                        deepMerge<any, any>({}, stratum, {
+                            namingConfig: {
+                                context: parentStratumId,
+                            },
+                        })
+                    );
+                }
+            }
         },
 
         /**
@@ -277,15 +301,38 @@ Delete constraints that use this column and try again.`;
         /**
          * Sets the partition column to the given column
          */
-        setPartitionColumn(context, partitionColumn: IColumnData) {
+        setPartitionColumn(context, partitionColumn: IColumnData | undefined) {
+            if (partitionColumn === undefined) {
+                throw new Error("Received update to set partition column to 'undefined'; use `deletePartitionColumn` instead");
+            }
+
             context.commit("setPartitionColumn", partitionColumn);
         },
 
         /**
          * Deletes the partition column set in state
          */
-        deletePartitionColumn(context) {
+        async deletePartitionColumn(context) {
             context.commit("setPartitionColumn", undefined);
+
+            // Check if there are stratum naming contexts which used the 
+            // "_PARTITION" identifier; if so, move to _GLOBAL
+            for (let stratum of context.state.annealConfig.strata) {
+                if (stratum.namingConfig.context === "_PARTITION") {
+                    // We need to copy out the object and merge in the naming 
+                    // context because we can't do direct object mutations as 
+                    // the object sits in the state store and non-tracked 
+                    // mutations are a big no-no
+                    await context.dispatch("upsertStratum",
+                        // TODO: Figure out how to best handle the types for this
+                        deepMerge<any, any>({}, stratum, {
+                            namingConfig: {
+                                context: "_GLOBAL",
+                            },
+                        })
+                    );
+                }
+            }
         },
 
         /**
