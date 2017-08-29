@@ -158,7 +158,7 @@ const store = new Vuex.Store({
                 max: 4,
             };
 
-            const genericStratum = Stratum.Init(stratumLabel, stratumSize);
+            const genericStratum = Stratum.Init(stratumLabel, stratumSize, "_GLOBAL");
 
             await context.dispatch("upsertStratum", genericStratum);
         },

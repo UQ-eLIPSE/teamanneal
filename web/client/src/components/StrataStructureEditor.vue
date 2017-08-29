@@ -69,7 +69,12 @@ export default class StrataStructureEditor extends Mixin(StoreState) {
             max: 4,
         };
 
-        const newStratum = Stratum.Init(stratumLabel, stratumSize);
+        // This is used to get the naming context (by default we set the 
+        // contexts to the parent stratum)
+        const parentStratum = this.strata[this.strata.length - 1];
+        const parentStratumId = parentStratum !== undefined ? parentStratum._id : "_GLOBAL";
+
+        const newStratum = Stratum.Init(stratumLabel, stratumSize, parentStratumId);
 
         await this.$store.dispatch("upsertStratum", newStratum);
     }
@@ -103,7 +108,7 @@ export default class StrataStructureEditor extends Mixin(StoreState) {
             max: 0,
         };
 
-        return Stratum.Init(shimLabel, shimSize);
+        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
     }
 }
 </script>

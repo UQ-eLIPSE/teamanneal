@@ -73,7 +73,7 @@ export default class StrataEditor extends Mixin(StoreState) {
             max: 0,
         };
 
-        return Stratum.Init(shimLabel, shimSize);
+        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
     }
 
     /**

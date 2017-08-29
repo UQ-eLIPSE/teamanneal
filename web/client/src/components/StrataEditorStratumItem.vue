@@ -53,14 +53,16 @@
             </div>
             <div class="stratum-name">
                 <h3>Name</h3>
-                <div>
+                <h4 class="smaller-margins">Format</h4>
+                <p class="smaller-margins">
                     <select v-model="counterType">
                         <option v-for="counterOption in counterList"
                                 :key="counterOption.value"
                                 :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
-                </div>
-                <p v-if="isCounterCustomList">
+                </p>
+                <p v-if="isCounterCustomList"
+                   class="smaller-margins">
                     Provide a list of names, one per line:
                     <br>
                     <textarea v-model="customCounterList"
@@ -70,17 +72,22 @@
                      class="error-msg">
                     <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
                 </div>
-                <p>
+                <p class="smaller-margins">
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
-                <p>Naming context:
-                    <select v-model="namingContext">
-                        <option v-for="namingContextOption in namingContextOptionList"
-                                :key="namingContextOption.value"
-                                :value="namingContextOption.value">{{ namingContextOption.text }}</option>
-                    </select>
-                </p>
+                <template v-if="showNamingContextOptions">
+                    <h4 class="smaller-margins">Context</h4>
+                    <p class="smaller-margins">
+                        Make names unique...
+                        <br>
+                        <select v-model="namingContext">
+                            <option v-for="namingContextOption in namingContextOptionList"
+                                    :key="namingContextOption.value"
+                                    :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                        </select>
+                    </p>
+                </template>
             </div>
         </div>
         <div v-else
@@ -352,7 +359,7 @@ export default class StrataEditorStratumItem extends Vue {
         const list = this.namingContexts.map((stratum) => {
             return {
                 value: stratum._id,
-                text: stratum.label,
+                text: `per ${stratum.label}`,
             };
         });
 
@@ -360,17 +367,21 @@ export default class StrataEditorStratumItem extends Vue {
         if (this.partitionColumnData !== undefined) {
             list.unshift({
                 value: "_PARTITION",
-                text: `Partition (${this.partitionColumnData.label})`,
+                text: `per partition (${this.partitionColumnData.label})`,
             });
         }
 
         // Global is always available
         list.unshift({
             value: "_GLOBAL",
-            text: "<Global>",
+            text: "globally",
         });
 
         return list;
+    }
+
+    get showNamingContextOptions() {
+        return this.namingContextOptionList.length > 1;
     }
 
     async updateStratum(diff: any) {
@@ -441,6 +452,17 @@ export default class StrataEditorStratumItem extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
+h3.smaller-margins,
+h4.smaller-margins,
+p.smaller-margins {
+    margin: 0.5em 0;
+}
+
+p + h3.smaller-margins,
+p + h4.smaller-margins {
+    margin-top: 1em;
+}
+
 .input {
     background: none;
 

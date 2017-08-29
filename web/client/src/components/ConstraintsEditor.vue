@@ -71,7 +71,7 @@ export default class ConstraintsEditor extends Mixin(StoreState) {
             max: 0,
         };
 
-        return Stratum.Init(shimLabel, shimSize);
+        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
     }
 
     getStratumConstraints(stratum: IStratum) {

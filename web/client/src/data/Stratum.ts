@@ -42,7 +42,8 @@ export namespace Stratum {
     export function Init(
         label: string,
         size: Size,
-        counter: ListCounterType | string[] = "decimal",
+        namingContext: "_GLOBAL" | "_PARTITION" | string,
+        namingCounter: ListCounterType | string[] = "decimal",
     ) {
         const data: Data = {
             _id: UUID.generate(),
@@ -51,8 +52,8 @@ export namespace Stratum {
             size,
 
             namingConfig: {
-                counter,
-                context: "_GLOBAL",
+                counter: namingCounter,
+                context: namingContext,
             },
         };
 
