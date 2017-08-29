@@ -43,9 +43,9 @@ export interface AnnealConfig {
     strata: IStratum[],
 
     namingConfig: {
-        consolidated: {
+        combined: {
             /**
-             * Describes the format with which to generate consolidated group
+             * Describes the format with which to generate combined group
              * names
              * 
              * Formatting is done by using the stratum label in moustaches,
@@ -90,7 +90,7 @@ export namespace State {
         const config: AnnealConfig = {
             strata: [],
             namingConfig: {
-                consolidated: {
+                combined: {
                     format: undefined,
                 },
             },

@@ -37,7 +37,7 @@ import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
  * Flattens the result tree into a form that can be used to construct table rows
  * for SpreadsheetTreeView* components
  */
-function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>>, idColumnIndex: number, nameMap: IResultTree_NodeNameMapNameGenerated, consolidatedNameFormat: string | undefined, hidePartitions: boolean, treeWalkAccumulator: AnnealNode.Node[], flattenedArray: FlattenedTreeItem[], nodes: ReadonlyArray<AnnealNode.Node>) {
+function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>>, idColumnIndex: number, nameMap: IResultTree_NodeNameMapNameGenerated, combinedNameFormat: string | undefined, hidePartitions: boolean, treeWalkAccumulator: AnnealNode.Node[], flattenedArray: FlattenedTreeItem[], nodes: ReadonlyArray<AnnealNode.Node>) {
     // How deep have we walked this tree so far?
     let depth = treeWalkAccumulator.length;
 
@@ -64,12 +64,12 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                 depth,
             };
 
-            // If a consolidated name format is supplied, then gather up all 
+            // If a combined name format is supplied, then gather up all 
             // generated names by walking up
-            if (consolidatedNameFormat !== undefined) {
+            if (combinedNameFormat !== undefined) {
                 // Get the generated name for this stratum label and 
-                // replace it in the consolidated name string
-                let consolidatedName = consolidatedNameFormat;
+                // replace it in the combined name string
+                let combinedName = combinedNameFormat;
 
                 [...treeWalkAccumulator, node].forEach((accumulatedNode) => {
                     const nameDesc = nameMap.get(accumulatedNode);
@@ -95,10 +95,10 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                     }
 
                     // NOTE: This uses the stratum ID and not the label!
-                    consolidatedName = consolidatedName.replace(`{{${stratumId}}}`, generatedName);
+                    combinedName = combinedName.replace(`{{${stratumId}}}`, generatedName);
                 });
 
-                flattenedTreeItem.content += ` (${consolidatedName})`;
+                flattenedTreeItem.content += ` (${combinedName})`;
             }
 
             // Push the label of this node (which is an actual group) in
@@ -140,7 +140,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
             }
 
             // Recurse into children
-            flatten(recordRows, idColumnIndex, nameMap, consolidatedNameFormat, hidePartitions, [...treeWalkAccumulator, node], flattenedArray, node.children);
+            flatten(recordRows, idColumnIndex, nameMap, combinedNameFormat, hidePartitions, [...treeWalkAccumulator, node], flattenedArray, node.children);
         }
     });
 }
@@ -158,12 +158,12 @@ export default class SpreadsheetTreeView extends Vue {
     @Prop nameMap = p<IResultTree_NodeNameMapNameGenerated>({ required: true, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
     @Prop numberOfColumns = p<number>({ type: Number, required: true, });
-    @Prop consolidatedNameFormat = p<string | undefined>({ type: String, required: false, default: undefined });
+    @Prop combinedNameFormat = p<string | undefined>({ type: String, required: false, default: undefined });
     @Prop hidePartitions = p<boolean>({ type: Boolean, required: true, });
 
     get flattenedTree() {
         const flattenedArray: FlattenedTreeItem[] = [];
-        flatten(this.recordRows, this.idColumnIndex, this.nameMap, this.consolidatedNameFormat, this.hidePartitions, [], flattenedArray, this.annealNodeRoots);
+        flatten(this.recordRows, this.idColumnIndex, this.nameMap, this.combinedNameFormat, this.hidePartitions, [], flattenedArray, this.annealNodeRoots);
 
         return flattenedArray;
     }

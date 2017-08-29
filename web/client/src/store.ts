@@ -114,10 +114,10 @@ const store = new Vuex.Store({
             Vue.set(annealResponse, "content", content);
         },
 
-        /// Consolidated name format
+        /// Combined name format
 
-        setConsolidatedNameFormat(state, nameFormat: string | undefined) {
-            Vue.set(state.annealConfig.namingConfig.consolidated, "format", nameFormat);
+        setCombinedNameFormat(state, nameFormat: string | undefined) {
+            Vue.set(state.annealConfig.namingConfig.combined, "format", nameFormat);
         },
     },
     actions: {
@@ -369,10 +369,10 @@ Delete constraints that use this column and try again.`;
         },
 
         /**
-         * Sets consolidated name format
+         * Sets combined name format
          */
-        setConsolidatedNameFormat(context, nameFormat: string | undefined) {
-            context.commit("setConsolidatedNameFormat", nameFormat);
+        setCombinedNameFormat(context, nameFormat: string | undefined) {
+            context.commit("setCombinedNameFormat", nameFormat);
         },
     },
 });

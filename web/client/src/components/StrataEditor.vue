@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div id="tree">
+        <div class="editor-container">
             <ul>
                 <li v-if="isPartitionColumnSet">
                     <StrataEditorStratumItem :stratum="partitionStratumShimObject"
@@ -16,11 +16,17 @@
                                              :partitionColumnData="state.recordData.partitionColumn"
                                              :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
-                <li>
-                    <h3>Consolidated group name format</h3>
-                    <input v-model="groupConsolidatedNameFormat"></input>
-                </li>
             </ul>
+        </div>
+        <div class="combined-name-container">
+            <h2>Combined group name format</h2>
+            <p>Provide a format to generate a single combined name for each of your groups. This will be visible in your results, and available in the exported CSV file.</p>
+            <p>Leave blank if you wish to disable this feature.</p>
+            <input class="combined-name-format"
+                   v-model="groupCombinedNameFormat"></input>
+            <p>For example:
+                <i>...example...</i>
+            </p>
         </div>
     </div>
 </template>
@@ -157,8 +163,8 @@ export default class StrataEditor extends Mixin(StoreState) {
 
 
 
-    get groupConsolidatedNameFormat() {
-        const format = this.state.annealConfig.namingConfig.consolidated.format;
+    get groupCombinedNameFormat() {
+        const format = this.state.annealConfig.namingConfig.combined.format;
 
         if (format === undefined) {
             return undefined;
@@ -167,13 +173,13 @@ export default class StrataEditor extends Mixin(StoreState) {
         return format;
     }
 
-    set groupConsolidatedNameFormat(newValue: string | undefined) {
+    set groupCombinedNameFormat(newValue: string | undefined) {
         if (newValue === undefined || newValue.trim().length === 0) {
-            this.$store.dispatch("setConsolidatedNameFormat", undefined);
+            this.$store.dispatch("setCombinedNameFormat", undefined);
             return;
         }
 
-        this.$store.dispatch("setConsolidatedNameFormat", newValue);
+        this.$store.dispatch("setCombinedNameFormat", newValue);
     }
 }
 </script>
@@ -181,7 +187,8 @@ export default class StrataEditor extends Mixin(StoreState) {
 <!-- ####################################################################### -->
 
 <style scoped>
-#tree {
+.editor-container,
+.combined-name-container {
     background: rgba(0, 0, 0, 0.05);
 
     width: 100%;
@@ -190,7 +197,7 @@ export default class StrataEditor extends Mixin(StoreState) {
     padding: 1rem;
 }
 
-#tree ul {
+.editor-container ul {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -201,11 +208,27 @@ export default class StrataEditor extends Mixin(StoreState) {
     background-size: 0.3em 100%;
 }
 
-#tree li {
+.editor-container li {
     padding: 0;
 }
 
-#tree li+li {
+.editor-container li+li {
     margin-top: 2rem;
+}
+
+.combined-name-container {
+    margin-top: 1em;
+}
+
+.combined-name-container h2 {
+    margin-top: 0;
+
+    font-weight: 500;
+    color: #49075E;
+}
+
+input.combined-name-format {
+    width: 100%;
+    max-width: 30em;
 }
 </style>

@@ -37,7 +37,7 @@
                                          :nameMap="nameMap"
                                          :idColumnIndex="idColumnIndex"
                                          :numberOfColumns="columns.length"
-                                         :consolidatedNameFormat="consolidatedNameFormat"
+                                         :combinedNameFormat="combinedNameFormat"
                                          :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
@@ -169,7 +169,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         // We use cooked values for the record ID columns for referencing
         const idColumnValues = ColumnData.GenerateCookedColumnValues(this.idColumn);
 
-        const consolidatedNameFormat = this.consolidatedNameFormat;
+        const combinedNameFormat = this.combinedNameFormat;
 
         rows.forEach((row, i) => {
             // Add stratum labels to the header rows
@@ -179,10 +179,10 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
                     headerRow.push(stratum.label);
                 });
 
-                // Add one more column header for consolidated group names if 
+                // Add one more column header for combined group names if 
                 // they are present
-                if (consolidatedNameFormat !== undefined) {
-                    headerRow.push("Consolidated group name");
+                if (combinedNameFormat !== undefined) {
+                    headerRow.push("Combined group name");
                 }
 
                 return;
@@ -213,15 +213,15 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
                     row.push("" + nameObj.nodeGeneratedName);
                 });
 
-            // Push in consolidated name as well
-            if (consolidatedNameFormat !== undefined) {
-                let consolidatedName = consolidatedNameFormat;
+            // Push in combined name as well
+            if (combinedNameFormat !== undefined) {
+                let combinedName = combinedNameFormat;
                 name.forEach(({ stratumId, nodeGeneratedName }) => {
                     const template = `{{${stratumId}}}`;
-                    consolidatedName = consolidatedName.replace(template, "" + nodeGeneratedName);
+                    combinedName = combinedName.replace(template, "" + nodeGeneratedName);
                 });
 
-                row.push(consolidatedName);
+                row.push(combinedName);
             }
         });
 
@@ -345,10 +345,10 @@ XMLHttpRequest {
         return annealNodeRoots;
     }
 
-    get consolidatedNameFormat() {
-        let consolidatedNameFormat = this.state.annealConfig.namingConfig.consolidated.format;
+    get combinedNameFormat() {
+        let combinedNameFormat = this.state.annealConfig.namingConfig.combined.format;
 
-        if (consolidatedNameFormat === undefined) {
+        if (combinedNameFormat === undefined) {
             return undefined;
         }
 
@@ -357,10 +357,10 @@ XMLHttpRequest {
         // TODO: Figure out whether we would like to stick with readable 
         // templates or use stratum IDs here instead
         this.strata.forEach(({ _id, label, }) => {
-            consolidatedNameFormat = consolidatedNameFormat!.replace(`{{${label}}}`, `{{${_id}}}`);
+            combinedNameFormat = combinedNameFormat!.replace(`{{${label}}}`, `{{${_id}}}`);
         });
 
-        return consolidatedNameFormat;
+        return combinedNameFormat;
     }
 }
 </script>
