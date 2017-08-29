@@ -1,7 +1,8 @@
 import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 import { Data as IConstraint } from "./Constraint";
 import { Stratum, Data as IStratum } from "./Stratum";
-import { AnnealRequest, Data as IAnnealRequest } from "./AnnealRequest";
+import { Data as IAnnealRequest } from "./AnnealRequest";
+import { AnnealResponse, Data as IAnnealResponse } from "./AnnealResponse";
 import { Partition } from "./Partition";
 
 export interface Data {
@@ -13,6 +14,9 @@ export interface Data {
 
     /** Information about request to the annealing server */
     annealRequest: IAnnealRequest | undefined,
+
+    /** Information about response from the annealing server */
+    annealResponse: IAnnealResponse | undefined,
 }
 
 export interface RecordData {
@@ -61,6 +65,7 @@ export namespace State {
             recordData: GenerateBlankRecordData(),
             annealConfig: GenerateBlankAnnealConfig(),
             annealRequest: undefined,
+            annealResponse: undefined,
         };
 
         return state;
@@ -95,24 +100,24 @@ export namespace State {
         return config;
     }
 
-    export function HasSourceFileData(state: Data) {
-        return state.recordData.source.length > 0;
+    export function HasSourceFileData({ recordData }: Data) {
+        return recordData.source.length > 0;
     }
 
-    export function HasValidIdColumnIndex(state: Data) {
-        return state.recordData.idColumn !== undefined;
+    export function HasValidIdColumnIndex({ recordData }: Data) {
+        return recordData.idColumn !== undefined;
     }
 
-    export function HasStrata(state: Data) {
-        return state.annealConfig.strata.length > 0;
+    export function HasStrata({ annealConfig }: Data) {
+        return annealConfig.strata.length > 0;
     }
 
-    export function HasConstraints(state: Data) {
-        return state.annealConfig.constraints.length > 0;
+    export function HasConstraints({ annealConfig }: Data) {
+        return annealConfig.constraints.length > 0;
     }
 
-    export function IsStrataConfigNamesValid(state: Data) {
-        const strata = state.annealConfig.strata;
+    export function IsStrataConfigNamesValid({ annealConfig }: Data) {
+        const strata = annealConfig.strata;
 
         const strataNameSet = new Set<string>();
 
@@ -135,8 +140,8 @@ export namespace State {
         return true;
     }
 
-    export function IsStrataConfigSizesValid(state: Data) {
-        const strata = state.annealConfig.strata;
+    export function IsStrataConfigSizesValid({ annealConfig, recordData }: Data) {
+        const strata = annealConfig.strata;
 
         if (strata === undefined) { return false; }
 
@@ -166,8 +171,8 @@ export namespace State {
         }
 
         // Check that group size calculations are possible over all partitions
-        const columns = state.recordData.columns;
-        const partitionColumnDescriptor = state.recordData.partitionColumn;
+        const columns = recordData.columns;
+        const partitionColumnDescriptor = recordData.partitionColumn;
 
         const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
@@ -186,35 +191,32 @@ export namespace State {
         return true;
     }
 
-    export function IsAnnealRequestInProgress(state: Data) {
+    export function IsAnnealRequestInProgress({ annealRequest, annealResponse }: Data) {
         return (
-            state.annealRequest !== undefined &&
-            !AnnealRequest.GetCompleted(state.annealRequest)    // Is not completed
+            annealRequest !== undefined &&
+            (
+                annealResponse === undefined ||     // No response object set up yet
+                (
+                    // Check if request object matches and if we have NOT yet
+                    // received a response
+                    AnnealResponse.RequestMatchesResponse(annealRequest, annealResponse) &&
+                    !AnnealResponse.IsResponseReceived(annealResponse)
+                )
+            )
         );
     }
 
-    export function IsAnnealRequestCreated(state: Data) {
-        return state.annealRequest !== undefined;
+    export function IsAnnealRequestCreated({ annealRequest }: Data) {
+        return annealRequest !== undefined;
     }
 
-    export function IsAnnealSuccessful(state: Data) {
+    export function IsAnnealRequestSuccessful({ annealRequest, annealResponse }: Data) {
         return (
-            state.annealRequest !== undefined &&
-            AnnealRequest.IsRequestSuccessful(state.annealRequest)
+            annealRequest !== undefined &&
+            annealResponse !== undefined &&
+            AnnealResponse.RequestMatchesResponse(annealRequest, annealResponse) &&
+            AnnealResponse.IsSuccessful(annealResponse)
         );
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 

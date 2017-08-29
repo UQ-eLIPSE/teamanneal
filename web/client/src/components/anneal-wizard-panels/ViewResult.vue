@@ -83,7 +83,7 @@ import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
-import { AnnealRequest, AxiosResponse, AxiosError } from "../../data/AnnealRequest";
+import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -239,22 +239,26 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
     }
 
     get isAnnealSuccessful() {
-        return State.IsAnnealSuccessful(this.state);
+        // If the request is successful and there is no error message
+        return (
+            State.IsAnnealRequestSuccessful(this.state) &&
+            this.annealErrorMessage === undefined
+        );
     }
 
     get annealErrorMessage() {
-        const request = this.state.annealRequest;
+        const response = this.state.annealResponse;
 
-        // No request
-        if (request === undefined) {
+        // No response - can't say much at the moment
+        if (response === undefined) {
             return undefined;
         }
 
-        // No **request** error
-        // This is not the same as "no anneal error"!
-        if (AnnealRequest.IsRequestSuccessful(request)) {
-            const response = AnnealRequest.GetResponse(request) as AxiosResponse;
-            const responseData = response.data as ToClientAnnealResponse.Root;
+        // No request/response error
+        // NOTE: This is not the same as "no anneal error"!
+        if (AnnealResponse.IsSuccessful(response)) {
+            const responseContent = response.content;
+            const responseData = responseContent.data as ToClientAnnealResponse.Root;
 
             // Return error now if it encompasses entire response
             if (responseData.error !== undefined) {
@@ -279,9 +283,9 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
 
                 // Return error if there is a node which suffered a failure
                 if (annealNodesWithErrors.length > 0) {
-                    let message = "Error: Partial anneal failure:\n";
+                    let message = "Error: One or more nodes failed to anneal:\n";
                     annealNodesWithErrors.forEach(({ index, error, }) => {
-                        message += `  at node index ${index}: ${error}\n`;
+                        message += `  at node index ${index}: \n     ${error}\n`;
                     });
 
                     return message;
@@ -293,7 +297,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         }
 
         // Response here is now the error
-        const error = AnnealRequest.GetResponse(request) as AxiosError;
+        const error = response.content as AxiosError;
 
         // Error was returned from server
         const errResponse = error.response;
@@ -331,8 +335,8 @@ XMLHttpRequest {
     }
 
     get annealNodeRoots() {
-        const response = AnnealRequest.GetResponse(this.state.annealRequest!)! as AxiosResponse;
-        const responseData = response.data as ToClientAnnealResponse.Root;
+        const responseContent = this.state.annealResponse!.content as AxiosResponse;
+        const responseData = responseContent.data as ToClientAnnealResponse.Root;
 
         // We're working on the presumption that we definitely have results
         const results = responseData.results!;
