@@ -310,9 +310,11 @@ Delete constraints that use this column and try again.`;
         /**
          * Sets the partition column to the given column
          */
-        setPartitionColumn(context, partitionColumn: IColumnData | undefined) {
+        async setPartitionColumn(context, partitionColumn: IColumnData | undefined) {
+            // Delete partition column if column to set is undefined
             if (partitionColumn === undefined) {
-                throw new Error("Received update to set partition column to 'undefined'; use `deletePartitionColumn` instead");
+                await context.dispatch("deletePartitionColumn");
+                return;
             }
 
             context.commit("setPartitionColumn", partitionColumn);
@@ -341,6 +343,15 @@ Delete constraints that use this column and try again.`;
                         })
                     );
                 }
+            }
+
+            // Replace the combined name format with a new version that has the 
+            // reference to the partition column erased
+            const combinedNameFormat = context.state.annealConfig.namingConfig.combined.format;
+
+            if (combinedNameFormat !== undefined) {
+                const newCombinedNameFormat = combinedNameFormat.replace(`{{_PARTITION}}`, "");
+                await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
             }
         },
 
