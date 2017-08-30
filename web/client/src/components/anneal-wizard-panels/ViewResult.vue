@@ -86,6 +86,8 @@ import { State } from "../../data/State";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { replaceAll } from "../../util/String";
+
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
@@ -217,8 +219,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
             if (combinedNameFormat !== undefined) {
                 let combinedName = combinedNameFormat;
                 name.forEach(({ stratumId, nodeGeneratedName }) => {
-                    const template = `{{${stratumId}}}`;
-                    combinedName = combinedName.replace(template, "" + nodeGeneratedName);
+                    combinedName = replaceAll(combinedName, `{{${stratumId}}}`, "" + nodeGeneratedName);
                 });
 
                 row.push(combinedName);

@@ -20,8 +20,22 @@
         </div>
         <div class="combined-name-container">
             <h2>Combined group name format</h2>
-            <p>Provide a format to generate a single combined name for each of your groups. This will be visible in your results, and available in the exported CSV file.</p>
-            <p>Leave blank if you wish to disable this feature.</p>
+            <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
+            <p>Use the following placeholders to insert each level's name values:</p>
+            <p>
+                <table class="example-table">
+                    <tr>
+                        <th>Level</th>
+                        <th>Placeholder to use</th>
+                    </tr>
+                    <tr v-for="item in groupCombinedNameFormatPlaceholderList"
+                        :key="item.label">
+                        <td>{{ item.label }}</td>
+                        <td>{{ item.placeholder }}</td>
+                    </tr>
+                </table>
+            </p>
+            <p>Set this field blank if you wish to disable this feature.</p>
             <input class="combined-name-format"
                    v-model="groupCombinedNameFormat"></input>
             <p>For example:
@@ -42,6 +56,7 @@ import { Stratum, Data as IStratum } from "../data/Stratum";
 import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
+import { replaceAll } from "../util/String";
 
 import { StoreState } from "./StoreState";
 
@@ -155,6 +170,26 @@ export default class StrataEditor extends Mixin(StoreState) {
         return outputList;
     }
 
+    get groupCombinedNameFormatPlaceholderList() {
+        const list = this.strata.map((stratum) => {
+            return {
+                label: stratum.label,
+                placeholder: `{{${stratum.label}}}`,
+            };
+        });
+
+        if (this.isPartitionColumnSet) {
+            const partitionShimObject = this.partitionStratumShimObject;
+
+            list.unshift({
+                label: partitionShimObject.label,
+                placeholder: "{{Partition}}",
+            });
+        }
+
+        return list;
+    }
+
     get groupCombinedNameFormat() {
         let format = this.state.annealConfig.namingConfig.combined.format;
 
@@ -164,8 +199,11 @@ export default class StrataEditor extends Mixin(StoreState) {
 
         // Get stratum labels back out because internally we use IDs
         this.strata.forEach(({ _id, label, }) => {
-            format = format!.replace(`{{${_id}}}`, `{{${label}}}`);
+            format = replaceAll(format!, `{{${_id}}}`, `{{${label}}}`);
         });
+
+        // Internally we use _PARTITION to represent the partition column
+        format = replaceAll(format, "{{_PARTITION}}", "{{Partition}}");
 
         return format;
     }
@@ -178,8 +216,11 @@ export default class StrataEditor extends Mixin(StoreState) {
 
         // Replace stratum labels with stratum IDs because internally we use IDs
         this.strata.forEach(({ _id, label, }) => {
-            newValue = newValue!.replace(`{{${label}}}`, `{{${_id}}}`);
+            newValue = replaceAll(newValue!, `{{${label}}}`, `{{${_id}}}`);
         });
+
+        // Internally we use _PARTITION to represent the partition column
+        newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
 
         this.$store.dispatch("setCombinedNameFormat", newValue);
     }
@@ -232,5 +273,17 @@ export default class StrataEditor extends Mixin(StoreState) {
 input.combined-name-format {
     width: 100%;
     max-width: 30em;
+}
+
+.example-table {
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.example-table th,
+.example-table td {
+    text-align: left;
+    border: 1px solid #aaa;
+    padding: 0.1em 0.3em;
 }
 </style>

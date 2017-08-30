@@ -31,6 +31,8 @@ import * as AnnealNode from "../../../common/AnnealNode";
 import { NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated } from "../data/ResultTree";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
 
+import { replaceAll } from "../util/String";
+
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
 
 /**
@@ -95,7 +97,7 @@ function flatten(recordRows: ReadonlyArray<ReadonlyArray<number | string | null>
                     }
 
                     // NOTE: This uses the stratum ID and not the label!
-                    combinedName = combinedName.replace(`{{${stratumId}}}`, generatedName);
+                    combinedName = replaceAll(combinedName, `{{${stratumId}}}`, generatedName);
                 });
 
                 flattenedTreeItem.content += ` (${combinedName})`;

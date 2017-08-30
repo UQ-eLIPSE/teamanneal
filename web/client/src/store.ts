@@ -9,7 +9,7 @@ import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } fr
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 import { deepMerge } from "./util/Object";
-
+import { replaceAll } from "./util/String";
 Vue.use(Vuex);
 
 const state: IState = State.Init();
@@ -244,7 +244,7 @@ const store = new Vuex.Store({
             const combinedNameFormat = $state.annealConfig.namingConfig.combined.format;
 
             if (combinedNameFormat !== undefined) {
-                const newCombinedNameFormat = combinedNameFormat.replace(`{{${stratumId}}}`, "");
+                const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
                 await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
             }
         },
@@ -350,7 +350,7 @@ Delete constraints that use this column and try again.`;
             const combinedNameFormat = context.state.annealConfig.namingConfig.combined.format;
 
             if (combinedNameFormat !== undefined) {
-                const newCombinedNameFormat = combinedNameFormat.replace(`{{_PARTITION}}`, "");
+                const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{_PARTITION}}`, "");
                 await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
             }
         },
