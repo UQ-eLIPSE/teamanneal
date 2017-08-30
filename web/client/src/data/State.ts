@@ -130,6 +130,9 @@ export namespace State {
             // Do not permit blank string names
             if (label.length === 0) { return false; }
 
+            // Do not permit "partition" as a name - it is reserved
+            if (label === "partition") { return false; }
+
             strataNameSet.add(label);
         }
 
