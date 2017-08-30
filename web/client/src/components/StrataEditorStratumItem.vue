@@ -79,7 +79,7 @@
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
                     <p class="smaller-margins">
-                        Make names unique...
+                        Make names unique:
                         <br>
                         <select v-model="namingContext">
                             <option v-for="namingContextOption in namingContextOptionList"
@@ -162,29 +162,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get randomExampleName() {
-        const counter = this.stratum.namingConfig.counter;
-
-        // Generate a random value for an example name
-        // Random index is up to the 20th index
-        if (Array.isArray(counter)) {
-            const counterArray = counter
-                .map(counterString => counterString.trim())
-                .filter(counterString => counterString.length !== 0);
-
-            const randomIndex = (Math.random() * (Math.min(20, counterArray.length))) >>> 0;
-            return counterArray[randomIndex];
-        } else {
-            const listCounters = ListCounter.SupportedListCounters;
-            const counterDesc = listCounters.find(x => x.type === counter);
-
-            if (counterDesc === undefined) {
-                throw new Error(`Counter "${counter}" not supported`);
-            }
-
-            // Generate sequence of 20 elements, and pick a random one from that
-            const randomIndex = ((Math.random() * 20) >>> 0);
-            return counterDesc.generator(randomIndex, 20);
-        }
+        return Stratum.GenerateRandomExampleName(this.stratum);
     }
 
     get counterList() {
@@ -458,8 +436,8 @@ p.smaller-margins {
     margin: 0.5em 0;
 }
 
-p + h3.smaller-margins,
-p + h4.smaller-margins {
+p+h3.smaller-margins,
+p+h4.smaller-margins {
     margin-top: 1em;
 }
 

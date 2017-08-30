@@ -3,7 +3,7 @@ import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as UUID from "../util/UUID";
 import { reverse } from "../util/Array";
 
-import { ListCounterType } from "./ListCounter";
+import * as ListCounter from "./ListCounter";
 
 export interface Data {
     _id: string,
@@ -13,7 +13,7 @@ export interface Data {
 
     namingConfig: {
         /** Definition of the list used for naming nodes in stratum */
-        counter: ListCounterType | string[],
+        counter: ListCounter.ListCounterType | string[],
 
         /** 
          * The context under which names are generated
@@ -43,7 +43,7 @@ export namespace Stratum {
         label: string,
         size: Size,
         namingContext: "_GLOBAL" | "_PARTITION" | string,
-        namingCounter: ListCounterType | string[] = "decimal",
+        namingCounter: ListCounter.ListCounterType | string[] = "decimal",
     ) {
         const data: Data = {
             _id: UUID.generate(),
@@ -125,5 +125,30 @@ export namespace Stratum {
         });
 
         return strataGroupSizeDistributions;
+    }
+
+    export function GenerateRandomExampleName(stratum: Data) {
+        const counter = stratum.namingConfig.counter;
+
+        // Generate a random value for an example name
+        if (Array.isArray(counter)) {
+            const counterArray = counter
+                .map(counterString => counterString.trim())
+                .filter(counterString => counterString.length !== 0);
+
+            const randomIndex = (Math.random() * counterArray.length) >>> 0;
+            return counterArray[randomIndex];
+        } else {
+            const listCounters = ListCounter.SupportedListCounters;
+            const counterDesc = listCounters.find(x => x.type === counter);
+
+            if (counterDesc === undefined) {
+                throw new Error(`Counter "${counter}" not supported`);
+            }
+
+            // Generate sequence of 20 elements, and pick a random one from that
+            const randomIndex = ((Math.random() * 20) >>> 0);
+            return counterDesc.generator(randomIndex, 20);
+        }
     }
 }

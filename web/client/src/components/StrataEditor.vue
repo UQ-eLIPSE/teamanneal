@@ -38,8 +38,9 @@
             <p>Set this field blank if you wish to disable this feature.</p>
             <input class="combined-name-format"
                    v-model="groupCombinedNameFormat"></input>
-            <p>For example:
-                <i>...example...</i>
+            <p v-if="groupCombinedNameExample !== undefined">
+                For example:
+                <i>{{ groupCombinedNameExample }}</i>
             </p>
         </div>
     </div>
@@ -53,6 +54,7 @@ import { Component, Mixin } from "av-ts";
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
+import { ColumnData } from "../data/ColumnData";
 import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
@@ -66,8 +68,22 @@ import { StoreState } from "./StoreState";
     },
 })
 export default class StrataEditor extends Mixin(StoreState) {
+    get columns() {
+        return this.state.recordData.columns;
+    }
+
     get strata() {
         return this.state.annealConfig.strata;
+    }
+
+    get partitionColumn() {
+        const partitionColumnDesc = this.state.recordData.partitionColumn;
+
+        if (partitionColumnDesc === undefined) {
+            return undefined;
+        }
+
+        return ColumnData.ConvertToDataObject(this.columns, partitionColumnDesc);
     }
 
     /**
@@ -188,6 +204,32 @@ export default class StrataEditor extends Mixin(StoreState) {
         }
 
         return list;
+    }
+
+    get groupCombinedNameExample() {
+        let combinedName = this.state.annealConfig.namingConfig.combined.format;
+
+        if (combinedName === undefined) {
+            return undefined;
+        }
+
+        // Set random partition name
+        const partitionColumn = this.partitionColumn;
+        if (partitionColumn !== undefined) {
+            const partitionValues = partitionColumn.rawColumnValues;
+            const randomPartitionName = "" + partitionValues[(partitionValues.length * Math.random()) >>> 0];
+
+            combinedName = replaceAll(combinedName, "{{_PARTITION}}", randomPartitionName);
+        }
+
+        // Set stratum names
+        this.strata.forEach((stratum) => {
+            const randomStratumName = Stratum.GenerateRandomExampleName(stratum);
+
+            combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
+        });
+
+        return combinedName;
     }
 
     get groupCombinedNameFormat() {
