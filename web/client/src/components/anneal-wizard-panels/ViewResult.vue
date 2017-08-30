@@ -36,7 +36,9 @@
                                          :recordRows="recordRows"
                                          :nameMap="nameMap"
                                          :idColumnIndex="idColumnIndex"
-                                         :numberOfColumns="columns.length"></SpreadsheetTreeView>
+                                         :numberOfColumns="columns.length"
+                                         :combinedNameFormat="combinedNameFormat"
+                                         :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -84,6 +86,8 @@ import { State } from "../../data/State";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { replaceAll } from "../../util/String";
+
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
@@ -125,9 +129,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
     }
 
     get nameMap() {
-        const { nameMap } = ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
-
-        return nameMap;
+        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
     }
 
     get idColumn() {
@@ -169,6 +171,8 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         // We use cooked values for the record ID columns for referencing
         const idColumnValues = ColumnData.GenerateCookedColumnValues(this.idColumn);
 
+        const combinedNameFormat = this.combinedNameFormat;
+
         rows.forEach((row, i) => {
             // Add stratum labels to the header rows
             if (i === 0) {
@@ -176,6 +180,12 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
                 strata.forEach((stratum) => {
                     headerRow.push(stratum.label);
                 });
+
+                // Add one more column header for combined group names if 
+                // they are present
+                if (combinedNameFormat !== undefined) {
+                    headerRow.push("Combined group name");
+                }
 
                 return;
             }
@@ -204,6 +214,16 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
                 .forEach((nameObj) => {
                     row.push("" + nameObj.nodeGeneratedName);
                 });
+
+            // Push in combined name as well
+            if (combinedNameFormat !== undefined) {
+                let combinedName = combinedNameFormat;
+                name.forEach(({ stratumId, nodeGeneratedName }) => {
+                    combinedName = replaceAll(combinedName, `{{${stratumId}}}`, "" + nodeGeneratedName);
+                });
+
+                row.push(combinedName);
+            }
         });
 
         // Export as CSV
@@ -324,6 +344,16 @@ XMLHttpRequest {
         const annealNodeRoots = results.map(res => res.result!);
 
         return annealNodeRoots;
+    }
+
+    get combinedNameFormat() {
+        let combinedNameFormat = this.state.annealConfig.namingConfig.combined.format;
+
+        if (combinedNameFormat === undefined) {
+            return undefined;
+        }
+
+        return combinedNameFormat;
     }
 }
 </script>

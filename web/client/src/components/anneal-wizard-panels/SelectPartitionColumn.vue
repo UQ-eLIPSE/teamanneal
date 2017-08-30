@@ -13,7 +13,7 @@
                  v-if="showHelp">
                 <h2>What a partition is</h2>
                 <p>A partition is a subset of your data, such that groups and constraints only apply to each partition subset, rather than the global set of person records.</p>
-    
+
                 <h2>When a partition should be used, and how to configure the partition column</h2>
                 <p>Partitions are only useful if you have subsets within your entire data set where you require TeamAnneal not to be able to form teams with members from a different subset.</p>
                 <p>Should you decide to partition your data set, select the column that contains values which identifies which partition subset a person belongs to.</p>
@@ -86,7 +86,7 @@
                 <p>If you were to select "Project" as the partition column, TeamAnneal will run two separate anneals for your constraints: one for the people in "P01", and one for those in "P02".</p>
                 <p>This way, you are guaranteed to have groups which are only formed
                     <u>within</u> the subsets you select - in this example, you will get groups that have a homogeneous project value "P01" or "P02" but not a mixture of both.</p>
-    
+
                 <h2>Partition limitations</h2>
                 <p>At present, TeamAnneal only supports up to one column with which to partition your data.</p>
                 <p>If you require finer control over partitioning, you will need to split your data into separate files and perform separate anneals with each of them.</p>
@@ -185,7 +185,11 @@ export default class SelectPartitionColumn extends Mixin(StoreState, AnnealProce
     }
 
     set partitionColumn(val: IColumnData_MinimalDescriptor | undefined) {
-        this.$store.dispatch("setPartitionColumn", val);
+        if (val === undefined) {
+            this.$store.dispatch("deletePartitionColumn");
+        } else {
+            this.$store.dispatch("setPartitionColumn", val);
+        }
     }
 }
 </script>
