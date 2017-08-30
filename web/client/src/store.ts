@@ -238,6 +238,15 @@ const store = new Vuex.Store({
                     );
                 }
             }
+
+            // Replace the combined name format with a new version that has the 
+            // reference to this stratum erased
+            const combinedNameFormat = $state.annealConfig.namingConfig.combined.format;
+
+            if (combinedNameFormat !== undefined) {
+                const newCombinedNameFormat = combinedNameFormat.replace(`{{${stratumId}}}`, "");
+                await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
+            }
         },
 
         /**
@@ -372,6 +381,11 @@ Delete constraints that use this column and try again.`;
          * Sets combined name format
          */
         setCombinedNameFormat(context, nameFormat: string | undefined) {
+            // If input is effectively blank, then set as undefined
+            if (nameFormat !== undefined && nameFormat.trim().length === 0) {
+                nameFormat = undefined;
+            }
+
             context.commit("setCombinedNameFormat", nameFormat);
         },
     },

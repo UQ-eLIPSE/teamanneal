@@ -155,20 +155,17 @@ export default class StrataEditor extends Mixin(StoreState) {
         return outputList;
     }
 
-
-
-
-
-
-
-
-
     get groupCombinedNameFormat() {
-        const format = this.state.annealConfig.namingConfig.combined.format;
+        let format = this.state.annealConfig.namingConfig.combined.format;
 
         if (format === undefined) {
             return undefined;
         }
+
+        // Get stratum labels back out because internally we use IDs
+        this.strata.forEach(({ _id, label, }) => {
+            format = format!.replace(`{{${_id}}}`, `{{${label}}}`);
+        });
 
         return format;
     }
@@ -178,6 +175,11 @@ export default class StrataEditor extends Mixin(StoreState) {
             this.$store.dispatch("setCombinedNameFormat", undefined);
             return;
         }
+
+        // Replace stratum labels with stratum IDs because internally we use IDs
+        this.strata.forEach(({ _id, label, }) => {
+            newValue = newValue!.replace(`{{${label}}}`, `{{${_id}}}`);
+        });
 
         this.$store.dispatch("setCombinedNameFormat", newValue);
     }

@@ -352,14 +352,6 @@ XMLHttpRequest {
             return undefined;
         }
 
-        // Replace stratum labels with stratum IDs because internally we use IDs
-        //
-        // TODO: Figure out whether we would like to stick with readable 
-        // templates or use stratum IDs here instead
-        this.strata.forEach(({ _id, label, }) => {
-            combinedNameFormat = combinedNameFormat!.replace(`{{${label}}}`, `{{${_id}}}`);
-        });
-
         return combinedNameFormat;
     }
 }
