@@ -15,7 +15,7 @@ Vue.use(Vuex);
 const state: IState = State.Init();
 
 const store = new Vuex.Store({
-    strict: process.env.NODE_ENV !== "production",
+    // strict: process.env.NODE_ENV !== "production",
     state,
     mutations: {
         /// General root state mutations
