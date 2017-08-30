@@ -341,7 +341,7 @@ XMLHttpRequest {
 
         // We're working on the presumption that we definitely have results
         const results = responseData.results!;
-        const annealNodeRoots = results.map(res => res.result!);
+        const annealNodeRoots = results.map(res => res.result!.tree);
 
         return annealNodeRoots;
     }

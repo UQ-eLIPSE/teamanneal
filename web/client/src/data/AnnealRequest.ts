@@ -267,6 +267,8 @@ export namespace AnnealRequest {
                 switch (internalConstraint.type) {
                     case "count": {
                         const constraint: Constraint.Desc = {
+                            _id: internalConstraint._id,
+
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
@@ -288,6 +290,8 @@ export namespace AnnealRequest {
 
                     case "limit": {
                         const constraint: Constraint.Desc = {
+                            _id: internalConstraint._id,
+
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
@@ -309,6 +313,8 @@ export namespace AnnealRequest {
 
                     case "similarity": {
                         const constraint: Constraint.Desc = {
+                            _id: internalConstraint._id,
+
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
