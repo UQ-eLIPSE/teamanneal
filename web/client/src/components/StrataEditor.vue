@@ -21,11 +21,11 @@
         <div class="combined-name-container">
             <h2>Combined group name format</h2>
             <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
-            <p>Use the following placeholders to insert each level's name values:</p>
+            <p>Use the following placeholders to insert each group level's name values:</p>
             <p>
                 <table class="example-table">
                     <tr>
-                        <th>Level</th>
+                        <th>Group level</th>
                         <th>Placeholder to use</th>
                     </tr>
                     <tr v-for="item in groupCombinedNameFormatPlaceholderList"
