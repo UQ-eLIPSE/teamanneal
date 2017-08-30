@@ -483,12 +483,10 @@ function generateStratumSatisfactionMap(constraints: ReadonlyArray<AbstractConst
 }
 
 function generateSatisfactionMap(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
-    const satisfactionMap =
-        strata
-            .map(stratum => generateStratumSatisfactionMap(constraints, stratum))
-            .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
-
-    return satisfactionMap;
+    // Generate satisfaction map of all stratum nodes combined into one
+    return strata
+        .map(stratum => generateStratumSatisfactionMap(constraints, stratum))
+        .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
 }
 
 function annealOuterLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, startTemp: number) {
