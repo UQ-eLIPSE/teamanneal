@@ -210,7 +210,7 @@ export default class StrataEditor extends Mixin(StoreState) {
 
     set groupCombinedNameFormat(newValue: string | undefined) {
         if (newValue === undefined || newValue.trim().length === 0) {
-            this.$store.dispatch("setCombinedNameFormat", undefined);
+            this.$store.dispatch("setCombinedNameFormatByUser", undefined);
             return;
         }
 
@@ -222,7 +222,7 @@ export default class StrataEditor extends Mixin(StoreState) {
         // Internally we use _PARTITION to represent the partition column
         newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
 
-        this.$store.dispatch("setCombinedNameFormat", newValue);
+        this.$store.dispatch("setCombinedNameFormatByUser", newValue);
     }
 }
 </script>

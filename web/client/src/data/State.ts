@@ -53,6 +53,12 @@ export interface AnnealConfig {
              * "Group {{Table}}-{{Team}}" might look like: "Group 2-C"
              */
             format: string | undefined,
+
+            /**
+             * Indicates if format was user provided, instead of being system 
+             * sgenerated
+             */
+            userProvided: boolean,
         },
     },
 
@@ -92,6 +98,7 @@ export namespace State {
             namingConfig: {
                 combined: {
                     format: undefined,
+                    userProvided: false,    // We always start off assuming the system is responsible for the combined name format
                 },
             },
             constraints: [],

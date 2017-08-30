@@ -15,7 +15,7 @@ Vue.use(Vuex);
 const state: IState = State.Init();
 
 const store = new Vuex.Store({
-    strict: true,
+    strict: process.env.NODE_ENV !== "production",
     state,
     mutations: {
         /// General root state mutations
@@ -119,6 +119,10 @@ const store = new Vuex.Store({
         setCombinedNameFormat(state, nameFormat: string | undefined) {
             Vue.set(state.annealConfig.namingConfig.combined, "format", nameFormat);
         },
+
+        setCombinedNameUserProvided(state, userProvided: boolean) {
+            Vue.set(state.annealConfig.namingConfig.combined, "userProvided", userProvided);
+        },
     },
     actions: {
         /**
@@ -168,7 +172,7 @@ const store = new Vuex.Store({
         /**
          * Upserts a given stratum
          */
-        upsertStratum(context, stratum: IStratum) {
+        async upsertStratum(context, stratum: IStratum) {
             const strata = context.state.annealConfig.strata;
 
             // Check if element exists
@@ -176,11 +180,13 @@ const store = new Vuex.Store({
 
             if (index > -1) {
                 // Update
-                return context.commit("setStratum", { stratum, index });
+                context.commit("setStratum", { stratum, index });
             } else {
                 // Insert
-                return context.commit("insertStratum", stratum);
+                context.commit("insertStratum", stratum);
             }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -247,6 +253,8 @@ const store = new Vuex.Store({
                 const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
                 await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
             }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -314,10 +322,11 @@ Delete constraints that use this column and try again.`;
             // Delete partition column if column to set is undefined
             if (partitionColumn === undefined) {
                 await context.dispatch("deletePartitionColumn");
-                return;
+            } else {
+                context.commit("setPartitionColumn", partitionColumn);
             }
 
-            context.commit("setPartitionColumn", partitionColumn);
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -353,6 +362,8 @@ Delete constraints that use this column and try again.`;
                 const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{_PARTITION}}`, "");
                 await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
             }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -399,6 +410,48 @@ Delete constraints that use this column and try again.`;
 
             context.commit("setCombinedNameFormat", nameFormat);
         },
+
+        /**
+         * Sets combined name format, but also flags that the format is user 
+         * provided
+         */
+        async setCombinedNameFormatByUser(context, nameFormat: string | undefined) {
+            await context.dispatch("setCombinedNameFormat", nameFormat);
+
+            // Flag as user provided name format, if not already flagged
+            if (!context.state.annealConfig.namingConfig.combined.userProvided) {
+                context.commit("setCombinedNameUserProvided", true);
+            }
+        },
+
+        /**
+         * Updates the system generated combined name format if the format is 
+         * not currently user provided
+         */
+        updateSystemGeneratedCombinedNameFormat(context) {
+            const $state = context.state;
+            const combinedNameConfig = $state.annealConfig.namingConfig.combined;
+
+            // Only update for non-user-provided name formats
+            if (combinedNameConfig.userProvided) {
+                return;
+            }
+
+            // Map out the names of items currently in strata
+            const nameItems = $state.annealConfig.strata.map(stratum => `{{${stratum._id}}}`);
+
+            // Add partition if set
+            const partitionColumn = $state.recordData.partitionColumn;
+
+            if (partitionColumn !== undefined) {
+                nameItems.unshift("{{_PARTITION}}");
+            }
+
+            // Generate name format
+            const nameFormat = `Team ${nameItems.join("-")}`;
+
+            context.commit("setCombinedNameFormat", nameFormat);
+        }
     },
 });
 
