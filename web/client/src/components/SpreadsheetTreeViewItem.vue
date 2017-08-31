@@ -6,7 +6,7 @@
             :data-depth="itemDepth"
             :colspan="numberOfColumns">
             <span class="group-heading-text"
-                  :style="groupHeadingTextStyle">{{ itemContent }} --> {{ itemSatisfaction.toString() }}</span>
+                  :style="groupHeadingTextStyle">{{ itemContent }} {{ itemSatisfactionString }}</span>
         </td>
     </tr>
     <tr v-else>
@@ -47,6 +47,16 @@ export default class SpreadsheetTreeViewItem extends Vue {
         }
 
         return Object.keys(satisfaction).sort().map(constraintId => satisfaction[constraintId]);
+    }
+
+    get itemSatisfactionString() {
+        const satisfactionArray = this.itemSatisfaction;
+
+        if (satisfactionArray === undefined) {
+            return "[]";
+        }
+
+        return `[${satisfactionArray.toString()}]`;
     }
 
     get isItemGroupHeading() {
