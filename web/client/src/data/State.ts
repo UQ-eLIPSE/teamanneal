@@ -42,6 +42,26 @@ export interface RecordData {
 export interface AnnealConfig {
     strata: IStratum[],
 
+    namingConfig: {
+        combined: {
+            /**
+             * Describes the format with which to generate combined group
+             * names
+             * 
+             * Formatting is done by using the stratum label in moustaches,
+             * for example:
+             * "Group {{Table}}-{{Team}}" might look like: "Group 2-C"
+             */
+            format: string | undefined,
+
+            /**
+             * Indicates if format was user provided, instead of being system 
+             * sgenerated
+             */
+            userProvided: boolean,
+        },
+    },
+
     constraints: IConstraint[],
 }
 
@@ -75,6 +95,12 @@ export namespace State {
     export function GenerateBlankAnnealConfig() {
         const config: AnnealConfig = {
             strata: [],
+            namingConfig: {
+                combined: {
+                    format: undefined,
+                    userProvided: false,    // We always start off assuming the system is responsible for the combined name format
+                },
+            },
             constraints: [],
         };
 
@@ -110,6 +136,9 @@ export namespace State {
 
             // Do not permit blank string names
             if (label.length === 0) { return false; }
+
+            // Do not permit "partition" as a name - it is reserved
+            if (label === "partition") { return false; }
 
             strataNameSet.add(label);
         }

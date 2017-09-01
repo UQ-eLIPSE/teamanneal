@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div id="tree">
+        <div class="editor-container">
             <ul>
                 <li v-if="isPartitionColumnSet">
                     <StrataEditorStratumItem :stratum="partitionStratumShimObject"
@@ -12,9 +12,36 @@
                     <StrataEditorStratumItem :stratum="stratum"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupDistribution[i]"
-                                             :isPartition="false"></StrataEditorStratumItem>
+                                             :isPartition="false"
+                                             :partitionColumnData="state.recordData.partitionColumn"
+                                             :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
             </ul>
+        </div>
+        <div class="combined-name-container">
+            <h2>Combined group name format</h2>
+            <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
+            <p>Use the following placeholders to insert each group level's name values:</p>
+            <p>
+                <table class="example-table">
+                    <tr>
+                        <th>Group level</th>
+                        <th>Placeholder to use</th>
+                    </tr>
+                    <tr v-for="item in groupCombinedNameFormatPlaceholderList"
+                        :key="item.label">
+                        <td>{{ item.label }}</td>
+                        <td>{{ item.placeholder }}</td>
+                    </tr>
+                </table>
+            </p>
+            <p>Set this field blank if you wish to disable this feature.</p>
+            <input class="combined-name-format"
+                   v-model="groupCombinedNameFormat"></input>
+            <p v-if="groupCombinedNameExample !== undefined">
+                For example:
+                <i>{{ groupCombinedNameExample }}</i>
+            </p>
         </div>
     </div>
 </template>
@@ -26,10 +53,12 @@ import { Component, Mixin } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
-import { Stratum } from "../data/Stratum";
+import { Stratum, Data as IStratum } from "../data/Stratum";
+import { ColumnData } from "../data/ColumnData";
 import { Partition } from "../data/Partition";
 
 import { concat } from "../util/Array";
+import { replaceAll } from "../util/String";
 
 import { StoreState } from "./StoreState";
 
@@ -39,8 +68,22 @@ import { StoreState } from "./StoreState";
     },
 })
 export default class StrataEditor extends Mixin(StoreState) {
+    get columns() {
+        return this.state.recordData.columns;
+    }
+
     get strata() {
         return this.state.annealConfig.strata;
+    }
+
+    get partitionColumn() {
+        const partitionColumnDesc = this.state.recordData.partitionColumn;
+
+        if (partitionColumnDesc === undefined) {
+            return undefined;
+        }
+
+        return ColumnData.ConvertToDataObject(this.columns, partitionColumnDesc);
     }
 
     /**
@@ -67,7 +110,7 @@ export default class StrataEditor extends Mixin(StoreState) {
             max: 0,
         };
 
-        return Stratum.Init(shimLabel, shimSize);
+        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
     }
 
     /**
@@ -120,13 +163,117 @@ export default class StrataEditor extends Mixin(StoreState) {
             return [];
         }
     }
+
+    /**
+     * Returns an array of possible naming context contexts for each stratum at
+     * the ith index
+     */
+    get strataNamingContexts() {
+        const strata = this.strata;
+
+        const accumulatedStrata: IStratum[] = [];
+        const outputList: IStratum[][] = [];
+
+        strata.forEach((stratum) => {
+            // Copy the accumulated strata array into the output list
+            outputList.push([...accumulatedStrata]);
+
+            // Accumulate this stratum
+            accumulatedStrata.push(stratum);
+
+        });
+
+        return outputList;
+    }
+
+    get groupCombinedNameFormatPlaceholderList() {
+        const list = this.strata.map((stratum) => {
+            return {
+                label: stratum.label,
+                placeholder: `{{${stratum.label}}}`,
+            };
+        });
+
+        if (this.isPartitionColumnSet) {
+            const partitionShimObject = this.partitionStratumShimObject;
+
+            list.unshift({
+                label: partitionShimObject.label,
+                placeholder: "{{Partition}}",
+            });
+        }
+
+        return list;
+    }
+
+    get groupCombinedNameExample() {
+        let combinedName = this.state.annealConfig.namingConfig.combined.format;
+
+        if (combinedName === undefined) {
+            return undefined;
+        }
+
+        // Set random partition name
+        const partitionColumn = this.partitionColumn;
+        if (partitionColumn !== undefined) {
+            const partitionValues = partitionColumn.rawColumnValues;
+            const randomPartitionName = "" + partitionValues[(partitionValues.length * Math.random()) >>> 0];
+
+            combinedName = replaceAll(combinedName, "{{_PARTITION}}", randomPartitionName);
+        }
+
+        // Set stratum names
+        this.strata.forEach((stratum) => {
+            const randomStratumName = Stratum.GenerateRandomExampleName(stratum);
+
+            combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
+        });
+
+        return combinedName;
+    }
+
+    get groupCombinedNameFormat() {
+        let format = this.state.annealConfig.namingConfig.combined.format;
+
+        if (format === undefined) {
+            return undefined;
+        }
+
+        // Get stratum labels back out because internally we use IDs
+        this.strata.forEach(({ _id, label, }) => {
+            format = replaceAll(format!, `{{${_id}}}`, `{{${label}}}`);
+        });
+
+        // Internally we use _PARTITION to represent the partition column
+        format = replaceAll(format, "{{_PARTITION}}", "{{Partition}}");
+
+        return format;
+    }
+
+    set groupCombinedNameFormat(newValue: string | undefined) {
+        if (newValue === undefined || newValue.trim().length === 0) {
+            this.$store.dispatch("setCombinedNameFormatByUser", undefined);
+            return;
+        }
+
+        // Replace stratum labels with stratum IDs because internally we use IDs
+        this.strata.forEach(({ _id, label, }) => {
+            newValue = replaceAll(newValue!, `{{${label}}}`, `{{${_id}}}`);
+        });
+
+        // Internally we use _PARTITION to represent the partition column
+        newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
+
+        this.$store.dispatch("setCombinedNameFormatByUser", newValue);
+    }
 }
 </script>
 
 <!-- ####################################################################### -->
 
 <style scoped>
-#tree {
+.editor-container,
+.combined-name-container {
     background: rgba(0, 0, 0, 0.05);
 
     width: 100%;
@@ -135,7 +282,7 @@ export default class StrataEditor extends Mixin(StoreState) {
     padding: 1rem;
 }
 
-#tree ul {
+.editor-container ul {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -146,11 +293,39 @@ export default class StrataEditor extends Mixin(StoreState) {
     background-size: 0.3em 100%;
 }
 
-#tree li {
+.editor-container li {
     padding: 0;
 }
 
-#tree li+li {
+.editor-container li+li {
     margin-top: 2rem;
+}
+
+.combined-name-container {
+    margin-top: 1em;
+}
+
+.combined-name-container h2 {
+    margin-top: 0;
+
+    font-weight: 500;
+    color: #49075E;
+}
+
+input.combined-name-format {
+    width: 100%;
+    max-width: 30em;
+}
+
+.example-table {
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.example-table th,
+.example-table td {
+    text-align: left;
+    border: 1px solid #aaa;
+    padding: 0.1em 0.3em;
 }
 </style>

@@ -8,12 +8,14 @@ import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
 import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
+import { deepMerge } from "./util/Object";
+import { replaceAll } from "./util/String";
 Vue.use(Vuex);
 
 const state: IState = State.Init();
 
 const store = new Vuex.Store({
-    strict: true,
+    // strict: process.env.NODE_ENV !== "production",
     state,
     mutations: {
         /// General root state mutations
@@ -111,6 +113,16 @@ const store = new Vuex.Store({
             // Update `content` on anneal response object
             Vue.set(annealResponse, "content", content);
         },
+
+        /// Combined name format
+
+        setCombinedNameFormat(state, nameFormat: string | undefined) {
+            Vue.set(state.annealConfig.namingConfig.combined, "format", nameFormat);
+        },
+
+        setCombinedNameUserProvided(state, userProvided: boolean) {
+            Vue.set(state.annealConfig.namingConfig.combined, "userProvided", userProvided);
+        },
     },
     actions: {
         /**
@@ -152,7 +164,7 @@ const store = new Vuex.Store({
                 max: 4,
             };
 
-            const genericStratum = Stratum.Init(stratumLabel, stratumSize);
+            const genericStratum = Stratum.Init(stratumLabel, stratumSize, "_GLOBAL");
 
             await context.dispatch("upsertStratum", genericStratum);
         },
@@ -160,7 +172,7 @@ const store = new Vuex.Store({
         /**
          * Upserts a given stratum
          */
-        upsertStratum(context, stratum: IStratum) {
+        async upsertStratum(context, stratum: IStratum) {
             const strata = context.state.annealConfig.strata;
 
             // Check if element exists
@@ -168,19 +180,22 @@ const store = new Vuex.Store({
 
             if (index > -1) {
                 // Update
-                return context.commit("setStratum", { stratum, index });
+                context.commit("setStratum", { stratum, index });
             } else {
                 // Insert
-                return context.commit("insertStratum", stratum);
+                context.commit("insertStratum", stratum);
             }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
          * Deletes supplied stratum, but also asks user to confirm this action
          * in the event that constraints will also be deleted
          */
-        deleteStratumConfirmSideEffect(context, stratum: IStratum) {
+        async deleteStratumConfirmSideEffect(context, stratum: IStratum) {
             const $state = context.state;
+            const strata = $state.annealConfig.strata;
 
             // Check if there are constraints that depend on this stratum
             const constraints = $state.annealConfig.constraints || [];
@@ -201,13 +216,45 @@ const store = new Vuex.Store({
             }
 
             // Find index of stratum and delete that one
-            const index = $state.annealConfig.strata.findIndex(s => Stratum.Equals(stratum, s));
+            const index = strata.findIndex(s => Stratum.Equals(stratum, s));
             context.commit("deleteStratum", index);
 
             dependentConstraints.forEach((constraint) => {
-                const index = $state.annealConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+                const index = constraints.findIndex(c => Constraint.Equals(constraint, c));
                 context.commit("deleteConstraint", index);
             });
+
+            // Check if there are stratum naming contexts which used this 
+            // stratum ID; if so, move to parent stratum or _GLOBAL
+            const parentStratumId = index === 0 ? "_GLOBAL" : strata[index - 1]._id;
+
+            for (let stratum of strata) {
+                if (stratum.namingConfig.context === stratumId) {
+                    // We need to copy out the object and merge in the naming 
+                    // context because we can't do direct object mutations as 
+                    // the object sits in the state store and non-tracked 
+                    // mutations are a big no-no
+                    await context.dispatch("upsertStratum",
+                        // TODO: Figure out how to best handle the types for this
+                        deepMerge<any, any>({}, stratum, {
+                            namingConfig: {
+                                context: parentStratumId,
+                            },
+                        })
+                    );
+                }
+            }
+
+            // Replace the combined name format with a new version that has the 
+            // reference to this stratum erased
+            const combinedNameFormat = $state.annealConfig.namingConfig.combined.format;
+
+            if (combinedNameFormat !== undefined) {
+                const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
+                await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
+            }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -271,15 +318,52 @@ Delete constraints that use this column and try again.`;
         /**
          * Sets the partition column to the given column
          */
-        setPartitionColumn(context, partitionColumn: IColumnData) {
-            context.commit("setPartitionColumn", partitionColumn);
+        async setPartitionColumn(context, partitionColumn: IColumnData | undefined) {
+            // Delete partition column if column to set is undefined
+            if (partitionColumn === undefined) {
+                await context.dispatch("deletePartitionColumn");
+            } else {
+                context.commit("setPartitionColumn", partitionColumn);
+            }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
          * Deletes the partition column set in state
          */
-        deletePartitionColumn(context) {
+        async deletePartitionColumn(context) {
             context.commit("setPartitionColumn", undefined);
+
+            // Check if there are stratum naming contexts which used the 
+            // "_PARTITION" identifier; if so, move to _GLOBAL
+            for (let stratum of context.state.annealConfig.strata) {
+                if (stratum.namingConfig.context === "_PARTITION") {
+                    // We need to copy out the object and merge in the naming 
+                    // context because we can't do direct object mutations as 
+                    // the object sits in the state store and non-tracked 
+                    // mutations are a big no-no
+                    await context.dispatch("upsertStratum",
+                        // TODO: Figure out how to best handle the types for this
+                        deepMerge<any, any>({}, stratum, {
+                            namingConfig: {
+                                context: "_GLOBAL",
+                            },
+                        })
+                    );
+                }
+            }
+
+            // Replace the combined name format with a new version that has the 
+            // reference to the partition column erased
+            const combinedNameFormat = context.state.annealConfig.namingConfig.combined.format;
+
+            if (combinedNameFormat !== undefined) {
+                const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{_PARTITION}}`, "");
+                await context.dispatch("setCombinedNameFormat", newCombinedNameFormat);
+            }
+
+            await context.dispatch("updateSystemGeneratedCombinedNameFormat");
         },
 
         /**
@@ -314,6 +398,60 @@ Delete constraints that use this column and try again.`;
                     context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
                 });
         },
+
+        /**
+         * Sets combined name format
+         */
+        setCombinedNameFormat(context, nameFormat: string | undefined) {
+            // If input is effectively blank, then set as undefined
+            if (nameFormat !== undefined && nameFormat.trim().length === 0) {
+                nameFormat = undefined;
+            }
+
+            context.commit("setCombinedNameFormat", nameFormat);
+        },
+
+        /**
+         * Sets combined name format, but also flags that the format is user 
+         * provided
+         */
+        async setCombinedNameFormatByUser(context, nameFormat: string | undefined) {
+            await context.dispatch("setCombinedNameFormat", nameFormat);
+
+            // Flag as user provided name format, if not already flagged
+            if (!context.state.annealConfig.namingConfig.combined.userProvided) {
+                context.commit("setCombinedNameUserProvided", true);
+            }
+        },
+
+        /**
+         * Updates the system generated combined name format if the format is 
+         * not currently user provided
+         */
+        updateSystemGeneratedCombinedNameFormat(context) {
+            const $state = context.state;
+            const combinedNameConfig = $state.annealConfig.namingConfig.combined;
+
+            // Only update for non-user-provided name formats
+            if (combinedNameConfig.userProvided) {
+                return;
+            }
+
+            // Map out the names of items currently in strata
+            const nameItems = $state.annealConfig.strata.map(stratum => `{{${stratum._id}}}`);
+
+            // Add partition if set
+            const partitionColumn = $state.recordData.partitionColumn;
+
+            if (partitionColumn !== undefined) {
+                nameItems.unshift("{{_PARTITION}}");
+            }
+
+            // Generate name format
+            const nameFormat = `Team ${nameItems.join("-")}`;
+
+            context.commit("setCombinedNameFormat", nameFormat);
+        }
     },
 });
 

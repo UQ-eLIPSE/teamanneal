@@ -130,7 +130,11 @@ th select.column-type {
 }
 
 .group-heading[data-depth="1"] {
-    background: #947b2f;
+    background: #059;
+}
+
+.group-heading[data-depth="2"] {
+    background: #972;
 }
 
 .group-heading-text {

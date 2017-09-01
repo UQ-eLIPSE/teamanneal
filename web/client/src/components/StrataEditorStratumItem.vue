@@ -53,14 +53,16 @@
             </div>
             <div class="stratum-name">
                 <h3>Name</h3>
-                <div>
+                <h4 class="smaller-margins">Format</h4>
+                <p class="smaller-margins">
                     <select v-model="counterType">
                         <option v-for="counterOption in counterList"
                                 :key="counterOption.value"
                                 :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
-                </div>
-                <p v-if="isCounterCustomList">
+                </p>
+                <p v-if="isCounterCustomList"
+                   class="smaller-margins">
                     Provide a list of names, one per line:
                     <br>
                     <textarea v-model="customCounterList"
@@ -70,10 +72,22 @@
                      class="error-msg">
                     <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
                 </div>
-                <p>
+                <p class="smaller-margins">
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
+                <template v-if="showNamingContextOptions">
+                    <h4 class="smaller-margins">Context</h4>
+                    <p class="smaller-margins">
+                        Make {{ stratum.label }} names unique:
+                        <br>
+                        <select v-model="namingContext">
+                            <option v-for="namingContextOption in namingContextOptionList"
+                                    :key="namingContextOption.value"
+                                    :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                        </select>
+                    </p>
+                </template>
             </div>
         </div>
         <div v-else
@@ -94,6 +108,7 @@ import { parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
+import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -127,6 +142,8 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop childUnit = p({ type: String, required: true, });
     @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
+    @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
+    @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -145,29 +162,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get randomExampleName() {
-        const counter = this.stratum.namingConfig.counter;
-
-        // Generate a random value for an example name
-        // Random index is up to the 20th index
-        if (Array.isArray(counter)) {
-            const counterArray = counter
-                .map(counterString => counterString.trim())
-                .filter(counterString => counterString.length !== 0);
-
-            const randomIndex = (Math.random() * (Math.min(20, counterArray.length))) >>> 0;
-            return counterArray[randomIndex];
-        } else {
-            const listCounters = ListCounter.SupportedListCounters;
-            const counterDesc = listCounters.find(x => x.type === counter);
-
-            if (counterDesc === undefined) {
-                throw new Error(`Counter "${counter}" not supported`);
-            }
-
-            // Generate sequence of 20 elements, and pick a random one from that
-            const randomIndex = ((Math.random() * 20) >>> 0);
-            return counterDesc.generator(randomIndex, 20);
-        }
+        return Stratum.GenerateRandomExampleName(this.stratum);
     }
 
     get counterList() {
@@ -326,6 +321,47 @@ export default class StrataEditorStratumItem extends Vue {
         return counterValueSet.size !== trimmedCounterStrings.length;
     }
 
+    get namingContext() {
+        return this.stratum.namingConfig.context;
+    }
+
+    set namingContext(newValue: string) {
+        this.updateStratum({
+            namingConfig: {
+                context: newValue,
+            },
+        });
+    }
+
+    get namingContextOptionList() {
+        const list = this.namingContexts.map((stratum) => {
+            return {
+                value: stratum._id,
+                text: `per ${stratum.label}`,
+            };
+        });
+
+        // Add partition option where set
+        if (this.partitionColumnData !== undefined) {
+            list.unshift({
+                value: "_PARTITION",
+                text: `per partition (${this.partitionColumnData.label})`,
+            });
+        }
+
+        // Global is always available
+        list.unshift({
+            value: "_GLOBAL",
+            text: "globally",
+        });
+
+        return list;
+    }
+
+    get showNamingContextOptions() {
+        return this.namingContextOptionList.length > 1;
+    }
+
     async updateStratum(diff: any) {
         // Deep copy and merge in diff
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
@@ -394,6 +430,17 @@ export default class StrataEditorStratumItem extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
+h3.smaller-margins,
+h4.smaller-margins,
+p.smaller-margins {
+    margin: 0.5em 0;
+}
+
+p+h3.smaller-margins,
+p+h4.smaller-margins {
+    margin-top: 1em;
+}
+
 .input {
     background: none;
 
