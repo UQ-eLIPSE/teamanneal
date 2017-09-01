@@ -79,7 +79,7 @@
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
                     <p class="smaller-margins">
-                        Make names unique:
+                        Make {{ stratum.label }} names unique:
                         <br>
                         <select v-model="namingContext">
                             <option v-for="namingContextOption in namingContextOptionList"
