@@ -1,22 +1,15 @@
+import * as AnnealNode from "./AnnealNode";
 import * as Constraint from "./Constraint";
-import * as SourceData from "./SourceData";
+import * as RecordData from "./RecordData";
 import * as Stratum from "./Stratum";
-
-export interface ConfigDesc {
-    /**
-     * Number of iterations to run
-     */
-    readonly iterations: number,
-    /**
-     * Whether the server should return all data and groups annealed rather than
-     * just the groups and identifiers
-     */
-    readonly returnAllData: boolean,
-}
 
 export interface Root {
     /** Describes the raw data being fed in from CSV or other data source */
-    readonly sourceData: SourceData.Desc,
+    readonly recordData: RecordData.Desc,
+
+    /** An array of parallelisable anneal requests */
+    readonly annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
+
     /**
      * Describes what and how (nested) subgroups are to be formed
      * 
@@ -32,12 +25,7 @@ export interface Root {
      * This used to be called "levels" but renamed to make it less confusing
      */
     readonly strata: ReadonlyArray<Stratum.Desc>,
-    /**
-     * Describes constraints
-     */
+
+    /** Describes constraints */
     readonly constraints: ReadonlyArray<Constraint.Desc>,
-    /**
-     * Describes anneal configuration
-     */
-    readonly config: ConfigDesc,
 }

@@ -12,7 +12,7 @@ export function checkValidity(constraint: Constraint.Desc): ValueMessageReturn<b
             message,
         });
 
-    if (!isStrataValid(constraint)) {
+    if (!isStratumValid(constraint)) {
         return msgFalse("Constraint does not have a valid strata index value");
     }
 
@@ -48,21 +48,11 @@ export function checkValidity(constraint: Constraint.Desc): ValueMessageReturn<b
     }
 }
 
-export function isStrataValid(constraint: Constraint.Desc) {
-    const strataValue = constraint.strata;
+export function isStratumValid(constraint: Constraint.Desc) {
+    const strataValue = constraint.stratum;
 
-    // Strata value must be a numeric index
-    if (typeof strataValue !== "number") {
-        return false;
-    }
-
-    // Indicies must be non-negative
-    if (strataValue < 0) {
-        return false;
-    }
-
-    // Indicies must be integers
-    if (strataValue !== (strataValue | 0)) {
+    // Strata value must be a string identifier
+    if (typeof strataValue !== "string") {
         return false;
     }
 

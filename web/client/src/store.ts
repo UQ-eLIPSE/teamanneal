@@ -5,6 +5,7 @@ import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as
 import { Stratum, Data as IStratum } from "./data/Stratum";
 import { Constraint, Data as IConstraint } from "./data/Constraint";
 import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 
 Vue.use(Vuex);
@@ -84,11 +85,32 @@ const store = new Vuex.Store({
             Vue.set(state.recordData, "partitionColumn", minimalDescriptor);
         },
 
-        /// Anneal request 
+        /// Anneal request/response
 
         setAnnealRequest(state, annealRequest: IAnnealRequest) {
             Vue.set(state, "annealRequest", annealRequest);
-        }
+        },
+
+        setAnnealResponse(state, annealResponse: IAnnealResponse) {
+            Vue.set(state, "annealResponse", annealResponse);
+        },
+
+        updateAnnealResponseContentIfRequestMatches(state, { request, content }: { request: IAnnealRequest, content: AxiosResponse | AxiosError }) {
+            const annealResponse = state.annealResponse;
+
+            if (annealResponse === undefined) {
+                return;
+            }
+
+            // We must make sure request object does indeed match up with what 
+            // we have in the store
+            if (!AnnealResponse.RequestMatchesResponse(request, annealResponse)) {
+                return;
+            }
+
+            // Update `content` on anneal response object
+            Vue.set(annealResponse, "content", content);
+        },
     },
     actions: {
         /**
@@ -271,17 +293,25 @@ Delete constraints that use this column and try again.`;
                 AnnealRequest.Cancel(existingAnnealRequest);
             }
 
-            // Set new anneal request
-            context.commit("setAnnealRequest", annealRequest);
+            // Generate anneal response object for receiving the request's reply
+            const annealResponse = AnnealResponse.Init(annealRequest);
 
-            // On completion, the state object doesn't actually know that the 
-            // underlying object has changed
+            // Set new anneal request and response objects
+            context.commit("setAnnealRequest", annealRequest);
+            context.commit("setAnnealResponse", annealResponse);
+
+            // Once the request completes, we need to update the response object
+            // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
-                .then(() => {
-                    // Force an update by running through a change to invalid
-                    // then to valid object
-                    context.commit("setAnnealRequest", undefined);
-                    Vue.nextTick(() => context.commit("setAnnealRequest", annealRequest));
+                .then((responseContent) => {
+                    // We pass back the request object so that we can check if
+                    // request matches what's in the store now
+                    const annealResponseUpdate = {
+                        request: annealRequest,
+                        content: responseContent,   // NOTE: `responseContent` can be response or error
+                    };
+
+                    context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
                 });
         },
     },

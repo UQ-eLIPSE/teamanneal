@@ -119,3 +119,19 @@ export function indexFilter<T>(array: ReadonlyArray<T>, indices: ReadonlyArray<n
 
     return filteredArray;
 }
+
+/**
+ * Randomly shuffles array in place.
+ */
+export function shuffleInPlace<T>(array: T[]) {
+    // Based on http://stackoverflow.com/a/12646864
+    let j: number;
+    let temp: T;
+    for (let i = array.length - 1; i > 0; i--) {
+        j = (Math.random() * (i + 1)) >>> 0;
+        temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}

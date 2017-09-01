@@ -13,7 +13,9 @@
     "clean": "npm run clean_build",
     "clean_build": "node ./scripts/CleanBuild.js",
     "build": "npm run clean && npm run build_client && npm run build_server",
+    "build_prod": "npm run clean && npm run build_client_prod && npm run build_server",
     "build_client": "cd ./client && webpack --config webpack.config.js && npm run build_client_copy_index",
+    "build_client_prod": "cd ./client && webpack -p --config webpack.config.js && npm run build_client_copy_index",
     "build_client_copy_index": "node ./scripts/CopyClientToBuild.js",
     "build_server": "tsc --project ./server"
   },

@@ -1,12 +1,15 @@
 import axios, { AxiosPromise, AxiosResponse, AxiosError, CancelTokenSource } from "axios";
 
-import { reverse } from "../util/Array";
+import { reverse, shuffleInPlace } from "../util/Array";
+import * as UUID from "../util/UUID";
 
 import * as Record from "../../../common/Record";
 import * as Stratum from "../../../common/Stratum";
+import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
-import * as SourceData from "../../../common/SourceData";
-import * as SourceDataColumn from "../../../common/SourceDataColumn";
+import * as RecordData from "../../../common/RecordData";
+import * as RecordDataColumn from "../../../common/RecordDataColumn";
+import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 import { Data as IState } from "./State";
@@ -14,36 +17,26 @@ import { Partition } from "./Partition";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
 export interface Data {
-    request: {
-        time: number,
+    time: number,
 
-        object: AxiosPromise,
-        cancelTokenSource: CancelTokenSource,
+    object: AxiosPromise,
+    cancelTokenSource: CancelTokenSource,
 
-        body: ToServerAnnealRequest.Root,
-    },
+    body: ToServerAnnealRequest.Root,
 }
 
-export type AxiosResponse = AxiosResponse;
-export type AxiosError = AxiosError;
-
 export namespace AnnealRequest {
-    /** Holds the AJAX response for each AnnealRequest */
-    const RequestResponseStore = new WeakMap<Data, AxiosResponse | AxiosError>();
-
     function Init(
         requestObject: AxiosPromise,
         cancelTokenSource: CancelTokenSource,
         requestBody: ToServerAnnealRequest.Root) {
         const annealRequestObject: Data = {
-            request: {
-                time: Date.now(),
+            time: Date.now(),
 
-                object: requestObject,
-                cancelTokenSource,
+            object: requestObject,
+            cancelTokenSource,
 
-                body: requestBody,
-            },
+            body: requestBody,
         };
 
         return annealRequestObject;
@@ -57,27 +50,17 @@ export namespace AnnealRequest {
         // Create AnnealRequest object
         const annealRequestObject = Init(request, cancelTokenSource, body);
 
-        // Attach completion handler so that the response is handled 
-        // appropriately
-        AttachCompletionHandler(annealRequestObject);
-
         return annealRequestObject;
     }
 
     export function ConvertStateToAnnealRequestBody(state: IState) {
         // =====================================================================
-        // Source data (Partitions and columns)
+        // Record data
         // =====================================================================
 
-        // Form partitions
-        const stateStrata = state.annealConfig.strata;
         const stateColumns = state.recordData.columns;
-        const partitionColumnDescriptor = state.recordData.partitionColumn;
-
-        const statePartitions = Partition.InitManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
-
         // Convert columns into rows
-        const records = statePartitions.map(partition => ColumnData.TransposeIntoCookedValueRowArray(partition.columns));
+        const records = ColumnData.TransposeIntoCookedValueRowArray(stateColumns);
 
         // Map the column info objects into just what we need for the request
         const idColumn = state.recordData.idColumn;
@@ -86,22 +69,40 @@ export namespace AnnealRequest {
             throw new Error("No ID column set");
         }
 
-        const columns = stateColumns.map((column) => {
-            const columnDesc: SourceDataColumn.ColumnDesc = {
+        // Keep track of the ID column
+        let idColumnIndex: number | undefined = undefined;
+
+        const columns = stateColumns.map((column, i) => {
+            const isId = ColumnData.Equals(idColumn, column);
+
+            if (isId) {
+                if (idColumnIndex === undefined) {
+                    idColumnIndex = i;
+                } else {
+                    throw new Error("Two or more ID columns found");
+                }
+            }
+
+            const columnDesc: RecordDataColumn.ColumnDesc = {
                 label: column.label,
                 type: column.type,
-                isId: ColumnData.Equals(idColumn, column),
+                isId,
             }
 
             return columnDesc;
         });
 
-        // Compile the source data object
-        const sourceData: SourceData.Desc = {
+        if (idColumnIndex === undefined) {
+            throw new Error("No ID columns found");
+        }
+
+        // Create record data object
+        const recordData: RecordData.Desc = {
             columns,
             records,
-            isPartitioned: true,    // We have partitioned the data above regardless
         };
+
+
 
         // =====================================================================
         // Strata
@@ -113,17 +114,119 @@ export namespace AnnealRequest {
         // rather than:
         //      [lowest, ..., highest]
         // which is what the server receives as input to the anneal endpoint.
+        const stateStrata = state.annealConfig.strata;
         const strataServerOrder = reverse(stateStrata);
 
         const strata =
-            strataServerOrder.map(({ label, size }) => {
+            strataServerOrder.map(({ _id, label, size }) => {
                 const stratum: Stratum.Desc = {
+                    _id,
                     label,
                     size,
                 };
 
                 return stratum;
             });
+
+
+
+        // =====================================================================
+        // Anneal nodes
+        // =====================================================================
+
+        // Each node represents each partition to anneal over
+        const partitionColumnDescriptor = state.recordData.partitionColumn;
+        const statePartitions = Partition.InitManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
+
+        // Create anneal nodes from the ID values of each partition
+        const annealNodes =
+            statePartitions.map((partition) => {
+                // Give records a shuffle before putting it into anneal nodes
+                // Note that we're copying the array first before shuffling it
+                const idColumnCookedValues = ColumnData.GenerateCookedColumnValues(partition.columns[idColumnIndex!]);
+                const shuffledRecordIdValues = shuffleInPlace<number | string | null>(idColumnCookedValues.slice());
+
+                // Remember that we're building from the bottom up (following 
+                // the server order) so we need to keep track of array of nodes
+                // from the previous run of the loop
+                let prevStratumNodes: (AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren)[] | undefined = undefined;
+
+                // Go through each stratum, and build up nodes
+                // Note that is in server order! (Index 0 = leaf/records)
+                strata.forEach((stratumDef, serverStratumIndex) => {
+                    const { min, ideal, max } = stratumDef.size;
+
+                    const nodes: (AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren)[] = [];
+
+                    if (serverStratumIndex === 0) {
+                        // Leaf node contains records (via their IDs) directly
+
+                        const groupSizeArray = GroupDistribution.generateGroupSizes(shuffledRecordIdValues.length, min, ideal, max, false);
+
+                        groupSizeArray.forEach((groupSize) => {
+                            // Init new leaf node with records
+                            const stratumRecordNode: AnnealNode.NodeStratumWithRecordChildren = {
+                                _id: UUID.generate(),
+                                type: "stratum-records",
+                                stratum: strata[serverStratumIndex]._id,
+                                recordIds: shuffledRecordIdValues.splice(0, groupSize), // "Pop off" the relevant record IDs for this node
+                            };
+
+                            nodes.push(stratumRecordNode);
+                        });
+
+                        // Shuffled ID column cooked values should be blank
+                        // because we've popped off all the records into nodes
+                        if (shuffledRecordIdValues.length !== 0) {
+                            throw new Error("Records still remaining after node generation; expected none to remain");
+                        }
+
+                    } else {
+                        // Intermediate nodes simply nest other children nodes
+
+                        if (prevStratumNodes === undefined) {
+                            throw new Error("No child nodes found");
+                        }
+
+                        const numberOfPrevStratumNodes = prevStratumNodes.length;
+
+                        const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfPrevStratumNodes, min, ideal, max, false);
+
+                        groupSizeArray.forEach((groupSize) => {
+                            // Init new intermediate node
+                            const stratumNode: AnnealNode.NodeStratumWithStratumChildren = {
+                                _id: UUID.generate(),
+                                type: "stratum-stratum",
+                                stratum: strata[serverStratumIndex]._id,
+                                children: prevStratumNodes!.splice(0, groupSize),
+                            };
+
+                            nodes.push(stratumNode);
+                        });
+                    }
+
+                    // Keep references to this set of nodes for the next round
+                    prevStratumNodes = nodes;
+                });
+
+                // Cap it off with a root node
+                const rootChildren = prevStratumNodes;
+
+                if (rootChildren === undefined) {
+                    throw new Error("No children found for root node");
+                }
+
+                const rootNode: AnnealNode.NodeRoot = {
+                    _id: UUID.generate(),
+                    type: "root",
+                    partitionValue: "" + partition.value,
+                    children: rootChildren,
+                }
+
+                return rootNode;
+            });
+
+
 
         // =====================================================================
         // Constraints
@@ -167,7 +270,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,
@@ -188,7 +291,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,
@@ -209,7 +312,7 @@ export namespace AnnealRequest {
                             type: internalConstraint.type,
                             weight: internalConstraint.weight,
 
-                            strata: stratumIndex,
+                            stratum: internalConstraint.stratum,
 
                             filter: {
                                 column: filterColumnIndex,
@@ -227,20 +330,17 @@ export namespace AnnealRequest {
             }
         );
 
+
+
         // =====================================================================
         // Request body
         // =====================================================================
 
         const request: ToServerAnnealRequest.Root = {
-            sourceData,
+            recordData,
+            annealNodes,
             strata,
             constraints,
-            config: {
-                // TODO: This entire block is dummy data;
-                // The config parameters are currently unused and will be cleaned up in TA-52
-                iterations: 0,
-                returnAllData: true,
-            },
         }
 
         return request;
@@ -258,11 +358,11 @@ export namespace AnnealRequest {
         return {
             cancelTokenSource,
             request,
-        }
+        };
     }
 
     export function Cancel(annealRequest: Data, message?: string) {
-        return annealRequest.request.cancelTokenSource.cancel(message);
+        return annealRequest.cancelTokenSource.cancel(message);
     }
 
     /**
@@ -271,46 +371,9 @@ export namespace AnnealRequest {
      */
     export function WaitForCompletion(annealRequest: Data) {
         return new Promise<AxiosResponse | AxiosError>((resolve) => {
-            annealRequest.request.object
+            annealRequest.object
                 .then(resolve)
                 .catch(resolve);
         });
-    }
-
-    function AttachCompletionHandler(annealRequest: Data) {
-        // When the AJAX request completes, set the completion flag to true
-        WaitForCompletion(annealRequest)
-            .then((response) => {
-                SetResponse(annealRequest, response);
-            });
-    }
-
-    export function GetCompleted(annealRequest: Data) {
-        return GetResponse(annealRequest) !== undefined;
-    }
-
-    function SetResponse(annealRequest: Data, response: AxiosResponse | AxiosError) {
-        return RequestResponseStore.set(annealRequest, response);
-    }
-
-    export function GetResponse(annealRequest: Data) {
-        return RequestResponseStore.get(annealRequest);
-    }
-
-    export function IsRequestSuccessful(annealRequest: Data) {
-        const response = GetResponse(annealRequest);
-
-        // Not yet received response, or unknown request
-        if (response === undefined) {
-            return false;
-        }
-
-        // If the "response" is an Error/AxiosError object
-        if (response instanceof Error) {
-            return false;
-        }
-
-        // Otherwise okay
-        return true;
     }
 }
