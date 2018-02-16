@@ -1,11 +1,28 @@
 <template>
     <div id="wizard-container">
-        <div id="wizard-sidebar">
-            <button class="button secondary exit-button" @click="exitAnnealProcess">◀ Exit</button>
-            <WizardNavigation class="wizard-navigation" :bus="wizardNavigationBus" :entries="processWizardEntries" />
+
+        <!-- Display error message if browser is not compatible -->
+        <div v-if="!isBrowserCompatible"
+             class="header-message">Your browser is currently not supported. Please use one of the following supported browsers:
+            <ul>
+                <li>Google Chrome</li>
+                <li>Mozilla Firefox</li>
+            </ul>
         </div>
-        <div id="wizard-content">
-            <router-view class="wizard-subcomponent" @wizardNavigation="onWizardNavigation" />
+
+        <div id="wizard-main">
+
+            <div id="wizard-sidebar">
+                <button class="button secondary exit-button"
+                        @click="exitAnnealProcess">◀ Exit</button>
+                <WizardNavigation class="wizard-navigation"
+                                  :bus="wizardNavigationBus"
+                                  :entries="processWizardEntries" />
+            </div>
+            <div id="wizard-content">
+                <router-view class="wizard-subcomponent"
+                             @wizardNavigation="onWizardNavigation" />
+            </div>
         </div>
     </div>
 </template>
@@ -38,6 +55,15 @@ export default class AnnealProcess extends Vue {
     onWizardNavigation(data: any) {
         this.wizardNavigationBus.$emit("wizardNavigation", data);
     }
+
+    /**
+     * Checks if browser is compatible.
+     * Currently checks for IE (not compatible), and returns false if IE is detected.
+     */
+    get isBrowserCompatible() {
+        const isIE = navigator.userAgent.indexOf("MSIE") !== -1 || navigator.appVersion.indexOf("Trident/") > 0;
+        return !isIE;
+    }
 }
 </script>
 
@@ -52,8 +78,13 @@ export default class AnnealProcess extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
+    flex-direction: column;
+}
 
+#wizard-main {
+    display: flex;
     flex-direction: row;
+    flex-basis: 100%;
 }
 
 #wizard-sidebar {
@@ -66,7 +97,7 @@ export default class AnnealProcess extends Vue {
     background: rgb(230, 230, 230);
 
     box-shadow: inset -1rem 0 1rem rgba(0, 0, 0, 0.1);
-    
+
     overflow-y: auto;
 }
 
@@ -95,5 +126,15 @@ export default class AnnealProcess extends Vue {
 .exit-button {
     margin: 1em;
     padding: 0.6em 1em;
+}
+
+.header-message {
+    background-color: darkorange;
+    padding: 1rem 1rem;
+}
+
+.header-message ul {
+    margin: 0 0.5rem;
+    padding: 0.5rem;
 }
 </style>
