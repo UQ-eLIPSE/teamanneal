@@ -65,17 +65,43 @@
                    class="smaller-margins">
                     Provide a list of names, one per line:
                     <br>
-                    <textarea v-model="customCounterList"
-                              rows="5"></textarea>
+                    <div class="custom-list-number-wrapper"
+                         v-if="isCounterCustomList">
+
+                        <div class="row">
+                            <textarea v-model="customCounterLineNumbersListNewLine"
+                                      ref="lineNumberTextArea"
+                                      rows="5"
+                                      cols="4"
+                                      disabled></textarea>
+                            <textarea v-model="customCounterList"
+                                      @scroll="syncLineNumbers"
+                                      ref="customCounterTextArea"
+                                      rows="5"></textarea>
+                        </div>
+                        <div class="number-teams">
+                            <span>{{numberOfCounterCustomList}} </span>
+                            <span>{{stratum.label}} name{{numberOfCounterCustomList===1?'':'s'}} entered</span>
+                        </div>
+                    </div>
                 </p>
+
                 <div v-if="isCounterCustomList && !isCounterCustomListValid"
                      class="error-msg">
                     <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
+                    <p v-if="doesCounterCustomListContainEmptyLines">Warning: Empty lines detected. Please make sure:
+                        <ul>
+                            <li>The list is not empty</li>
+                            <li>There are no empty lines in the list.</li>
+                        </ul>
+                    </p>
                 </div>
                 <p class="smaller-margins">
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
+
+
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
                     <p class="smaller-margins">
@@ -144,6 +170,9 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
+
+    /** Stores the line numbers needed for custom counter list */
+    private lineNumbersList: number[] = [];
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -289,7 +318,10 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     set customCounterList(newValue: string) {
+        this.syncLineNumbers();
         const customCounterList = newValue.split("\n");
+        // Set line numbers list according to the new value of custom counter list
+        this.customCounterLineNumbersList = customCounterList.map((item: any, i: number) => i + 1);
 
         this.updateStratum({
             namingConfig: {
@@ -298,9 +330,37 @@ export default class StrataEditorStratumItem extends Vue {
         });
     }
 
+    /**
+     * Returns line numbers as a new-line delimited string
+     */
+    get customCounterLineNumbersListNewLine() {
+        return this.customCounterLineNumbersList.join('.\n');
+    }
+
+    /**
+     * Returns an array of line numbers needed for custom counter list
+     */
+    get customCounterLineNumbersList() {
+        return this.lineNumbersList;
+    }
+
+    set customCounterLineNumbersList(list: number[]) {
+        this.lineNumbersList = [...list];
+    }
+
+    /**
+     * Returns the number of names in custom counter list
+     */
+    get numberOfCounterCustomList() {
+        if (this.isCounterCustomList) {
+            return this.customCounterList.trim().split('\n').filter((item) => item !== '').length;
+        }
+        return '-';
+    }
+
     get isCounterCustomListValid() {
         return !(
-            this.doesCounterCustomListContainDuplicates
+            this.doesCounterCustomListContainDuplicates || this.doesCounterCustomListContainEmptyLines
         );
     }
 
@@ -319,6 +379,20 @@ export default class StrataEditorStratumItem extends Vue {
         const counterValueSet = new Set(trimmedCounterStrings);
 
         return counterValueSet.size !== trimmedCounterStrings.length;
+    }
+
+    /**
+     * Checks if any empty lines exist / list is empty
+     */
+    get doesCounterCustomListContainEmptyLines() {
+        // Check for two successive new line characters
+        if (this.customCounterList.indexOf('\n\n') !== -1) {
+            return true;
+        }
+
+        // Check if empty lines exist
+        const emptyLines = this.customCounterList.trim().split('\n').filter((item) => item == '');
+        return emptyLines.length > 0;
     }
 
     get namingContext() {
@@ -424,6 +498,16 @@ export default class StrataEditorStratumItem extends Vue {
             }
         });
     }
+
+    /**
+     * Synchronises scrolling between line numbers and custom counter list text area
+     */
+    syncLineNumbers() {
+        const source = this.$refs['customCounterTextArea'] as HTMLTextAreaElement;
+        const lineNumberTextArea = this.$refs['lineNumberTextArea'] as HTMLTextAreaElement;
+        lineNumberTextArea.scrollTop = source.scrollTop;
+    }
+
 }
 </script>
 
@@ -549,9 +633,51 @@ ul.distribution {
     padding-left: 1.5em;
 }
 
-.error-msg {
+
+/* Custom name list */
+
+.error-msg>p {
     font-size: 0.9em;
     background: darkorange;
-    padding: 1px 1em;
+    padding: 1rem;
+}
+
+.custom-list-number-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    border: 0.5px solid rgba(1, 0, 0, 0.1);
+    padding: 0.2em;
+    background-color: #fff;
+    border-radius: 0.1em;
+}
+
+.custom-list-number-wrapper>.number-teams {
+    padding: 0.5em;
+    border-top: 0.5px solid rgba(1, 0, 0, 0.1);
+    background-color: white;
+}
+
+.number-teams>span:first-child {
+    color: #49075e;
+    font-weight: 500;
+}
+
+.custom-list-number-wrapper>.row>textarea {
+    border: 0;
+    padding: 0.4em 0.2em;
+}
+
+.custom-list-number-wrapper>.row>textarea:first-child {
+    background-color: #fff;
+    color: #aaa;
+    text-align: right;
+    overflow: hidden;
+    resize: none;
+    cursor: default;
+    border-right: 0.2em solid #aaa;
+}
+
+.row {
+    display: flex;
 }
 </style>
