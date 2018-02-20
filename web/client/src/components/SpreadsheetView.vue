@@ -5,6 +5,7 @@
                 <tr class="header">
                     <SpreadsheetViewColumnTypeHeader v-for="column in columnData"
                                                      :key="column.index"
+                                                     :invalidColumn="!isValidColumn(column)"
                                                      :column="column"></SpreadsheetViewColumnTypeHeader>
                 </tr>
             </thead>
@@ -13,7 +14,7 @@
                     :key="i">
                     <td v-for="(cell, j) in row"
                         :key="j"
-                        :class="cellClasses(cell)">
+                        :class="cellClasses(cell, j)">
                         <template v-if="cellContentVisible(cell)">{{ cell }}</template>
                     </td>
                 </tr>
@@ -40,6 +41,8 @@ export default class SpreadsheetView extends Vue {
     // Props
     @Prop rows = p<ReadonlyArray<string | number | null>>({ type: Array, required: true, });
     @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
+    /**  Array of invalid columns (valid if no duplicate column names exist) */
+    @Prop invalidColumns = p<ReadonlyArray<IColumnData>>({type: Array, required: false, default: () => []});
 
     get contentRows() {
         return this.rows.slice(1);
@@ -49,15 +52,22 @@ export default class SpreadsheetView extends Vue {
         return !Number.isNaN(value);
     }
 
-    cellClasses(value: any) {
+    cellClasses(value: any, index: number) {
         const classes = {
             "cell-content": true,
             "nan": Number.isNaN(value),
             "null": value === null,
+            "error" : this.invalidColumns.indexOf(this.columnData[index]) !== -1
         }
 
         return classes;
     }
+
+    /** Returns if column is valid (i.e. it does not exist in invalid columns array) */
+    isValidColumn(column: IColumnData) {
+        return this.invalidColumns.indexOf(column) === -1;
+    }
+
 }   
 </script>
 
@@ -102,5 +112,9 @@ td {
     content: "No value";
     font-style: italic;
     font-size: 0.7em;
+}
+
+.error {
+    background-color: #ffe2bf;
 }
 </style>

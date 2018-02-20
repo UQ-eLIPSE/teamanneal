@@ -61,7 +61,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state) &&
+
+                //Disable if duplicate column names encountered
+                !State.HasDuplicateColumnNames(state)
             );
         },
 
