@@ -3,11 +3,19 @@ import * as IPCQueue from "../data/IPCQueue";
 
 import * as Anneal from "../anneal/Anneal";
 
+import * as RedisService from "../utils/RedisService";
+
 export function init(workerId: string) {
     IPCQueue.openQueue()
-        .process("anneal", 1, (job, done) => {
+        .process("anneal", 1, async (job, done) => {
             const data: IPCData.AnnealJobData = job.data;
             const { _meta, annealNode, constraints, recordData, strata } = data;
+            const { redisResponseId } = _meta as any;
+
+
+
+            await RedisService.findAndUpdate(redisResponseId, { status: "Starting anneal ..." });
+
 
             // Start processing job
             const tag = `[${_meta.annealNode.index} of ID = ${_meta.serverResponseId}]`;
@@ -25,7 +33,7 @@ export function init(workerId: string) {
 
                 // Pass message back with result
                 IPCQueue.queueMessage("anneal-result", resultMessage);
-
+                await RedisService.findAndUpdate(redisResponseId, { status: "Anneal complete" });
                 done();
 
             } catch (error) {

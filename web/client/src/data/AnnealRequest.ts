@@ -45,7 +45,7 @@ export namespace AnnealRequest {
     export function InitFromState(state: IState) {
         // Translate state into request body and create AJAX request
         const body = ConvertStateToAnnealRequestBody(state);
-        const { request, cancelTokenSource } = CreateAnnealAjaxRequest(body);
+        const { request, cancelTokenSource } =  CreateAnnealAjaxRequest(body);
 
         // Create AnnealRequest object
         const annealRequestObject = Init(request, cancelTokenSource, body);

@@ -123,6 +123,8 @@ const store = new Vuex.Store({
         setCombinedNameUserProvided(state, userProvided: boolean) {
             Vue.set(state.annealConfig.namingConfig.combined, "userProvided", userProvided);
         },
+
+        
     },
     actions: {
         /**
@@ -384,10 +386,15 @@ Delete constraints that use this column and try again.`;
             context.commit("setAnnealRequest", annealRequest);
             context.commit("setAnnealResponse", annealResponse);
 
+
+
             // Once the request completes, we need to update the response object
             // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
-                .then((responseContent) => {
+                .then((responseContent:any) => {
+                    console.log('In client, reponse from server. My uuid :');
+                    console.log(responseContent.data.id);
+
                     // We pass back the request object so that we can check if
                     // request matches what's in the store now
                     const annealResponseUpdate = {

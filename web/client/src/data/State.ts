@@ -67,11 +67,12 @@ export interface AnnealConfig {
 
 export namespace State {
     export function Init() {
-        const state: Data = {
+        const state: any = {
             recordData: GenerateBlankRecordData(),
             annealConfig: GenerateBlankAnnealConfig(),
             annealRequest: undefined,
             annealResponse: undefined,
+            annealRequestId: undefined
         };
 
         return state;

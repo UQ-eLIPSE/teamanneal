@@ -1,12 +1,13 @@
 import * as express from "express";
 
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
-import * as IPCData from "../data/IPCData";
+// import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
-import * as PendingResponseStore from "../data/PendingResponseStore";
-
+// import * as PendingResponseStore from "../data/PendingResponseStore";
+import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
+import * as RedisService from "../utils/RedisService";
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
@@ -27,27 +28,49 @@ module.exports = () => {
 };
 
 
-
 const anneal: express.RequestHandler =
     (req, res) => {
         const annealRequest: ToServerAnnealRequest.Root = req.body;
 
-        // Add request to store
-        const serverResponseId = PendingResponseStore.add(res);
-        console.log(`Anneal request to server worker received; response tagged with ID ${serverResponseId}`);
+        // 1. Generate UUID associated with request
+        const redisResponseId = RedisService.createNewEntry();
 
-        const annealJobData: IPCData.AnnealRequestMessageData = {
+        // Add request to store
+
+        // 3. Replace this with new redis client interface
+        // const serverResponseId = PendingResponseStore.add(res);
+        // console.log(`Anneal request to server worker received; response tagged with ID ${serverResponseId}`);
+        console.log(`Anneal request to server worker received; response tagged with ID ${redisResponseId}`);
+
+
+        // const annealJobData: IPCData.AnnealRequestMessageData = {
+        //     _meta: {
+        //         // 4. Replace this with redis uuid
+        //         serverResponseId,
+        //     },
+
+        //     annealRequest,
+        // }
+
+        const annealJobData: any = {
             _meta: {
-                serverResponseId,
+                // 4. Replace this with redis uuid
+                redisResponseId,
             },
 
             annealRequest,
         }
 
+        
         // Queue request data now to reduce server blocking
         IPCQueue.queueMessage("anneal-request", annealJobData);
 
         // There is no response yet; the anneal job has been sent and will be
         // responded to by the "anneal-response" message handler that's also run
         // in the main server process
+
+        //The above is being changed to sending the response to the client right away with the UID
+        res
+            .status(HTTPResponseCode.SUCCESS.ACCEPTED)
+            .json({id: redisResponseId})
     };

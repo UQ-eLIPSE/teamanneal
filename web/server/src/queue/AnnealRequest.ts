@@ -7,25 +7,28 @@ export function init() {
     IPCQueue.openQueue()
         .process("anneal-request", 1, (job, done) => {
             const data: IPCData.AnnealRequestMessageData = job.data;
-
             const { annealRequest, _meta } = data;
-            const { serverResponseId } = _meta;
+            const { serverResponseId } = _meta as any;
+            const { redisResponseId } = _meta as any;
+
 
             // Start processing job
-            console.log(`Anneal request [${serverResponseId}] - Starting...`);
-
+            // console.log(`Anneal request [${serverResponseId}] - Starting...`);
+            console.log(`Anneal request [${redisResponseId}] - Starting...`);
             try {
                 const { strata, constraints, recordData, annealNodes } = annealRequest;
 
                 // Create entry in result collation store
-                PendingResultCollationStore.add(serverResponseId, annealNodes.length);
+                PendingResultCollationStore.add(redisResponseId, annealNodes.length);
 
                 // Split job, one per anneal node in the request
                 annealNodes.forEach((annealNode, i) => {
-                    console.log(`Anneal request [${serverResponseId}] - Splitting job: #${i}`);
+                    console.log(`Anneal request [${redisResponseId}] - Splitting job: #${i}`);
 
-                    const annealJobMessage: IPCData.AnnealJobData = {
+                    // const annealJobMessage: IPCData.AnnealJobData = {
+                    const annealJobMessage: any = {
                         _meta: {
+                            redisResponseId,
                             serverResponseId,
                             annealNode: {
                                 id: annealNode._id,

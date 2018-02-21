@@ -7,7 +7,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "start": "node --turbo --ignition ./build/server/src/index.js",
+    "start": "node ./build/server/src/index.js",
     "test": "npm run test_server",
     "test_server": "jest --no-cache --config=test/server.jest.config.json",
     "clean": "npm run clean_build",
@@ -47,6 +47,7 @@
     "webpack": "2.6.1"
   },
   "dependencies": {
+    "@types/redis": "^2.8.5",
     "axios": "0.16.2",
     "body-parser": "1.17.1",
     "es6-promise": "4.1.0",
