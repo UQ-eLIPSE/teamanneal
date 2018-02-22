@@ -6,15 +6,21 @@ import * as PendingResultCollationStore from "../data/PendingResultCollationStor
 export function init() {
     IPCQueue.openQueue()
         .process("anneal-result", 1, (job, done) => {
-            const data: IPCData.AnnealResultMessageData = job.data;
+            const data: any = job.data;
             const serverResponseId = data._meta.serverResponseId;
-
+            const redisResponseId = data._meta.redisResponseId;
+            
             try {
                 // Find the result collation object
-                const resultCollationObj = PendingResultCollationStore.get(serverResponseId);
+                // const resultCollationObj = PendingResultCollationStore.get(serverResponseId);
+                console.log('Result collations | Redis ID : ' + redisResponseId);
+                console.log('Pending collation store : ');
+                console.log(PendingResultCollationStore.get(redisResponseId));
+                const resultCollationObj = PendingResultCollationStore.get(redisResponseId);
+                
 
                 if (resultCollationObj === undefined) {
-                    throw new Error(`No result collation object found for ID ${serverResponseId}`);
+                    throw new Error(`No result collation object found for ID ${redisResponseId}`);
                 }
 
                 // Collate result (regardless of whether it is successful or not)
@@ -24,9 +30,11 @@ export function init() {
                 // off to the response handling queue and remove the collation 
                 // object from the store
                 if (resultCollationObj.expectedNumberOfResults === resultCollationObj.results.length) {
-                    const responseMessageData: IPCData.AnnealResponseMessageData = {
+                    console.log('check if results collated ...');
+                    const responseMessageData: any = {
                         _meta: {
                             serverResponseId,
+                            redisResponseId
                         },
 
                         results: resultCollationObj.results,
@@ -34,7 +42,7 @@ export function init() {
 
                     IPCQueue.queueMessage("anneal-response", responseMessageData);
 
-                    PendingResultCollationStore.remove(serverResponseId);
+                    PendingResultCollationStore.remove(redisResponseId);
                 }
 
                 done();

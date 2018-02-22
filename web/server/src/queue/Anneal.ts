@@ -9,16 +9,19 @@ export function init(workerId: string) {
     IPCQueue.openQueue()
         .process("anneal", 1, async (job, done) => {
             const data: IPCData.AnnealJobData = job.data;
-            const { _meta, annealNode, constraints, recordData, strata } = data;
+            const { _meta, annealNode, constraints, recordData, strata } = data as any;
             const { redisResponseId } = _meta as any;
 
 
-
-            await RedisService.findAndUpdate(redisResponseId, { status: "Starting anneal ..." });
+            console.log('Anneal node id : ');
+            console.log(annealNode.id);
+            await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: "Starting anneal ...", timestamp: Date.now(), annealNode: annealNode });
 
 
             // Start processing job
-            const tag = `[${_meta.annealNode.index} of ID = ${_meta.serverResponseId}]`;
+            // const tag = `[${_meta.annealNode.index} of ID = ${_meta.serverResponseId}]`;
+            const tag = `[${_meta.annealNode.index} of ID = ${_meta.redisResponseId}]`;
+            
             console.log(`Anneal worker ${workerId} - Starting anneal for ${tag}...`);
 
             try {
@@ -30,10 +33,10 @@ export function init(workerId: string) {
 
                     result,
                 }
-
+                // await RedisService.findAndUpdate(redisResponseId, resultMessage);
                 // Pass message back with result
                 IPCQueue.queueMessage("anneal-result", resultMessage);
-                await RedisService.findAndUpdate(redisResponseId, { status: "Anneal complete" });
+                
                 done();
 
             } catch (error) {

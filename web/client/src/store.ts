@@ -5,9 +5,9 @@ import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as
 import { Stratum, Data as IStratum } from "./data/Stratum";
 import { Constraint, Data as IConstraint } from "./data/Constraint";
 import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
+import { AnnealResponse, Data as IAnnealResponse } from "./data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
-
+import axios, { AxiosResponse, AxiosError } from "axios";
 import { deepMerge } from "./util/Object";
 import { replaceAll } from "./util/String";
 Vue.use(Vuex);
@@ -113,6 +113,12 @@ const store = new Vuex.Store({
             // Update `content` on anneal response object
             Vue.set(annealResponse, "content", content);
         },
+        updateAnnealResponseOnServerResponse(state, content: any) {
+            const annealResponse = state.annealResponse as any;
+
+            // Update `content` on anneal response object
+            Vue.set(annealResponse, "content", content);
+        },
 
         /// Combined name format
 
@@ -124,7 +130,7 @@ const store = new Vuex.Store({
             Vue.set(state.annealConfig.namingConfig.combined, "userProvided", userProvided);
         },
 
-        
+
     },
     actions: {
         /**
@@ -391,18 +397,42 @@ Delete constraints that use this column and try again.`;
             // Once the request completes, we need to update the response object
             // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
-                .then((responseContent:any) => {
+                .then((responseContent: any) => {
                     console.log('In client, reponse from server. My uuid :');
                     console.log(responseContent.data.id);
+                    let status = "incomplete";
+                    let i = 0;
+                    console.log(status);
+
+                    setTimeout(getAfterDuration, getRequestTimeout(i));
+
+                    async function getAfterDuration () {
+                        console.log('Time: ');
+                        console.log(Date.now());
+                        const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
+                        status = response.data.status;
+                        console.log('Checking status for `Complete`...');
+
+                        if (status === 'Complete') {
+                            context.commit("updateAnnealResponseOnServerResponse", response);
+                        } else {
+                            setTimeout(getAfterDuration, getRequestTimeout(i));
+                        }
+                        i++;
+                    }
 
                     // We pass back the request object so that we can check if
                     // request matches what's in the store now
-                    const annealResponseUpdate = {
-                        request: annealRequest,
-                        content: responseContent,   // NOTE: `responseContent` can be response or error
-                    };
+                    // const annealResponseUpdate = {
+                    //     request: annealRequest,
+                    //     content: responseContent,   // NOTE: `responseContent` can be response or error
+                    // };
 
-                    context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
+                    // context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
+
+                    function getRequestTimeout(attemptNumber: number) {
+                        return (Math.pow(1.5, attemptNumber) + 5) * 1000;
+                    }
                 });
         },
 

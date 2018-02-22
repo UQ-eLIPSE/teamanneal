@@ -24,6 +24,11 @@ module.exports = () => {
         anneal,
     );
 
+    router.route("/annealResults")
+        .post(
+        annealResults
+        )
+
     return router;
 };
 
@@ -33,8 +38,8 @@ const anneal: express.RequestHandler =
         const annealRequest: ToServerAnnealRequest.Root = req.body;
 
         // 1. Generate UUID associated with request
-        const redisResponseId = RedisService.createNewEntry();
-
+        // const redisResponseId = RedisService.createNewEntry();
+        const redisResponseId = RedisService.generateUID();
         // Add request to store
 
         // 3. Replace this with new redis client interface
@@ -61,7 +66,7 @@ const anneal: express.RequestHandler =
             annealRequest,
         }
 
-        
+
         // Queue request data now to reduce server blocking
         IPCQueue.queueMessage("anneal-request", annealJobData);
 
@@ -72,5 +77,36 @@ const anneal: express.RequestHandler =
         //The above is being changed to sending the response to the client right away with the UID
         res
             .status(HTTPResponseCode.SUCCESS.ACCEPTED)
-            .json({id: redisResponseId})
+            .json({ id: redisResponseId })
     };
+
+const annealResults: express.RequestHandler =
+    async (req, res) => {
+        try {
+            console.log('request body');
+            console.log(req.body);
+            
+            const annealRequest = req.body;
+            const annealID = annealRequest.id;
+            console.log('Anneal ID sent by client');
+            console.log(annealID);
+            const results = await RedisService.getLRANGE(annealID, 0, 0);
+            const resultsObject = JSON.parse(results);
+            if(results === undefined) {
+                res 
+                    .json({status: "ip", results: results});
+            } else {
+                res
+                .status(HTTPResponseCode.SUCCESS.OK)
+                .json(resultsObject)
+        
+            }
+            
+
+        } catch (e) {
+            console.log('Error');
+            res 
+                .status(HTTPResponseCode.SUCCESS.ACCEPTED)
+                .json({status: "ip", error: e});
+        }
+    }
