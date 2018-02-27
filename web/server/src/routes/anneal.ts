@@ -8,6 +8,7 @@ import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
 import * as RedisService from "../utils/RedisService";
+import AnnealStatus from "../../../common/AnnealStatus";
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
@@ -82,19 +83,14 @@ const anneal: express.RequestHandler =
 
 const annealResults: express.RequestHandler =
     async (req, res) => {
-        try {
-            console.log('request body');
-            console.log(req.body);
-            
+        try {            
             const annealRequest = req.body;
             const annealID = annealRequest.id;
-            console.log('Anneal ID sent by client');
-            console.log(annealID);
-            const results = await RedisService.getLRANGE(annealID, 0, 0);
+            const results = await RedisService.getLRANGE(annealID, 0, -1);
             const resultsObject = JSON.parse(results);
             if(results === undefined) {
                 res 
-                    .json({status: "ip", results: results});
+                    .json({status: AnnealStatus.ANNEAL_IN_PROGRESS, results: results});
             } else {
                 res
                 .status(HTTPResponseCode.SUCCESS.OK)

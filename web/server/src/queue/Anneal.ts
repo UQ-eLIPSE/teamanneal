@@ -4,6 +4,7 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as Anneal from "../anneal/Anneal";
 
 import * as RedisService from "../utils/RedisService";
+import AnnealStatus from "../../../common/AnnealStatus";
 
 export function init(workerId: string) {
     IPCQueue.openQueue()
@@ -15,7 +16,7 @@ export function init(workerId: string) {
 
             console.log('Anneal node id : ');
             console.log(annealNode.id);
-            await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: "Starting anneal ...", timestamp: Date.now(), annealNode: annealNode });
+            await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.ANNEAL_STARTED, timestamp: Date.now(), annealNode: annealNode });
 
 
             // Start processing job
@@ -33,7 +34,7 @@ export function init(workerId: string) {
 
                     result,
                 }
-                // await RedisService.findAndUpdate(redisResponseId, resultMessage);
+                
                 // Pass message back with result
                 IPCQueue.queueMessage("anneal-result", resultMessage);
                 

@@ -4,6 +4,7 @@
 import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 import * as RedisService from "../utils/RedisService";
+import AnnealStatus from "../../../common/AnnealStatus";
 
 // import * as PendingResponseStore from "../data/PendingResponseStore";
 
@@ -13,7 +14,6 @@ import * as RedisService from "../utils/RedisService";
 export function init() {
     IPCQueue.openQueue()
         .process("anneal-response", 1, async (job, done) => {
-            console.log('In Anneal response');
             const responseMessageData: IPCData.AnnealResponseMessageData = job.data;
 
             const { error, results, _meta } = responseMessageData;
@@ -40,13 +40,13 @@ export function init() {
                 results.forEach((result) => {
                     delete result["_meta"];
                 });
-                await RedisService.findAndUpdate(redisResponseId, {status: "Complete", results});
+                await RedisService.findAndUpdate(redisResponseId, {status: AnnealStatus.ANNEAL_COMPLETE, results});
                 
 
             }
        
             if (error !== undefined) {
-                await RedisService.findAndUpdate(redisResponseId, {status: "Error", error});
+                await RedisService.findAndUpdate(redisResponseId, {status: AnnealStatus.ANNEAL_FAILED, error});
             }
             // await RedisService.findAndUpdate(redisResponseId, JSON.stringify(results));
             // console.log('Results');

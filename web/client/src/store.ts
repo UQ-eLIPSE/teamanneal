@@ -10,6 +10,8 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import axios, { AxiosResponse, AxiosError } from "axios";
 import { deepMerge } from "./util/Object";
 import { replaceAll } from "./util/String";
+import AnnealStatus from "../../common/AnnealStatus";
+
 Vue.use(Vuex);
 
 const state: IState = State.Init();
@@ -398,25 +400,20 @@ Delete constraints that use this column and try again.`;
             // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent: any) => {
-                    console.log('In client, reponse from server. My uuid :');
-                    console.log(responseContent.data.id);
-                    let status = "incomplete";
+                    let status: AnnealStatus | undefined = undefined;
                     let i = 0;
-                    console.log(status);
 
-                    setTimeout(getAfterDuration, getRequestTimeout(i));
+                    setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
 
-                    async function getAfterDuration () {
-                        console.log('Time: ');
-                        console.log(Date.now());
+                    async function getAnnealResultsWithVariableDelay() {
                         const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
                         status = response.data.status;
-                        console.log('Checking status for `Complete`...');
 
-                        if (status === 'Complete') {
+                        // Check if anneal is completed
+                        if (status === AnnealStatus.ANNEAL_COMPLETE) {
                             context.commit("updateAnnealResponseOnServerResponse", response);
                         } else {
-                            setTimeout(getAfterDuration, getRequestTimeout(i));
+                            setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
                         }
                         i++;
                     }
@@ -430,6 +427,10 @@ Delete constraints that use this column and try again.`;
 
                     // context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
 
+                    /**
+                     * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
+                     * @param attemptNumber The number of times client has requested anneal results
+                     */
                     function getRequestTimeout(attemptNumber: number) {
                         return (Math.pow(1.5, attemptNumber) + 5) * 1000;
                     }
