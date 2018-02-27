@@ -432,7 +432,8 @@ Delete constraints that use this column and try again.`;
                      * @param attemptNumber The number of times client has requested anneal results
                      */
                     function getRequestTimeout(attemptNumber: number) {
-                        return (Math.pow(1.5, attemptNumber) + 5) * 1000;
+                        // return (Math.pow(1.5, attemptNumber) + 5) * 1000;
+                        return attemptNumber;
                     }
                 });
         },

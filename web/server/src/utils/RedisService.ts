@@ -14,12 +14,15 @@ export function getClient() {
 }
 
 export async function getValue(key: string) {
-    try {
-        const result = await getAsync(key);
-        return result;
+    if (key !== undefined) {
+        try {
+            const result = await getAsync(key);
+            return result;
 
-    } catch (e) {
-        throw new Error(e);
+        } catch (e) {
+            console.log('Error while getting key : ' + e);
+            // throw new Error(e);
+        }
     }
 }
 

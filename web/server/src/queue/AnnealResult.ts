@@ -43,6 +43,7 @@ export function init() {
                     IPCQueue.queueMessage("anneal-response", responseMessageData);
 
                     PendingResultCollationStore.remove(redisResponseId);
+                    console.log(PendingResultCollationStore.get(redisResponseId));
                 }
 
                 done();

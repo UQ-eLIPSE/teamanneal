@@ -54,6 +54,7 @@ export function init(workerId: string) {
                 done(error);
 
             } finally {
+                await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.PARTITION_FINISHED, timestamp: Date.now(), annealNode: annealNode });
                 console.log(`Anneal worker ${workerId} - Finished ${tag}`);
             }
         });

@@ -16,18 +16,18 @@ module.exports = () => {
 
     router.route("/")
         .post(
-        // Validation middleware
-        // TODO: More input validation
-        RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
-        ConstraintCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).constraints),
+            // Validation middleware
+            // TODO: More input validation
+            RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
+            ConstraintCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).constraints),
 
-        // Run anneal
-        anneal,
+            // Run anneal
+            anneal,
     );
 
     router.route("/annealResults")
         .post(
-        annealResults
+            annealResults
         )
 
     return router;
@@ -83,26 +83,50 @@ const anneal: express.RequestHandler =
 
 const annealResults: express.RequestHandler =
     async (req, res) => {
-        try {            
+        try {
             const annealRequest = req.body;
             const annealID = annealRequest.id;
-            const results = await RedisService.getLRANGE(annealID, 0, -1);
-            const resultsObject = JSON.parse(results);
-            if(results === undefined) {
-                res 
-                    .json({status: AnnealStatus.ANNEAL_IN_PROGRESS, results: results});
-            } else {
-                res
-                .status(HTTPResponseCode.SUCCESS.OK)
-                .json(resultsObject)
-        
+            // const results = await RedisService.getLRANGE(annealID, 0, 0);
+            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
+            const statusTimestampPartitionMap = {} as any;
+            let resultsObject: any = undefined;
+
+            for(let annealMap of annealMapList) {
+                const annealStatusObject = JSON.parse(annealMap);
+                if(annealStatusObject.status === AnnealStatus.ANNEAL_COMPLETE) {
+                    resultsObject = annealStatusObject;
+                    break;
+                }
+                if (statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] === undefined) {
+                    statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] = {
+                        annealStatusObject: annealStatusObject
+                    }
+                } else {
+                    if(annealStatusObject.timestamp > statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue].annealStatusObject.timestamp) {
+                        statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] = {
+                            annealStatusObject: annealStatusObject
+                        }
+                    }
+                }
             }
             
+           
+            
+            if (resultsObject === undefined) {
+                res
+                    .json({statusMap: statusTimestampPartitionMap});
+            } else {
+                res
+                    .status(HTTPResponseCode.SUCCESS.OK)
+                    .json(resultsObject)
+
+            }
+
 
         } catch (e) {
-            console.log('Error');
-            res 
-                .status(HTTPResponseCode.SUCCESS.ACCEPTED)
-                .json({status: "ip", error: e});
+            console.log('Error:' + e);
+            res
+                .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+                .json({ status: AnnealStatus.ANNEAL_FAILED, error: e });
         }
     }

@@ -46,6 +46,7 @@ export function init() {
             }
        
             if (error !== undefined) {
+                console.log('error occured during anneal');
                 await RedisService.findAndUpdate(redisResponseId, {status: AnnealStatus.ANNEAL_FAILED, error});
             }
             // await RedisService.findAndUpdate(redisResponseId, JSON.stringify(results));
