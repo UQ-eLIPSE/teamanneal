@@ -14,8 +14,6 @@ export function init() {
                 // Find the result collation object
                 // const resultCollationObj = PendingResultCollationStore.get(serverResponseId);
                 console.log('Result collations | Redis ID : ' + redisResponseId);
-                console.log('Pending collation store : ');
-                console.log(PendingResultCollationStore.get(redisResponseId));
                 const resultCollationObj = PendingResultCollationStore.get(redisResponseId);
                 
 

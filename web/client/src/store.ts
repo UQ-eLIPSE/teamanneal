@@ -400,21 +400,31 @@ Delete constraints that use this column and try again.`;
             // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent: any) => {
-                    let status: AnnealStatus | undefined = undefined;
                     let i = 0;
-
+                    let isCompleted = false;
                     setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
 
                     async function getAnnealResultsWithVariableDelay() {
                         const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
-                        status = response.data.status;
 
-                        // Check if anneal is completed
-                        if (status === AnnealStatus.ANNEAL_COMPLETE) {
+                        if (response.data.status === AnnealStatus.ANNEAL_COMPLETE) {
+                            // Anneal is complete
                             context.commit("updateAnnealResponseOnServerResponse", response);
+                            isCompleted = true;
                         } else {
+                            const statusMap = response.data.statusMap;
+                            // Check partitions progress
+                            for (let _partitionValue in statusMap) {
+                                // Set partition statuses for progress bar
+
+                            }
+                        }
+
+                        // Attempt to get anneal results again
+                        if (!isCompleted) {
                             setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
                         }
+
                         i++;
                     }
 
@@ -432,7 +442,7 @@ Delete constraints that use this column and try again.`;
                      * @param attemptNumber The number of times client has requested anneal results
                      */
                     function getRequestTimeout(attemptNumber: number) {
-                        // return (Math.pow(1.5, attemptNumber) + 5) * 1000;
+                        // return (Math.pow(1.5, attemptNumber) + 1) * 1000;
                         return attemptNumber;
                     }
                 });
