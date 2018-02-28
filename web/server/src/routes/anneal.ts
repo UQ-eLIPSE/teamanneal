@@ -8,7 +8,8 @@ import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
 import * as RedisService from "../utils/RedisService";
-import AnnealStatus from "../../../common/AnnealStatus";
+
+type _ = any;
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
@@ -26,22 +27,24 @@ module.exports = () => {
     );
     router.route("/annealStatus")
         .post(
+            // Get anneal's status
             annealStatus
         );
+
     router.route("/annealResult")
         .post(
+            // Retrieve anneal result
             annealResult
-        )
-
-    router.route("/annealResults")
-        .post(
-            annealResults
-        )
+        );
 
     return router;
 };
 
-
+/**
+ * Endpoint for user to initialise an anneal job
+ * @param req Request
+ * @param res Response - Returns an id (stored on redis) which identifies the anneal job
+ */
 const anneal: express.RequestHandler =
     (req, res) => {
         const annealRequest: ToServerAnnealRequest.Root = req.body;
@@ -66,7 +69,7 @@ const anneal: express.RequestHandler =
         //     annealRequest,
         // }
 
-        const annealJobData: any = {
+        const annealJobData: _ = {
             _meta: {
                 // 4. Replace this with redis uuid
                 redisResponseId,
@@ -79,85 +82,26 @@ const anneal: express.RequestHandler =
         // Queue request data now to reduce server blocking
         IPCQueue.queueMessage("anneal-request", annealJobData);
 
-        // There is no response yet; the anneal job has been sent and will be
-        // responded to by the "anneal-response" message handler that's also run
-        // in the main server process
-
-        //The above is being changed to sending the response to the client right away with the UID
+        // Send response with anneal job's ID (stored in Redis) 
         res
             .status(HTTPResponseCode.SUCCESS.ACCEPTED)
             .json({ id: redisResponseId });
     };
 
-const annealResults: express.RequestHandler =
-    async (req, res) => {
-        try {
-            const annealRequest = req.body;
-            const annealID = annealRequest.id;
-            // const results = await RedisService.getLRANGE(annealID, 0, 0);
-            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
-            const statusTimestampPartitionMap = {} as any;
-            let resultsObject: any = undefined;
 
-            for (let annealMap of annealMapList) {
-                const annealStatusObject = JSON.parse(annealMap);
-                if (annealStatusObject.status === AnnealStatus.ANNEAL_COMPLETE) {
-                    resultsObject = annealStatusObject;
-                    break;
-                }
-                if (statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] === undefined) {
-                    statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] = {
-                        annealStatusObject: annealStatusObject
-                    }
-                } else {
-                    if (annealStatusObject.timestamp > statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue].annealStatusObject.timestamp) {
-                        statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] = {
-                            annealStatusObject: annealStatusObject
-                        }
-                    }
-                }
-            }
-
-
-
-
-            if (resultsObject === undefined) {
-                res
-                    .json({ statusMap: statusTimestampPartitionMap });
-            } else {
-                res
-                    .status(HTTPResponseCode.SUCCESS.OK)
-                    .json(resultsObject)
-
-            }
-
-
-        } catch (e) {
-            console.error(e);
-            res
-                .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                .json({ status: AnnealStatus.ANNEAL_FAILED, error: e });
-        }
-    }
-
-// interface AnnealStatusResponse {
-//     statusMap: { annealStatusObject: any };
-//     expectedNumberOfResults: number;
-
-// }
-
-// interface AnnealResultResponse {
-//     status: AnnealStatus;
-//     results: any
-// }
+/**
+ * Endpoint for client to query for anneal status
+ * @param req Request
+ * @param res Response
+ */
 const annealStatus: express.RequestHandler =
     async (req, res) => {
         try {
             const annealRequest = req.body;
             const annealID = annealRequest.id;
             const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
-            const statusTimestampPartitionMap = {} as any;
-            let statusList = annealMapList.filter((annealMap: any) => JSON.parse(annealMap).results === undefined);
+            const statusTimestampPartitionMap = {} as _;
+            let statusList = annealMapList.filter((annealMap: _) => JSON.parse(annealMap).results === undefined);
             for (let annealMap of statusList) {
 
                 const annealStatusObject = JSON.parse(annealMap);
@@ -189,7 +133,11 @@ const annealStatus: express.RequestHandler =
 
     }
 
-
+/**
+ * Endpoint for client to retrieve results once the anneal is complete
+ * @param req Request
+ * @param res Response
+ */
 const annealResult: express.RequestHandler =
     async (req, res) => {
         try {
@@ -201,7 +149,7 @@ const annealResult: express.RequestHandler =
                     res
                         .status(HTTPResponseCode.SUCCESS.OK)
                         .send(annealMap);
-                    
+
                     // Sent data to user
                     // Set expiration time of 60 seconds before all data related to this anneal is removed from the store
                     RedisService.getClient().expire(annealID, 60);

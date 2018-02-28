@@ -1,5 +1,6 @@
 import * as redis from "redis";
 import { promisify } from 'util';
+import * as uuidv4 from "uuid/v4";
 
 const client = (function InitRedis() {
     const redisClient = redis.createClient({ prefix: 'annealMap:' });
@@ -28,7 +29,7 @@ export async function getValue(key: string) {
 
 // TODO: Replace with actual uuid generator
 export const generateUID = (): string => {
-    return 'ta-uuid-' + Math.random() * 10e7;
+    return uuidv4();
 }
 
 /**

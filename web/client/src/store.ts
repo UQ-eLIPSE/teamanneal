@@ -402,9 +402,8 @@ Delete constraints that use this column and try again.`;
                 .then((responseContent: any) => {
                     let i = 0;
                     setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
-                    
+
                     async function getAnnealResultsWithVariableDelay() {
-                        // const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
                         const response = await axios.post("/api/anneal/annealStatus", { id: responseContent.data.id });
                         const data = response.data;
                         const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
@@ -413,23 +412,35 @@ Delete constraints that use this column and try again.`;
                         console.log('Percent complete : ' + annealCompletePercentage);
                         // Check if completed
                         if (expectedNumberOfResults === completedPartitions.length) {
-                            console.log('---------------------------ANNEAL COMPLETE----------------------------');
                             // Anneal is complete
                             const response = await axios.post("/api/anneal/annealResult", { id: responseContent.data.id });
                             context.commit("updateAnnealResponseOnServerResponse", response);
 
                         } else {
-                            // Check partitions progress
-                            // Set partition statuses for progress bar
-                            // const remainingPartitions = expectedNumberOfResults - completedPartitions.length;
-                            // const annealCompletePercentage = (remainingPartitions / expectedNumberOfResults) * 100;
-                            // console.log('Percent complete : ' + annealCompletePercentage);
                             setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
 
                         }
                         i++;
                     }
+                    /**
+                     * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
+                     * @param attemptNumber The number of times client has requested anneal results
+                     */
+                    function getRequestTimeout(attemptNumber: number) {
+                        return (Math.pow(1.5, attemptNumber) + 1) * 1000;
+                    }
 
+                    function getCompletedPartitions(data: any) {
+                        const statusMap = data.statusMap;
+                        let partitions: any[] = [];
+
+                        for (let partition in statusMap) {
+                            if (statusMap[partition].annealStatusObject.status === AnnealStatus.PARTITION_FINISHED) {
+                                partitions.push(partition);
+                            }
+                        }
+                        return partitions;
+                    }
                     // We pass back the request object so that we can check if
                     // request matches what's in the store now
                     // const annealResponseUpdate = {
@@ -439,26 +450,7 @@ Delete constraints that use this column and try again.`;
 
                     // context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
 
-                    /**
-                     * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
-                     * @param attemptNumber The number of times client has requested anneal results
-                     */
-                    function getRequestTimeout(attemptNumber: number) {
-                        // return (Math.pow(1.5, attemptNumber) + 1) * 1000;
-                        return attemptNumber;
-                    }
 
-                    function getCompletedPartitions(data: any) {
-                        const statusMap = data.statusMap;
-                        let partitions: any[] = [];
-
-                        for(let partition in statusMap) {
-                            if(statusMap[partition].annealStatusObject.status === AnnealStatus.PARTITION_FINISHED) {
-                                partitions.push(partition);
-                            }
-                        }
-                        return partitions;
-                    }
                 });
         },
 
