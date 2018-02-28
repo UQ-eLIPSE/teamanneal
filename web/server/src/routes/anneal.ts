@@ -24,6 +24,14 @@ module.exports = () => {
             // Run anneal
             anneal,
     );
+    router.route("/annealStatus")
+        .post(
+            annealStatus
+        );
+    router.route("/annealResult")
+        .post(
+            annealResult
+        )
 
     router.route("/annealResults")
         .post(
@@ -78,7 +86,7 @@ const anneal: express.RequestHandler =
         //The above is being changed to sending the response to the client right away with the UID
         res
             .status(HTTPResponseCode.SUCCESS.ACCEPTED)
-            .json({ id: redisResponseId })
+            .json({ id: redisResponseId });
     };
 
 const annealResults: express.RequestHandler =
@@ -91,9 +99,9 @@ const annealResults: express.RequestHandler =
             const statusTimestampPartitionMap = {} as any;
             let resultsObject: any = undefined;
 
-            for(let annealMap of annealMapList) {
+            for (let annealMap of annealMapList) {
                 const annealStatusObject = JSON.parse(annealMap);
-                if(annealStatusObject.status === AnnealStatus.ANNEAL_COMPLETE) {
+                if (annealStatusObject.status === AnnealStatus.ANNEAL_COMPLETE) {
                     resultsObject = annealStatusObject;
                     break;
                 }
@@ -102,19 +110,20 @@ const annealResults: express.RequestHandler =
                         annealStatusObject: annealStatusObject
                     }
                 } else {
-                    if(annealStatusObject.timestamp > statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue].annealStatusObject.timestamp) {
+                    if (annealStatusObject.timestamp > statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue].annealStatusObject.timestamp) {
                         statusTimestampPartitionMap[annealStatusObject.annealNode.partitionValue] = {
                             annealStatusObject: annealStatusObject
                         }
                     }
                 }
             }
-            
-           
-            
+
+
+
+
             if (resultsObject === undefined) {
                 res
-                    .json({statusMap: statusTimestampPartitionMap});
+                    .json({ statusMap: statusTimestampPartitionMap });
             } else {
                 res
                     .status(HTTPResponseCode.SUCCESS.OK)
@@ -124,9 +133,87 @@ const annealResults: express.RequestHandler =
 
 
         } catch (e) {
-            console.log('Error:' + e);
+            console.error(e);
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
                 .json({ status: AnnealStatus.ANNEAL_FAILED, error: e });
         }
+    }
+
+// interface AnnealStatusResponse {
+//     statusMap: { annealStatusObject: any };
+//     expectedNumberOfResults: number;
+
+// }
+
+// interface AnnealResultResponse {
+//     status: AnnealStatus;
+//     results: any
+// }
+const annealStatus: express.RequestHandler =
+    async (req, res) => {
+        try {
+            const annealRequest = req.body;
+            const annealID = annealRequest.id;
+            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
+            const statusTimestampPartitionMap = {} as any;
+            let statusList = annealMapList.filter((annealMap: any) => JSON.parse(annealMap).results === undefined);
+            for (let annealMap of statusList) {
+
+                const annealStatusObject = JSON.parse(annealMap);
+                const partitionKey = annealStatusObject.annealNode.partitionValue;
+
+                if (statusTimestampPartitionMap[partitionKey] === undefined) {
+                    statusTimestampPartitionMap[partitionKey] = {
+                        annealStatusObject: annealStatusObject
+                    }
+                } else {
+                    if (annealStatusObject.timestamp > statusTimestampPartitionMap[partitionKey].annealStatusObject.timestamp) {
+                        statusTimestampPartitionMap[partitionKey] = {
+                            annealStatusObject: annealStatusObject
+                        }
+                    }
+                }
+            }
+            const expectedNumberOfResults = await RedisService.getValue(annealID + '-expectedNumberOfResults');
+            res
+                .status(HTTPResponseCode.SUCCESS.OK)
+                .json({ statusMap: statusTimestampPartitionMap, expectedNumberOfResults: expectedNumberOfResults });
+
+        } catch (e) {
+            console.error(e);
+            res
+                .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+                .json({ Error: e });
+        }
+
+    }
+
+
+const annealResult: express.RequestHandler =
+    async (req, res) => {
+        try {
+            const annealRequest = req.body;
+            const annealID = annealRequest.id;
+            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
+            for (let annealMap of annealMapList) {
+                if (JSON.parse(annealMap).results) {
+                    res
+                        .status(HTTPResponseCode.SUCCESS.OK)
+                        .send(annealMap);
+                    
+                    // Sent data to user
+                    // Set expiration time of 60 seconds before all data related to this anneal is removed from the store
+                    RedisService.getClient().expire(annealID, 60);
+                }
+            }
+
+        } catch (e) {
+            res
+                .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+                .json({ Error: e });
+            throw new Error(e);
+
+        }
+
     }

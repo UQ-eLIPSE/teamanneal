@@ -2,6 +2,7 @@ import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 
 import * as PendingResultCollationStore from "../data/PendingResultCollationStore";
+import * as RedisService from "../utils/RedisService";
 
 export function init() {
     IPCQueue.openQueue()
@@ -13,14 +14,13 @@ export function init() {
 
 
             // Start processing job
-            // console.log(`Anneal request [${serverResponseId}] - Starting...`);
             console.log(`Anneal request [${redisResponseId}] - Starting...`);
             try {
                 const { strata, constraints, recordData, annealNodes } = annealRequest;
 
                 // Create entry in result collation store
                 PendingResultCollationStore.add(redisResponseId, annealNodes.length);
-
+                RedisService.getClient().set(redisResponseId + '-expectedNumberOfResults', annealNodes.length + '');                
                 // Split job, one per anneal node in the request
                 annealNodes.forEach((annealNode, i) => {
                     console.log(`Anneal request [${redisResponseId}] - Splitting job: #${i}`);

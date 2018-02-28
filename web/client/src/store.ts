@@ -401,30 +401,32 @@ Delete constraints that use this column and try again.`;
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent: any) => {
                     let i = 0;
-                    let isCompleted = false;
                     setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
-
+                    
                     async function getAnnealResultsWithVariableDelay() {
-                        const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
-
-                        if (response.data.status === AnnealStatus.ANNEAL_COMPLETE) {
+                        // const response = await axios.post("/api/anneal/annealResults", { id: responseContent.data.id });
+                        const response = await axios.post("/api/anneal/annealStatus", { id: responseContent.data.id });
+                        const data = response.data;
+                        const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
+                        const completedPartitions = getCompletedPartitions(data);
+                        const annealCompletePercentage = (completedPartitions.length / expectedNumberOfResults) * 100;
+                        console.log('Percent complete : ' + annealCompletePercentage);
+                        // Check if completed
+                        if (expectedNumberOfResults === completedPartitions.length) {
+                            console.log('---------------------------ANNEAL COMPLETE----------------------------');
                             // Anneal is complete
+                            const response = await axios.post("/api/anneal/annealResult", { id: responseContent.data.id });
                             context.commit("updateAnnealResponseOnServerResponse", response);
-                            isCompleted = true;
+
                         } else {
-                            const statusMap = response.data.statusMap;
                             // Check partitions progress
-                            for (let _partitionValue in statusMap) {
-                                // Set partition statuses for progress bar
-
-                            }
-                        }
-
-                        // Attempt to get anneal results again
-                        if (!isCompleted) {
+                            // Set partition statuses for progress bar
+                            // const remainingPartitions = expectedNumberOfResults - completedPartitions.length;
+                            // const annealCompletePercentage = (remainingPartitions / expectedNumberOfResults) * 100;
+                            // console.log('Percent complete : ' + annealCompletePercentage);
                             setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
-                        }
 
+                        }
                         i++;
                     }
 
@@ -444,6 +446,18 @@ Delete constraints that use this column and try again.`;
                     function getRequestTimeout(attemptNumber: number) {
                         // return (Math.pow(1.5, attemptNumber) + 1) * 1000;
                         return attemptNumber;
+                    }
+
+                    function getCompletedPartitions(data: any) {
+                        const statusMap = data.statusMap;
+                        let partitions: any[] = [];
+
+                        for(let partition in statusMap) {
+                            if(statusMap[partition].annealStatusObject.status === AnnealStatus.PARTITION_FINISHED) {
+                                partitions.push(partition);
+                            }
+                        }
+                        return partitions;
                     }
                 });
         },

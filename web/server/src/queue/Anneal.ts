@@ -14,9 +14,7 @@ export function init(workerId: string) {
             const { redisResponseId } = _meta as any;
 
 
-            console.log('Anneal node id : ');
-            console.log(annealNode.id);
-            await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.ANNEAL_STARTED, timestamp: Date.now(), annealNode: annealNode });
+            await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.ANNEAL_STARTED, timestamp: Date.now(), annealNode: Object.assign({},annealNode) });
 
 
             // Start processing job
@@ -55,7 +53,7 @@ export function init(workerId: string) {
 
             } finally {
                 // Update status when partition has been annealed
-                await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.PARTITION_FINISHED, timestamp: Date.now(), annealNode: annealNode });
+                await RedisService.findAndUpdate(redisResponseId, { workerId: workerId, status: AnnealStatus.PARTITION_FINISHED, timestamp: Date.now(), annealNode: Object.assign({}, annealNode) });
                 console.log(`Anneal worker ${workerId} - Finished ${tag}`);
             }
         });

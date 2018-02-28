@@ -47,7 +47,7 @@
     "webpack": "2.6.1"
   },
   "dependencies": {
-    "@types/redis": "^2.8.5",
+    "@types/redis": "2.8.5",
     "axios": "0.16.2",
     "body-parser": "1.17.1",
     "es6-promise": "4.1.0",

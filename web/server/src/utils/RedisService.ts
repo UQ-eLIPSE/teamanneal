@@ -20,7 +20,7 @@ export async function getValue(key: string) {
             return result;
 
         } catch (e) {
-            console.log('Error while getting key : ' + e);
+            console.error('Error while getting key : ' + e);
             // throw new Error(e);
         }
     }

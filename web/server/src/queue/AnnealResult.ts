@@ -13,7 +13,6 @@ export function init() {
             try {
                 // Find the result collation object
                 // const resultCollationObj = PendingResultCollationStore.get(serverResponseId);
-                console.log('Result collations | Redis ID : ' + redisResponseId);
                 const resultCollationObj = PendingResultCollationStore.get(redisResponseId);
                 
 
@@ -28,7 +27,6 @@ export function init() {
                 // off to the response handling queue and remove the collation 
                 // object from the store
                 if (resultCollationObj.expectedNumberOfResults === resultCollationObj.results.length) {
-                    console.log('check if results collated ...');
                     const responseMessageData: any = {
                         _meta: {
                             serverResponseId,
@@ -41,7 +39,6 @@ export function init() {
                     IPCQueue.queueMessage("anneal-response", responseMessageData);
 
                     PendingResultCollationStore.remove(redisResponseId);
-                    console.log(PendingResultCollationStore.get(redisResponseId));
                 }
 
                 done();

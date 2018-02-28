@@ -40,7 +40,7 @@ export function init() {
                 results.forEach((result) => {
                     delete result["_meta"];
                 });
-                await RedisService.findAndUpdate(redisResponseId, {status: AnnealStatus.ANNEAL_COMPLETE, results});
+                await RedisService.findAndUpdate(redisResponseId, {status: AnnealStatus.ANNEAL_COMPLETE, results: [...results]});
                 
 
             }
