@@ -6,12 +6,11 @@ import * as PendingResultCollationStore from "../data/PendingResultCollationStor
 export function init() {
     IPCQueue.openQueue()
         .process("anneal-result", 1, (job, done) => {
-            const data: any = job.data;
+            const data: IPCData.AnnealResultMessageData = job.data;
             const redisResponseId = data._meta.redisResponseId;
             
             try {
                 // Find the result collation object
-                // const resultCollationObj = PendingResultCollationStore.get(serverResponseId);
                 const resultCollationObj = PendingResultCollationStore.get(redisResponseId);
                 
 

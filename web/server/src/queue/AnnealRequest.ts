@@ -4,14 +4,7 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as PendingResultCollationStore from "../data/PendingResultCollationStore";
 import * as RedisService from "../utils/RedisService";
 
-/**
- * Stores the expected number of partitions in redis as a new key
- * @param redisResponseId 
- * @param numberOfResults Expected number of results
- */
-function storeExpectedNumberOfResults(redisResponseId: string, numberOfResults: number): boolean {
-    return RedisService.getClient().set(redisResponseId + '-expectedNumberOfResults', numberOfResults + ''); 
-}
+
 
 export function init() {
     IPCQueue.openQueue()
@@ -73,4 +66,13 @@ export function init() {
                 done(error);
             }
         });
+}
+
+/**
+ * Stores the expected number of partitions in redis as a new key
+ * @param redisResponseId 
+ * @param numberOfResults Expected number of results
+ */
+function storeExpectedNumberOfResults(redisResponseId: string, numberOfResults: number): boolean {
+    return RedisService.getClient().set(redisResponseId + '-expectedNumberOfResults', numberOfResults + ''); 
 }

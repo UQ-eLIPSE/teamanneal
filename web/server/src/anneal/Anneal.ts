@@ -22,6 +22,7 @@ import { CountConstraint } from "./CountConstraint";
 import { LimitConstraint } from "./LimitConstraint";
 import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
 import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
+
 import { AnnealRecordPointerArray } from "./AnnealRecordPointerArray";
 import { AnnealStratum } from "./AnnealStratum";
 import { AnnealStratumNode } from "./AnnealStratumNode";
@@ -30,6 +31,7 @@ import { AnnealStratumNode } from "./AnnealStratumNode";
 export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     // Fix random seed for debugging
     // Random.setSeed(0xDEADBEEF);
+
     // Check that constraints array is not empty
     if (constraintDefinitions.length === 0) {
         throw new Error("Constraints array is empty; aborting anneal");
