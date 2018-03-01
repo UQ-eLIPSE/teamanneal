@@ -7,8 +7,7 @@ import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
 import * as RedisService from "../utils/RedisService";
-
-type _ = any;
+import { AnnealStatusState, StatusMap } from "../../../common/AnnealState";
 
 // Signature of exported function must not be altered for all routers
 module.exports = () => {
@@ -83,29 +82,39 @@ const annealStatus: express.RequestHandler =
             const annealRequest = req.body;
             const annealID = annealRequest.id;
             const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
-            const statusTimestampPartitionMap = {} as _;
-            let statusList = annealMapList.filter((annealMap: _) => JSON.parse(annealMap).results === undefined);
-            for (let annealMap of statusList) {
 
-                const annealStatusObject = JSON.parse(annealMap);
-                const partitionKey = annealStatusObject.annealNode.partitionValue;
+            const annealStateObjects = annealMapList.map((jsonString: string) => JSON.parse(jsonString));
+            let partitionStateStatusMap: StatusMap = {};
 
-                if (statusTimestampPartitionMap[partitionKey] === undefined) {
-                    statusTimestampPartitionMap[partitionKey] = {
-                        annealStatusObject: annealStatusObject
-                    }
+            // Filter status type states (i.e. exclude anneal result states)
+            const statusStateObjects: AnnealStatusState[] = annealStateObjects.filter((o: any) => o.results === undefined);
+
+            statusStateObjects.forEach((statusStateObject) => {
+                // Get partition identifier
+                const partitionKey = statusStateObject.annealNode.partitionValue;
+
+                // Check if key is defined in partition state status map
+                if (partitionStateStatusMap[partitionKey] === undefined) {
+                    partitionStateStatusMap[partitionKey] = statusStateObject;
                 } else {
-                    if (annealStatusObject.timestamp > statusTimestampPartitionMap[partitionKey].annealStatusObject.timestamp) {
-                        statusTimestampPartitionMap[partitionKey] = {
-                            annealStatusObject: annealStatusObject
-                        }
+                    // Key already exists
+                    const oldStatusStateObject = partitionStateStatusMap[partitionKey];
+                    
+                    if (statusStateObject.timestamp > oldStatusStateObject.timestamp) {
+                        // Update key with new status state object
+                        partitionStateStatusMap[partitionKey] = statusStateObject;
                     }
                 }
-            }
-            const expectedNumberOfResults = await RedisService.getValue(annealID + '-expectedNumberOfResults');
+
+            });
+
+            const expectedNumberOfResults = await RedisService.getExpectedNumberOfAnnealResults(annealID);
+
             res
                 .status(HTTPResponseCode.SUCCESS.OK)
-                .json({ statusMap: statusTimestampPartitionMap, expectedNumberOfResults: expectedNumberOfResults });
+                .json({ statusMap: partitionStateStatusMap, expectedNumberOfResults: expectedNumberOfResults });
+
+
 
         } catch (e) {
             console.error(e);
@@ -134,15 +143,15 @@ const annealResult: express.RequestHandler =
                         .send(annealMap);
 
                     // Sent data to user
-                    // Set expiration time of 60 seconds before all data related to this anneal is removed from the store
-                    RedisService.getClient().expire(annealID, 60);
+                    // Set expiry time for all anneal data pertaining to the anneal job (already returned to user)
+                    RedisService.expireAnnealData(annealID);
                 }
             }
 
         } catch (e) {
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                .json({ Error: e });
+                .send({ Error: e });
             throw new Error(e);
 
         }

@@ -67,6 +67,18 @@ export const pushAnnealState = (key: string, value: { [key: string]: any }) => {
     });
 }
 
+export async function getExpectedNumberOfAnnealResults(key: string) {
+    return await getValue(key + '-expectedNumberOfResults');
+}
+
+/**
+ * Expires the keys associated to an anneal job
+ * @param annealID ID of the anneal job
+ */
+export function expireAnnealData(annealID: string) {
+    client.expire(annealID, 60);
+    client.expire(annealID + '-expectedNumberOfResults', 60);
+}
 /**
  * Creates new entry in redis store
  */

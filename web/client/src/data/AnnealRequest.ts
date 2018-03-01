@@ -11,6 +11,8 @@ import * as RecordData from "../../../common/RecordData";
 import * as RecordDataColumn from "../../../common/RecordDataColumn";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
+import AnnealStatus from "../../../common/AnnealStatus";
+import { AnnealStatusState, StatusMap } from "../../../common/AnnealState";
 
 import { Data as IState } from "./State";
 import { Partition } from "./Partition";
@@ -45,7 +47,7 @@ export namespace AnnealRequest {
     export function InitFromState(state: IState) {
         // Translate state into request body and create AJAX request
         const body = ConvertStateToAnnealRequestBody(state);
-        const { request, cancelTokenSource } =  CreateAnnealAjaxRequest(body);
+        const { request, cancelTokenSource } = CreateAnnealAjaxRequest(body);
 
         // Create AnnealRequest object
         const annealRequestObject = Init(request, cancelTokenSource, body);
@@ -375,5 +377,31 @@ export namespace AnnealRequest {
                 .then(resolve)
                 .catch(resolve);
         });
+    }
+
+    /**
+    * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
+    * @param attemptNumber The number of times client has requested anneal results
+    */
+    export function getRequestTimeout(attemptNumber: number) {
+        return (Math.pow(1.5, attemptNumber) + 1) * 1000;
+    }
+
+    /**
+     * Returns partitions data and status
+     * @param data Response data received from server
+     */
+    export function getCompletedPartitionsData(data: any) {
+        const statusMap = data.statusMap as StatusMap;
+        let partitions: AnnealStatusState[] = [];
+        const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
+
+        for (let partition in statusMap) {
+            if ((statusMap[partition] as AnnealStatusState).status === AnnealStatus.PARTITION_FINISHED) {
+                partitions.push(statusMap[partition]);
+            }
+        }
+
+        return { isAnnealComplete: partitions.length === expectedNumberOfResults, completedPartitions: partitions };
     }
 }

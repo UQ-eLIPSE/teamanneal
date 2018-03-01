@@ -10,7 +10,6 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import axios, { AxiosResponse, AxiosError } from "axios";
 import { deepMerge } from "./util/Object";
 import { replaceAll } from "./util/String";
-import AnnealStatus from "../../common/AnnealStatus";
 
 Vue.use(Vuex);
 
@@ -400,47 +399,32 @@ Delete constraints that use this column and try again.`;
             // that is paired up with it
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent: any) => {
-                    let i = 0;
-                    setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
+                    /** Stores number of requests sent by client */
+                    let requestAttemptNumber = 0;
+                    setTimeout(getAnnealStatusWithVariableDelay, AnnealRequest.getRequestTimeout(requestAttemptNumber));
 
-                    async function getAnnealResultsWithVariableDelay() {
-                        const response = await axios.post("/api/anneal/annealStatus", { id: responseContent.data.id });
-                        const data = response.data;
-                        const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
-                        const completedPartitions = getCompletedPartitions(data);
-                        const annealCompletePercentage = (completedPartitions.length / expectedNumberOfResults) * 100;
-                        console.log('Percent complete : ' + annealCompletePercentage);
+                    async function getAnnealStatusWithVariableDelay() {
+                        const statusResponse = await axios.post("/api/anneal/annealStatus", { id: responseContent.data.id });
+                        const { isAnnealComplete } = AnnealRequest.getCompletedPartitionsData(statusResponse.data);
+
+                        // Get anneal complete percentage by uncommenting the following line
+                        //const annealCompletePercentage = (completedPartitions.length / expectedNumberOfResults) * 100;
+
                         // Check if completed
-                        if (expectedNumberOfResults === completedPartitions.length) {
+                        if (isAnnealComplete) {
                             // Anneal is complete
-                            const response = await axios.post("/api/anneal/annealResult", { id: responseContent.data.id });
-                            context.commit("updateAnnealResponseOnServerResponse", response);
+                            const resultResponse = await axios.post("/api/anneal/annealResult", { id: responseContent.data.id });
+                            context.commit("updateAnnealResponseOnServerResponse", resultResponse);
 
                         } else {
-                            setTimeout(getAnnealResultsWithVariableDelay, getRequestTimeout(i));
-
+                            // Anneal incomplete
+                            setTimeout(getAnnealStatusWithVariableDelay, AnnealRequest.getRequestTimeout(requestAttemptNumber));
                         }
-                        i++;
+                        requestAttemptNumber++;
                     }
-                    /**
-                     * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
-                     * @param attemptNumber The number of times client has requested anneal results
-                     */
-                    function getRequestTimeout(attemptNumber: number) {
-                        return (Math.pow(1.5, attemptNumber) + 1) * 1000;
-                    }
+                    
+                   //TODO: Remove all infrastructure surrounding request-response mapping and tracking (old system)
 
-                    function getCompletedPartitions(data: any) {
-                        const statusMap = data.statusMap;
-                        let partitions: any[] = [];
-
-                        for (let partition in statusMap) {
-                            if (statusMap[partition].annealStatusObject.status === AnnealStatus.PARTITION_FINISHED) {
-                                partitions.push(partition);
-                            }
-                        }
-                        return partitions;
-                    }
                     // We pass back the request object so that we can check if
                     // request matches what's in the store now
                     // const annealResponseUpdate = {
