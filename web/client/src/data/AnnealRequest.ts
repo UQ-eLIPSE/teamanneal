@@ -380,7 +380,57 @@ export namespace AnnealRequest {
     }
 
     /**
-    * Returns a variable timeout as a function of the number of attempts made by the client to get anneal status
+     * Handles firing of anneal status query requests
+     * @param responseContent Response from server with ID of anneal job
+     * @param annealCompleteCallbackFunction Function to be called once anneal job is finished
+     */
+    export function queryAndUpdateAnnealStatus(responseContent: any, annealCompleteCallbackFunction: any) {
+
+        let requestAttemptNumber = 0;
+
+        setTimeout(getAnnealStatusWithVariableDelay, getRequestTimeout(requestAttemptNumber));
+
+        /** 
+         * Queries for anneal job status
+         */
+        async function getAnnealStatusWithVariableDelay() {
+            requestAttemptNumber++;
+            const statusResponse = await getAnnealStatus(responseContent.data.id);
+            const { isAnnealComplete } = getCompletedPartitionsData(statusResponse.data);
+
+            // Get anneal's completed percentage by uncommenting the following line
+            // const { isAnnealComplete, percentComplete } = getCompletedPartitionsData(statusResponse.data);
+
+            // Check if completed
+            if (isAnnealComplete) {
+                // Anneal is complete
+                const resultResponse = await AnnealRequest.getAnnealResult(responseContent.data.id);                
+                annealCompleteCallbackFunction(resultResponse);
+            } else {
+                // Anneal incomplete
+                setTimeout(getAnnealStatusWithVariableDelay, getRequestTimeout(requestAttemptNumber));
+            }
+        }
+    }
+
+    /**
+     * Sends axios POST request with ID of anneal job to get anneal status.
+     * @param annealId ID of the anneal job
+     */
+    export async function getAnnealStatus(annealId: string) {
+        return axios.post("/api/anneal/annealStatus", { id: annealId });
+    }
+
+    /**
+     * Sends axios POST request with ID of anneal job to retrieve anneal results.
+     * @param annealId ID of the anneal job
+     */
+    export async function getAnnealResult(annealId: string) {
+        return axios.post("/api/anneal/annealResult", { id: annealId })
+    }
+
+    /**
+    * Returns a variable timeout (in ms) as a function of the number of attempts made by the client to get anneal status.
     * @param attemptNumber The number of times client has requested anneal results
     */
     export function getRequestTimeout(attemptNumber: number) {
@@ -401,7 +451,11 @@ export namespace AnnealRequest {
                 partitions.push(statusMap[partition]);
             }
         }
-        const completedPercentage =  (partitions.length/expectedNumberOfResults) * 100;
-        return { isAnnealComplete: partitions.length === expectedNumberOfResults, completedPartitions: partitions, percentComplete: completedPercentage  };
+        const completedPercentage = (partitions.length / expectedNumberOfResults) * 100;
+        return {
+            isAnnealComplete: partitions.length === expectedNumberOfResults,
+            completedPartitions: partitions,
+            percentComplete: completedPercentage
+        };
     }
 }
