@@ -402,12 +402,15 @@ Delete constraints that use this column and try again.`;
                     let requestAttemptNumber = 0;
                     setTimeout(getAnnealStatusWithVariableDelay, AnnealRequest.getRequestTimeout(requestAttemptNumber));
 
+                    /** 
+                     * Queries for anneal job status
+                     */
                     async function getAnnealStatusWithVariableDelay() {
                         const statusResponse = await axios.post("/api/anneal/annealStatus", { id: responseContent.data.id });
                         const { isAnnealComplete } = AnnealRequest.getCompletedPartitionsData(statusResponse.data);
-
-                        // Get anneal complete percentage by uncommenting the following line
-                        //const annealCompletePercentage = (completedPartitions.length / expectedNumberOfResults) * 100;
+                        
+                        // Get anneal's completed percentage by uncommenting the following line
+                        // const { isAnnealComplete, percentComplete } = AnnealRequest.getCompletedPartitionsData(statusResponse.data);
 
                         // Check if completed
                         if (isAnnealComplete) {
@@ -421,19 +424,6 @@ Delete constraints that use this column and try again.`;
                         }
                         requestAttemptNumber++;
                     }
-                    
-                   //TODO: Remove all infrastructure surrounding request-response mapping and tracking (old system)
-
-                    // We pass back the request object so that we can check if
-                    // request matches what's in the store now
-                    // const annealResponseUpdate = {
-                    //     request: annealRequest,
-                    //     content: responseContent,   // NOTE: `responseContent` can be response or error
-                    // };
-
-                    // context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
-
-
                 });
         },
 

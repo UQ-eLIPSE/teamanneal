@@ -401,7 +401,7 @@ export namespace AnnealRequest {
                 partitions.push(statusMap[partition]);
             }
         }
-
-        return { isAnnealComplete: partitions.length === expectedNumberOfResults, completedPartitions: partitions };
+        const completedPercentage =  (partitions.length/expectedNumberOfResults) * 100;
+        return { isAnnealComplete: partitions.length === expectedNumberOfResults, completedPartitions: partitions, percentComplete: completedPercentage  };
     }
 }

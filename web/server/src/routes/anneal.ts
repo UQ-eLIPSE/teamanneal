@@ -144,7 +144,7 @@ const annealResult: express.RequestHandler =
 
                     // Sent data to user
                     // Set expiry time for all anneal data pertaining to the anneal job (already returned to user)
-                    RedisService.expireAnnealData(annealID);
+                    RedisService.expireAnnealData(annealID, 60);
                 }
             }
 
