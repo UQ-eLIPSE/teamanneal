@@ -6,7 +6,7 @@ import * as Stratum from "../../../common/Stratum";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 interface InternalAnnealMeta {
-    serverResponseId: number,
+    redisResponseId: string,
 }
 
 interface InternalAnnealNodeMeta {

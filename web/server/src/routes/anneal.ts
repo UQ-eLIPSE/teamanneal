@@ -1,9 +1,8 @@
 import * as express from "express";
 
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
-// import * as IPCData from "../data/IPCData";
+import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
-// import * as PendingResponseStore from "../data/PendingResponseStore";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
 import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
@@ -49,30 +48,14 @@ const anneal: express.RequestHandler =
     (req, res) => {
         const annealRequest: ToServerAnnealRequest.Root = req.body;
 
-        // 1. Generate UUID associated with request
-        // const redisResponseId = RedisService.createNewEntry();
-        const redisResponseId = RedisService.generateUID();
-        // Add request to store
+        // Generate UUID associated with anneal request
+        const redisResponseId = RedisService.generateUUIDv4();
 
-        // 3. Replace this with new redis client interface
-        // const serverResponseId = PendingResponseStore.add(res);
-        // console.log(`Anneal request to server worker received; response tagged with ID ${serverResponseId}`);
         console.log(`Anneal request to server worker received; response tagged with ID ${redisResponseId}`);
 
-
-        // const annealJobData: IPCData.AnnealRequestMessageData = {
-        //     _meta: {
-        //         // 4. Replace this with redis uuid
-        //         serverResponseId,
-        //     },
-
-        //     annealRequest,
-        // }
-
-        const annealJobData: _ = {
+        const annealJobData: IPCData.AnnealRequestMessageData = {
             _meta: {
-                // 4. Replace this with redis uuid
-                redisResponseId,
+                redisResponseId
             },
 
             annealRequest,

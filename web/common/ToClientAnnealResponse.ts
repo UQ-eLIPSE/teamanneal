@@ -1,4 +1,5 @@
 import * as AnnealNode from "./AnnealNode";
+import AnnealStatus from "../common/AnnealStatus";
 
 interface OutputResult {
     readonly result?: AnnealNode.NodeRoot,
@@ -6,6 +7,7 @@ interface OutputResult {
 }
 
 export interface Root {
+    status: AnnealStatus,
     readonly results?: ReadonlyArray<OutputResult>,
     readonly error?: string,
 }

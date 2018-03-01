@@ -7,7 +7,6 @@ export function init() {
     IPCQueue.openQueue()
         .process("anneal-result", 1, (job, done) => {
             const data: any = job.data;
-            const serverResponseId = data._meta.serverResponseId;
             const redisResponseId = data._meta.redisResponseId;
             
             try {
@@ -27,9 +26,8 @@ export function init() {
                 // off to the response handling queue and remove the collation 
                 // object from the store
                 if (resultCollationObj.expectedNumberOfResults === resultCollationObj.results.length) {
-                    const responseMessageData: any = {
+                    const responseMessageData: IPCData.AnnealResponseMessageData = {
                         _meta: {
-                            serverResponseId,
                             redisResponseId
                         },
 
@@ -47,7 +45,7 @@ export function init() {
                 // Pass error back if this process fails
                 const resultMessage: IPCData.AnnealResponseMessageData = {
                     _meta: {
-                        serverResponseId,
+                        redisResponseId
                     },
 
                     error: "" + error,

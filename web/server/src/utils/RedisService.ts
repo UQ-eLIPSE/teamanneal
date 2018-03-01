@@ -28,7 +28,7 @@ export async function getValue(key: string) {
 }
 
 // TODO: Replace with actual uuid generator
-export const generateUID = (): string => {
+export const generateUUIDv4 = (): string => {
     return uuidv4();
 }
 
@@ -36,7 +36,7 @@ export const generateUID = (): string => {
  * Creates new entry in redis store
  */
 export const createNewEntry = (): string => {
-    const uid = generateUID();
+    const uid = generateUUIDv4();
     const initialState = {
         status: "Created"
     }
@@ -56,7 +56,7 @@ export const createNewEntry = (): string => {
  * 
  * @return {Promise<number>} Number is the number of rows inserted???
  */
-export const findAndUpdate = (key: string, value: { [key: string]: any }) => {
+export const pushAnnealState = (key: string, value: { [key: string]: any }) => {
     return new Promise<number>((resolve, reject) => {
         client.LPUSH(key, JSON.stringify(value), (error, reply) => {
             if (error !== null) {
