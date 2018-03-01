@@ -35,16 +35,7 @@ export function add(id: string, expectedNumberOfResults: number) {
 /**
  * Gets the response object stored at the slot of given ID.
  * 
- * @param {number} id Server response ID associated with anneal job
- */
-// export function get(id: number) {
-//     return store.get(id);
-// }
-
-/**
- * Gets the response object stored at the slot of given ID.
- * 
- * @param {number} id Server response ID associated with anneal job
+ * @param {number} id Server's redis ID associated with anneal job
  */
 export function get(id: string) {
     return store.get(id);

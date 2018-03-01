@@ -395,8 +395,7 @@ Delete constraints that use this column and try again.`;
 
 
 
-            // Once the request completes, we need to update the response object
-            // that is paired up with it
+            // Once the request completes, send status queries to server to check the status of the anneal job
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent: any) => {
                     /** Stores number of requests sent by client */

@@ -99,7 +99,7 @@ const annealStatus: express.RequestHandler =
                 } else {
                     // Key already exists
                     const oldStatusStateObject = partitionStateStatusMap[partitionKey];
-                    
+
                     if (statusStateObject.timestamp > oldStatusStateObject.timestamp) {
                         // Update key with new status state object
                         partitionStateStatusMap[partitionKey] = statusStateObject;
