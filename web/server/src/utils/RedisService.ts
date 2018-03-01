@@ -3,17 +3,25 @@ import { promisify } from 'util';
 import * as uuidv4 from "uuid/v4";
 
 const client = (function InitRedis() {
-    const redisClient = redis.createClient({ prefix: 'annealMap:' });
+    const redisClient = redis.createClient({ prefix: 'annealStateStatusList:' });
     return redisClient;
 })();
 
 const getAsync = promisify(client.get).bind(client);
 export const getLRANGE = promisify(client.LRANGE).bind(client);
 
+/**
+ * Returns instance of the redis client
+ */
+
 export function getClient() {
     return client;
 }
 
+/**
+ * Retrieves a key's value from redis
+ * @param key redis key
+ */
 export async function getValue(key: string) {
     if (key !== undefined) {
         try {
@@ -22,35 +30,20 @@ export async function getValue(key: string) {
 
         } catch (e) {
             console.error('Error while getting key : ' + e);
-            // throw new Error(e);
+            throw new Error(e);
         }
     }
 }
 
-// TODO: Replace with actual uuid generator
+/**
+ * Generates unique ID for anneal jobs
+ */
 export const generateUUIDv4 = (): string => {
     return uuidv4();
 }
 
 /**
- * Creates new entry in redis store
- */
-export const createNewEntry = (): string => {
-    const uid = generateUUIDv4();
-    const initialState = {
-        status: "Created"
-    }
-
-    client.set(uid, JSON.stringify(initialState), (e: Error, _res: any) => {
-        if (e) throw new Error("Redis entry could not be created.")
-    });
-
-    return uid;
-
-}
-
-/**
- * 
+ * Pushes the anneal status state / results to a redis list
  * @param key 
  * @param value 
  * 
@@ -78,17 +71,4 @@ export async function getExpectedNumberOfAnnealResults(key: string) {
 export function expireAnnealData(annealID: string) {
     client.expire(annealID, 60);
     client.expire(annealID + '-expectedNumberOfResults', 60);
-}
-/**
- * Creates new entry in redis store
- */
-export const createNewCollationEntry = (uid: string, value: any): string => {
-
-
-    client.set(uid, value, (e: Error, _res: any) => {
-        if (e) throw new Error("Redis entry could not be created.")
-    });
-
-    return uid;
-
 }
