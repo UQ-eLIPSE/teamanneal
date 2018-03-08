@@ -3,10 +3,13 @@
 
         <!-- Display error message if browser is not compatible -->
         <div v-if="!isBrowserCompatible"
-             class="header-message">Your browser is currently not supported. Please use one of the following supported browsers:
+             class="header-message">
+            Your browser does not support features required for TeamAnneal. Try using an up-to-date version of one of the following browsers:
             <ul>
                 <li>Google Chrome</li>
                 <li>Mozilla Firefox</li>
+                <li>Microsoft Edge</li>
+                <li>Apple Safari</li>
             </ul>
         </div>
 
@@ -57,12 +60,27 @@ export default class AnnealProcess extends Vue {
     }
 
     /**
-     * Checks if browser is compatible.
-     * Currently checks for IE (not compatible), and returns false if IE is detected.
+     * Checks if browser is compatible through feature detection.
      */
     get isBrowserCompatible() {
-        const isIE = navigator.userAgent.indexOf("MSIE") !== -1 || navigator.appVersion.indexOf("Trident/") > 0;
-        return !isIE;
+        try {
+            // Promise
+            const promiseAvailable = typeof Promise === "function";
+
+            // WeakMap
+            const weakMapAvailable = typeof WeakMap === "function";
+
+            // Object.assign()
+            const objectAssignAvailable = typeof Object.assign === "function";
+
+            return (
+                promiseAvailable &&
+                weakMapAvailable &&
+                objectAssignAvailable
+            );
+        } catch (e) {
+            return false;
+        }
     }
 }
 </script>
@@ -131,6 +149,7 @@ export default class AnnealProcess extends Vue {
 .header-message {
     background-color: darkorange;
     padding: 1rem 1rem;
+    flex-shrink: 0;
 }
 
 .header-message ul {
