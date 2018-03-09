@@ -105,8 +105,8 @@
                 <select v-model="partitionColumn">
                     <option disabled
                             :value="undefined">Please select partition column</option>
-                    <option v-for="option in possiblePartitionColumns"
-                            :key="getObjectId(option.value)"
+                    <option v-for="(option, i) in possiblePartitionColumns"
+                            :key="option.text + i"
                             :value="option.value">{{ option.text }}</option>
                 </select>
             </p>
@@ -128,7 +128,6 @@ import { Component, Mixin } from "av-ts";
 
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import { GlobalObjectIdentifier } from "../../data/GlobalObjectIdentifier";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
@@ -191,10 +190,6 @@ export default class SelectPartitionColumn extends Mixin(StoreState, AnnealProce
         } else {
             this.$store.dispatch("setPartitionColumn", val);
         }
-    }
-
-    getObjectId(obj: Object) {
-        return GlobalObjectIdentifier.GetId(obj);
     }
 }
 </script>

@@ -1,9 +1,11 @@
 <template>
     <select v-model="activeItemValue"
+            @input="onInputChange"
+            @change="onInputChange"
             :disabled="disabled"
             :style="{ width: elWidth }">
-        <option v-for="item in list"
-                :key="getObjectId(item)"
+        <option v-for="(item, i) in list"
+                :key="item.text + i"
                 :value="item.value"
                 :selected="item.value === activeItemValue">{{ item.text }}</option>
     </select>
@@ -13,8 +15,6 @@
 
 <script lang="ts">
 import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
-
-import { GlobalObjectIdentifier } from "../data/GlobalObjectIdentifier";
 
 interface ListItem {
     value: any,
@@ -57,10 +57,6 @@ export default class DynamicWidthSelect extends Vue {
         this.$emit("valueUpdate", newValue);
     }
 
-    getObjectId(obj: Object) {
-        return GlobalObjectIdentifier.GetId(obj);
-    }
-
     updateRenderWidth() {
         const activeItem = this.activeItem;
 
@@ -69,12 +65,19 @@ export default class DynamicWidthSelect extends Vue {
             return;
         }
 
+        const width = this.calculateRenderWidth(activeItem.text);
+
+        // Update element width
+        this.elWidth = `${width}px`;
+    }
+
+    calculateRenderWidth(text: string) {
         // Extract element
         const el = this.$el as HTMLSelectElement;
 
         // Set up width test element
         const parentNode = el.parentNode!;
-        widthTestElement.textContent = activeItem.text;
+        widthTestElement.textContent = text;
         parentNode.insertBefore(selectTestElement, el);
 
         // Test width
@@ -84,8 +87,20 @@ export default class DynamicWidthSelect extends Vue {
         // Remove test element
         parentNode.removeChild(selectTestElement);
 
-        // Update element width
-        this.elWidth = `${width}px`;
+        return width;
+    }
+
+    onInputChange() {
+        // Force update of size immediately on select field changes
+        const el = this.$el as HTMLSelectElement;
+        const selectedItem = this.list[el.selectedIndex];
+
+        if (selectedItem === undefined) {
+            return;
+        }
+
+        const width = this.calculateRenderWidth(selectedItem.text);
+        el.style.width = `${width}px`;
     }
 
     @Watch("selectedValue")

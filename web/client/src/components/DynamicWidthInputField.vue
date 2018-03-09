@@ -1,5 +1,7 @@
 <template>
     <input v-model="inputValue"
+           @input="onInputChange"
+           @change="onInputChange"
            :disabled="disabled"
            :style="{ width: elWidth }">
 </template>
@@ -46,12 +48,19 @@ export default class DynamicWidthInputField extends Vue {
             return;
         }
 
+        const width = this.calculateRenderWidth(value);
+
+        // Update element width
+        this.elWidth = `${width}px`;
+    }
+
+    calculateRenderWidth(text: string) {
         // Extract element and value
         const el = this.$el as HTMLInputElement;
 
         // Set up width test element
         const parentNode = el.parentNode!;
-        widthTestElement.textContent = value;
+        widthTestElement.textContent = text;
         parentNode.insertBefore(widthTestElement, el);
 
         // Test width
@@ -61,8 +70,7 @@ export default class DynamicWidthInputField extends Vue {
         // Remove test element
         parentNode.removeChild(widthTestElement);
 
-        // Update element width
-        this.elWidth = `${width}px`;
+        return width;
     }
 
     syncInputValueToElement() {
@@ -76,6 +84,13 @@ export default class DynamicWidthInputField extends Vue {
                 el.value = this.inputValue;
             }
         });
+    }
+
+    onInputChange() {
+        // Force update of size immediately on input field changes
+        const el = this.$el as HTMLInputElement;
+        const width = this.calculateRenderWidth(el.value);
+        el.style.width = `${width}px`;
     }
 
     @Watch("value")
