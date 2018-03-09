@@ -25,7 +25,7 @@
                     <option disabled
                             :value="undefined">Please select ID column</option>
                     <option v-for="option in possibleIdColumns"
-                            :key="option.value"
+                            :key="getObjectId(option)"
                             :value="option.value">{{ option.text }}</option>
                 </select>
             </p>
@@ -45,6 +45,7 @@ import { Component, Mixin } from "av-ts";
 
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+import { GlobalObjectIdentifier } from "../../data/GlobalObjectIdentifier";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
@@ -94,6 +95,10 @@ export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizar
 
     set idColumn(val: IColumnData_MinimalDescriptor | undefined) {
         this.$store.dispatch("setIdColumn", val);
+    }
+
+    getObjectId(obj: Object) {
+        return GlobalObjectIdentifier.GetId(obj);
     }
 }
 </script>

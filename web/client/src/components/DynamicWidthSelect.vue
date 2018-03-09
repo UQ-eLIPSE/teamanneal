@@ -3,7 +3,7 @@
             :disabled="disabled"
             :style="{ width: elWidth }">
         <option v-for="item in list"
-                :key="item.value"
+                :key="getObjectId(item)"
                 :value="item.value"
                 :selected="item.value === activeItemValue">{{ item.text }}</option>
     </select>
@@ -13,6 +13,13 @@
 
 <script lang="ts">
 import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
+
+import { GlobalObjectIdentifier } from "../data/GlobalObjectIdentifier";
+
+interface ListItem {
+    value: any,
+    text: string,
+}
 
 // The "test elements" below are used to determine the width of the select menu
 // during resize
@@ -30,7 +37,7 @@ selectTestElement.appendChild(widthTestElement);
 })
 export default class DynamicWidthSelect extends Vue {
     // Props
-    @Prop list = p<ReadonlyArray<{ value: any, text: string }>>({ type: Array, required: true, });
+    @Prop list = p<ReadonlyArray<ListItem>>({ type: Array, required: true, });
     @Prop selectedValue = p<any>({ required: true, });
     @Prop minWidth = p({ type: Number, required: false, default: 20 });
     @Prop disabled = p({ type: Boolean, required: false, default: false, });
@@ -48,6 +55,10 @@ export default class DynamicWidthSelect extends Vue {
 
     set activeItemValue(newValue: any) {
         this.$emit("valueUpdate", newValue);
+    }
+
+    getObjectId(obj: Object) {
+        return GlobalObjectIdentifier.GetId(obj);
     }
 
     updateRenderWidth() {
