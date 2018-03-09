@@ -68,7 +68,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Mixin } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { AnnealRequest } from "../../data/AnnealRequest";
@@ -81,7 +81,7 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
 
 @Component({
     components: {
-        ConstraintsEditor: ConstraintsEditor as Vue.Component,
+        ConstraintsEditor,
     },
 })
 export default class ConfigureConstraints extends Mixin(StoreState, AnnealProcessWizardPanel) {

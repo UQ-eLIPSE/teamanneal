@@ -1,8 +1,9 @@
 import Vue from "vue";
-import Vuex from "vuex";
+import { Store } from "vuex";
 import VueRouter from "vue-router";
 
 // Data
+import { Data as IState } from "./data/State";
 import * as WizardNavigationEntry from "./data/WizardNavigationEntry";
 import * as AnnealProcessWizardEntries from "./data/AnnealProcessWizardEntries";
 
@@ -22,7 +23,7 @@ import Anneal_ViewResult from "./components/anneal-wizard-panels/ViewResult.vue"
 
 Vue.use(VueRouter);
 
-export default (store: Vuex.Store<any>) => {
+export default (store: Store<any>) => {
     const router = new VueRouter({
         routes: [
             {
@@ -109,7 +110,7 @@ export default (store: Vuex.Store<any>) => {
     router.beforeEach((to, _from, next) => {
         // If this is part of a wizard, check whether it is disabled
         if (to.meta && to.meta.wizardEntry) {
-            const wizardEntry: WizardNavigationEntry.WizardNavigationEntry = to.meta.wizardEntry;
+            const wizardEntry: WizardNavigationEntry.WizardNavigationEntry<IState> = to.meta.wizardEntry;
 
             // Get the disabled checking function
             const isDisabledFn = wizardEntry.disabled;

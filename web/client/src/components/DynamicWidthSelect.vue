@@ -30,7 +30,7 @@ selectTestElement.appendChild(widthTestElement);
 })
 export default class DynamicWidthSelect extends Vue {
     // Props
-    @Prop list = p<any[]>({ type: Array, required: true, });
+    @Prop list = p<ReadonlyArray<{ value: any, text: string }>>({ type: Array, required: true, });
     @Prop selectedValue = p<any>({ required: true, });
     @Prop minWidth = p({ type: Number, required: false, default: 20 });
     @Prop disabled = p({ type: Boolean, required: false, default: false, });
@@ -78,7 +78,7 @@ export default class DynamicWidthSelect extends Vue {
     }
 
     @Watch("selectedValue")
-    onSelectedValueChange() {
+    onSelectedValueChange(_value: any, _oldValue: any) {
         this.updateRenderWidth();
     }
 

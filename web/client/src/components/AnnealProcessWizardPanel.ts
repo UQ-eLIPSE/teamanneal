@@ -2,11 +2,13 @@ import * as store from "../store";
 
 import { Vue, Trait } from "av-ts";
 
+import { Data as IState } from "../data/State";
 import { WizardNavigationEntry } from "../data/WizardNavigationEntry";
 
 @Trait
 export class AnnealProcessWizardPanel extends Vue {
-    readonly thisWizardStep: WizardNavigationEntry;
+    // We assert that `thisWizardStep` will be definitely assigned at runtime
+    readonly thisWizardStep!: WizardNavigationEntry<IState>;
     showHelp: boolean = false;
 
     /**

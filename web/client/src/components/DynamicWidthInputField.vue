@@ -79,7 +79,7 @@ export default class DynamicWidthInputField extends Vue {
     }
 
     @Watch("value")
-    onValueChange() {
+    onValueChange(_value: any, _oldValue: any) {
         this.updateRenderWidth();
     }
 
