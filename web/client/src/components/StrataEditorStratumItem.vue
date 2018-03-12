@@ -408,12 +408,13 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumGroupSizes() {
         // Convert all group size keys into numbers
         const groupSizes = this.groupSizes;
-        const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
 
         if (groupSizes === undefined) {
             throw new Error("Group sizes do not exist");
         }
 
+        const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
+        
         // Produce group size ordered array with the count for each group size
         return groupSizeKeys.sort().map((size) => {
             const count = groupSizes[size];

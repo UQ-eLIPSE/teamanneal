@@ -24,8 +24,8 @@
                 <select v-model="idColumn">
                     <option disabled
                             :value="undefined">Please select ID column</option>
-                    <option v-for="option in possibleIdColumns"
-                            :key="option.value"
+                    <option v-for="(option, i) in possibleIdColumns"
+                            :key="option.text + i"
                             :value="option.value">{{ option.text }}</option>
                 </select>
             </p>

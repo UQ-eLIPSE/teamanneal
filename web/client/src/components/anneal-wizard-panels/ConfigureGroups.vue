@@ -40,7 +40,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Mixin } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
@@ -51,7 +51,7 @@ import StrataEditor from "../StrataEditor.vue";
 
 @Component({
     components: {
-        StrataEditor: StrataEditor as Vue.Component,
+        StrataEditor,
     },
 })
 export default class ConfigureGroups extends Mixin(StoreState, AnnealProcessWizardPanel) {

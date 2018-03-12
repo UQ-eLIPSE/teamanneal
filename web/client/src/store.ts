@@ -20,10 +20,6 @@ const store = new Vuex.Store({
     mutations: {
         /// General root state mutations
 
-        initialiseState(state) {
-            state = State.Init();
-        },
-
         setRecordData(state, recordData: IState_RecordData) {
             Vue.set(state, "recordData", recordData);
         },
@@ -125,13 +121,6 @@ const store = new Vuex.Store({
         },
     },
     actions: {
-        /**
-         * Initialises state back to a clean slate
-         */
-        initialiseState(context) {
-            context.commit("initialiseState");
-        },
-
         /**
          * Performs all actions when clearing record data:
          * - wipes record data
