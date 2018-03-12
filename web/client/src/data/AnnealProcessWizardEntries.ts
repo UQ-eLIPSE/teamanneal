@@ -13,7 +13,8 @@ export let
     designGroupStructure: WNE,
     configureGroups: WNE,
     configureConstraints: WNE,
-    viewResult: WNE;
+    viewResult: WNE,
+    modifyResult: WNE;
 
 /**
  * Contains all entries for the anneal process wizard
@@ -154,6 +155,15 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 // Enable only when the anneal request is actually created
                 State.IsAnnealRequestCreated(state)
             );
+        },
+    },
+    modifyResult = {
+        label: "Modify result",
+        path: "/anneal/modify-result",
+        disabled: (_state) => {
+            // NOTE: Currently returning `false` during development
+            // TODO: Actually disable as appropriate
+            return false;
         },
     },
 ];
