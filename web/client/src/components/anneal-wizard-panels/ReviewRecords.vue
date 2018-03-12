@@ -28,10 +28,13 @@
                 <div v-if="hasDuplicateColumnNames"
                      class="error-msg">
                     <h3>Duplicate column names detected</h3>
-                    <p>Please ensure that your records file does not have duplicate column names.</p>
-                    <p v-for="(message, i) in duplicateColumnListMessage"
-                       :key="i"
-                       v-html="message"></p>
+                    <p>Please change the below columns to ensure that you have unique column names.</p>
+                    <ul>
+                        <li v-for="x in duplicateColumnListMessage"
+                            :key="x.label">Found duplicated column name "
+                            <b>{{ x.label }}</b>" at columns: {{ x.columnIndicies.join(", ") }}.
+                        </li>
+                    </ul>
                 </div>
             </div>
             <div class="spreadsheet">
@@ -62,6 +65,11 @@ import { StoreState } from "../StoreState";
 import { State } from "../../data/State";
 import SpreadsheetView from "../SpreadsheetView.vue";
 
+interface ColumnIndexInfo {
+    column: IColumnData,
+    index: number,
+}
+
 @Component({
     components: {
         SpreadsheetView,
@@ -84,38 +92,53 @@ export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizard
         return State.HasDuplicateColumnNames(this.state);
     }
 
+    get columnIndexInfoMap() {
+        return this.columns.reduce((map, column, index) => {
+            if (!map.has(column.label)) {
+                map.set(column.label, []);
+            }
+
+            // Get the previous array of columns with the same label
+            const columnsWithSameLabel = map.get(column.label)!;
+
+            // Push this column in
+            columnsWithSameLabel.push({ column, index });
+
+            return map;
+        }, new Map<string, ColumnIndexInfo[]>());
+    }
+
     /** 
      * Returns columns which have duplicate labels
      */
     get duplicateColumns() {
-        const columnNames = this.columns.map((col: IColumnData) => col.label);
-        // Get repeated column names
-        const duplicateColumnNames = columnNames.filter((columnName: string, i: number) => columnNames.indexOf(columnName, i + 1) !== -1);
-        // Get all columns with duplicate labels
-        const duplicateColumnList = this.columns.filter((column: IColumnData) => duplicateColumnNames.indexOf(column.label) !== -1);
-        return duplicateColumnList;
-    }
+        const duplicateColumnIndexInfo: ColumnIndexInfo[] = [];
 
-    /** Returns messages describing the column numbers of duplicate column names */
-    get duplicateColumnListMessage() {
-        let messages: string[] = [];
-
-        /** Stores <duplicate column name, column numbers> at which the duplicate column name exists */
-        const dupMap: { [key: string]: number[] } = {};
-
-        this.duplicateColumns.forEach((col: IColumnData) => {
-            if (dupMap[col.label] === undefined) {
-                dupMap[col.label] = [this.columns.indexOf(col) + 1];
-            } else {
-                dupMap[col.label].push(this.columns.indexOf(col) + 1);
+        this.columnIndexInfoMap.forEach((colInfo) => {
+            if (colInfo.length > 1) {
+                duplicateColumnIndexInfo.push(...colInfo);
             }
         });
 
-        for (let duplicateColumnName in dupMap) {
-            messages.push("Found repeated column name: `<b>" + duplicateColumnName + "</b>` at column no. " + dupMap[duplicateColumnName].join(', '));
-        }
+        return duplicateColumnIndexInfo.map(x => x.column);
+    }
 
-        return messages;
+    /** 
+     * Returns messages describing the column numbers of duplicate column names
+     */
+    get duplicateColumnListMessage() {
+        const messageObjs: { label: string, columnIndicies: number[] }[] = [];
+
+        this.columnIndexInfoMap.forEach((colInfo, label) => {
+            if (colInfo.length > 1) {
+                messageObjs.push({
+                    label,
+                    columnIndicies: colInfo.map(y => y.index + 1).sort()
+                });
+            }
+        });
+
+        return messageObjs;
     }
 }
 </script>

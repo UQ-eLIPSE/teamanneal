@@ -42,7 +42,7 @@ export default class SpreadsheetView extends Vue {
     @Prop rows = p<ReadonlyArray<string | number | null>>({ type: Array, required: true, });
     @Prop columnData = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
     /**  Array of invalid columns (valid if no duplicate column names exist) */
-    @Prop invalidColumns = p<ReadonlyArray<IColumnData>>({type: Array, required: false, default: () => []});
+    @Prop invalidColumns = p<ReadonlyArray<IColumnData>>({ type: Array, required: false, default: () => [] });
 
     get contentRows() {
         return this.rows.slice(1);
@@ -57,13 +57,16 @@ export default class SpreadsheetView extends Vue {
             "cell-content": true,
             "nan": Number.isNaN(value),
             "null": value === null,
-            "error" : this.invalidColumns.indexOf(this.columnData[index]) !== -1
+            "error": !this.isValidColumn(this.columnData[index]),
         }
 
         return classes;
     }
 
-    /** Returns if column is valid (i.e. it does not exist in invalid columns array) */
+    /** 
+     * Returns if column is valid (i.e. it does not exist in invalid columns 
+     * array)
+     */
     isValidColumn(column: IColumnData) {
         return this.invalidColumns.indexOf(column) === -1;
     }
