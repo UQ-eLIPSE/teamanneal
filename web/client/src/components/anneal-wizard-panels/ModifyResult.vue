@@ -4,17 +4,29 @@
             <div class="desc-text">
                 <h1>Modify result</h1>
             </div>
-            <div class="spreadsheet">
-                <SpreadsheetTreeView class="viewer"
-                                     :annealNodeRoots="annealNodeRoots"
-                                     :annealSatisfactionMap="annealSatisfactionMap"
-                                     :headerRow="headerRow"
-                                     :recordRows="recordRows"
-                                     :nameMap="nameMap"
-                                     :idColumnIndex="idColumnIndex"
-                                     :numberOfColumns="columns.length"
-                                     :combinedNameFormat="combinedNameFormat"
-                                     :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+            <div class="workspace">
+                <div class="edit-operations">
+                    <br>
+                    Edit operations
+                    <br>
+                </div>
+                <div class="spreadsheet-dashboard-wrapper">
+                    <div class="spreadsheet">
+                        <SpreadsheetTreeView class="viewer"
+                                             :annealNodeRoots="annealNodeRoots"
+                                             :annealSatisfactionMap="annealSatisfactionMap"
+                                             :headerRow="headerRow"
+                                             :recordRows="recordRows"
+                                             :nameMap="nameMap"
+                                             :idColumnIndex="idColumnIndex"
+                                             :numberOfColumns="columns.length"
+                                             :combinedNameFormat="combinedNameFormat"
+                                             :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+                    </div>
+                    <div class="dashboard">
+                        Dashboard
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -334,10 +346,31 @@ XMLHttpRequest {
     flex-shrink: 0;
 }
 
+.workspace {
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-operations {
+    background: #ccc;
+    flex-shrink: 0;
+}
+
+.spreadsheet-dashboard-wrapper {
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: row;
+}
+
 .spreadsheet {
     background: #fff;
 
-    flex-grow: 1;
+    flex-grow: 100;
     flex-shrink: 0;
 
     position: relative;
@@ -349,6 +382,16 @@ XMLHttpRequest {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+.dashboard {
+    background: #e6e6e6;
+
+    flex-grow: 1;
+    flex-shrink: 1;
+
+    min-width: 20vw;
+    max-width: 30vw;
 }
 
 .export-button {
