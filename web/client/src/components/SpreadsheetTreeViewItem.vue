@@ -5,20 +5,23 @@
             class="group-heading"
             :data-depth="itemDepth"
             :colspan="numberOfColumns">
-            <span class="group-heading-text"
-                  :style="groupHeadingTextStyle">{{ itemContent }} {{ itemSatisfactionString }}</span>
+            <div class="satisfaction-table-data">
+                <span class="group-heading-text"
+                      :style="groupHeadingTextStyle">{{ itemContent }} {{ itemSatisfactionString }}</span>
 
-            <div class="satisfaction-wrapper"
-                 v-if="itemSatisfaction !== undefined && weightedAverageSatisfaction !== undefined">
+                <div class="satisfaction-wrapper"
+                     v-if="itemSatisfaction !== undefined && weightedAverageSatisfaction !== undefined">
+                    <span>{{(weightedAverageSatisfaction*100).toFixed(0)}}%</span>
 
-                <meter class="satisfaction-meter"
-                       :value="weightedAverageSatisfaction"
-                       max="1"
-                       min="0"
-                       low="0.5"></meter>
-                {{(weightedAverageSatisfaction*100).toFixed(0)}}
+                    <!-- TODO: decide what is 'low' for the satisfaction meter -->
+                    <meter class="satisfaction-meter"
+                           :value="weightedAverageSatisfaction"
+                           max="1"
+                           min="0"
+                           low="0.5"></meter>
+
+                </div>
             </div>
-
         </td>
     </tr>
     <tr v-else>
@@ -217,5 +220,11 @@ th select.column-type {
 
 .satisfaction-wrapper {
     display: inline-block;
+    font-size: 0.8em;
+}
+
+.satisfaction-table-data {
+    display: flex;
+    justify-content: space-between;
 }
 </style>
