@@ -5,7 +5,7 @@ import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as
 import { Stratum, Data as IStratum } from "./data/Stratum";
 import { Constraint, Data as IConstraint } from "./data/Constraint";
 import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse } from "./data/AnnealResponse";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse } from "./data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
 import { deepMerge } from "./util/Object";
 import { replaceAll } from "./util/String";
@@ -96,8 +96,12 @@ const store = new Vuex.Store({
         setAnnealResponse(state, annealResponse: IAnnealResponse) {
             Vue.set(state, "annealResponse", annealResponse);
         },
-        updateAnnealResponseOnServerResponse(state, content: any) {
-            const annealResponse = state.annealResponse as any;
+        updateAnnealResponseOnServerResponse(state, content: AxiosResponse) {
+            const annealResponse = state.annealResponse;
+
+            if(annealResponse === undefined) {
+                return;
+            }
 
             // Update `content` on anneal response object
             Vue.set(annealResponse, "content", content);
@@ -379,11 +383,12 @@ Delete constraints that use this column and try again.`;
 
             // Once the request completes, send status queries to server to check the status of the anneal job
             AnnealRequest.WaitForCompletion(annealRequest)
-                .then((responseContent: any) => {
+                .then((responseContent: AxiosResponse) => {
+                    if(responseContent.data) {
+                        AnnealRequest.QueryAndUpdateAnnealStatus(responseContent, handleAnnealCompletion);
+                    }
 
-                    AnnealRequest.queryAndUpdateAnnealStatus(responseContent, handleAnnealCompletion);
-
-                    function handleAnnealCompletion(resultResponse: any) {
+                    function handleAnnealCompletion(resultResponse: AxiosResponse) {
                         context.commit("updateAnnealResponseOnServerResponse", resultResponse);
                     }
                 });

@@ -74,5 +74,5 @@ export function init() {
  * @param numberOfResults Expected number of results
  */
 function storeExpectedNumberOfResults(redisResponseId: string, numberOfResults: number): boolean {
-    return RedisService.getClient().set(redisResponseId + '-expectedNumberOfResults', numberOfResults + ''); 
+    return RedisService.getClient().set(RedisService.appendExpectedNumberOfAnnealResultsTag(redisResponseId), numberOfResults + ''); 
 }

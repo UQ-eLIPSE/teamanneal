@@ -23,14 +23,15 @@ module.exports = () => {
             // Run anneal
             anneal,
     );
-    router.route("/annealStatus")
-        .post(
+
+    router.route("/anneal-status")
+        .get(
             // Get anneal's status
             annealStatus
         );
 
-    router.route("/annealResult")
-        .post(
+    router.route("/anneal-result")
+        .get(
             // Retrieve anneal result
             annealResult
         );
@@ -79,8 +80,10 @@ const anneal: express.RequestHandler =
 const annealStatus: express.RequestHandler =
     async (req, res) => {
         try {
-            const annealRequest = req.body;
-            const annealID = annealRequest.id;
+
+            if (req.query.id === undefined) throw new Error("Anneal job ID is invalid.");
+
+            const annealID = req.query.id;
             const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
 
             const annealStateObjects = annealMapList.map((jsonString: string) => JSON.parse(jsonString));
@@ -93,23 +96,25 @@ const annealStatus: express.RequestHandler =
                 // Get partition identifier
                 const partitionKey = statusStateObject.annealNode.partitionValue;
 
+                // Makes responses lightweight, client doesn't need "annealNode" for anneal status responses
+                const { annealNode, ...statusStateResponseObject } = statusStateObject;
+
                 // Check if key is defined in partition state status map
                 if (partitionStateStatusMap[partitionKey] === undefined) {
-                    partitionStateStatusMap[partitionKey] = statusStateObject;
+                    partitionStateStatusMap[partitionKey] = statusStateResponseObject;
                 } else {
                     // Key already exists
                     const oldStatusStateObject = partitionStateStatusMap[partitionKey];
 
                     if (statusStateObject.timestamp > oldStatusStateObject.timestamp) {
                         // Update key with new status state object
-                        partitionStateStatusMap[partitionKey] = statusStateObject;
+                        partitionStateStatusMap[partitionKey] = statusStateResponseObject;
                     }
                 }
 
             });
 
             const expectedNumberOfResults = await RedisService.getExpectedNumberOfAnnealResults(annealID);
-
             res
                 .status(HTTPResponseCode.SUCCESS.OK)
                 .json({ statusMap: partitionStateStatusMap, expectedNumberOfResults: expectedNumberOfResults });
@@ -120,7 +125,7 @@ const annealStatus: express.RequestHandler =
             console.error(e);
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                .json({ Error: e });
+                .json({ error: e });
         }
 
     }
@@ -133,8 +138,9 @@ const annealStatus: express.RequestHandler =
 const annealResult: express.RequestHandler =
     async (req, res) => {
         try {
-            const annealRequest = req.body;
-            const annealID = annealRequest.id;
+
+            if (req.query.id === undefined) throw new Error("Anneal job ID is invalid.");
+            const annealID = req.query.id;
             const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
             for (let annealMap of annealMapList) {
                 if (JSON.parse(annealMap).results) {
@@ -151,7 +157,7 @@ const annealResult: express.RequestHandler =
         } catch (e) {
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-                .send({ Error: e });
+                .send({ error: e });
             throw new Error(e);
 
         }

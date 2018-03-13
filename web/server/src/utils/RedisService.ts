@@ -71,8 +71,12 @@ export const pushAnnealState = (key: string, value: { [key: string]: any }) => {
     });
 }
 
+export function appendExpectedNumberOfAnnealResultsTag(key: string) {
+    return key + '-expectedNumberOfResults';
+}
+
 export async function getExpectedNumberOfAnnealResults(key: string) {
-    return await getValue(key + '-expectedNumberOfResults');
+    return await getValue(appendExpectedNumberOfAnnealResultsTag(key));
 }
 
 /**
@@ -80,7 +84,7 @@ export async function getExpectedNumberOfAnnealResults(key: string) {
  * @param annealID ID of the anneal job.
  * @param seconds The number of seconds after which key will expire.
  */
-export function expireAnnealData(annealID: string, seconds: number) {
-    client.expire(annealID, seconds);
-    client.expire(annealID + '-expectedNumberOfResults', seconds);
+export function expireAnnealData(annealId: string, seconds: number) {
+    client.expire(annealId, seconds);
+    client.expire(appendExpectedNumberOfAnnealResultsTag(annealId), seconds);
 }
