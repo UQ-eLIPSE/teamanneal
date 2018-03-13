@@ -1,23 +1,30 @@
 <template>
-    <div id="spreadsheet">
-        <table>
-            <thead>
-                <tr class="header">
-                    <th v-for="(label, i) in headerRow"
-                        :key="i">
-                        <template>
-                            <span class="cell-content">{{ label }}</span>
-                        </template>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <SpreadsheetTreeViewItem v-for="(item, i) in flattenedTree"
-                                         :key="i"
-                                         :item="item"
-                                         :numberOfColumns="numberOfColumns"></SpreadsheetTreeViewItem>
-            </tbody>
-        </table>
+    <div id="results-wrapper">
+        <div id="spreadsheet">
+            <table>
+                <thead>
+                    <tr class="header">
+                        <th v-for="(label, i) in headerRow"
+                            :key="i">
+                            <template>
+                                <span class="cell-content">{{ label }}</span>
+                            </template>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <SpreadsheetTreeViewItem v-for="(item, i) in flattenedTree"
+                                             :key="i"
+                                             :item="item"
+                                             :numberOfColumns="numberOfColumns"></SpreadsheetTreeViewItem>
+                </tbody>
+            </table>
+        </div>
+        <ConstraintSatisfactionDashboard class="satisfaction-dashboard"
+                                         :flattenedTree="flattenedTree">
+
+        </ConstraintSatisfactionDashboard>
+
     </div>
 </template>
 
@@ -33,10 +40,12 @@ import { NodeNameMapNameGenerated as IResultTree_NodeNameMapNameGenerated } from
 import { FlattenedTreeItem, flattenNodes } from "../data/SpreadsheetTreeView";
 
 import SpreadsheetTreeViewItem from "./SpreadsheetTreeViewItem.vue";
+import ConstraintSatisfactionDashboard from "./ConstraintSatisfactionDashboard.vue";
 
 @Component({
     components: {
         SpreadsheetTreeViewItem,
+        ConstraintSatisfactionDashboard
     },
 })
 export default class SpreadsheetTreeView extends Vue {
@@ -74,6 +83,15 @@ export default class SpreadsheetTreeView extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
+#results-wrapper {
+    display: flex;
+}
+
+.satisfaction-dashboard {
+    width: 20%;
+    overflow-y: scroll;
+}
+
 #spreadsheet {
     overflow: scroll;
 }

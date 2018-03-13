@@ -29,17 +29,18 @@
                                target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
+
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :annealNodeRoots="annealNodeRoots"
-                                         :annealSatisfactionMap="annealSatisfactionMap"
-                                         :headerRow="headerRow"
-                                         :recordRows="recordRows"
-                                         :nameMap="nameMap"
-                                         :idColumnIndex="idColumnIndex"
-                                         :numberOfColumns="columns.length"
-                                         :combinedNameFormat="combinedNameFormat"
-                                         :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+                                        :annealNodeRoots="annealNodeRoots"
+                                        :annealSatisfactionMap="annealSatisfactionMap"
+                                        :headerRow="headerRow"
+                                        :recordRows="recordRows"
+                                        :nameMap="nameMap"
+                                        :idColumnIndex="idColumnIndex"
+                                        :numberOfColumns="columns.length"
+                                        :combinedNameFormat="combinedNameFormat"
+                                        :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -413,5 +414,13 @@ XMLHttpRequest {
     border: 1px dashed #a00;
     padding: 1em;
     overflow: auto;
+}
+
+.spreadsheet-dashboard {
+    display: flex;
+}
+
+.satisfaction-dashboard {
+    width: 20%;
 }
 </style>
