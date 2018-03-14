@@ -6,22 +6,17 @@
             </div>
             <div class="workspace">
                 <div class="edit-operations">
-                    <br>
-                    Edit operations
+                    <br> Edit operations
                     <br>
                 </div>
                 <div class="spreadsheet-dashboard-wrapper">
                     <div class="spreadsheet">
-                        <SpreadsheetTreeView class="viewer"
-                                             :annealNodeRoots="annealNodeRoots"
-                                             :annealSatisfactionMap="annealSatisfactionMap"
-                                             :headerRow="headerRow"
-                                             :recordRows="recordRows"
-                                             :nameMap="nameMap"
-                                             :idColumnIndex="idColumnIndex"
-                                             :numberOfColumns="columns.length"
-                                             :combinedNameFormat="combinedNameFormat"
-                                             :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+                        <SpreadsheetTreeView2 class="viewer"
+                                              :annealNodeRoots="annealNodeRoots"
+                                              :headerRow="headerRow"
+                                              :recordRows="recordRows"
+                                              :idColumnIndex="idColumnIndex">
+                        </SpreadsheetTreeView2>
                     </div>
                     <div class="dashboard">
                         Dashboard
@@ -50,11 +45,11 @@ import { replaceAll } from "../../util/String";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
-import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
+import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 
 @Component({
     components: {
-        SpreadsheetTreeView,
+        SpreadsheetTreeView2,
     },
 })
 export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardPanel) {
