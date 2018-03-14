@@ -1,11 +1,13 @@
 <template>
     <div class="constraint-satisfaction-dashboard">
-        <h4>Dashboard</h4>
-        <select v-model="currentStratum">
-            <option v-for="stratum in strata"
-                    :key="stratum._id"
-                    :value="stratum">By {{stratum.label}}</option>
-        </select>
+        <h2>Dashboard</h2>
+        <label class="filter">Filter
+            <select v-model="currentStratum">
+                <option v-for="stratum in strata"
+                        :key="stratum._id"
+                        :value="stratum">By {{stratum.label}}</option>
+            </select>
+        </label>
         <div class="constraints-container">
 
             <ConstraintSatisfactionDashboardConstraint v-for="constraint in constraintsArray"
@@ -66,15 +68,15 @@ export default class ConstraintSatisfactionDashboard extends Vue {
         let constraintScores: number[] = [];
         this.flattenedTree.forEach((treeItem) => {
             const treeItemSatisfaction = treeItem.satisfaction;
-            if(treeItemSatisfaction === undefined) return;
+            if (treeItemSatisfaction === undefined) return;
             const treeItemConstraintIds = Object.keys(treeItemSatisfaction);
-            if(treeItemConstraintIds.indexOf(constraint._id) !== -1) {
+            if (treeItemConstraintIds.indexOf(constraint._id) !== -1) {
                 // Constraint exists for current tree item
                 constraintScores.push(treeItemSatisfaction[constraint._id] as number);
             }
         });
-        const totalScore = constraintScores.reduce((totalScore, score) => totalScore + score,0);
-        const perc = (totalScore/constraintScores.length) * 100;
+        const totalScore = constraintScores.reduce((totalScore, score) => totalScore + score, 0);
+        const perc = (totalScore / constraintScores.length) * 100;
         return perc;
     }
 }
@@ -84,21 +86,26 @@ export default class ConstraintSatisfactionDashboard extends Vue {
 <style scoped>
 .constraint-satisfaction-dashboard {
     display: flex;
-    justify-content: center;
+    align-items: center;
     flex-direction: column;
+    background-color: #f2f2f2;
 }
 
-.constraint-satisfaction-dashboard > * {
-    margin: 0.2rem 0.1rem 0.2rem 0.1rem;
+.filter {
+    width: 100%;
+    padding: 0.5em;
 }
 
 select {
-    padding: 1rem;
+    width: 100%;
+    padding: 0.5rem;
     font-weight: 400;
     margin: 0.5rem;
+    flex-shrink: 0;
+    margin: 0.5rem 0 0.5rem 0
 }
 
-h3 {
+h2 {
     color: #49075E;
 }
 
@@ -108,7 +115,7 @@ h3 {
     padding: 0.5em;
 }
 
-.constraints-container > * {
+.constraints-container>* {
     margin: 0.1rem 0 0.1rem 0;
 }
 

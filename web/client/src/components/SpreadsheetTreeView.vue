@@ -88,12 +88,13 @@ export default class SpreadsheetTreeView extends Vue {
 }
 
 .satisfaction-dashboard {
-    width: 20%;
+    width: 25%;
     overflow-y: scroll;
 }
 
 #spreadsheet {
     overflow: scroll;
+    width: 75%;
 }
 
 table {
