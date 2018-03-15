@@ -12,7 +12,7 @@ export interface NodeRoot extends NodeBase {
     readonly children: ReadonlyArray<NodeStratum>,
 }
 
-type NodeStratum = NodeStratumWithStratumChildren | NodeStratumWithRecordChildren;
+export type NodeStratum = NodeStratumWithStratumChildren | NodeStratumWithRecordChildren;
 
 export interface NodeStratumWithStratumChildren extends NodeBase {
     readonly type: "stratum-stratum",
