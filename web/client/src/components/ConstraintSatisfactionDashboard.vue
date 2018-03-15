@@ -2,17 +2,17 @@
     <div class="constraint-satisfaction-dashboard">
         <h2>Dashboard</h2>
         <label class="filter">Filter
-            <select v-model="currentStratum">
+            <select v-model="selectedStratum">
                 <option v-for="stratum in strata"
                         :key="stratum._id"
                         :value="stratum">By {{stratum.label}}</option>
             </select>
         </label>
         <div class="constraints-container">
-
+            <!-- TODO: Decide what `getConstraintFulfilledPercentage` returns -->
             <ConstraintSatisfactionDashboardConstraint v-for="constraint in constraintsArray"
                                                        :key="constraint._id"
-                                                       :currentStratum="currentStratum"
+                                                       :selectedStratum="selectedStratum"
                                                        :fulfilledPercentage="getConstraintFulfilledPercentage(constraint)"
                                                        @constraintSelected="handleConstraintClicked"
                                                        :constraint="constraint"> </ConstraintSatisfactionDashboardConstraint>
@@ -34,50 +34,75 @@ import { Data as IStratum } from "../data/Stratum";
     }
 })
 export default class ConstraintSatisfactionDashboard extends Vue {
+    /** Flattened tree generated from anneal node root */
     @Prop flattenedTree = p<FlattenedTreeItem[]>({ required: true, });
+
+    /** Stores stratum for filtering constraints */
     private filterStratum: IStratum | undefined = undefined;
 
-    get currentStratum() {
+    get selectedStratum() {
         return this.filterStratum || this.strata[0];
     }
 
-
-    set currentStratum(stratum: IStratum) {
+    set selectedStratum(stratum: IStratum) {
         this.filterStratum = stratum;
     }
 
+    /**
+     * Returns store state
+     */
     get state() {
         return this.$store.state as IState;
     }
 
-    handleConstraintClicked(constraint: IConstraint) {
-        console.log('selected constraint: ');
-        console.log(constraint);
-
-    }
-
+    /**
+     * Returns constraints applicable to currently selected stratum
+     */
     get constraintsArray() {
-        return this.state.annealConfig.constraints.filter((constraint) => constraint.stratum === this.currentStratum._id);
+        return this.state.annealConfig.constraints.filter((constraint) => constraint.stratum === this.selectedStratum._id);
     }
 
+    /**
+     * Returns strata from state store
+     */
     get strata() {
         return this.state.annealConfig.strata;
     }
 
+    /**
+     * Handles `constraintSelected` event emitted from 
+     * `ConstraintSatisfactionDashboardConstraint` component.
+     */
+    handleConstraintClicked(constraint: IConstraint) {
+        this.$emit("constraintSelected", constraint);
+    }
+
+    /**
+     * TODO: Decide the value that this function should return.
+     * At the moment in the UI, this number is displayed as "x% of groups match" - which is incorrect.
+     * This function actually returns the average satisfaction value of a specific constraint across strata. 
+     * @param constraint Constraint
+     */
     getConstraintFulfilledPercentage(constraint: IConstraint) {
-        let constraintScores: number[] = [];
-        this.flattenedTree.forEach((treeItem) => {
-            const treeItemSatisfaction = treeItem.satisfaction;
-            if (treeItemSatisfaction === undefined) return;
-            const treeItemConstraintIds = Object.keys(treeItemSatisfaction);
-            if (treeItemConstraintIds.indexOf(constraint._id) !== -1) {
-                // Constraint exists for current tree item
-                constraintScores.push(treeItemSatisfaction[constraint._id] as number);
-            }
-        });
-        const totalScore = constraintScores.reduce((totalScore, score) => totalScore + score, 0);
-        const perc = (totalScore / constraintScores.length) * 100;
-        return perc;
+
+        /** Tree items to which `constraint` is applicable */
+        // Constraint applicability conditions:
+        // 1. `satisfaction` exists on tree item
+        // 2. `satisfaction` value for this constraint is not falsy (except 0)   
+        const applicableTreeItems = this.flattenedTree.filter((treeItem) =>
+            treeItem.satisfaction &&
+            (treeItem.satisfaction[constraint._id] || treeItem.satisfaction[constraint._id] === 0));
+
+
+        const constraintScores = applicableTreeItems.map((treeItem) => treeItem.satisfaction![constraint._id] as number);
+
+        // Since we do not have a "match" condition, `totalScore` is basically the 
+        // average satisfaction value for a constraint over all strata that said constraint applies to.
+        const totalScore = constraintScores.reduce((sum, score) => sum + score, 0);
+
+        const fulfilledPercentage = (totalScore / constraintScores.length) * 100;
+
+        return fulfilledPercentage;
     }
 }
 </script>
