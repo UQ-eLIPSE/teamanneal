@@ -44,6 +44,7 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
 }
 
+/** Creates the heading elements for stratum nodes */
 function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
     return createElement("tr", [
         createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
@@ -62,6 +63,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
     ]);
 }
 
+/** Creates elements for records */
 function createRecordContentRow(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, recordId: RecordElement, cells: Record, leadingPadCells: number) {
     return createElement("tr",
         {
@@ -80,6 +82,7 @@ function createRecordContentRow(createElement: CreateElement, onItemClick: (data
     );
 }
 
+/** Returns the classes to apply to cells of a given value */
 function getCellClasses(cellValue: number | string | null) {
     return {
         "nan": Number.isNaN(cellValue as any),
@@ -87,6 +90,7 @@ function getCellClasses(cellValue: number | string | null) {
     };
 }
 
+/** Returns the string to display for cells of a given value */
 function getCellDisplayedValue(cellValue: number | string | null) {
     if (cellValue === null) {
         return undefined;

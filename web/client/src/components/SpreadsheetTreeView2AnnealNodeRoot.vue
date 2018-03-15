@@ -43,11 +43,13 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop totalNumberOfColumns = p({ type: Number, required: true, });
     @Prop recordLookupMap = p<Map<string | number | null, ReadonlyArray<number | string | null>>>({ required: true, });
 
+    /** Handles click on the heading rendered in this component */
     onHeadingClick() {
         // The node is already appended to the array in the inner handler
         this.onItemClickHandler([]);
     }
 
+    /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }

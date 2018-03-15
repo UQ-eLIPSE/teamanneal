@@ -4,9 +4,9 @@
             v-for="n in padCells"
             :key="n"
             class="blank"></th>
-        <th v-once
-            v-for="(label, i) in headerRow"
-            :key="i">{{ label }}</th>
+        <th v-for="(label, i) in headerRow"
+            :key="i"
+            :style="dataColumnStyle(i)">{{ label }}</th>
     </tr>
 </template>
 
@@ -20,6 +20,24 @@ export default class SpreadsheetTreeView2Header extends Vue {
     // Props
     @Prop padCells = p({ type: Number, required: false, default: 0 });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
+    @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
+
+    dataColumnStyle(i: number) {
+        // If no width information is available, no style is applied
+        if (this.columnWidths === undefined) {
+            return undefined;
+        }
+
+        // The column widths include pad cell widths too, so we need to
+        // offset by the number `padCells`
+        const cellWidth = `${this.columnWidths[i + this.padCells]}px`;
+
+        return {
+            width: cellWidth,
+            minWidth: cellWidth,
+            maxWidth: cellWidth,
+        };
+    }
 }   
 </script>
 

@@ -1,20 +1,31 @@
 <template>
-    <div id="spreadsheet">
+    <div class="spreadsheet-tree-view">
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
-                                        :headerRow="headerRow"></SpreadsheetTreeView2Header>
+                                        :headerRow="headerRow"
+                                        :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
         </table>
         <table class="contents">
-            <!-- One special row to align content in tree layout -->
             <tbody>
+                <!-- One special row to align content in tree layout -->
                 <tr class="alignment-row">
-                    <td v-for="n in treeMaxDepth"
+                    <td v-once
+                        v-for="n in treeMaxDepth"
                         class="leading-pad-cell"
                         :key="n"></td>
-                    <td :colspan="numberOfDataColumns"></td>
+                    <td v-for="i in numberOfDataColumns"
+                        :key="i"
+                        :style="dataColumnStyle(i-1)"></td>
                 </tr>
+
+                <!-- If we're in the sizing phase, we need to include the header in the contents of the table before we do an analysis of the widths of the columns -->
+                <SpreadsheetTreeView2Header ref="sizingPhaseHeader"
+                                            class="sizing-phase-header"
+                                            :padCells="treeMaxDepth"
+                                            :headerRow="headerRow"></SpreadsheetTreeView2Header>
             </tbody>
 
+            <!-- Render node roots (partitions or highest stratum) -->
             <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in annealNodeRoots"
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
@@ -27,8 +38,9 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
+import { Record, RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
@@ -62,6 +74,9 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
 
+    // Private
+    columnWidths: number[] | undefined = undefined;
+
     get treeMaxDepth() {
         // Get the maximum depth of all children
         return this.annealNodeRoots.reduce((carry, node) => {
@@ -84,7 +99,52 @@ export default class SpreadsheetTreeView2 extends Vue {
             const id = record[idColumnIndex];
             map.set(id, record);
             return map;
-        }, new Map<string | number | null, ReadonlyArray<number | string | null>>());
+        }, new Map<RecordElement, Record>());
+    }
+
+    dataColumnStyle(i: number) {
+        // If no width information is available, no style is applied
+        if (this.columnWidths === undefined) {
+            return undefined;
+        }
+
+        // The column widths include pad cell widths too, so we need to
+        // offset by the number `treeMaxDepth`
+        const cellWidth = `${this.columnWidths[i + this.treeMaxDepth]}px`;
+
+        return {
+            width: cellWidth,
+            minWidth: cellWidth,
+            maxWidth: cellWidth,
+        };
+    }
+
+    sizeColumnWidths() {
+        const headerEl = (this.$refs["sizingPhaseHeader"] as Vue).$el as HTMLTableRowElement;
+
+        // "Show" the element for measurements
+        headerEl.classList.add("show");
+
+        // Measure all columns
+        const widths: number[] = [];
+
+        for (let i = 0; i < headerEl.children.length; ++i) {
+            const headerCell = headerEl.children[i];
+            widths.push(headerCell.getBoundingClientRect().width);
+        }
+
+        // Hide the element again
+        headerEl.classList.remove("show");
+
+        return widths;
+    }
+
+    updateColumnWidths() {
+        this.columnWidths = this.sizeColumnWidths();
+    }
+
+    @Lifecycle mounted() {
+        this.updateColumnWidths();
     }
 }   
 </script>
@@ -92,15 +152,13 @@ export default class SpreadsheetTreeView2 extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#spreadsheet {
+.spreadsheet-tree-view {
     overflow: scroll;
 }
 
 .header,
 .contents {
     border-collapse: collapse;
-
-    table-layout: fixed;
 }
 
 .header {
@@ -130,5 +188,14 @@ export default class SpreadsheetTreeView2 extends Vue {
     width: 2em;
     min-width: 2em;
     max-width: 2em;
+}
+
+.sizing-phase-header {
+    display: none;
+    visibility: hidden;
+}
+
+.sizing-phase-header.show {
+    display: table-row;
 }
 </style>
