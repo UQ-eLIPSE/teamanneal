@@ -22,7 +22,7 @@ interface Props_NodeStratumWithStratumChildren {
     recordLookupMap: Map<string | number | null, ReadonlyArray<number | string | null>>,
 }
 
-function getLabel(p: Props) {
+function getGroupHeadingLabel(p: Props) {
     return `AnnealNode.NodeStratum[${p.node._id}]`;
 }
 
@@ -38,9 +38,16 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
 }
 
+function createGroupHeading(createElement: CreateElement, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
+    return createElement("tr", [
+        createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
+        createElement("td", { class: "group-heading", attrs: { colspan: totalNumberOfColumns - leadingPadCells } }, heading),
+    ]);
+}
+
 function createRecordContentRow(createElement: CreateElement, cells: ReadonlyArray<number | string | null>, leadingPadCells: number) {
     return createElement("tr", { class: "record-content" }, [
-        ...Array.from({ length: leadingPadCells }, () => createElement("td", { class: "blank" })),
+        createElement("td", { class: "leading-pad-cell", attrs: { colspan: leadingPadCells } }),
         ...cells.map((cellValue) => {
             return createElement("td", { class: getCellClasses(cellValue) }, getCellDisplayedValue(cellValue));
         }),
@@ -82,10 +89,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         // See https://github.com/vuejs/vue-loader/issues/1168
 
         const elements: VNode[] = [
-            h("tr", [
-                h("td", { class: "tree-indicator", attrs: { colspan: p.depth } }, "-"),
-                h("td", { class: "group-heading", attrs: { colspan: p.totalNumberOfColumns - p.depth } }, getLabel(p)),
-            ]),
+            createGroupHeading(h, getGroupHeadingLabel(p), p.totalNumberOfColumns, p.depth),
         ];
 
         if (nodeHasRecordChildren(p)) {
@@ -93,7 +97,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
             elements.push(...getRows(p).map(row => createRecordContentRow(h, row.data, p.depth)));
         } else {
             // Render further strata
-            elements.push(...getInnerNodes(p).map(child =>
+            elements.push(...getInnerNodes(p).map((child) =>
                 // Recurse down using this same component
                 h("SpreadsheetTreeView2AnnealNodeStratum", {
                     props: {
@@ -148,13 +152,9 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     white-space: nowrap;
 }
 
-.record-content td.blank {
+.record-content .leading-pad-cell {
     border: 0;
     padding: 0;
-
-    width: 2em;
-    min-width: 2em;
-    max-width: 2em;
 }
 
 .nan {
