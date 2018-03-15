@@ -16,7 +16,7 @@ interface Props_NodeStratumWithRecordChildren {
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
 
-    onItemClick: (data: any[]) => void,
+    onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
 }
 
 interface Props_NodeStratumWithStratumChildren {
@@ -25,7 +25,7 @@ interface Props_NodeStratumWithStratumChildren {
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
 
-    onItemClick: (data: any[]) => void,
+    onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
 }
 
 function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
@@ -44,7 +44,7 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
 }
 
-function createGroupHeading(createElement: CreateElement, onItemClick: (data: any[]) => void, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
+function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
     return createElement("tr", [
         createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
         createElement("td",
@@ -62,7 +62,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: an
     ]);
 }
 
-function createRecordContentRow(createElement: CreateElement, onItemClick: (data: any[]) => void, recordId: RecordElement, cells: Record, leadingPadCells: number) {
+function createRecordContentRow(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, recordId: RecordElement, cells: Record, leadingPadCells: number) {
     return createElement("tr",
         {
             class: "record-content",
@@ -112,7 +112,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 
         // This appends information about the current stratum node to the item
         // click chain
-        const __onItemClick = (data: any[]) => {
+        const __onItemClick = (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => {
             p.onItemClick([{ node: p.node }, ...data]);
         }
 

@@ -26,6 +26,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import { RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
@@ -47,7 +48,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.onItemClickHandler([]);
     }
 
-    onItemClickHandler(data: any[]) {
+    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
