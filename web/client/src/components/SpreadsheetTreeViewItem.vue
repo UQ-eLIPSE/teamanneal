@@ -5,8 +5,23 @@
             class="group-heading"
             :data-depth="itemDepth"
             :colspan="numberOfColumns">
-            <span class="group-heading-text"
-                  :style="groupHeadingTextStyle">{{ itemContent }} {{ itemSatisfactionString }}</span>
+            <div class="satisfaction-table-data">
+                <span class="group-heading-text"
+                      :style="groupHeadingTextStyle">{{ itemContent }} {{ itemSatisfactionString }}</span>
+
+                <div class="satisfaction-wrapper"
+                     v-if="itemSatisfaction !== undefined && weightedAverageSatisfaction !== undefined">
+                    <span>{{(weightedAverageSatisfaction*100).toFixed(0)}}%</span>
+
+                    <!-- TODO: decide what is 'low' for the satisfaction meter -->
+                    <meter class="satisfaction-meter"
+                           :value="weightedAverageSatisfaction"
+                           max="1"
+                           min="0"
+                           low="0.5"></meter>
+
+                </div>
+            </div>
         </td>
     </tr>
     <tr v-else>
@@ -22,8 +37,9 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
-
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
+import { Data as IState } from "../data/State";
+import { Data as IConstraint } from "../data/Constraint";
 
 @Component
 export default class SpreadsheetTreeViewItem extends Vue {
@@ -35,6 +51,10 @@ export default class SpreadsheetTreeViewItem extends Vue {
         return this.item.depth;
     }
 
+    get state() {
+        return this.$store.state as IState;
+    }
+
     get itemContent() {
         return this.item.content;
     }
@@ -42,18 +62,55 @@ export default class SpreadsheetTreeViewItem extends Vue {
     get itemSatisfaction() {
         const satisfaction = this.item.satisfaction;
 
-        if (satisfaction === undefined) {
+        if (satisfaction === undefined || Object.keys(satisfaction).length === 0) {
             return undefined;
         }
 
         return Object.keys(satisfaction).sort().map(constraintId => satisfaction[constraintId]);
     }
 
+    get weightedAverageSatisfaction() {
+        if (this.itemSatisfaction !== undefined) {
+            const constraints = this.getConstraintsFromState();
+            const totalWeightedSum = constraints.map((constraint) => (constraint.satisfaction || 0) * constraint.constraintWeight)
+                .reduce((sum, weightedSum) => sum + weightedSum, 0);
+            const totalWeight = constraints.map((constraint) => constraint.constraintWeight)
+                .reduce((totalSum, weight) => totalSum + weight, 0);
+
+            if (!totalWeightedSum || !totalWeight) return 0;
+            return totalWeightedSum / totalWeight;
+        }
+        return undefined;
+
+
+    }
+
+
+    getConstraintsFromState() {
+
+        const satisfaction = this.item.satisfaction!;
+        const constraintIdToConstraintObjectMap: { [key: string]: IConstraint } = {};
+
+        // Create a map from constraintId:{constraint object from state} to avoid iterations for every constraint for current SpreadsheetTreeViewItem
+        this.state.annealConfig.constraints.forEach((constraint) => {
+            constraintIdToConstraintObjectMap[constraint._id] = constraint;
+        });
+
+        const currentStratumConstraints = Object.keys(satisfaction).map((constraintId) => (
+            {
+                constraintId: constraintId,
+                satisfaction: satisfaction[constraintId],
+                constraintWeight: constraintIdToConstraintObjectMap[constraintId].weight as number
+            }));
+
+        return currentStratumConstraints || [];
+    }
+
     get itemSatisfactionString() {
         const satisfactionArray = this.itemSatisfaction;
 
         if (satisfactionArray === undefined) {
-            return "[]";
+            return "";
         }
 
         return `[${satisfactionArray.toString()}]`;
@@ -159,5 +216,15 @@ th select.column-type {
 
 .group-heading-text {
     display: inline-block;
+}
+
+.satisfaction-wrapper {
+    display: inline-block;
+    font-size: 0.8em;
+}
+
+.satisfaction-table-data {
+    display: flex;
+    justify-content: space-between;
 }
 </style>
