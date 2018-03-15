@@ -29,6 +29,7 @@
             <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in annealNodeRoots"
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
+                                                @itemClick="onItemClickHandler"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
@@ -76,6 +77,11 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     // Private
     columnWidths: number[] | undefined = undefined;
+
+    /** Handles item clicks that were delivered from children component */
+    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+        this.$emit("itemClick", data);
+    }
 
     get treeMaxDepth() {
         // Get the maximum depth of all children

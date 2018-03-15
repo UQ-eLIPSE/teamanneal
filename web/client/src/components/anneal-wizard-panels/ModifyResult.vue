@@ -6,8 +6,8 @@
             </div>
             <div class="workspace">
                 <div class="edit-operations">
-                    <br> Edit operations
-                    <br>
+                    <ModifyResultEditOperationBar></ModifyResultEditOperationBar>
+
                 </div>
                 <div class="spreadsheet-dashboard-wrapper">
                     <div class="spreadsheet">
@@ -15,6 +15,7 @@
                                               :annealNodeRoots="annealNodeRoots"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
+                                              @itemClick="onItemClickHandler"
                                               :idColumnIndex="idColumnIndex">
                         </SpreadsheetTreeView2>
                     </div>
@@ -47,15 +48,23 @@ import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
 import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 
+import ModifyResultEditOperationBar from "../ModifyResultEditOperationBar.vue";
+import * as AnnealNode from "../../../../common/AnnealNode";
+import { RecordElement } from "../../../../common/Record";
+
 @Component({
     components: {
         SpreadsheetTreeView2,
+        ModifyResultEditOperationBar
     },
 })
 export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
+    onItemClickHandler(_data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+        
+    }
 
     get columns() {
         return this.state.recordData.columns;
@@ -350,8 +359,11 @@ XMLHttpRequest {
 }
 
 .edit-operations {
-    background: #ccc;
+    background: #e6e6e6;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     flex-shrink: 0;
+    margin: 1rem 0 1rem 0;
 }
 
 .spreadsheet-dashboard-wrapper {
