@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue, { VNode } from "vue";
+import Vue, { VNode, CreateElement } from "vue";
 
 import * as AnnealNode from "../../../common/AnnealNode";
 
@@ -38,6 +38,30 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
 }
 
+function createRecordContentRow(createElement: CreateElement, cells: ReadonlyArray<number | string | null>, leadingPadCells: number) {
+    return createElement("tr", { class: "record-content" }, [
+        ...Array.from({ length: leadingPadCells }, () => createElement("td", { class: "blank" })),
+        ...cells.map((cellValue) => {
+            return createElement("td", { class: getCellClasses(cellValue) }, getCellDisplayedValue(cellValue));
+        }),
+    ]);
+}
+
+function getCellClasses(cellValue: number | string | null) {
+    return {
+        "nan": Number.isNaN(cellValue as any),
+        "null": cellValue === null,
+    };
+}
+
+function getCellDisplayedValue(cellValue: number | string | null) {
+    if (cellValue === null) {
+        return undefined;
+    }
+
+    return "" + cellValue;
+}
+
 export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     functional: true,
 
@@ -66,16 +90,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 
         if (nodeHasRecordChildren(p)) {
             // Render records here
-            elements.push(...getRows(p).map(row =>
-                h("tr", { class: "record-content" }, [
-                    // Create `p.depth` copies of the <td> blank element
-                    ...Array.from({ length: p.depth } as any, () => h("td", { class: "blank" })),
-                    // Map out every row's content into cells
-                    ...row.data.map(value =>
-                        h("td", "" + value)
-                    )
-                ])
-            ))
+            elements.push(...getRows(p).map(row => createRecordContentRow(h, row.data, p.depth)));
         } else {
             // Render further strata
             elements.push(...getInnerNodes(p).map(child =>
@@ -123,6 +138,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     text-align: right;
 }
 
+
 .record-content td {
     border: 1px solid #ddd;
     text-align: inherit;
@@ -139,5 +155,27 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     width: 2em;
     min-width: 2em;
     max-width: 2em;
+}
+
+.nan {
+    background: #fee;
+    color: #f00;
+}
+
+.nan::before {
+    content: "Not a number";
+    font-style: italic;
+    font-size: 0.7em;
+}
+
+.null {
+    background: #eef;
+    color: #00f;
+}
+
+.null::before {
+    content: "No value";
+    font-style: italic;
+    font-size: 0.7em;
 }
 </style>
