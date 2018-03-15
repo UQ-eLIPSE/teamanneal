@@ -36,6 +36,10 @@ export default class SpreadsheetTreeView2Header extends Vue {
     padding: 0.5em;
 
     white-space: nowrap;
+
+    /* Fixes missing border in some browsers when header is stickied */
+    /* https://stackoverflow.com/a/41883019 */
+    background-clip: padding-box;
 }
 
 .header th.blank {

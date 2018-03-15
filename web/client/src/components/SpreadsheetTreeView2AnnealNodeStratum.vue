@@ -1,6 +1,8 @@
 <script lang="ts">
 import Vue, { VNode, CreateElement } from "vue";
 
+import { Record, RecordElement } from "../../../common/Record";
+
 import * as AnnealNode from "../../../common/AnnealNode";
 
 type Props = (
@@ -12,22 +14,26 @@ interface Props_NodeStratumWithRecordChildren {
     node: AnnealNode.NodeStratumWithRecordChildren,
     depth: number,
     totalNumberOfColumns: number,
-    recordLookupMap: Map<string | number | null, ReadonlyArray<number | string | null>>,
+    recordLookupMap: Map<RecordElement, Record>,
+
+    onItemClick: (data: any[]) => void,
 }
 
 interface Props_NodeStratumWithStratumChildren {
     node: AnnealNode.NodeStratumWithStratumChildren,
     depth: number,
     totalNumberOfColumns: number,
-    recordLookupMap: Map<string | number | null, ReadonlyArray<number | string | null>>,
+    recordLookupMap: Map<RecordElement, Record>,
+
+    onItemClick: (data: any[]) => void,
+}
+
+function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
+    return p.node.type === "stratum-records";
 }
 
 function getGroupHeadingLabel(p: Props) {
     return `AnnealNode.NodeStratum[${p.node._id}]`;
-}
-
-function nodeHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
-    return p.node.type === "stratum-records";
 }
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
@@ -38,20 +44,40 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
 }
 
-function createGroupHeading(createElement: CreateElement, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
+function createGroupHeading(createElement: CreateElement, onItemClick: (data: any[]) => void, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
     return createElement("tr", [
         createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
-        createElement("td", { class: "group-heading", attrs: { colspan: totalNumberOfColumns - leadingPadCells } }, heading),
+        createElement("td",
+            {
+                class: "group-heading",
+                attrs: { colspan: totalNumberOfColumns - leadingPadCells },
+                on: {
+                    // When stratum heading clicked emit just blank array as the
+                    // actual stratum information is contained by the component 
+                    // `render()` function and not here
+                    click: () => onItemClick([]),
+                },
+            },
+            heading),
     ]);
 }
 
-function createRecordContentRow(createElement: CreateElement, cells: ReadonlyArray<number | string | null>, leadingPadCells: number) {
-    return createElement("tr", { class: "record-content" }, [
-        createElement("td", { class: "leading-pad-cell", attrs: { colspan: leadingPadCells } }),
-        ...cells.map((cellValue) => {
-            return createElement("td", { class: getCellClasses(cellValue) }, getCellDisplayedValue(cellValue));
-        }),
-    ]);
+function createRecordContentRow(createElement: CreateElement, onItemClick: (data: any[]) => void, recordId: RecordElement, cells: Record, leadingPadCells: number) {
+    return createElement("tr",
+        {
+            class: "record-content",
+            on: {
+                // When record clicked, emit record info up
+                click: () => onItemClick([{ recordId, }]),
+            },
+        },
+        [
+            createElement("td", { class: "leading-pad-cell", attrs: { colspan: leadingPadCells } }),
+            ...cells.map((cellValue) => {
+                return createElement("td", { class: getCellClasses(cellValue) }, getCellDisplayedValue(cellValue));
+            }),
+        ]
+    );
 }
 
 function getCellClasses(cellValue: number | string | null) {
@@ -77,10 +103,18 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         depth: { type: Number, required: true, },
         totalNumberOfColumns: { type: Number, required: true, },
         recordLookupMap: { required: true, },
+
+        onItemClick: { required: true, },
     },
 
     render: function(h, ctx) {
         const p = ctx.props;
+
+        // This appends information about the current stratum node to the item
+        // click chain
+        const __onItemClick = (data: any[]) => {
+            p.onItemClick([{ node: p.node }, ...data]);
+        }
 
         // We're constructing the component manually due to restrictions on how
         // we can create multi-root-node components with Vue and templates in
@@ -89,12 +123,12 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         // See https://github.com/vuejs/vue-loader/issues/1168
 
         const elements: VNode[] = [
-            createGroupHeading(h, getGroupHeadingLabel(p), p.totalNumberOfColumns, p.depth),
+            createGroupHeading(h, __onItemClick, getGroupHeadingLabel(p), p.totalNumberOfColumns, p.depth),
         ];
 
-        if (nodeHasRecordChildren(p)) {
+        if (propsHasRecordChildren(p)) {
             // Render records here
-            elements.push(...getRows(p).map(row => createRecordContentRow(h, row.data, p.depth)));
+            elements.push(...getRows(p).map(row => createRecordContentRow(h, __onItemClick, row.id, row.data, p.depth)));
         } else {
             // Render further strata
             elements.push(...getInnerNodes(p).map((child) =>
@@ -105,6 +139,8 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                         depth: p.depth + 1,
                         totalNumberOfColumns: p.totalNumberOfColumns,
                         recordLookupMap: p.recordLookupMap,
+
+                        onItemClick: __onItemClick,
                     }
                 })
             ));

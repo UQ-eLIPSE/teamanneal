@@ -6,7 +6,8 @@
             </td>
             <td v-once
                 class="group-heading"
-                :colspan="totalNumberOfColumns - depth">
+                :colspan="totalNumberOfColumns - depth"
+                @click="onHeadingClick">
                 {{ label }}
             </td>
         </tr>
@@ -15,7 +16,8 @@
                                                :node="node"
                                                :depth="depth + 1"
                                                :totalNumberOfColumns="totalNumberOfColumns"
-                                               :recordLookupMap="recordLookupMap"></SpreadsheetTreeView2AnnealNodeStratum>
+                                               :recordLookupMap="recordLookupMap"
+                                               :onItemClick="onItemClickHandler"></SpreadsheetTreeView2AnnealNodeStratum>
     </tbody>
 </template>
 
@@ -39,6 +41,15 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop depth = p({ type: Number, required: false, default: 1, });
     @Prop totalNumberOfColumns = p({ type: Number, required: true, });
     @Prop recordLookupMap = p<Map<string | number | null, ReadonlyArray<number | string | null>>>({ required: true, });
+
+    onHeadingClick() {
+        // The node is already appended to the array in the inner handler
+        this.onItemClickHandler([]);
+    }
+
+    onItemClickHandler(data: any[]) {
+        this.$emit("itemClick", [{ node: this.node }, ...data]);
+    }
 
     get label() {
         return `AnnealNode.NodeRoot[${this.node._id}]`;
