@@ -64,8 +64,8 @@ export default class SpreadsheetTreeView2Header extends Vue {
     border: 0;
     padding: 0;
 
-    width: 2em;
-    min-width: 2em;
-    max-width: 2em;
+    width: 1em;
+    min-width: 1em;
+    max-width: 1em;
 }
 </style>
