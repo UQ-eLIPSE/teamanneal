@@ -71,6 +71,13 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
         return this.state.annealConfig.strata;
     }
 
+    get constraints() {
+        return this.state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
+            cObj[constraint._id] = constraint;
+            return cObj;
+        }, {});
+    }
+
     get partitionColumn() {
         const partitionColumnDesc = this.state.recordData.partitionColumn;
 
@@ -152,18 +159,32 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
                 }
 
                 // If there are no constraints to apply, then there is nothing 
-                // add to the object
+                // to add to the object
                 if (constraintIds.length === 0) {
                     return mapObj;
                 }
 
-                // Sum and divide by number of constraints
-                const satisfactionSum = constraintIds.reduce((sum, constraintId) => {
-                    return sum + nodeSatisfactionObject[constraintId]!;
-                }, 0);
+                // Do a weighted satisfaction sum scaled to [0,1]
+                const satisfaction = constraintIds.reduce<[number, number]>((satTuple, constraintId) => {
+                    const constraint = this.constraints[constraintId];
+
+                    if (constraint === undefined) {
+                        throw new Error("Constraint not found");
+                    }
+
+                    const constraintWeight = constraint.weight;
+
+                    // 0th index = sum of (weight * raw satisfaction)
+                    satTuple[0] += constraintWeight * (nodeSatisfactionObject[constraintId] || 0);
+
+                    // 1th index = sum of weights
+                    satTuple[1] += constraintWeight;
+
+                    return satTuple;
+                }, [0, 0]);
 
                 // Assign overall satisfaction to node ID
-                mapObj[nodeId] = satisfactionSum / constraintIds.length;
+                mapObj[nodeId] = satisfaction[0] / satisfaction[1];
 
                 return mapObj;
             }, {});
@@ -185,8 +206,6 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
         // Otherwise, overwrite the value of the selected constraint
         this.selectedConstraint = constraint;
     }
-
-
 }
 </script>
 
