@@ -20,7 +20,9 @@
                     </div>
                     <div class="dashboard">
                         <ConstraintSatisfactionDashboard2 class="constraint-satisfaction"
-                                                          :constraintSatisfactionMap="annealSatisfactionMap"></ConstraintSatisfactionDashboard2>
+                                                          :constraintSatisfactionMap="annealSatisfactionMap"
+                                                          :selectedConstraint="selectedConstraint"
+                                                          @constraintSelected="onConstraintSelected"></ConstraintSatisfactionDashboard2>
                     </div>
                 </div>
             </div>
@@ -38,6 +40,7 @@ import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealRespon
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { AxiosResponse } from "../../data/AnnealResponse";
+import { Data as IConstraint } from "../../data/Constraint";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
@@ -56,6 +59,8 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.modifyResult;
+
+    selectedConstraint: IConstraint | undefined = undefined;
 
     get columns() {
         return this.state.recordData.columns;
@@ -155,6 +160,25 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
                 return mapObj;
             }, {});
     }
+
+    onConstraintSelected(constraint: IConstraint) {
+        // Set the selected constraint when the previous value is undefined
+        if (this.selectedConstraint === undefined) {
+            this.selectedConstraint = constraint;
+            return;
+        }
+
+        // Unset selected constraint if constraint selected again
+        if (this.selectedConstraint._id === constraint._id) {
+            this.selectedConstraint = undefined;
+            return;
+        }
+
+        // Otherwise, overwrite the value of the selected constraint
+        this.selectedConstraint = constraint;
+    }
+
+
 }
 </script>
 

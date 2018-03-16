@@ -12,10 +12,11 @@
             <!-- TODO: Decide what `getConstraintFulfilledPercentage` returns -->
             <ConstraintSatisfactionDashboardConstraint v-for="constraint in constraintsArray"
                                                        :key="constraint._id"
+                                                       :constraint="constraint"
+                                                       :isSelected="isConstraintSelected(constraint)"
                                                        :selectedStratum="selectedStratum"
                                                        :fulfilledPercentage="getConstraintFulfilledPercentage(constraint)"
-                                                       @constraintSelected="handleConstraintClicked"
-                                                       :constraint="constraint"> </ConstraintSatisfactionDashboardConstraint>
+                                                       @constraintSelected="onConstraintSelected"> </ConstraintSatisfactionDashboardConstraint>
         </div>
     </div>
 </template>
@@ -36,6 +37,9 @@ import ConstraintSatisfactionDashboardConstraint from "./ConstraintSatisfactionD
 })
 export default class ConstraintSatisfactionDashboard2 extends Vue {
     @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: true, });
+
+    /** Constraint to indicate as "selected" */
+    @Prop selectedConstraint = p<IConstraint>({ required: false, });
 
     /** Stores stratum for filtering constraints */
     private filterStratum: IStratum | undefined = undefined;
@@ -89,11 +93,19 @@ export default class ConstraintSatisfactionDashboard2 extends Vue {
         }, {});
     }
 
+    isConstraintSelected(constraint: IConstraint) {
+        if (this.selectedConstraint === undefined) {
+            return false;
+        }
+
+        return this.selectedConstraint._id === constraint._id;
+    }
+
     /**
      * Handles `constraintSelected` event emitted from 
      * `ConstraintSatisfactionDashboardConstraint` component.
      */
-    handleConstraintClicked(constraint: IConstraint) {
+    onConstraintSelected(constraint: IConstraint) {
         this.$emit("constraintSelected", constraint);
     }
 

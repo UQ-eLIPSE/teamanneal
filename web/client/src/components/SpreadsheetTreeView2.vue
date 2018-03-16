@@ -31,7 +31,7 @@
                                                 :node="nodeRoot"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"
-                                                :constraintSatisfactionMap="constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
+                                                :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
 </template>
@@ -71,10 +71,12 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
 export default class SpreadsheetTreeView2 extends Vue {
     // Props
     @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
-    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
+
+    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -102,6 +104,18 @@ export default class SpreadsheetTreeView2 extends Vue {
             map.set(id, record);
             return map;
         }, new Map<RecordElement, Record>());
+    }
+
+    /**
+     * Special gated version of the constraint satisfaction map that is only 
+     * returned when conditions are appropriate
+     */
+    get __constraintSatisfactionMap() {
+        if (!this.showConstraintSatisfaction) {
+            return undefined;
+        }
+
+        return this.constraintSatisfactionMap;
     }
 
     dataColumnStyle(i: number) {
@@ -187,9 +201,9 @@ export default class SpreadsheetTreeView2 extends Vue {
 }
 
 .alignment-row .leading-pad-cell {
-    width: 2em;
-    min-width: 2em;
-    max-width: 2em;
+    width: 1em;
+    min-width: 1em;
+    max-width: 1em;
 }
 
 .sizing-phase-header {

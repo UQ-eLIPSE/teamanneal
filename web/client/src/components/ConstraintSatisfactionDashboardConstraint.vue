@@ -1,5 +1,6 @@
 <template>
     <a class="constraint-item"
+       :class="constraintItemClasses"
        href="#"
        @click.prevent.stop="selectConstraint">
         <h5>Constraint</h5>
@@ -10,7 +11,6 @@
                low="50"
                min="0"></meter>
         {{fulfilledPercentage.toFixed(0)}}% of {{selectedStratum.label}}s match
-
     </a>
 </template>
 
@@ -23,6 +23,9 @@ import { ConstraintPhraseMaps } from "../data/Constraint";
 @Component
 export default class ConstraintSatisfactionDashboardConstraint extends Vue {
     @Prop constraint = p<IConstraint>({ required: true, });
+
+    @Prop isSelected = p({ type: Boolean, required: false, default: false, });
+
     /** Currently represents an average value of `constraint` satisfaction across strata */
     @Prop fulfilledPercentage = p<number>({ required: false, default: () => 0 });
 
@@ -177,6 +180,12 @@ export default class ConstraintSatisfactionDashboardConstraint extends Vue {
     findItemInList(list: any[], property: string, value: any) {
         return list.find((listItem: any) => listItem[property] === value);
     }
+
+    get constraintItemClasses() {
+        return {
+            "selected": this.isSelected,
+        };
+    }
 }
 </script>
 
@@ -188,7 +197,7 @@ h5 {
     align-self: flex-start;
 }
 
-a.constraint-item {
+.constraint-item {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -198,6 +207,10 @@ a.constraint-item {
     padding: 0.5em;
     font-size: 0.8em;
     align-items: center;
+}
+
+.constraint-item.selected {
+    border-color: rgba(1, 1, 1, 1);
 }
 
 .constraints-container {
