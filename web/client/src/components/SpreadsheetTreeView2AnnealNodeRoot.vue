@@ -120,7 +120,5 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 .anr-heading-content .anr-label {
     flex-grow: 1;
     flex-shrink: 1;
-
-    font-style: italic;
 }
 </style>

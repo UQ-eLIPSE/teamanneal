@@ -48,7 +48,7 @@ function getGroupHeadingLabel(p: Props) {
         return p.node._id;
     }
 
-    return `${name.stratumLabel} ${name.nodeGeneratedName || "[?]"}`;
+    return `${name.stratumLabel} ${name.nodeGeneratedName}`;
 }
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
