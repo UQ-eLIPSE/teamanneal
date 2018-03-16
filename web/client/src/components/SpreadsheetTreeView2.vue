@@ -30,7 +30,8 @@
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
-                                                :recordLookupMap="recordLookupMap"></SpreadsheetTreeView2AnnealNodeRoot>
+                                                :recordLookupMap="recordLookupMap"
+                                                :constraintSatisfactionMap="constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
 </template>
@@ -40,8 +41,8 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
-import { Record, RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
+import { Record, RecordElement } from "../../../common/Record";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
@@ -70,6 +71,7 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
 export default class SpreadsheetTreeView2 extends Vue {
     // Props
     @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
+    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });

@@ -13,6 +13,7 @@
                     <div class="spreadsheet">
                         <SpreadsheetTreeView2 class="viewer"
                                               :annealNodeRoots="annealNodeRoots"
+                                              :constraintSatisfactionMap="nodeToOverallSatisfactionMap"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
                                               :idColumnIndex="idColumnIndex"></SpreadsheetTreeView2>
@@ -125,6 +126,34 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
         return this.annealResults
             .map(res => res.result!.satisfaction)
             .reduce((carry, sMap) => Object.assign(carry, sMap), {});
+    }
+
+    get nodeToOverallSatisfactionMap() {
+        const asMap = this.annealSatisfactionMap;
+
+        return Object.keys(asMap)
+            .reduce<{ [nodeId: string]: number | undefined }>((mapObj, nodeId) => {
+                // Satisfaction of constraints for this node
+                const nodeSatisfactionObject = asMap[nodeId];
+
+                const constraintIds = Object.keys(nodeSatisfactionObject);
+
+                // If there are no constraints to apply, then there is nothing 
+                // add to the object
+                if (constraintIds.length === 0) {
+                    return mapObj;
+                }
+
+                // Sum and divide by number of constraints
+                const satisfactionSum = constraintIds.reduce((sum, constraintId) => {
+                    return sum + nodeSatisfactionObject[constraintId]!;
+                }, 0);
+
+                // Assign overall satisfaction to node ID
+                mapObj[nodeId] = satisfactionSum / constraintIds.length;
+
+                return mapObj;
+            }, {});
     }
 }
 </script>

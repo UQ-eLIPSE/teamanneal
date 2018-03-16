@@ -8,7 +8,10 @@
                 class="group-heading"
                 :colspan="totalNumberOfColumns - depth"
                 @click="onHeadingClick">
-                {{ label }}
+                <div class="heading-content">
+                    <div class="label">{{ label }}</div>
+                    <!-- Node roots/partitions do not have constraints and thus no satisfaction values -->
+                </div>
             </td>
         </tr>
         <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
@@ -17,6 +20,7 @@
                                                :depth="depth + 1"
                                                :totalNumberOfColumns="totalNumberOfColumns"
                                                :recordLookupMap="recordLookupMap"
+                                               :constraintSatisfactionMap="constraintSatisfactionMap"
                                                :onItemClick="onItemClickHandler"></SpreadsheetTreeView2AnnealNodeStratum>
     </tbody>
 </template>
@@ -26,8 +30,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import { RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
+import { Record, RecordElement } from "../../../common/Record";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
 
@@ -41,7 +45,8 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop node = p<AnnealNode.NodeRoot>({ required: true, });
     @Prop depth = p({ type: Number, required: false, default: 1, });
     @Prop totalNumberOfColumns = p({ type: Number, required: true, });
-    @Prop recordLookupMap = p<Map<string | number | null, ReadonlyArray<number | string | null>>>({ required: true, });
+    @Prop recordLookupMap = p<Map<RecordElement, Record>>({ required: true, });
+    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
 
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
@@ -86,5 +91,15 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     max-width: 2em;
 
     text-align: right;
+}
+
+.heading-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.heading-content .label {
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 </style>

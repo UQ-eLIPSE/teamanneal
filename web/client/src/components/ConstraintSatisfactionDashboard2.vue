@@ -126,7 +126,6 @@ export default class ConstraintSatisfactionDashboard2 extends Vue {
     display: flex;
     align-items: center;
     flex-direction: column;
-    background-color: #f2f2f2;
 }
 
 .filter {
