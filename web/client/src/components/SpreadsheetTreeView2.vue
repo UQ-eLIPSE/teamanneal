@@ -31,6 +31,7 @@
                                                 :node="nodeRoot"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"
+                                                :nodeNameMap="nodeNameMap"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
@@ -43,6 +44,8 @@ import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
+
+import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
@@ -73,6 +76,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
+    @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
 
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });

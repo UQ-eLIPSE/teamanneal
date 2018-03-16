@@ -16,6 +16,7 @@
                                               :constraintSatisfactionMap="nodeToOverallSatisfactionMap"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
+                                              :nodeNameMap="nameMap"
                                               :idColumnIndex="idColumnIndex"></SpreadsheetTreeView2>
                     </div>
                     <div class="dashboard">

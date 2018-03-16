@@ -4,6 +4,8 @@ import Vue, { VNode, CreateElement } from "vue";
 import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
+import { NodeNameMapNameGenerated } from "../data/ResultTree";
+
 type Props = (
     Props_NodeStratumWithRecordChildren |
     Props_NodeStratumWithStratumChildren
@@ -14,6 +16,7 @@ interface Props_NodeStratumWithRecordChildren {
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
+    nodeNameMap: NodeNameMapNameGenerated | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
@@ -24,6 +27,7 @@ interface Props_NodeStratumWithStratumChildren {
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
+    nodeNameMap: NodeNameMapNameGenerated | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
@@ -34,7 +38,17 @@ function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChild
 }
 
 function getGroupHeadingLabel(p: Props) {
-    return `AnnealNode.NodeStratum[${p.node._id}]`;
+    if (p.nodeNameMap === undefined) {
+        return p.node._id;
+    }
+
+    const name = p.nodeNameMap.get(p.node);
+
+    if (name === undefined) {
+        return p.node._id;
+    }
+
+    return `${name.stratumLabel} ${name.nodeGeneratedName || "[?]"}`;
 }
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
@@ -148,6 +162,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         depth: { type: Number, required: true, },
         totalNumberOfColumns: { type: Number, required: true, },
         recordLookupMap: { required: true, },
+        nodeNameMap: { required: false, },
         constraintSatisfactionMap: { required: false, },
 
         onItemClick: { required: true, },
@@ -185,6 +200,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                         depth: p.depth + 1,
                         totalNumberOfColumns: p.totalNumberOfColumns,
                         recordLookupMap: p.recordLookupMap,
+                        nodeNameMap: p.nodeNameMap,
                         constraintSatisfactionMap: p.constraintSatisfactionMap,
 
                         onItemClick: __onItemClick,
