@@ -141,7 +141,14 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
                 // Satisfaction of constraints for this node
                 const nodeSatisfactionObject = asMap[nodeId];
 
-                const constraintIds = Object.keys(nodeSatisfactionObject);
+                let constraintIds = Object.keys(nodeSatisfactionObject);
+
+                // If there is a selected constraint, then only generate the 
+                // satisfaction map with that constraint
+                if (this.selectedConstraint !== undefined) {
+                    const selectedConstraintId = this.selectedConstraint._id;
+                    constraintIds = constraintIds.filter(constraintId => selectedConstraintId === constraintId);
+                }
 
                 // If there are no constraints to apply, then there is nothing 
                 // add to the object

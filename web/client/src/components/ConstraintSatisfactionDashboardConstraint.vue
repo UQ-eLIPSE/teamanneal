@@ -203,14 +203,34 @@ h5 {
     flex-shrink: 0;
     text-decoration: none;
     color: inherit;
-    border: 0.2em solid rgba(1, 1, 1, 0.1);
+    border: 0.2em solid rgba(0, 0, 0, 0.1);
     padding: 0.5em;
     font-size: 0.8em;
     align-items: center;
+
+    position: relative;
 }
 
 .constraint-item.selected {
-    border-color: rgba(1, 1, 1, 1);
+    border-color: #49075E;
+    background: rgba(73, 7, 94, 0.2);
+}
+
+.constraint-item.selected::after {
+    content: "✓";
+    display: inline-block;
+
+    color: #fff;
+    background: linear-gradient(to right top, transparent, transparent 50%, #49075E 50%, #49075E);
+    font-weight: bold;
+    text-align: right;
+
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    width: 2em;
+    height: 2em;
 }
 
 .constraints-container {
