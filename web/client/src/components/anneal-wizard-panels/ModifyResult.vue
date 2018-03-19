@@ -17,14 +17,18 @@
                     <div class="spreadsheet">
                         <SpreadsheetTreeView2 class="viewer"
                                               :annealNodeRoots="modifiedAnnealNodeRoots"
+                                              :constraintSatisfactionMap="nodeToOverallSatisfactionMap"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
+                                              :nodeNameMap="nameMap"
                                               :idColumnIndex="idColumnIndex"
-                                              @itemClick="onItemClickHandler">
-                        </SpreadsheetTreeView2>
+                                              @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
                     </div>
                     <div class="dashboard">
-                        Dashboard
+                        <ConstraintSatisfactionDashboard2 class="constraint-satisfaction"
+                                                          :constraintSatisfactionMap="annealSatisfactionMap"
+                                                          :selectedConstraint="selectedConstraint"
+                                                          @constraintSelected="onConstraintSelected"></ConstraintSatisfactionDashboard2>
                     </div>
                 </div>
             </div>
@@ -41,8 +45,8 @@ import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealRespon
 
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
-import { State } from "../../data/State";
-import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
+import { AxiosResponse } from "../../data/AnnealResponse";
+import { Data as IConstraint } from "../../data/Constraint";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { StoreState } from "../StoreState";
@@ -53,6 +57,7 @@ import * as AnnealNode from "../../../../common/AnnealNode";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 import ModifyResultEditOperationBar from "../ModifyResultEditOperationBar.vue";
+import ConstraintSatisfactionDashboard2 from "../ConstraintSatisfactionDashboard2.vue";
 
 type EditOperation = EditOperation_MoveRecord | EditOperation_SwapRecords;
 
@@ -73,13 +78,16 @@ interface EditOperation_SwapRecords {
 @Component({
     components: {
         SpreadsheetTreeView2,
-        ModifyResultEditOperationBar
+        ModifyResultEditOperationBar,
+        ConstraintSatisfactionDashboard2,
     },
 })
 export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
-    readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
+    readonly thisWizardStep = AnnealProcessWizardEntries.modifyResult;
+
+    selectedConstraint: IConstraint | undefined = undefined;
 
     /**
      * Holds a new deep copy of the annealed nodes that may be modified by the 
@@ -96,6 +104,13 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
 
     get strata() {
         return this.state.annealConfig.strata;
+    }
+
+    get constraints() {
+        return this.state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
+            cObj[constraint._id] = constraint;
+            return cObj;
+        }, {});
     }
 
     get partitionColumn() {
@@ -147,106 +162,6 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
         return idColumnIndex;
     }
 
-    get isRequestInProgress() {
-        return State.IsAnnealRequestInProgress(this.state);
-    }
-
-    get isAnnealSuccessful() {
-        // If the request is successful and there is no error message
-        return (
-            State.IsAnnealRequestSuccessful(this.state) &&
-            this.annealErrorMessage === undefined
-        );
-    }
-
-    get annealErrorMessage() {
-        const response = this.state.annealResponse;
-
-        // No response - can't say much at the moment
-        if (response === undefined) {
-            return undefined;
-        }
-
-        // No request/response error
-        // NOTE: This is not the same as "no anneal error"!
-        if (AnnealResponse.IsSuccessful(response)) {
-            const responseContent = response.content;
-            const responseData = responseContent.data as ToClientAnnealResponse.Root;
-
-            // Return error now if it encompasses entire response
-            if (responseData.error !== undefined) {
-                return `Error: ${responseData.error}`;
-            }
-
-
-            // We still need to check if there was an error in one of the 
-            // individual anneal node results
-            if (responseData.results !== undefined) {
-                const annealNodesWithErrors: { index: number, error: string }[] = [];
-
-                // Accumulate errors if present
-                responseData.results.forEach((result, index) => {
-                    if (result.error !== undefined) {
-                        annealNodesWithErrors.push({
-                            index,
-                            error: result.error,
-                        });
-                    }
-                });
-
-                // Return error if there is a node which suffered a failure
-                if (annealNodesWithErrors.length > 0) {
-                    let message = "Error: One or more nodes failed to anneal:\n";
-                    annealNodesWithErrors.forEach(({ index, error, }) => {
-                        message += `  at node index ${index}: \n     ${error}\n`;
-                    });
-
-                    return message;
-                }
-            }
-
-            // No problems
-            return undefined;
-        }
-
-        // Response here is now the error
-        const error = response.content as AxiosError;
-
-        // Error was returned from server
-        const errResponse = error.response;
-        if (errResponse !== undefined) {
-            const message =
-                `${errResponse.data.error}
-
-HTTP ${errResponse.status}`;
-
-            return message;
-        }
-
-        // Error happened in XHR process
-        const errXHR: XMLHttpRequest | undefined = (error as any).request;
-        if (errXHR !== undefined) {
-            const message =
-                `Error: Network request failed
-
-XMLHttpRequest {
-  readyState: ${errXHR.readyState}
-  status: ${errXHR.status}
-  timeout: ${errXHR.timeout}
-}`;
-            return message;
-        }
-
-        // Some error with a message
-        const errMsg = error.message;
-        if (errMsg !== undefined) {
-            return `Error: ${errMsg}`;
-        }
-
-        // Unknown error
-        return "Error: Unknown error occurred";
-    }
-
     get annealResults() {
         const responseContent = this.state.annealResponse!.content as AxiosResponse;
         const responseData = responseContent.data as ToClientAnnealResponse.Root;
@@ -261,14 +176,70 @@ XMLHttpRequest {
             .reduce((carry, sMap) => Object.assign(carry, sMap), {});
     }
 
-    get combinedNameFormat() {
-        let combinedNameFormat = this.state.annealConfig.namingConfig.combined.format;
+    get nodeToOverallSatisfactionMap() {
+        const asMap = this.annealSatisfactionMap;
 
-        if (combinedNameFormat === undefined) {
-            return undefined;
+        return Object.keys(asMap)
+            .reduce<{ [nodeId: string]: number | undefined }>((mapObj, nodeId) => {
+                // Satisfaction of constraints for this node
+                const nodeSatisfactionObject = asMap[nodeId];
+
+                let constraintIds = Object.keys(nodeSatisfactionObject);
+
+                // If there is a selected constraint, then only generate the 
+                // satisfaction map with that constraint
+                if (this.selectedConstraint !== undefined) {
+                    const selectedConstraintId = this.selectedConstraint._id;
+                    constraintIds = constraintIds.filter(constraintId => selectedConstraintId === constraintId);
+                }
+
+                // If there are no constraints to apply, then there is nothing 
+                // to add to the object
+                if (constraintIds.length === 0) {
+                    return mapObj;
+                }
+
+                // Do a weighted satisfaction sum scaled to [0,1]
+                const satisfaction = constraintIds.reduce<[number, number]>((satTuple, constraintId) => {
+                    const constraint = this.constraints[constraintId];
+
+                    if (constraint === undefined) {
+                        throw new Error("Constraint not found");
+                    }
+
+                    const constraintWeight = constraint.weight;
+
+                    // 0th index = sum of (weight * raw satisfaction)
+                    satTuple[0] += constraintWeight * (nodeSatisfactionObject[constraintId] || 0);
+
+                    // 1th index = sum of weights
+                    satTuple[1] += constraintWeight;
+
+                    return satTuple;
+                }, [0, 0]);
+
+                // Assign overall satisfaction to node ID
+                mapObj[nodeId] = satisfaction[0] / satisfaction[1];
+
+                return mapObj;
+            }, {});
+    }
+
+    onConstraintSelected(constraint: IConstraint) {
+        // Set the selected constraint when the previous value is undefined
+        if (this.selectedConstraint === undefined) {
+            this.selectedConstraint = constraint;
+            return;
         }
 
-        return combinedNameFormat;
+        // Unset selected constraint if constraint selected again
+        if (this.selectedConstraint._id === constraint._id) {
+            this.selectedConstraint = undefined;
+            return;
+        }
+
+        // Otherwise, overwrite the value of the selected constraint
+        this.selectedConstraint = constraint;
     }
 
     onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
@@ -609,6 +580,18 @@ XMLHttpRequest {
 
     min-width: 20vw;
     max-width: 30vw;
+
+    position: relative;
+}
+
+.dashboard .constraint-satisfaction {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    overflow-y: auto;
 }
 
 .export-button {

@@ -31,7 +31,9 @@
                                                 :node="nodeRoot"
                                                 @itemClick="onItemClickHandler"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
-                                                :recordLookupMap="recordLookupMap"></SpreadsheetTreeView2AnnealNodeRoot>
+                                                :recordLookupMap="recordLookupMap"
+                                                :nodeNameMap="nodeNameMap"
+                                                :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
 </template>
@@ -41,8 +43,10 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
-import { Record, RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
+import { Record, RecordElement } from "../../../common/Record";
+
+import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
@@ -73,7 +77,11 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
+    @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
+
+    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -106,6 +114,18 @@ export default class SpreadsheetTreeView2 extends Vue {
             map.set(id, record);
             return map;
         }, new Map<RecordElement, Record>());
+    }
+
+    /**
+     * Special gated version of the constraint satisfaction map that is only 
+     * returned when conditions are appropriate
+     */
+    get __constraintSatisfactionMap() {
+        if (!this.showConstraintSatisfaction) {
+            return undefined;
+        }
+
+        return this.constraintSatisfactionMap;
     }
 
     dataColumnStyle(i: number) {
@@ -191,9 +211,9 @@ export default class SpreadsheetTreeView2 extends Vue {
 }
 
 .alignment-row .leading-pad-cell {
-    width: 2em;
-    min-width: 2em;
-    max-width: 2em;
+    width: 1em;
+    min-width: 1em;
+    max-width: 1em;
 }
 
 .sizing-phase-header {

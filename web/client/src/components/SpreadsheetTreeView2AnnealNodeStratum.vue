@@ -1,9 +1,10 @@
 <script lang="ts">
 import Vue, { VNode, CreateElement } from "vue";
 
+import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
-import * as AnnealNode from "../../../common/AnnealNode";
+import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 type Props = (
     Props_NodeStratumWithRecordChildren |
@@ -15,6 +16,8 @@ interface Props_NodeStratumWithRecordChildren {
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
+    nodeNameMap: NodeNameMapNameGenerated | undefined,
+    constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
 }
@@ -24,6 +27,8 @@ interface Props_NodeStratumWithStratumChildren {
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
+    nodeNameMap: NodeNameMapNameGenerated | undefined,
+    constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
 }
@@ -33,7 +38,17 @@ function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChild
 }
 
 function getGroupHeadingLabel(p: Props) {
-    return `AnnealNode.NodeStratum[${p.node._id}]`;
+    if (p.nodeNameMap === undefined) {
+        return p.node._id;
+    }
+
+    const name = p.nodeNameMap.get(p.node);
+
+    if (name === undefined) {
+        return p.node._id;
+    }
+
+    return `${name.stratumLabel} ${name.nodeGeneratedName}`;
 }
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
@@ -45,7 +60,35 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
 }
 
 /** Creates the heading elements for stratum nodes */
-function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, heading: string, totalNumberOfColumns: number, leadingPadCells: number) {
+function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, p: Props) {
+    const leadingPadCells = p.depth;
+    const totalNumberOfColumns = p.totalNumberOfColumns;
+    const heading = getGroupHeadingLabel(p);
+
+    const constraintSatisfaction = overallConstraintSatisfaction(p);
+
+    const headingContentElementArray = [
+        createElement("div", { class: "label" }, heading),
+    ];
+
+    if (constraintSatisfaction !== undefined) {
+        headingContentElementArray.push(
+            createElement("div", { class: "overall-constraint-satisfaction" }, [
+                `${(constraintSatisfaction * 100) >>> 0}%`,
+                createElement("meter",
+                    {
+                        attrs: {
+                            value: constraintSatisfaction,
+                            min: 0,
+                            max: 1,
+                            low: 0.5,
+                        },
+                    }
+                )
+            ])
+        );
+    }
+
     return createElement("tr", [
         createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
         createElement("td",
@@ -59,7 +102,10 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                     click: () => onItemClick([]),
                 },
             },
-            heading),
+            [
+                createElement("div", { class: "heading-content" }, headingContentElementArray)
+            ]
+        ),
     ]);
 }
 
@@ -99,6 +145,15 @@ function getCellDisplayedValue(cellValue: number | string | null) {
     return "" + cellValue;
 }
 
+function overallConstraintSatisfaction(p: Props) {
+    // No map to use
+    if (p.constraintSatisfactionMap === undefined) {
+        return undefined;
+    }
+
+    return p.constraintSatisfactionMap[p.node._id];
+}
+
 export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     functional: true,
 
@@ -107,6 +162,8 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         depth: { type: Number, required: true, },
         totalNumberOfColumns: { type: Number, required: true, },
         recordLookupMap: { required: true, },
+        nodeNameMap: { required: false, },
+        constraintSatisfactionMap: { required: false, },
 
         onItemClick: { required: true, },
     },
@@ -127,7 +184,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         // See https://github.com/vuejs/vue-loader/issues/1168
 
         const elements: VNode[] = [
-            createGroupHeading(h, __onItemClick, getGroupHeadingLabel(p), p.totalNumberOfColumns, p.depth),
+            createGroupHeading(h, __onItemClick, p),
         ];
 
         if (propsHasRecordChildren(p)) {
@@ -143,6 +200,8 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                         depth: p.depth + 1,
                         totalNumberOfColumns: p.totalNumberOfColumns,
                         recordLookupMap: p.recordLookupMap,
+                        nodeNameMap: p.nodeNameMap,
+                        constraintSatisfactionMap: p.constraintSatisfactionMap,
 
                         onItemClick: __onItemClick,
                     }
@@ -175,9 +234,9 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     border: 0;
     padding: 0;
 
-    width: 2em;
-    min-width: 2em;
-    max-width: 2em;
+    width: 1em;
+    min-width: 1em;
+    max-width: 1em;
 
     text-align: right;
 }
@@ -217,5 +276,27 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     content: "No value";
     font-style: italic;
     font-size: 0.7em;
+}
+
+.heading-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.heading-content .label {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.heading-content .overall-constraint-satisfaction {
+    flex-grow: 0;
+    flex-shrink: 0;
+
+    font-size: 0.8em;
+    align-self: center;
+}
+
+.heading-content .overall-constraint-satisfaction meter {
+    margin-left: 0.7ch;
 }
 </style>
