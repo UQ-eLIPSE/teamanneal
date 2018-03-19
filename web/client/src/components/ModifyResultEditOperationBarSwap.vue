@@ -7,7 +7,7 @@
         <div class="content">
             <button class="edit-operation-field"
                     :class="recordAClasses"
-                    @click="onRecordAClick">{{ recordA }}</button> -&gt;
+                    @click="onRecordAClick">{{ recordA }}</button> &lt;-&gt;
             <button class="edit-operation-field"
                     :class="recordBClasses"
                     @click="onRecordBClick">{{ recordB }}</button>
