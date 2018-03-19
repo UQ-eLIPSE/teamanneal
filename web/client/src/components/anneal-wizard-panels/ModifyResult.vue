@@ -6,17 +6,21 @@
             </div>
             <div class="workspace">
                 <div class="edit-operations">
-                    <ModifyResultEditOperationBar></ModifyResultEditOperationBar>
+                    <ModifyResultEditOperationBar :pendingEditOperation="pendingEditOperation"
+                                                  @selectOperation="onSelectEditOperation"
+                                                  @cancelOperation="onCancelEditOperation"
+                                                  @commitOperation="onCommitEditOperation"
+                                                  @cursorChange="onEditOperationCursorChange"></ModifyResultEditOperationBar>
 
                 </div>
                 <div class="spreadsheet-dashboard-wrapper">
                     <div class="spreadsheet">
                         <SpreadsheetTreeView2 class="viewer"
-                                              :annealNodeRoots="annealNodeRoots"
+                                              :annealNodeRoots="modifiedAnnealNodeRoots"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
-                                              @itemClick="onItemClickHandler"
-                                              :idColumnIndex="idColumnIndex">
+                                              :idColumnIndex="idColumnIndex"
+                                              @itemClick="onItemClickHandler">
                         </SpreadsheetTreeView2>
                     </div>
                     <div class="dashboard">
@@ -31,26 +35,33 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Component, Lifecycle, Mixin } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
 
-import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
-import { replaceAll } from "../../util/String";
+import { StoreState } from "../StoreState";
+
+import { RecordElement } from "../../../../common/Record";
+import * as AnnealNode from "../../../../common/AnnealNode";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
-
 import ModifyResultEditOperationBar from "../ModifyResultEditOperationBar.vue";
-import * as AnnealNode from "../../../../common/AnnealNode";
-import { RecordElement } from "../../../../common/Record";
+
+type EditOperation = EditOperation_MoveRecord;
+
+interface EditOperation_MoveRecord {
+    type: "move-record",
+    cursor: keyof EditOperation_MoveRecord | undefined,
+    from: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
+    to: { path: ReadonlyArray<AnnealNode.Node>, } | undefined,
+}
 
 @Component({
     components: {
@@ -62,9 +73,15 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
-    onItemClickHandler(_data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
-        
-    }
+
+    /**
+     * Holds a new deep copy of the annealed nodes that may be modified by the 
+     * user
+     */
+    modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
+
+    /** Stores the current editing operation information */
+    pendingEditOperation: EditOperation | undefined = undefined;
 
     get columns() {
         return this.state.recordData.columns;
@@ -93,7 +110,11 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     }
 
     get nameMap() {
-        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
+        if (this.modifiedAnnealNodeRoots === undefined) {
+            return undefined;
+        }
+
+        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.modifiedAnnealNodeRoots);
     }
 
     get idColumn() {
@@ -117,86 +138,6 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
         const idColumnIndex = this.columns.indexOf(idColumn);
 
         return idColumnIndex;
-    }
-
-    onExportButtonClick() {
-        // Get node name map
-        const nodes = this.annealNodeRoots;
-        const strata = this.state.annealConfig.strata;
-        const nameMap = this.nameMap;
-
-        // Convert into record node name map
-        const recordNameMap = ResultTree.GenerateRecordNodeNameMap(nameMap, nodes);
-
-        // Get the columns and transform them back into 2D string array for
-        // exporting, and include the headers in the output while we're at it
-        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
-
-        // We use cooked values for the record ID columns for referencing
-        const idColumnValues = ColumnData.GenerateCookedColumnValues(this.idColumn);
-
-        const combinedNameFormat = this.combinedNameFormat;
-
-        rows.forEach((row, i) => {
-            // Add stratum labels to the header rows
-            if (i === 0) {
-                const headerRow = row;
-                strata.forEach((stratum) => {
-                    headerRow.push(stratum.label);
-                });
-
-                // Add one more column header for combined group names if 
-                // they are present
-                if (combinedNameFormat !== undefined) {
-                    headerRow.push("Combined group name");
-                }
-
-                return;
-            }
-
-            // Append name values to end of ordinary row
-
-            // Note that this is not the same as row[idColumnIndex] as the row
-            // is always the raw value (string[]), while the record ID values in
-            // the name map are cooked values
-            const recordId = idColumnValues[i - 1]; // Remember that `i = 0` is the header row
-
-            // Get name object array
-            const name = recordNameMap.get(recordId);
-
-            if (name === undefined) {
-                throw new Error("Name for record node not found");
-            }
-
-            // For the purposes of CSV exports, we only want the generated name 
-            // value and not the stratum label for each record
-            //
-            // The filter here removes partition info from the output as it'll
-            // duplicate the existing partition column
-            name
-                .filter(nameObj => nameObj.stratumId !== "_PARTITION")
-                .forEach((nameObj) => {
-                    row.push("" + nameObj.nodeGeneratedName);
-                });
-
-            // Push in combined name as well
-            if (combinedNameFormat !== undefined) {
-                let combinedName = combinedNameFormat;
-                name.forEach(({ stratumId, nodeGeneratedName }) => {
-                    combinedName = replaceAll(combinedName, `{{${stratumId}}}`, "" + nodeGeneratedName);
-                });
-
-                row.push(combinedName);
-            }
-        });
-
-        // Export as CSV
-        const sourceFileName = this.state.recordData.source.name;
-        unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
-    }
-
-    get isExportButtonDisabled() {
-        return this.isRequestInProgress;
     }
 
     get isRequestInProgress() {
@@ -307,10 +248,6 @@ XMLHttpRequest {
         return responseData.results!;
     }
 
-    get annealNodeRoots() {
-        return this.annealResults.map(res => res.result!.tree);
-    }
-
     get annealSatisfactionMap() {
         return this.annealResults
             .map(res => res.result!.satisfaction)
@@ -325,6 +262,164 @@ XMLHttpRequest {
         }
 
         return combinedNameFormat;
+    }
+
+    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+        // Only continue if we're in an editing operation
+        if (this.pendingEditOperation === undefined) {
+            return;
+        }
+
+        // Each operation type has different behaviours
+        const op = this.pendingEditOperation;
+
+        switch (op.type) {
+            case "move-record": {
+                switch (op.cursor) {
+                    case "from": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.from = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        // Move cursor to "to" if `to` not filled in
+                        if (op.to === undefined) {
+                            op.cursor = "to";
+                        } else {
+                            op.cursor = undefined;
+                        }
+
+                        return;
+                    }
+
+                    case "to": {
+                        // Get the lowest stratum selected
+                        const targetNodeReversedIndex = [...data].reverse().findIndex((item: any) => item.node !== undefined);
+                        const arrayCopyLength = (targetNodeReversedIndex === -1) ? data.length : data.length - targetNodeReversedIndex;
+                        // TODO: Fix type narrowing
+                        const targetPath = (data.slice(0, arrayCopyLength) as { node: AnnealNode.Node }[]).map(item => item.node);
+                        const targetNode = targetPath[targetPath.length - 1];
+
+                        // Can only move records to other "stratum-records"
+                        if (targetNode.type !== "stratum-records") {
+                            return;
+                        }
+
+                        // Set operation path and cursor
+                        op.to = {
+                            path: targetPath,
+                        };
+
+                        op.cursor = undefined;
+
+                        return;
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    onSelectEditOperation(operationType: string) {
+        switch (operationType) {
+            case "move-record": {
+                this.pendingEditOperation = {
+                    type: "move-record",
+                    cursor: "from",
+                    from: undefined,
+                    to: undefined,
+                }
+                break;
+            }
+        }
+    }
+
+    onCancelEditOperation() {
+        this.pendingEditOperation = undefined;
+    }
+
+    onCommitEditOperation() {
+        // Perform the edit operation
+        const op = this.pendingEditOperation;
+
+        if (op === undefined) {
+            return;
+        }
+
+        switch (op.type) {
+            case "move-record": {
+                // Invalid state for commit
+                if (op.from === undefined || op.to === undefined) {
+                    throw new Error("Not enough information provided for move operation");
+                }
+
+                const from = op.from;
+                const fromPath = from.path;
+                const fromNode = fromPath[fromPath.length - 1];
+
+                const movedRecordId = from.recordId;
+
+                if (fromNode.type !== "stratum-records") {
+                    throw new Error("'From node' is not a record carrying stratum");
+                }
+
+                const to = op.to;
+                const toPath = to.path;
+                const toNode = toPath[toPath.length - 1];
+
+                if (toNode.type !== "stratum-records") {
+                    throw new Error("'To node' is not a record carrying stratum");
+                }
+
+                // TODO: Fix type `any`
+                // This is due to nodes being typed as being purely read-only
+                // for safety, but this prevents us from being able to modify 
+                // the node information as required here, unless we do a full
+                // recreation of the tree
+                (fromNode as any).recordIds = fromNode.recordIds.filter(x => x !== movedRecordId);
+                (toNode as any).recordIds = [...toNode.recordIds, movedRecordId];
+
+                break;
+            }
+        }
+
+        // Clear the pending edit operation now that we're done
+        this.pendingEditOperation = undefined;
+    }
+
+    onEditOperationCursorChange(cursor: string | undefined) {
+        if (this.pendingEditOperation === undefined) {
+            return;
+        }
+
+        // TODO: Fix type narrowing
+        this.pendingEditOperation.cursor = cursor as any;
+    }
+
+    @Lifecycle created() {
+        // Copy out the data from the state so that modifications are separate 
+        // from the anneal result which is consistent with constraints
+        //
+        // This is NOT persistent - if you leave this component, the changes you
+        // made will disappear
+        //
+        // TODO: This needs some persistence of some sort but this will heavily
+        // depend on how we will be managing the data
+        this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
     }
 }
 </script>

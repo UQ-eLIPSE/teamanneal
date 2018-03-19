@@ -1,67 +1,52 @@
 <template>
     <div class="edit-operation-bar">
-        <div class="operation-button-list"
-             v-show="!isOperationSelected">
+        <div v-if="!isEditOperationActive"
+             class="operation-button-list">
             <button type="button"
                     class="button"
-                    @click.prevent="selectOperation(operationMap.MOVE)">Move Person</button>
+                    @click.prevent="selectOperation('move-record')">Move Person</button>
             <button type="button"
                     class="button"
-                    @click.prevent="selectOperation(operationMap.SWAP)">Swap people</button>
+                    @click.prevent="selectOperation()">Swap people</button>
             <button type="button"
                     class="button"
-                    @click.prevent="selectOperation(operationMap.ADD)">Add Person</button>
+                    @click.prevent="selectOperation()">Add Person</button>
             <button type="button"
                     class="button"
-                    @click.prevent="selectOperation(operationMap.REMOVE)">Remove Person</button>
+                    @click.prevent="selectOperation()">Remove Person</button>
         </div>
-        <div class="edit-operation-component">
-            <div v-if="isOperationSelected"
-                 class="close-button"
-                 @click="handleOperationClose">&times;</div>
-
-            <component v-if="isOperationSelected"
-                       :is="operation.component"></component>
+        <div v-if="isEditOperationActive"
+             class="edit-operation-component">
+            <div class="close-button"
+                 @click="cancelOperation">&times;</div>
+            <component :is="editOperationComponent"
+                       :pendingEditOperation="pendingEditOperation"
+                       @cursorChange="onCursorChange"
+                       @commitOperation="onCommitOperation"></component>
         </div>
-
-
     </div>
 </template>
 
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 import ModifyResultEditOperationBarMove from "./ModifyResultEditOperationBarMove.vue";
 import ModifyResultEditOperationBarSwap from "./ModifyResultEditOperationBarSwap.vue";
 import ModifyResultEditOperationBarAdd from "./ModifyResultEditOperationBarAdd.vue";
 import ModifyResultEditOperationBarRemove from "./ModifyResultEditOperationBarRemove.vue";
 
-interface Operation {
-    component: any
-}
+// TODO: Change this from `any` to the definition provided in ModifyResult.vue
+type EditOperation = any;
 
 /** 
  * Maps operation to respective component
  */
-const OPERATION_MAP: { [key: string]: Operation } = {
-    MOVE: {
-        component: ModifyResultEditOperationBarMove
-    },
-    SWAP: {
-        component: ModifyResultEditOperationBarSwap
-    },
-    ADD: {       
-        component: ModifyResultEditOperationBarAdd
-    },
-    REMOVE: { 
-        component: ModifyResultEditOperationBarRemove
-    },
-    // `NO_OPERATION` explicitly depicts a state when no operation is selected to avoid any ambiguity
-    NO_OPERATION: {
-        component: undefined
-    },
+const EDIT_OPERATION_COMPONENT_MAP: { [key: string]: any } = {
+    "move-record": ModifyResultEditOperationBarMove,
+    "swap-records": ModifyResultEditOperationBarSwap,
+    "add-record": ModifyResultEditOperationBarAdd,
+    "remove-record": ModifyResultEditOperationBarRemove,
 }
-
 
 @Component({
     components: {
@@ -72,32 +57,30 @@ const OPERATION_MAP: { [key: string]: Operation } = {
     }
 })
 export default class ModifyResultEditOperationBar extends Vue {
-    /** Stores currently selected operation, selects NO_OPERATION by default */
-    private currentOperation: Operation = OPERATION_MAP.NO_OPERATION;
+    @Prop pendingEditOperation = p<EditOperation | undefined>({ required: true });
 
-    get operationMap() {
-        return OPERATION_MAP;
+    get editOperationComponent() {
+        return EDIT_OPERATION_COMPONENT_MAP[this.pendingEditOperation.type] || undefined;
     }
 
-    get operation() {
-        return this.currentOperation;
+    get isEditOperationActive() {
+        return this.pendingEditOperation !== undefined;
     }
 
-    set operation(operation: Operation) {
-        this.currentOperation = operation;
+    selectOperation(operationType: string) {
+        this.$emit("selectOperation", operationType);
     }
 
-    get isOperationSelected() {
-        return this.operation !== this.operationMap.NO_OPERATION;
+    cancelOperation() {
+        this.$emit("cancelOperation");
     }
 
-    selectOperation(operation: Operation) {
-        this.operation = operation;
+    onCursorChange(value: string | undefined) {
+        this.$emit("cursorChange", value);
     }
 
-    /** Resets the current operation to `NO_OPERATION` */
-    handleOperationClose() {
-        this.operation = this.operationMap.NO_OPERATION;
+    onCommitOperation() {
+        this.$emit("commitOperation");
     }
 }
 </script>
@@ -117,6 +100,7 @@ export default class ModifyResultEditOperationBar extends Vue {
     display: flex;
     align-items: center;
 }
+
 .close-button {
     font-size: 2em;
     background-color: #49075e;
