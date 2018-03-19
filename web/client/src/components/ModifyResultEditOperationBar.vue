@@ -7,7 +7,7 @@
                     @click.prevent="selectOperation('move-record')">Move Person</button>
             <button type="button"
                     class="button"
-                    @click.prevent="selectOperation()">Swap people</button>
+                    @click.prevent="selectOperation('swap-records')">Swap people</button>
             <button type="button"
                     class="button"
                     @click.prevent="selectOperation()">Add Person</button>

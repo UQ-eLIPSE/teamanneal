@@ -54,13 +54,20 @@ import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 import ModifyResultEditOperationBar from "../ModifyResultEditOperationBar.vue";
 
-type EditOperation = EditOperation_MoveRecord;
+type EditOperation = EditOperation_MoveRecord | EditOperation_SwapRecords;
 
 interface EditOperation_MoveRecord {
     type: "move-record",
     cursor: keyof EditOperation_MoveRecord | undefined,
     from: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
     to: { path: ReadonlyArray<AnnealNode.Node>, } | undefined,
+}
+
+interface EditOperation_SwapRecords {
+    type: "swap-records",
+    cursor: keyof EditOperation_SwapRecords | undefined,
+    recordA: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
+    recordB: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
 }
 
 @Component({
@@ -331,9 +338,70 @@ XMLHttpRequest {
                 }
                 return;
             }
+
+            case "swap-records": {
+                switch (op.cursor) {
+                    case "recordA": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.recordA = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        // Move cursor to "recordB" if `recordB` not filled in
+                        if (op.recordB === undefined) {
+                            op.cursor = "recordB";
+                        } else {
+                            op.cursor = undefined;
+                        }
+
+                        return;
+                    }
+
+                    case "recordB": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.recordB = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        op.cursor = undefined;
+
+                        return;
+                    }
+                }
+                return;
+            }
         }
     }
 
+    // TODO: Correct `keyof` type for the operation type parameter
     onSelectEditOperation(operationType: string) {
         switch (operationType) {
             case "move-record": {
@@ -342,7 +410,19 @@ XMLHttpRequest {
                     cursor: "from",
                     from: undefined,
                     to: undefined,
-                }
+                };
+
+                return;
+            }
+
+            case "swap-records": {
+                this.pendingEditOperation = {
+                    type: "swap-records",
+                    cursor: "recordA",
+                    recordA: undefined,
+                    recordB: undefined,
+                };
+
                 break;
             }
         }
@@ -392,6 +472,41 @@ XMLHttpRequest {
                 // recreation of the tree
                 (fromNode as any).recordIds = fromNode.recordIds.filter(x => x !== movedRecordId);
                 (toNode as any).recordIds = [...toNode.recordIds, movedRecordId];
+
+                break;
+            }
+
+            case "swap-records": {
+                // Invalid state for commit
+                if (op.recordA === undefined || op.recordB === undefined) {
+                    throw new Error("Not enough information provided for swap operation");
+                }
+
+                const { recordA, recordB } = op;
+
+                const recordAPath = recordA.path;
+                const recordANode = recordAPath[recordAPath.length - 1];
+                const recordAId = recordA.recordId;
+
+                if (recordANode.type !== "stratum-records") {
+                    throw new Error("'Record A node' is not a record carrying stratum");
+                }
+
+                const recordBPath = recordB.path;
+                const recordBNode = recordBPath[recordAPath.length - 1];
+                const recordBId = recordB.recordId;
+
+                if (recordBNode.type !== "stratum-records") {
+                    throw new Error("'Record B node' is not a record carrying stratum");
+                }
+
+                // TODO: Fix type `any`
+                // This is due to nodes being typed as being purely read-only
+                // for safety, but this prevents us from being able to modify 
+                // the node information as required here, unless we do a full
+                // recreation of the tree
+                (recordANode as any).recordIds = [...recordANode.recordIds.filter(x => x !== recordAId), recordBId];
+                (recordBNode as any).recordIds = [...recordBNode.recordIds.filter(x => x !== recordBId), recordAId];
 
                 break;
             }
