@@ -7,7 +7,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "start": "node --turbo --ignition ./build/server/src/index.js",
+    "start": "node ./build/server/src/index.js",
     "test": "npm run test_server",
     "test_server": "jest --no-cache --config=test/server.jest.config.json",
     "clean": "npm run clean_build",

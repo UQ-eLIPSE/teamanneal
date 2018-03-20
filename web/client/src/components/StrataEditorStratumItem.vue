@@ -61,6 +61,15 @@
                                 :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
                 </p>
+
+                <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
+                                                       :stratum="stratum"
+                                                    @customNameListChanged="customNameListChangedHandler"
+                                                       >
+
+                </StrataEditorStratumItemCustomNameList>
+
+<!--
                 <p v-if="isCounterCustomList"
                    class="smaller-margins">
                     Provide a list of names, one per line:
@@ -100,7 +109,7 @@
                     For example:
                     <i>{{ stratum.label }} {{ randomExampleName }}</i>
                 </p>
-
+                                    -->
 
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
@@ -136,6 +145,7 @@ import { deepCopy, deepMerge } from "../util/Object";
 import { Stratum, Data as IStratum } from "../data/Stratum";
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
+import StrataEditorStratumItemCustomNameList from "./StrataEditorStratumItemCustomNameList.vue";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
@@ -160,6 +170,7 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 @Component({
     components: {
         DynamicWidthInputField,
+        StrataEditorStratumItemCustomNameList
     },
 })
 export default class StrataEditorStratumItem extends Vue {
@@ -171,8 +182,7 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
 
-    /** Stores the line numbers needed for custom counter list */
-    private lineNumbersList: number[] = [];
+
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -188,10 +198,6 @@ export default class StrataEditorStratumItem extends Vue {
     get pluralChildUnitTextFirstCharCapitalised() {
         const text = this.pluralChildUnitText;
         return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    get randomExampleName() {
-        return Stratum.GenerateRandomExampleName(this.stratum);
     }
 
     get counterList() {
@@ -307,93 +313,7 @@ export default class StrataEditorStratumItem extends Vue {
         return Array.isArray(this.stratum.namingConfig.counter);
     }
 
-    get customCounterList() {
-        const counterValue = this.stratum.namingConfig.counter;
-
-        if (!Array.isArray(counterValue)) {
-            throw new Error("Not custom counter list");
-        }
-
-        return counterValue.join("\n");
-    }
-
-    set customCounterList(newValue: string) {
-        this.syncLineNumbers();
-        const customCounterList = newValue.split("\n");
-        // Set line numbers list according to the new value of custom counter list
-        this.customCounterLineNumbersList = customCounterList.map((item: any, i: number) => i + 1);
-
-        this.updateStratum({
-            namingConfig: {
-                counter: customCounterList,
-            }
-        });
-    }
-
-    /**
-     * Returns line numbers as a new-line delimited string
-     */
-    get customCounterLineNumbersListNewLine() {
-        return this.customCounterLineNumbersList.join('.\n');
-    }
-
-    /**
-     * Returns an array of line numbers needed for custom counter list
-     */
-    get customCounterLineNumbersList() {
-        return this.lineNumbersList;
-    }
-
-    set customCounterLineNumbersList(list: number[]) {
-        this.lineNumbersList = [...list];
-    }
-
-    /**
-     * Returns the number of names in custom counter list
-     */
-    get numberOfCounterCustomList() {
-        if (this.isCounterCustomList) {
-            return this.customCounterList.trim().split('\n').filter((item) => item !== '').length;
-        }
-        return '-';
-    }
-
-    get isCounterCustomListValid() {
-        return !(
-            this.doesCounterCustomListContainDuplicates || this.doesCounterCustomListContainEmptyLines
-        );
-    }
-
-    get doesCounterCustomListContainDuplicates() {
-        const counterValue = this.stratum.namingConfig.counter;
-
-        if (!Array.isArray(counterValue)) {
-            throw new Error("Not custom counter list");
-        }
-
-        // Check for duplicates in the custom list
-        const trimmedCounterStrings = counterValue
-            .map(counterString => counterString.trim())
-            .filter(counterString => counterString.length !== 0);
-
-        const counterValueSet = new Set(trimmedCounterStrings);
-
-        return counterValueSet.size !== trimmedCounterStrings.length;
-    }
-
-    /**
-     * Checks if any empty lines exist / list is empty
-     */
-    get doesCounterCustomListContainEmptyLines() {
-        // Check for two successive new line characters
-        if (this.customCounterList.indexOf('\n\n') !== -1) {
-            return true;
-        }
-
-        // Check if empty lines exist
-        const emptyLines = this.customCounterList.trim().split('\n').filter((item) => item == '');
-        return emptyLines.length > 0;
-    }
+    
 
     get namingContext() {
         return this.stratum.namingConfig.context;
@@ -499,13 +419,12 @@ export default class StrataEditorStratumItem extends Vue {
         });
     }
 
-    /**
-     * Synchronises scrolling between line numbers and custom counter list text area
-     */
-    syncLineNumbers() {
-        const source = this.$refs['customCounterTextArea'] as HTMLTextAreaElement;
-        const lineNumberTextArea = this.$refs['lineNumberTextArea'] as HTMLTextAreaElement;
-        lineNumberTextArea.scrollTop = source.scrollTop;
+    customNameListChangedHandler(customCounterList: string[]) {
+        this.updateStratum({
+            namingConfig: {
+                counter: customCounterList,
+            }
+        });
     }
 
 }
@@ -632,6 +551,7 @@ ul.distribution {
     padding: 0;
     padding-left: 1.5em;
 }
+
 
 
 /* Custom name list */
