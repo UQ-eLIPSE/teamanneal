@@ -21,6 +21,7 @@
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
                                               :nodeNameMap="nameMap"
+                                              :nodeStyles="nodeStyles"
                                               :idColumnIndex="idColumnIndex"
                                               @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
                     </div>
@@ -223,6 +224,45 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
 
                 return mapObj;
             }, {});
+    }
+
+    /** A map of nodes or records which are to be styled in the spreadsheet */
+    get nodeStyles() {
+        // We currently only style things being edited
+        const op = this.pendingEditOperation;
+
+        if (op === undefined) {
+            return undefined;
+        }
+
+        // TODO: Proper UI design for this feature
+        const nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
+
+        switch (op.type) {
+            case "move-record": {
+                if (op.from !== undefined) {
+                    nodeStyles.set(op.from.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                if (op.to !== undefined) {
+                    nodeStyles.set(op.to.path[op.to.path.length - 1], { color: "#fff", backgroundColor: "#000" });
+                }
+
+                return nodeStyles;
+            }
+
+            case "swap-records": {
+                if (op.recordA !== undefined) {
+                    nodeStyles.set(op.recordA.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                if (op.recordB !== undefined) {
+                    nodeStyles.set(op.recordB.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                return nodeStyles;
+            }
+        }
     }
 
     onConstraintSelected(constraint: IConstraint) {
@@ -544,7 +584,6 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     flex-shrink: 0;
-    margin: 1rem 0 1rem 0;
 }
 
 .spreadsheet-dashboard-wrapper {

@@ -22,6 +22,7 @@
                                                :recordLookupMap="recordLookupMap"
                                                :nodeNameMap="nodeNameMap"
                                                :constraintSatisfactionMap="constraintSatisfactionMap"
+                                               :nodeStyles="nodeStyles"
                                                :onItemClick="onItemClickHandler"></SpreadsheetTreeView2AnnealNodeStratum>
     </tbody>
 </template>
@@ -50,6 +51,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop totalNumberOfColumns = p({ type: Number, required: true, });
     @Prop recordLookupMap = p<Map<RecordElement, Record>>({ required: true, });
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
+    @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
 
     /** Handles click on the heading rendered in this component */

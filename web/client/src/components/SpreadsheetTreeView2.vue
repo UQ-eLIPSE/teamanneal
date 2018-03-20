@@ -33,6 +33,7 @@
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"
                                                 :nodeNameMap="nodeNameMap"
+                                                :nodeStyles="nodeStyles"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
@@ -78,6 +79,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
+    @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
 
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
