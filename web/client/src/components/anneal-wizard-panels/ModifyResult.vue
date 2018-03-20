@@ -503,6 +503,12 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
                     throw new Error("'Record A node' is not a record carrying stratum");
                 }
 
+                const recordAIndex = recordANode.recordIds.indexOf(recordAId);
+
+                if (recordAIndex === -1) {
+                    throw new Error("'Record A node' not found");
+                }
+
                 const recordBPath = recordB.path;
                 const recordBNode = recordBPath[recordAPath.length - 1];
                 const recordBId = recordB.recordId;
@@ -511,13 +517,19 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
                     throw new Error("'Record B node' is not a record carrying stratum");
                 }
 
+                const recordBIndex = recordBNode.recordIds.indexOf(recordBId);
+
+                if (recordBIndex === -1) {
+                    throw new Error("'Record B node' not found");
+                }
+
                 // TODO: Fix type `any`
                 // This is due to nodes being typed as being purely read-only
                 // for safety, but this prevents us from being able to modify 
                 // the node information as required here, unless we do a full
                 // recreation of the tree
-                (recordANode as any).recordIds = [...recordANode.recordIds.filter(x => x !== recordAId), recordBId];
-                (recordBNode as any).recordIds = [...recordBNode.recordIds.filter(x => x !== recordBId), recordAId];
+                (recordANode as any).recordIds[recordAIndex] = recordBId;
+                (recordBNode as any).recordIds[recordBIndex] = recordAId;
 
                 break;
             }
