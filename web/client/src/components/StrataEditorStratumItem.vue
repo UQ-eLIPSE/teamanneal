@@ -64,52 +64,9 @@
 
                 <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
                                                        :stratum="stratum"
-                                                    @customNameListChanged="customNameListChangedHandler"
-                                                       >
+                                                       @customNameListChanged="customNameListChangedHandler">
 
                 </StrataEditorStratumItemCustomNameList>
-
-<!--
-                <p v-if="isCounterCustomList"
-                   class="smaller-margins">
-                    Provide a list of names, one per line:
-                    <br>
-                    <div class="custom-list-number-wrapper"
-                         v-if="isCounterCustomList">
-
-                        <div class="row">
-                            <textarea v-model="customCounterLineNumbersListNewLine"
-                                      ref="lineNumberTextArea"
-                                      rows="5"
-                                      cols="4"
-                                      disabled></textarea>
-                            <textarea v-model="customCounterList"
-                                      @scroll="syncLineNumbers"
-                                      ref="customCounterTextArea"
-                                      rows="5"></textarea>
-                        </div>
-                        <div class="number-teams">
-                            <span>{{numberOfCounterCustomList}} </span>
-                            <span>{{stratum.label}} name{{numberOfCounterCustomList===1?'':'s'}} entered</span>
-                        </div>
-                    </div>
-                </p>
-
-                <div v-if="isCounterCustomList && !isCounterCustomListValid"
-                     class="error-msg">
-                    <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
-                    <p v-if="doesCounterCustomListContainEmptyLines">Warning: Empty lines detected. Please make sure:
-                        <ul>
-                            <li>The list is not empty</li>
-                            <li>There are no empty lines in the list.</li>
-                        </ul>
-                    </p>
-                </div>
-                <p class="smaller-margins">
-                    For example:
-                    <i>{{ stratum.label }} {{ randomExampleName }}</i>
-                </p>
-                                    -->
 
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
@@ -313,7 +270,7 @@ export default class StrataEditorStratumItem extends Vue {
         return Array.isArray(this.stratum.namingConfig.counter);
     }
 
-    
+
 
     get namingContext() {
         return this.stratum.namingConfig.context;
@@ -550,54 +507,5 @@ ul.stratum-size-errors {
 ul.distribution {
     padding: 0;
     padding-left: 1.5em;
-}
-
-
-
-/* Custom name list */
-
-.error-msg>p {
-    font-size: 0.9em;
-    background: darkorange;
-    padding: 1rem;
-}
-
-.custom-list-number-wrapper {
-    display: inline-flex;
-    flex-direction: column;
-    border: 0.5px solid rgba(1, 0, 0, 0.1);
-    padding: 0.2em;
-    background-color: #fff;
-    border-radius: 0.1em;
-}
-
-.custom-list-number-wrapper>.number-teams {
-    padding: 0.5em;
-    border-top: 0.5px solid rgba(1, 0, 0, 0.1);
-    background-color: white;
-}
-
-.number-teams>span:first-child {
-    color: #49075e;
-    font-weight: 500;
-}
-
-.custom-list-number-wrapper>.row>textarea {
-    border: 0;
-    padding: 0.4em 0.2em;
-}
-
-.custom-list-number-wrapper>.row>textarea:first-child {
-    background-color: #fff;
-    color: #aaa;
-    text-align: right;
-    overflow: hidden;
-    resize: none;
-    cursor: default;
-    border-right: 0.2em solid #aaa;
-}
-
-.row {
-    display: flex;
 }
 </style>

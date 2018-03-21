@@ -5,20 +5,22 @@
             <br>
             <div class="custom-list-number-wrapper">
 
-                <div class="row">
-                    <textarea v-model="customCounterLineNumbersListNewLine"
+                <div class="text-areas">
+                    <textarea v-model="customCounterLineNumbers"
+                              class="line-numbers-text-area"
                               ref="lineNumberTextArea"
-                              rows="5"
                               cols="4"
                               disabled></textarea>
                     <textarea v-model="customCounterList"
                               @scroll="syncLineNumbers"
+                              class="custom-counter-text-area"
                               ref="customCounterTextArea"
-                              rows="5"></textarea>
+                              rows="12"
+                              cols="60"></textarea>
                 </div>
-                <div class="number-teams">
-                    <span>{{numberOfCounterCustomList}} </span>
-                    <span>{{stratum.label}} name{{numberOfCounterCustomList===1?'':'s'}} entered</span>
+                <div class="team-count">
+                    <span class="number">{{numberOfCustomNames}} </span>
+                    <span>{{stratum.label}} name{{numberOfCustomNames===1?'':'s'}} entered</span>
                 </div>
             </div>
         </p>
@@ -27,12 +29,8 @@
         <div v-if="!isCounterCustomListValid"
              class="error-msg">
             <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
-            <p v-if="doesCounterCustomListContainEmptyLines">Warning: Empty lines detected. Please make sure:
-                <ul>
-                    <li>The list is not empty</li>
-                    <li>There are no empty lines in the list.</li>
-                </ul>
-            </p>
+            <p v-if="doesCounterCustomListContainEmptyLines">Warning: Empty lines detected. Please make sure there are no empty lines in the list.</p>
+            <p v-if="isCounterCustomListEmpty">Warning: Name list cannot be empty.</p>
         </div>
         <p class="smaller-margins">
             For example:
@@ -51,68 +49,63 @@ import { Stratum, Data as IStratum } from "../data/Stratum";
 export default class StrataEditorStratumItemCustomNameList extends Vue {
     @Prop stratum = p<IStratum>({ required: true, });
 
-    /** Stores the line numbers needed for custom counter list */
-    private lineNumbersList: number[] = [];
+    /** Returns array of custom names */
+    get counter() {
+        return this.stratum.namingConfig.counter;
+    }
 
+    /** 
+     * Returns list of custom names
+     */
     get customCounterList() {
-        const counterValue = this.stratum.namingConfig.counter;
-
-        if (!Array.isArray(counterValue)) {
+        if (!Array.isArray(this.counter)) {
             throw new Error("Not custom counter list");
         }
 
-        return counterValue.join("\n");
+        return this.counter.join("\n");
     }
 
     set customCounterList(newValue: string) {
         this.syncLineNumbers();
-        const customCounterList = newValue.split("\n");
-        // Set line numbers list according to the new value of custom counter list
-        this.customCounterLineNumbersList = customCounterList.map((_item: any, i: number) => i + 1);
-        this.$emit("customNameListChanged", customCounterList);
-        
+        this.$emit("customNameListChanged", newValue.split("\n"));
     }
 
     /**
      * Returns line numbers as a new-line delimited string
      */
-    get customCounterLineNumbersListNewLine() {
-        return this.customCounterLineNumbersList.join('.\n');
+    get customCounterLineNumbers() {
+        return this.customCounterList.split("\n").map((_item: any, i: number) => i + 1).join("\n");
     }
 
-    /**
-     * Returns an array of line numbers needed for custom counter list
+    /** 
+     * Returns the number of custom names entered by user
      */
-    get customCounterLineNumbersList() {
-        return this.lineNumbersList;
-    }
-
-    set customCounterLineNumbersList(list: number[]) {
-        this.lineNumbersList = [...list];
-    }
-
-    /**
-     * Returns the number of names in custom counter list
-     */
-    get numberOfCounterCustomList() {
-        return this.customCounterList.trim().split('\n').filter((item) => item !== '').length;
+    get numberOfCustomNames() {
+        return (this.counter as string[]).filter((name: string) => name.trim() !== '').length;
     }
 
     get isCounterCustomListValid() {
         return !(
-            this.doesCounterCustomListContainDuplicates || this.doesCounterCustomListContainEmptyLines
+            this.doesCounterCustomListContainDuplicates ||
+            this.doesCounterCustomListContainEmptyLines ||
+            this.isCounterCustomListEmpty
         );
     }
 
-    get doesCounterCustomListContainDuplicates() {
-        const counterValue = this.stratum.namingConfig.counter;
+    /**
+     * Checks if custom counter name list is empty
+     */
+    get isCounterCustomListEmpty() {
+        return this.numberOfCustomNames === 0;
+    }
 
-        if (!Array.isArray(counterValue)) {
+    get doesCounterCustomListContainDuplicates() {
+        if (!Array.isArray(this.counter)) {
             throw new Error("Not custom counter list");
         }
 
         // Check for duplicates in the custom list
-        const trimmedCounterStrings = counterValue
+        const trimmedCounterStrings = this.counter
             .map(counterString => counterString.trim())
             .filter(counterString => counterString.length !== 0);
 
@@ -122,17 +115,15 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
     }
 
     /**
-     * Checks if any empty lines exist / list is empty
+     * Checks if any empty lines exist
      */
     get doesCounterCustomListContainEmptyLines() {
-        // Check for two successive new line characters
-        if (this.customCounterList.indexOf('\n\n') !== -1) {
-            return true;
+        if (Array.isArray(this.counter)) {
+            const emptyValue = this.counter
+                .find((counterItem: string, i: number) => counterItem.trim().length === 0 && i < this.counter.length - 1);
+            if (emptyValue !== undefined) return true;
         }
-
-        // Check if empty lines exist
-        const emptyLines = this.customCounterList.trim().split('\n').filter((item) => item == '');
-        return emptyLines.length > 0;
+        return false;
     }
 
     get randomExampleName() {
@@ -155,4 +146,65 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
 
 <style scoped>
 
+.error-msg>p {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1rem;
+}
+
+.custom-list-number-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    border: 0.5px solid rgba(1, 0, 0, 0.1);
+    padding: 0.2em;
+    background-color: #fff;
+    border-radius: 0.1em;
+}
+
+.text-areas {
+    display: flex;
+}
+
+textarea {
+    border: 0;
+    padding: 0.4em 0.2em;
+    border-bottom: 0.5px solid rgba(1, 0, 0, 0.1);
+    font-family: inherit;
+    font-size: 1.2em;
+}
+
+
+.line-numbers-text-area {
+    background: rgba(73, 7, 94, 0.04);
+    color: #49075e;
+    text-align: right;
+    overflow: hidden;
+    resize: none;
+    cursor: default;
+    border-right: 0.2em solid #aaa;
+}
+
+.custom-counter-text-area {
+    resize: none;
+    white-space: nowrap;
+    overflow: auto;
+    outline: none;
+}
+
+.custom-counter-text-area:active,
+.custom-counter-text-area:focus {
+    outline: 0.2em solid rgba(73, 7, 94, 0.2);
+}
+
+.team-count {
+    padding: 0.5em;
+    background-color: white;
+    align-self: flex-end;
+    margin-top: 0.1rem;
+}
+
+.team-count>.number {
+    color: #49075e;
+    font-weight: 500;
+}
 </style>
