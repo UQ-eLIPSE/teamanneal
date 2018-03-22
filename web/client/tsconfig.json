@@ -11,22 +11,14 @@
 
         "sourceMap": true,
         "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
 
-        "alwaysStrict": true,
+        "strict": true,
 
         "forceConsistentCasingInFileNames": true,
-
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-
-        "strictNullChecks": true,
 
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-
 
         "allowUnreachableCode": false
     },

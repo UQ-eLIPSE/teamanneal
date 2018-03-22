@@ -29,16 +29,18 @@
                                target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
+
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                         :annealNodeRoots="annealNodeRoots"
-                                         :headerRow="headerRow"
-                                         :recordRows="recordRows"
-                                         :nameMap="nameMap"
-                                         :idColumnIndex="idColumnIndex"
-                                         :numberOfColumns="columns.length"
-                                         :combinedNameFormat="combinedNameFormat"
-                                         :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+                                        :annealNodeRoots="annealNodeRoots"
+                                        :annealSatisfactionMap="annealSatisfactionMap"
+                                        :headerRow="headerRow"
+                                        :recordRows="recordRows"
+                                        :nameMap="nameMap"
+                                        :idColumnIndex="idColumnIndex"
+                                        :numberOfColumns="columns.length"
+                                        :combinedNameFormat="combinedNameFormat"
+                                        :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -335,15 +337,22 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get annealNodeRoots() {
+    get annealResults() {
         const responseContent = this.state.annealResponse!.content as AxiosResponse;
         const responseData = responseContent.data as ToClientAnnealResponse.Root;
 
         // We're working on the presumption that we definitely have results
-        const results = responseData.results!;
-        const annealNodeRoots = results.map(res => res.result!);
+        return responseData.results!;
+    }
 
-        return annealNodeRoots;
+    get annealNodeRoots() {
+        return this.annealResults.map(res => res.result!.tree);
+    }
+
+    get annealSatisfactionMap() {
+        return this.annealResults
+            .map(res => res.result!.satisfaction)
+            .reduce((carry, sMap) => Object.assign(carry, sMap), {});
     }
 
     get combinedNameFormat() {
@@ -405,5 +414,13 @@ XMLHttpRequest {
     border: 1px dashed #a00;
     padding: 1em;
     overflow: auto;
+}
+
+.spreadsheet-dashboard {
+    display: flex;
+}
+
+.satisfaction-dashboard {
+    width: 20%;
 }
 </style>

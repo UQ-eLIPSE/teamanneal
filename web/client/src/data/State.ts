@@ -115,6 +115,15 @@ export namespace State {
         return recordData.idColumn !== undefined;
     }
 
+    /**
+     * Returns true if a duplicate column name (case sensitive) is encountered in recordData
+     */
+    export function HasDuplicateColumnNames({ recordData }: Data) {
+        const columnNames = recordData.columns.map(column => column.label);
+        const uniqueColumnNames = new Set(columnNames);
+        return uniqueColumnNames.size !== columnNames.length;
+    }
+
     export function HasStrata({ annealConfig }: Data) {
         return annealConfig.strata.length > 0;
     }
