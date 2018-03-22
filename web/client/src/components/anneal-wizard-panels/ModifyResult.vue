@@ -6,18 +6,24 @@
             </div>
             <div class="workspace">
                 <div class="edit-operations">
-                    <br> Edit operations
-                    <br>
+                    <ModifyResultEditOperationBar :pendingEditOperation="pendingEditOperation"
+                                                  @selectOperation="onSelectEditOperation"
+                                                  @cancelOperation="onCancelEditOperation"
+                                                  @commitOperation="onCommitEditOperation"
+                                                  @cursorChange="onEditOperationCursorChange"></ModifyResultEditOperationBar>
+
                 </div>
                 <div class="spreadsheet-dashboard-wrapper">
                     <div class="spreadsheet">
                         <SpreadsheetTreeView2 class="viewer"
-                                              :annealNodeRoots="annealNodeRoots"
+                                              :annealNodeRoots="modifiedAnnealNodeRoots"
                                               :constraintSatisfactionMap="nodeToOverallSatisfactionMap"
                                               :headerRow="headerRow"
                                               :recordRows="recordRows"
                                               :nodeNameMap="nameMap"
-                                              :idColumnIndex="idColumnIndex"></SpreadsheetTreeView2>
+                                              :nodeStyles="nodeStyles"
+                                              :idColumnIndex="idColumnIndex"
+                                              @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
                     </div>
                     <div class="dashboard">
                         <ConstraintSatisfactionDashboard2 class="constraint-satisfaction"
@@ -34,7 +40,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Component, Lifecycle, Mixin } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
 
@@ -44,15 +50,36 @@ import { AxiosResponse } from "../../data/AnnealResponse";
 import { Data as IConstraint } from "../../data/Constraint";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
-import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
 
+import { RecordElement } from "../../../../common/Record";
+import * as AnnealNode from "../../../../common/AnnealNode";
+
+import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
+import ModifyResultEditOperationBar from "../ModifyResultEditOperationBar.vue";
 import ConstraintSatisfactionDashboard2 from "../ConstraintSatisfactionDashboard2.vue";
+
+type EditOperation = EditOperation_MoveRecord | EditOperation_SwapRecords;
+
+interface EditOperation_MoveRecord {
+    type: "move-record",
+    cursor: keyof EditOperation_MoveRecord | undefined,
+    from: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
+    to: { path: ReadonlyArray<AnnealNode.Node>, } | undefined,
+}
+
+interface EditOperation_SwapRecords {
+    type: "swap-records",
+    cursor: keyof EditOperation_SwapRecords | undefined,
+    recordA: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
+    recordB: { path: ReadonlyArray<AnnealNode.Node>, recordId: RecordElement, } | undefined,
+}
 
 @Component({
     components: {
         SpreadsheetTreeView2,
+        ModifyResultEditOperationBar,
         ConstraintSatisfactionDashboard2,
     },
 })
@@ -62,6 +89,15 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     readonly thisWizardStep = AnnealProcessWizardEntries.modifyResult;
 
     selectedConstraint: IConstraint | undefined = undefined;
+
+    /**
+     * Holds a new deep copy of the annealed nodes that may be modified by the 
+     * user
+     */
+    modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
+
+    /** Stores the current editing operation information */
+    pendingEditOperation: EditOperation | undefined = undefined;
 
     get columns() {
         return this.state.recordData.columns;
@@ -97,7 +133,11 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
     }
 
     get nameMap() {
-        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
+        if (this.modifiedAnnealNodeRoots === undefined) {
+            return undefined;
+        }
+
+        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.modifiedAnnealNodeRoots);
     }
 
     get idColumn() {
@@ -129,10 +169,6 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
 
         // We're working on the presumption that we definitely have results
         return responseData.results!;
-    }
-
-    get annealNodeRoots() {
-        return this.annealResults.map(res => res.result!.tree);
     }
 
     get annealSatisfactionMap() {
@@ -190,6 +226,45 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
             }, {});
     }
 
+    /** A map of nodes or records which are to be styled in the spreadsheet */
+    get nodeStyles() {
+        // We currently only style things being edited
+        const op = this.pendingEditOperation;
+
+        if (op === undefined) {
+            return undefined;
+        }
+
+        // TODO: Proper UI design for this feature
+        const nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
+
+        switch (op.type) {
+            case "move-record": {
+                if (op.from !== undefined) {
+                    nodeStyles.set(op.from.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                if (op.to !== undefined) {
+                    nodeStyles.set(op.to.path[op.to.path.length - 1], { color: "#fff", backgroundColor: "#000" });
+                }
+
+                return nodeStyles;
+            }
+
+            case "swap-records": {
+                if (op.recordA !== undefined) {
+                    nodeStyles.set(op.recordA.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                if (op.recordB !== undefined) {
+                    nodeStyles.set(op.recordB.recordId, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                return nodeStyles;
+            }
+        }
+    }
+
     onConstraintSelected(constraint: IConstraint) {
         // Set the selected constraint when the previous value is undefined
         if (this.selectedConstraint === undefined) {
@@ -205,6 +280,284 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
 
         // Otherwise, overwrite the value of the selected constraint
         this.selectedConstraint = constraint;
+    }
+
+    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+        // Only continue if we're in an editing operation
+        if (this.pendingEditOperation === undefined) {
+            return;
+        }
+
+        // Each operation type has different behaviours
+        const op = this.pendingEditOperation;
+
+        switch (op.type) {
+            case "move-record": {
+                switch (op.cursor) {
+                    case "from": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.from = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        // Move cursor to "to" if `to` not filled in
+                        if (op.to === undefined) {
+                            op.cursor = "to";
+                        } else {
+                            op.cursor = undefined;
+                        }
+
+                        return;
+                    }
+
+                    case "to": {
+                        // Get the lowest stratum selected
+                        const targetNodeReversedIndex = [...data].reverse().findIndex((item: any) => item.node !== undefined);
+                        const arrayCopyLength = (targetNodeReversedIndex === -1) ? data.length : data.length - targetNodeReversedIndex;
+                        // TODO: Fix type narrowing
+                        const targetPath = (data.slice(0, arrayCopyLength) as { node: AnnealNode.Node }[]).map(item => item.node);
+                        const targetNode = targetPath[targetPath.length - 1];
+
+                        // Can only move records to other "stratum-records"
+                        if (targetNode.type !== "stratum-records") {
+                            return;
+                        }
+
+                        // Set operation path and cursor
+                        op.to = {
+                            path: targetPath,
+                        };
+
+                        op.cursor = undefined;
+
+                        return;
+                    }
+                }
+                return;
+            }
+
+            case "swap-records": {
+                switch (op.cursor) {
+                    case "recordA": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.recordA = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        // Move cursor to "recordB" if `recordB` not filled in
+                        if (op.recordB === undefined) {
+                            op.cursor = "recordB";
+                        } else {
+                            op.cursor = undefined;
+                        }
+
+                        return;
+                    }
+
+                    case "recordB": {
+                        // TODO: Fix type narrowing
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records
+                        if (targetItem.recordId === undefined) {
+                            return;
+                        }
+
+                        // Split array, with the assumption that record only
+                        // appears at end once
+                        const recordId: RecordElement = targetItem.recordId;
+                        const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+
+                        // Set operation path and cursor
+                        op.recordB = {
+                            path: targetPath,
+                            recordId,
+                        };
+
+                        op.cursor = undefined;
+
+                        return;
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    // TODO: Correct `keyof` type for the operation type parameter
+    onSelectEditOperation(operationType: string) {
+        switch (operationType) {
+            case "move-record": {
+                this.pendingEditOperation = {
+                    type: "move-record",
+                    cursor: "from",
+                    from: undefined,
+                    to: undefined,
+                };
+
+                return;
+            }
+
+            case "swap-records": {
+                this.pendingEditOperation = {
+                    type: "swap-records",
+                    cursor: "recordA",
+                    recordA: undefined,
+                    recordB: undefined,
+                };
+
+                break;
+            }
+        }
+    }
+
+    onCancelEditOperation() {
+        this.pendingEditOperation = undefined;
+    }
+
+    onCommitEditOperation() {
+        // Perform the edit operation
+        const op = this.pendingEditOperation;
+
+        if (op === undefined) {
+            return;
+        }
+
+        switch (op.type) {
+            case "move-record": {
+                // Invalid state for commit
+                if (op.from === undefined || op.to === undefined) {
+                    throw new Error("Not enough information provided for move operation");
+                }
+
+                const from = op.from;
+                const fromPath = from.path;
+                const fromNode = fromPath[fromPath.length - 1];
+
+                const movedRecordId = from.recordId;
+
+                if (fromNode.type !== "stratum-records") {
+                    throw new Error("'From node' is not a record carrying stratum");
+                }
+
+                const to = op.to;
+                const toPath = to.path;
+                const toNode = toPath[toPath.length - 1];
+
+                if (toNode.type !== "stratum-records") {
+                    throw new Error("'To node' is not a record carrying stratum");
+                }
+
+                // TODO: Fix type `any`
+                // This is due to nodes being typed as being purely read-only
+                // for safety, but this prevents us from being able to modify 
+                // the node information as required here, unless we do a full
+                // recreation of the tree
+                (fromNode as any).recordIds = fromNode.recordIds.filter(x => x !== movedRecordId);
+                (toNode as any).recordIds = [...toNode.recordIds, movedRecordId];
+
+                break;
+            }
+
+            case "swap-records": {
+                // Invalid state for commit
+                if (op.recordA === undefined || op.recordB === undefined) {
+                    throw new Error("Not enough information provided for swap operation");
+                }
+
+                const { recordA, recordB } = op;
+
+                const recordAPath = recordA.path;
+                const recordANode = recordAPath[recordAPath.length - 1];
+                const recordAId = recordA.recordId;
+
+                if (recordANode.type !== "stratum-records") {
+                    throw new Error("'Record A node' is not a record carrying stratum");
+                }
+
+                const recordAIndex = recordANode.recordIds.indexOf(recordAId);
+
+                if (recordAIndex === -1) {
+                    throw new Error("'Record A node' not found");
+                }
+
+                const recordBPath = recordB.path;
+                const recordBNode = recordBPath[recordAPath.length - 1];
+                const recordBId = recordB.recordId;
+
+                if (recordBNode.type !== "stratum-records") {
+                    throw new Error("'Record B node' is not a record carrying stratum");
+                }
+
+                const recordBIndex = recordBNode.recordIds.indexOf(recordBId);
+
+                if (recordBIndex === -1) {
+                    throw new Error("'Record B node' not found");
+                }
+
+                // TODO: Fix type `any`
+                // This is due to nodes being typed as being purely read-only
+                // for safety, but this prevents us from being able to modify 
+                // the node information as required here, unless we do a full
+                // recreation of the tree
+                (recordANode as any).recordIds[recordAIndex] = recordBId;
+                (recordBNode as any).recordIds[recordBIndex] = recordAId;
+
+                break;
+            }
+        }
+
+        // Clear the pending edit operation now that we're done
+        this.pendingEditOperation = undefined;
+    }
+
+    onEditOperationCursorChange(cursor: string | undefined) {
+        if (this.pendingEditOperation === undefined) {
+            return;
+        }
+
+        // TODO: Fix type narrowing
+        this.pendingEditOperation.cursor = cursor as any;
+    }
+
+    @Lifecycle created() {
+        // Copy out the data from the state so that modifications are separate 
+        // from the anneal result which is consistent with constraints
+        //
+        // This is NOT persistent - if you leave this component, the changes you
+        // made will disappear
+        //
+        // TODO: This needs some persistence of some sort but this will heavily
+        // depend on how we will be managing the data
+        this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
     }
 }
 </script>
@@ -239,7 +592,9 @@ export default class ModifyResult extends Mixin(StoreState, AnnealProcessWizardP
 }
 
 .edit-operations {
-    background: #ccc;
+    background: #e6e6e6;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     flex-shrink: 0;
 }
 
