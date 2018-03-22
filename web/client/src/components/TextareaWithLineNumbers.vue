@@ -114,7 +114,7 @@ textarea {
 
 .input-text-area {
     resize: none;
-    white-space: nowrap;
+    white-space: pre;
     overflow: auto;
     outline: none;
 }
