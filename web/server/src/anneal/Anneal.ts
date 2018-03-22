@@ -1,9 +1,10 @@
 // Interfaces
+import * as Record from "../../../common/Record";
+import * as Stratum from "../../../common/Stratum";
 import * as RecordData from "../../../common/RecordData";
 import * as Constraint from "../../../common/Constraint";
 import * as AnnealNode from "../../../common/AnnealNode";
-import * as Stratum from "../../../common/Stratum";
-import * as Record from "../../../common/Record";
+import { NodeSatisfactionObject, SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
 // Data manipulation and structures
 import * as ColumnInfo from "../data/ColumnInfo";
@@ -15,7 +16,7 @@ import * as MutationOperation from "./MutationOperation";
 import * as Iteration from "./Iteration";
 import * as UphillTracker from "./UphillTracker";
 import * as TemperatureDerivation from "./TemperatureDerivation";
-// import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
+import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
 import { AbstractConstraint } from "./AbstractConstraint";
 import { CountConstraint } from "./CountConstraint";
@@ -150,18 +151,12 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
     /// Generate output
     /// ===============
 
-    // Walk anneal node tree again and read out the stratum node record pointers
-
-
     const output = {
-        // satisfaction: generateSatisfactionArray(constraints, strata),
-        result: generateOutputTree(thisNodeRecords, idColumnIndex, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
+        tree: generateOutputTree(thisNodeRecords, idColumnIndex, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
+        satisfaction: generateSatisfactionMap(constraints, strata),
     };
 
-    // TODO: Satisfaction information to be delivered to client in TA-93
-    const { result, /* satisfaction,*/ } = output;
-
-    return result;
+    return output;
 }
 
 /**
@@ -470,27 +465,29 @@ function createConstraintObjects(records: Record.RecordSet, columnInfos: Readonl
     return constraints;
 }
 
-// function generateSatisfactionArray(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>): ReadonlyArray<ReadonlyArray<ReadonlyArray<number | undefined>>> {
-//     const satisfaction =
-//         strata.map((stratum) => {                       // For each stratum,
-//             const stratumId = stratum.id;
-//             return stratum.nodes.map(node => {          // and for each node in that stratum,
-//                 return constraints.map(constraint => {  // go through all constraints
+function generateStratumSatisfactionMap(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    // We only work with constraints that actually apply to this stratum
+    const applicableConstraints = constraints.filter(c => c.constraintDef.stratum === stratum.id);
 
-//                     // If this constraint does not apply to the stratum, return
-//                     // undefined
-//                     if (constraint.constraintDef.stratum !== stratumId) {
-//                         return undefined;
-//                     }
+    // Collect up all node satisfaction objects into one large lookup map
+    return stratum.nodes.reduce<SatisfactionMap>((satisfactionMap, node) => {
+        const nodeId = node.getId();
 
-//                     // Return the actual satisfaction value (in range [0,1])
-//                     return ConstraintSatisfaction.calculateSatisfaction(constraint, node);
-//                 });
-//             });
-//         });
+        // Collect up all constraint satisfaction for this node in an object
+        satisfactionMap[nodeId] = applicableConstraints.reduce<NodeSatisfactionObject>((nodeSatisfactionObject, constraint) => {
+            return Object.assign(nodeSatisfactionObject, ConstraintSatisfaction.calculateSatisfaction(constraint, node));
+        }, {});
 
-//     return satisfaction;
-// }
+        return satisfactionMap;
+    }, {});
+}
+
+function generateSatisfactionMap(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
+    // Generate satisfaction map of all stratum nodes combined into one
+    return strata
+        .map(stratum => generateStratumSatisfactionMap(constraints, stratum))
+        .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
+}
 
 function annealOuterLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, startTemp: number) {
     // TODO: Make parameters configurable in TA-79

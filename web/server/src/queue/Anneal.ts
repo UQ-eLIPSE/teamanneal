@@ -15,12 +15,12 @@ export function init(workerId: string) {
 
             try {
                 // Run anneal
-                const result = Anneal.anneal(annealNode, recordData, strata, constraints);
+                const annealOutput = Anneal.anneal(annealNode, recordData, strata, constraints);
 
                 const resultMessage: IPCData.AnnealResultMessageData = {
                     _meta,
 
-                    result,
+                    result: annealOutput,
                 }
 
                 // Pass message back with result

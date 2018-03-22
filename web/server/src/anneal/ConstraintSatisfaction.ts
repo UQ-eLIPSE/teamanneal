@@ -1,4 +1,4 @@
-// import * as AnnealNode from "../data/AnnealNode";
+import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 
 import { AbstractConstraint } from "./AbstractConstraint";
 import { CountConstraint } from "./CountConstraint";
@@ -10,13 +10,12 @@ import { AnnealStratumNode } from "./AnnealStratumNode";
 
 import * as Util from "../core/Util";
 
-
 /**
  * @param constraint 
  * @param node The stratum node being checked (not root node)
  * @param allLeaves All leaves regardless of whether they're under the node
  */
-export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealStratumNode) {
+export function calculateSatisfactionValue(constraint: AbstractConstraint, node: AnnealStratumNode) {
     const recordPointers = node.getRecordPointers();
 
     // If not applicable, return undefined
@@ -31,6 +30,14 @@ export function calculateSatisfaction(constraint: AbstractConstraint, node: Anne
     }
 
     throw new Error("Unrecognised constraint type");
+}
+
+export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealStratumNode) {
+    const satisfactionObject: ConstraintSatisfaction.NodeSatisfactionObject = {
+        [constraint.constraintDef._id]: calculateSatisfactionValue(constraint, node),
+    };
+
+    return satisfactionObject;
 }
 
 

@@ -42,7 +42,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Mixin } from "av-ts";
+import { Component, Mixin } from "av-ts";
 
 import { State } from "../../data/State";
 
@@ -55,7 +55,7 @@ import StrataStructureEditor from "../StrataStructureEditor.vue";
 
 @Component({
     components: {
-        StrataStructureEditor: StrataStructureEditor as Vue.Component,
+        StrataStructureEditor,
     },
 })
 export default class DesignGroupStructure extends Mixin(StoreState, AnnealProcessWizardPanel) {

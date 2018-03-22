@@ -10,7 +10,7 @@ export interface ListCounter {
     type: ListCounterType,
     description: string,
     example: string,
-    generator: (index: number, contextSize?: number) => string,
+    generator: (index: number, contextSize: number) => string,
     generatorArray: (length: number) => ReadonlyArray<string>,
 }
 

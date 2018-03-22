@@ -18,9 +18,10 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
+import { Data as IState } from "../data/State";
 import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
 
-type WNE = WizardNavigationEntry.WizardNavigationEntry;
+type WNE = WizardNavigationEntry.WizardNavigationEntry<IState>;
 
 @Component
 export default class WizardNavigation extends Vue {

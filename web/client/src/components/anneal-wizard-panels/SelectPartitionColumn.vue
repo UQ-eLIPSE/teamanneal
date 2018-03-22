@@ -105,8 +105,8 @@
                 <select v-model="partitionColumn">
                     <option disabled
                             :value="undefined">Please select partition column</option>
-                    <option v-for="option in possiblePartitionColumns"
-                            :key="option.value"
+                    <option v-for="(option, i) in possiblePartitionColumns"
+                            :key="option.text + i"
                             :value="option.value">{{ option.text }}</option>
                 </select>
             </p>

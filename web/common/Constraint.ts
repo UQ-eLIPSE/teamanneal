@@ -28,6 +28,7 @@ export interface ApplicabilityGroupSizeCondition {
      * e.g. the group size is *equal to* [value]
      */
     readonly function: ComparisonFunction,
+
     /**
      * Group size target
      * 
@@ -37,12 +38,16 @@ export interface ApplicabilityGroupSizeCondition {
 }
 
 export interface Base {
+    _id: string,
+
     /** The stratum object ID that this constraint applies to */
     readonly stratum: string,
+
     /** Weight applied to this constraint in the annealing algorithm */
     readonly weight: number,
+
     /**
-     *  applicability conditions
+     * Applicability conditions
      * 
      * This constraint will only be considered if the applicability filters are
      * all met, or if there are no conditions imposed

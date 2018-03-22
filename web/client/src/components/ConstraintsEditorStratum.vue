@@ -41,7 +41,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Mixin, Prop, p } from "av-ts";
+import { Component, Mixin, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
@@ -53,7 +53,7 @@ import { StoreState } from "./StoreState";
 
 @Component({
     components: {
-        ConstraintsEditorConstraintItem: ConstraintsEditorConstraintItem as Vue.Component,
+        ConstraintsEditorConstraintItem,
     },
 })
 export default class ConstraintsEditorStratum extends Mixin(StoreState) {
