@@ -63,10 +63,8 @@
                 </p>
 
                 <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
-                                                       :stratum="stratum"
-                                                       @customNameListChanged="customNameListChangedHandler">
-
-                </StrataEditorStratumItemCustomNameList>
+                                                       v-model="customNameList"
+                                                       :stratumLabel="stratum.label"></StrataEditorStratumItemCustomNameList>
 
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
@@ -376,14 +374,19 @@ export default class StrataEditorStratumItem extends Vue {
         });
     }
 
-    customNameListChangedHandler(customCounterList: string[]) {
+    get customNameList() {
+        // We assume that this is only used when the custom name functionality
+        // is enabled, and so assert that we're delivering a string array
+        return this.stratum.namingConfig.counter as string[];
+    }
+
+    set customNameList(names: string[]) {
         this.updateStratum({
             namingConfig: {
-                counter: customCounterList,
+                counter: names,
             }
         });
     }
-
 }
 </script>
 
