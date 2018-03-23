@@ -1,16 +1,19 @@
 <template>
     <div id="wrapper">
         <div id="welcome">
-            <h1>Team sorting. Sorted.</span>
-            </h1>
+            <h1>Teams? Sorted.</h1>
             <p>
-                TeamAnneal is a tool that optimises team allocations
-                <br>using constraints you provide.
-                <a class="more" href="https://www.elipse.uq.edu.au/team-anneal-team-formation" target="_blank">Find out more.</a>
+                TeamAnneal optimises allocation of teams
+                <br> using constraints you provide.
+                <a class="more"
+                   href="https://www.elipse.uq.edu.au/team-anneal-team-formation"
+                   target="_blank">Find out more.</a>
             </p>
             <p>
-                <button class="button" @click="goToAnneal">Create new teams</button>
-                <button class="button secondary" @click="goToEditor">Edit existing teams</button>
+                <button class="button"
+                        @click="goToAnneal">Create new teams</button>
+                <button class="button secondary"
+                        @click="goToEditor">Edit existing teams</button>
             </p>
         </div>
     </div>
