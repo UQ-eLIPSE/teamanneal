@@ -11,7 +11,7 @@
                                   :idColumnIndex="idColumnIndex"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
-        <div class="menu">Menu</div>
+        <ResultsEditorSideToolArea class="side-tool-area"></ResultsEditorSideToolArea>
     </div>
 </template>
 
@@ -32,10 +32,12 @@ import { Vue, Component } from "av-ts";
 // import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
+import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 
 @Component({
     components: {
         SpreadsheetTreeView2,
+        ResultsEditorSideToolArea,
     },
 })
 export default class ResultsEditor extends Vue {
@@ -528,12 +530,9 @@ export default class ResultsEditor extends Vue {
     position: relative;
 }
 
-.menu {
+.side-tool-area {
     flex-grow: 0;
     flex-shrink: 0;
-
-    background: #49075e;
-    color: #fff;
 }
 
 .spreadsheet {
