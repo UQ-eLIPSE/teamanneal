@@ -9,4 +9,8 @@ export interface MenuItem {
      * "end" = End of the menu bar (bottom) 
      */
     region?: "start" | "center" | "end",
+
+    /** Component to render in side panel */
+    // TODO: Figure out what a component type is
+    component?: any,
 }

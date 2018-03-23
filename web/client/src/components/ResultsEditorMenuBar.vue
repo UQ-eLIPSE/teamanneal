@@ -82,6 +82,7 @@ export default class ResultsEditorMenuBar extends Vue {
 .aligned-items {
     flex-grow: 1;
     flex-shrink: 0;
+    flex-basis: 0;
 
     display: flex;
     flex-direction: column;
@@ -102,6 +103,9 @@ export default class ResultsEditorMenuBar extends Vue {
 .menu-item {
     width: 4em;
     height: 4em;
+    
+    flex-grow: 0;
+    flex-shrink: 0;
 
     border: 0;
     margin: 0;
