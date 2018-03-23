@@ -2,7 +2,8 @@
     <div id="teamanneal">
         <div id="header">
             <h1>
-                <a id="uq-logo" href="#">The University of Queensland</a>
+                <router-link id="uq-logo"
+                             to="/">The University of Queensland</router-link>
             </h1>
             <h2>
                 TeamAnneal
