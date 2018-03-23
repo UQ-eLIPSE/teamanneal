@@ -1,16 +1,18 @@
 <template>
     <div class="header"
          :class="headerClasses">
-
         <h1 v-if="!enableMenu">
             <a :class="logoClasses"
                href="#">The University of Queensland</a>
         </h1>
-        <HeaderMenu :enableMenu="enableMenu"></HeaderMenu>
-        
+        <HeaderMenu v-else
+                    :enableMenu="enableMenu"></HeaderMenu>
+
         <h2>
             {{headerText}}
         </h2>
+
+
     </div>
 </template>
 
@@ -39,7 +41,8 @@ export default class Header extends Vue {
 
     get logoClasses() {
         return {
-            "uq-logo": !this.enableMenu
+            "uq-logo": !this.enableMenu,
+            "uq-logo-minimal": this.minimal
         }
     }
 }
@@ -99,6 +102,12 @@ export default class Header extends Vue {
     display: block;
     margin: 0;
     padding: 0;
+}
+
+.uq-logo-minimal {
+    background-size: 119px 33px;
+    height: 33px;
+    width: 121px;
 }
 
 .menu {
