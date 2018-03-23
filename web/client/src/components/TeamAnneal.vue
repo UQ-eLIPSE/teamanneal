@@ -1,6 +1,6 @@
 <template>
     <div id="teamanneal">
-        <Header :enableMenu="true" :minimal="true"></Header>
+        <Header :enableMenu="headerOptions.enableMenu" :minimal="headerOptions.minimal" :headerText="headerOptions.headerText"></Header>
         <div id="content">
             <router-view />
         </div>
@@ -19,6 +19,14 @@ import Header from "./Header.vue";
     }
 })
 export default class TeamAnneal extends Vue {
+    
+    get headerOptions() {
+        return {
+            headerText: 'TeamAnneal',
+            minimal: true,
+            enableMenu: true
+        }
+    }
 }
 </script>
 

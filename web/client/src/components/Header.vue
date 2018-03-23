@@ -1,12 +1,15 @@
 <template>
-    <div id="header">
-        <h1>
-            <a v-if="!enableMenu"
-               :class="headerClasses"
+    <div class="header"
+         :class="headerClasses">
+
+        <h1 v-if="!enableMenu">
+            <a :class="logoClasses"
                href="#">The University of Queensland</a>
         </h1>
+        <HeaderMenu :enableMenu="enableMenu"></HeaderMenu>
+        
         <h2>
-            TeamAnneal
+            {{headerText}}
         </h2>
     </div>
 </template>
@@ -15,17 +18,28 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
+import HeaderMenu from "./HeaderMenu.vue";
 
-@Component
+@Component({
+    components: {
+        HeaderMenu
+    }
+})
 export default class Header extends Vue {
+    @Prop headerText = p<string>({ required: false, default: 'TeamAnneal' });
     @Prop minimal = p<boolean>({ required: false, default: () => false });
     @Prop enableMenu = p<boolean>({ required: false, default: () => true });
 
 
     get headerClasses() {
         return {
-            'uq-logo': !this.enableMenu,
             'header-minimal': this.minimal
+        }
+    }
+
+    get logoClasses() {
+        return {
+            "uq-logo": !this.enableMenu
         }
     }
 }
@@ -34,7 +48,7 @@ export default class Header extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-#header {
+.header {
     background-color: #49075E;
     padding: 1rem 1.6rem;
     font-size: 0.8rem;
@@ -50,13 +64,13 @@ export default class Header extends Vue {
 }
 
 .header-minimal {
-    padding: 
+    padding: 0.3rem 0rem;
 }
 
 
 
-#header h1,
-#header h2 {
+.header h1,
+.header h2 {
     font-weight: normal;
     color: inherit;
     margin: 0;
@@ -64,13 +78,13 @@ export default class Header extends Vue {
     border: 0;
 }
 
-#header h1 {
+.header h1 {
     padding: 0.4rem 1rem;
     border-right: 0.1rem solid rgba(255, 255, 255, 0.15);
     margin-right: 1.2rem;
 }
 
-#header h2 {
+.header h2 {
     font-size: 1.8em;
     font-weight: 300;
 }
@@ -85,5 +99,9 @@ export default class Header extends Vue {
     display: block;
     margin: 0;
     padding: 0;
+}
+
+.menu {
+    cursor: pointer;
 }
 </style>
