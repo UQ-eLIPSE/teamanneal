@@ -1,6 +1,8 @@
 <template>
     <div class="results-editor-side-tool-area">
-        <ResultsEditorMenuBar :items="menuBarItems"></ResultsEditorMenuBar>
+        <ResultsEditorMenuBar :items="menuBarItems"
+                              :selectedItem="selectedItem"
+                              @itemSelected="onItemSelected"></ResultsEditorMenuBar>
     </div>
 </template>
 
@@ -46,8 +48,20 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     },
 })
 export default class ResultsEditorSideToolArea extends Vue {
+    /** Which menu item is currently selected */
+    selectedItem: MenuItem | undefined = undefined;
+
     get menuBarItems() {
         return MENU_BAR_ITEMS;
+    }
+
+    onItemSelected(item: MenuItem) {
+        if (this.selectedItem === item) {
+            this.selectedItem = undefined;
+            return;
+        }
+
+        this.selectedItem = item;
     }
 }
 </script>

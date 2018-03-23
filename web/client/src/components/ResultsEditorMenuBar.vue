@@ -4,19 +4,25 @@
             <button v-for="item in startAlignedItems"
                     :key="item.label"
                     class="menu-item"
-                    :title="item.label">{{ item.label }}</button>
+                    :class="menuItemClasses(item)"
+                    :title="item.label"
+                    @click="onMenuItemClick(item)">{{ item.label }}</button>
         </div>
         <div class="center-align aligned-items">
             <button v-for="item in centerAlignedItems"
                     :key="item.label"
                     class="menu-item"
-                    :title="item.label">{{ item.label }}</button>
+                    :class="menuItemClasses(item)"
+                    :title="item.label"
+                    @click="onMenuItemClick(item)">{{ item.label }}</button>
         </div>
         <div class="end-align aligned-items">
             <button v-for="item in endAlignedItems"
                     :key="item.label"
                     class="menu-item"
-                    :title="item.label">{{ item.label }}</button>
+                    :class="menuItemClasses(item)"
+                    :title="item.label"
+                    @click="onMenuItemClick(item)">{{ item.label }}</button>
         </div>
     </div>
 </template>
@@ -30,7 +36,11 @@ import { MenuItem } from "../data/ResultsEditorMenuBar";
 
 @Component
 export default class ResultsEditorMenuBar extends Vue {
+    /** Menu items */
     @Prop items = p<ReadonlyArray<MenuItem>>({ type: Array, required: false, default: () => [], });
+    
+    /** Which menu item is currently selected */
+    @Prop selectedItem = p<MenuItem>({ required: false, });
 
     get startAlignedItems() {
         return this.items.filter(item => item.region === "start");
@@ -42,6 +52,16 @@ export default class ResultsEditorMenuBar extends Vue {
 
     get endAlignedItems() {
         return this.items.filter(item => item.region === "end");
+    }
+
+    menuItemClasses(item: MenuItem) {
+        return {
+            "selected": this.selectedItem === item, 
+        };
+    }
+
+    onMenuItemClick(item: MenuItem) {
+        this.$emit("itemSelected", item);
     }
 }
 </script>
@@ -98,5 +118,10 @@ export default class ResultsEditorMenuBar extends Vue {
     line-height: normal;
 
     -webkit-appearance: none;
+}
+
+.menu-item.selected {
+    background: #ccc;
+    color: #000;
 }
 </style>
