@@ -19,7 +19,6 @@ import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/Desig
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
 import Anneal_ViewResult from "./components/anneal-wizard-panels/ViewResult.vue";
-import Anneal_ModifyResult from "./components/anneal-wizard-panels/ModifyResult.vue";
 
 Vue.use(VueRouter);
 
@@ -100,13 +99,6 @@ export default (store: Store<any>) => {
                         component: Anneal_ViewResult,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.viewResult,
-                        },
-                    },
-                    {
-                        path: "modify-result",
-                        component: Anneal_ModifyResult,
-                        meta: {
-                            wizardEntry: AnnealProcessWizardEntries.modifyResult,
                         },
                     },
                 ]
