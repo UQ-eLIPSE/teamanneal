@@ -47,6 +47,8 @@
                 <button class="button export-button"
                         @click="onExportButtonClick"
                         :disabled="isExportButtonDisabled">Export as CSV</button>
+                <button class="button"
+                        @click="onTAFileExportButtonClick">Export *.TEAMANNEAL (!)</button>
             </div>
         </template>
         <template v-else>
@@ -231,6 +233,12 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         // Export as CSV
         const sourceFileName = this.state.recordData.source.name;
         unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
+    }
+
+    onTAFileExportButtonClick() {
+        // TODO: Implement export for testing purposes so we can import in the
+        // results editor
+        throw new Error("Not yet implemented");
     }
 
     get isExportButtonDisabled() {
