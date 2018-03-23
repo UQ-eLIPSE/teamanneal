@@ -10,6 +10,7 @@ import * as AnnealProcessWizardEntries from "./data/AnnealProcessWizardEntries";
 // Subcomponents
 import Welcome from "./components/Welcome.vue";
 import AnnealProcess from "./components/AnnealProcess.vue";
+import ResultsEditor from "./components/ResultsEditor.vue";
 
 import Anneal_ProvideRecordsFile from "./components/anneal-wizard-panels/ProvideRecordsFile.vue";
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
@@ -102,6 +103,10 @@ export default (store: Store<any>) => {
                         },
                     },
                 ]
+            },
+            {
+                path: "/editor",
+                component: ResultsEditor,
             },
         ],
     });
