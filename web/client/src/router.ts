@@ -10,6 +10,7 @@ import * as AnnealProcessWizardEntries from "./data/AnnealProcessWizardEntries";
 // Subcomponents
 import Welcome from "./components/Welcome.vue";
 import AnnealProcess from "./components/AnnealProcess.vue";
+import ResultsEditor from "./components/ResultsEditor.vue";
 
 import Anneal_ProvideRecordsFile from "./components/anneal-wizard-panels/ProvideRecordsFile.vue";
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
@@ -19,7 +20,6 @@ import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/Desig
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
 import Anneal_ViewResult from "./components/anneal-wizard-panels/ViewResult.vue";
-import Anneal_ModifyResult from "./components/anneal-wizard-panels/ModifyResult.vue";
 
 Vue.use(VueRouter);
 
@@ -27,10 +27,12 @@ export default (store: Store<any>) => {
     const router = new VueRouter({
         routes: [
             {
+                name: "welcome",
                 path: "/",
                 component: Welcome,
             },
             {
+                name: "anneal-process",
                 path: "/anneal",
                 component: AnnealProcess,
                 children: [
@@ -102,14 +104,12 @@ export default (store: Store<any>) => {
                             wizardEntry: AnnealProcessWizardEntries.viewResult,
                         },
                     },
-                    {
-                        path: "modify-result",
-                        component: Anneal_ModifyResult,
-                        meta: {
-                            wizardEntry: AnnealProcessWizardEntries.modifyResult,
-                        },
-                    },
                 ]
+            },
+            {
+                name: "results-editor",
+                path: "/editor",
+                component: ResultsEditor,
             },
         ],
     });
