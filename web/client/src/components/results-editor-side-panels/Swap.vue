@@ -1,7 +1,6 @@
 <template>
-    <div class="print">
-        <h2>Print</h2>
-        <p>Configure how you would like to print:</p>
+    <div class="move-person">
+        <h2>Swap</h2>
     </div>
 </template>
 
@@ -11,7 +10,7 @@
 import { Vue, Component } from "av-ts";
 
 @Component
-export default class Print extends Vue {
+export default class Swap extends Vue {
 }
 </script>
 
