@@ -46,44 +46,4 @@ export default class Move extends Vue {
 <style scoped src="../../static/results-editor-side-panel.css"></style>
 
 <style scoped>
-.form-block {
-    margin: 1em 0;
-}
-
-.click-input-field-block {
-    display: flex;
-    flex-direction: row;
-
-    background: #fff;
-    color: inherit;
-    border: 1px solid;
-}
-
-.click-input-field-block>button {
-    flex-grow: 0;
-    flex-shrink: 0;
-
-    font: inherit;
-    color: inherit;
-    background: none;
-    text-align: inherit;
-    text-decoration: none;
-
-    border: 0;
-    margin: 0;
-    padding: 0.3em;
-}
-
-.click-input-field-block>button.input-field {
-    flex-grow: 1;
-}
-
-.click-input-field-block>button.input-field:empty {
-    font-style: italic;
-    color: #888;
-}
-
-.click-input-field-block>button.input-field:empty::before {
-    content: attr(data-placeholder-text);
-}
 </style>
