@@ -21,6 +21,9 @@ import { MenuItem } from "../data/ResultsEditorMenuBar";
 import ResultsEditorMenuBar from "./ResultsEditorMenuBar.vue";
 
 import ImportFile from "./results-editor-side-panels/ImportFile.vue";
+import ExportFile from "./results-editor-side-panels/ExportFile.vue";
+import Print from "./results-editor-side-panels/Print.vue";
+import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
@@ -31,10 +34,12 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
         label: "Export",
         region: "start",
+        component: ExportFile,
     },
     {
         label: "Print",
         region: "start",
+        component: Print,
     },
     {
         label: "Move a person",
@@ -51,6 +56,7 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
         label: "Help",
         region: "end",
+        component: Help,
     },
 ]
 
