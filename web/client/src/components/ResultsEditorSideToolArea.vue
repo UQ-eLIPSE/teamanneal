@@ -125,5 +125,9 @@ export default class ResultsEditorSideToolArea extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
+
+    padding: 1em;
+
+    overflow-y: auto;
 }
 </style>
