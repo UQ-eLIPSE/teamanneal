@@ -32,18 +32,20 @@
 
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
-                                        :annealNodeRoots="annealNodeRoots"
-                                        :annealSatisfactionMap="annealSatisfactionMap"
-                                        :headerRow="headerRow"
-                                        :recordRows="recordRows"
-                                        :nameMap="nameMap"
-                                        :idColumnIndex="idColumnIndex"
-                                        :numberOfColumns="columns.length"
-                                        :combinedNameFormat="combinedNameFormat"
-                                        :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
+                                         :annealNodeRoots="annealNodeRoots"
+                                         :annealSatisfactionMap="annealSatisfactionMap"
+                                         :headerRow="headerRow"
+                                         :recordRows="recordRows"
+                                         :nameMap="nameMap"
+                                         :idColumnIndex="idColumnIndex"
+                                         :numberOfColumns="columns.length"
+                                         :combinedNameFormat="combinedNameFormat"
+                                         :hidePartitions="partitionColumn === undefined"></SpreadsheetTreeView>
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
+                <button class="button"
+                        @click="onEditResultButtonClick">Edit results</button>
                 <button class="button export-button"
                         @click="onExportButtonClick"
                         :disabled="isExportButtonDisabled">Export as CSV</button>
@@ -239,6 +241,16 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         // TODO: Implement export for testing purposes so we can import in the
         // results editor
         throw new Error("Not yet implemented");
+    }
+
+    onEditResultButtonClick() {
+        // TODO: This is currently just going to the appropriate route; in 
+        // future this should be an actual export-import process for the 
+        // editor component so that data is reliably copied and not have state 
+        // mutated in the editor directly
+        this.$router.push({
+            name: "results-editor",
+        });
     }
 
     get isExportButtonDisabled() {

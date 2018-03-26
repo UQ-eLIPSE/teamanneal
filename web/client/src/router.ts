@@ -27,10 +27,12 @@ export default (store: Store<any>) => {
     const router = new VueRouter({
         routes: [
             {
+                name: "welcome",
                 path: "/",
                 component: Welcome,
             },
             {
+                name: "anneal-process",
                 path: "/anneal",
                 component: AnnealProcess,
                 children: [
@@ -105,6 +107,7 @@ export default (store: Store<any>) => {
                 ]
             },
             {
+                name: "results-editor",
                 path: "/editor",
                 component: ResultsEditor,
             },
