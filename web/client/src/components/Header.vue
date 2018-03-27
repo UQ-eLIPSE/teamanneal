@@ -1,15 +1,14 @@
 <template>
     <div class="header"
          :class="headerClasses">
-        <h1 v-if="!enableMenu">
+        <h1 v-if="!options.enableMenu">
             <a :class="logoClasses"
                href="#">The University of Queensland</a>
         </h1>
-        <HeaderMenu v-else
-                    :enableMenu="enableMenu"></HeaderMenu>
+        <HeaderMenu v-else></HeaderMenu>
 
         <h2>
-            {{headerText}}
+            {{options.headerText}}
         </h2>
 
 
@@ -21,6 +20,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 import HeaderMenu from "./HeaderMenu.vue";
+import { HeaderOptions } from "../data/Header";
 
 @Component({
     components: {
@@ -28,21 +28,18 @@ import HeaderMenu from "./HeaderMenu.vue";
     }
 })
 export default class Header extends Vue {
-    @Prop headerText = p<string>({ required: false, default: 'TeamAnneal' });
-    @Prop minimal = p<boolean>({ required: false, default: () => false });
-    @Prop enableMenu = p<boolean>({ required: false, default: () => true });
-
+    @Prop options = p<HeaderOptions>({ required: true });
 
     get headerClasses() {
         return {
-            'header-minimal': this.minimal
+            'header-minimal': this.options.minimal
         }
     }
 
     get logoClasses() {
         return {
-            "uq-logo": !this.enableMenu,
-            "uq-logo-minimal": this.minimal
+            "uq-logo": !this.options.enableMenu,
+            "uq-logo-minimal": this.options.minimal
         }
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="menu">
+    <div class="menu" v-if="enableMenu">
         <button class="menu-button"
                 @click.prevent.stop="toggleMenu">
             <span>{{iconText}}</span>
@@ -8,11 +8,11 @@
         <div class="menu-items"
              v-show="open">
             <router-link @click.native="closeMenu"
-                         :to="item.route"
+                         :to="item.ROUTE"
                          class="menu-item"
                          v-for="(item, i) in menuItems"
                          :key="i">
-                <span>{{item.label}}</span>
+                <span>{{item.LABEL}}</span>
             </router-link>
         </div>
     </div>
@@ -22,29 +22,11 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
-
-const MENU_ITEMS = [
-    {
-        route: '/',
-        label: 'Home'
-    },
-    {
-        route: '/anneal',
-        label: 'Creator'
-    },
-    {
-        route: '/editor',
-        label: 'Editor'
-    },
-    {
-        route: '/help',
-        label: 'Help'
-    }
-]
+import { MENU_ITEMS } from "../data/Header";
 
 @Component
 export default class HeaderMenu extends Vue {
-    @Prop enableMenu = p<boolean>({ required: false, default: () => true });
+    @Prop enableMenu = p<boolean>({ required: false, default: true });
     private menuOpen: boolean = false;
 
     get open() {
@@ -60,11 +42,7 @@ export default class HeaderMenu extends Vue {
     }
 
     get iconText() {
-        if (this.open) {
-            return "×";
-        }
-
-        return "☰";
+        return this.open ? "×" : "☰";
     }
 
     toggleMenu() {

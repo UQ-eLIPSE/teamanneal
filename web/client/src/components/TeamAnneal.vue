@@ -1,8 +1,6 @@
 <template>
     <div id="teamanneal">
-        <Header :enableMenu="headerOptions.enableMenu"
-                :minimal="headerOptions.minimal"
-                :headerText="headerOptions.headerText"></Header>
+        <Header :options="headerOptions"></Header>
         <div id="content">
             <router-view />
         </div>
@@ -14,47 +12,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 import Header from "./Header.vue";
-
-interface HeaderOptions {
-    headerText: string;
-    minimal: boolean;
-    enableMenu: boolean;
-}
-
-// TODO: Move header config to a separate file
-const HEADER_CONFIG = {
-    ANNEAL: {
-        pathRegex: /^\/anneal(.*)?$/i,
-        headerOptions: {
-            headerText: 'TeamAnneal Creator',
-            minimal: true,
-            enableMenu: true
-        }
-    },
-    EDITOR: {
-        pathRegex: /^\/editor(.*)?$/i,
-        headerOptions: {
-            headerText: 'TeamAnneal Editor',
-            minimal: true,
-            enableMenu: true
-        }
-    },
-    HOME: {
-        pathRegex: /^\/$/i,
-        headerOptions: {
-            headerText: 'TeamAnneal',
-            minimal: false,
-            enableMenu: false
-        }
-    },
-    DEFAULT: {
-        headerOptions: {
-            headerText: 'TeamAnneal',
-            minimal: true,
-            enableMenu: true
-        }
-    }
-}
+import { HEADER_CONFIG, HeaderOptions } from "../data/Header";
 
 @Component({
     components: {
@@ -64,21 +22,22 @@ const HEADER_CONFIG = {
 export default class TeamAnneal extends Vue {
 
     /** 
-     * Matches the current route with certain regular expressions and returns appropriate header options
+     * Matches the current route and returns appropriate header options
      */
     get headerOptions(): HeaderOptions {
-        if (this.$route.path.match(HEADER_CONFIG.ANNEAL.pathRegex)) {
-            return HEADER_CONFIG.ANNEAL.headerOptions;
+        // Check if a match was found for the current route
+        if (this.$route.matched[0]) {
+            // $route.matched contains route records for all nested path segments of the current route.
+            // Route records are stored in parent to child order.
+            // Match the first record i.e. the top-level parent route
+            switch (this.$route.matched[0].path) {
+                case HEADER_CONFIG.ANNEAL.PATH: return HEADER_CONFIG.ANNEAL.HEADER_OPTIONS;
+                case HEADER_CONFIG.EDITOR.PATH: return HEADER_CONFIG.EDITOR.HEADER_OPTIONS;
+                case HEADER_CONFIG.HOME.PATH: return HEADER_CONFIG.HOME.HEADER_OPTIONS;
+                default: return HEADER_CONFIG.DEFAULT.HEADER_OPTIONS;
+            }
         }
-        if (this.$route.path.match(HEADER_CONFIG.EDITOR.pathRegex)) {
-            return HEADER_CONFIG.EDITOR.headerOptions;
-        }
-        if (this.$route.path.match(HEADER_CONFIG.HOME.pathRegex)) {
-            console.log('matches');
-            return HEADER_CONFIG.HOME.headerOptions;
-        }
-
-        return HEADER_CONFIG.DEFAULT.headerOptions;
+        return HEADER_CONFIG.DEFAULT.HEADER_OPTIONS;
     }
 }
 </script>
