@@ -1,15 +1,16 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
-import { Stratum, Data as IStratum } from "./data/Stratum";
-import { Constraint, Data as IConstraint } from "./data/Constraint";
-import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
-import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
+import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "../data/State";
+import { Stratum, Data as IStratum } from "../data/Stratum";
+import { Constraint, Data as IConstraint } from "../data/Constraint";
+import { AnnealRequest, Data as IAnnealRequest } from "../data/AnnealRequest";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "../data/AnnealResponse";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 
-import { deepMerge } from "./util/Object";
-import { replaceAll } from "./util/String";
+import { deepMerge } from "../util/Object";
+import { replaceAll } from "../util/String";
+
 Vue.use(Vuex);
 
 const state: IState = State.Init();
