@@ -4,33 +4,33 @@ export interface HeaderOptions {
     enableMenu: boolean;
 }
 
-export const HEADER_CONFIG = {
-    ANNEAL: {
-        PATH: "/anneal",
-        HEADER_OPTIONS: {
+export const HEADER_CONFIG: { [key: string]: { path?: string; headerOptions: HeaderOptions } } = {
+    anneal: {
+        path: "/anneal",
+        headerOptions: {
             headerText: 'TeamAnneal Creator',
             minimal: true,
             enableMenu: true
         }
     },
-    EDITOR: {
-        PATH: "/editor",
-        HEADER_OPTIONS: {
+    editor: {
+        path: "/editor",
+        headerOptions: {
             headerText: 'TeamAnneal Editor',
             minimal: true,
             enableMenu: true
         }
     },
-    HOME: {
-        PATH: "",
-        HEADER_OPTIONS: {
+    home: {
+        path: "",
+        headerOptions: {
             headerText: 'TeamAnneal',
             minimal: false,
             enableMenu: false
         }
     },
-    DEFAULT: {
-        HEADER_OPTIONS: {
+    default: {
+        headerOptions: {
             headerText: 'TeamAnneal',
             minimal: true,
             enableMenu: true
@@ -38,21 +38,21 @@ export const HEADER_CONFIG = {
     }
 }
 
-export const MENU_ITEMS = [
+export const MENU_ITEMS: { route: string; label: string }[] = [
     {
-        ROUTE: '/',
-        LABEL: 'Home'
+        route: '/',
+        label: 'Home'
     },
     {
-        ROUTE: '/anneal',
-        LABEL: 'Team Creator'
+        route: '/anneal',
+        label: 'Team Creator'
     },
     {
-        ROUTE: '/editor',
-        LABEL: 'Team Editor'
+        route: '/editor',
+        label: 'Team Editor'
     },
     {
-        ROUTE: '/help',
-        LABEL: 'Help'
+        route: '/help',
+        label: 'Help'
     }
 ];

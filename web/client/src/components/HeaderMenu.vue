@@ -1,5 +1,6 @@
 <template>
-    <div class="menu" v-if="enableMenu">
+    <div class="menu"
+         v-if="enableMenu">
         <button class="menu-button"
                 @click.prevent.stop="toggleMenu">
             <span>{{iconText}}</span>
@@ -8,11 +9,11 @@
         <div class="menu-items"
              v-show="open">
             <router-link @click.native="closeMenu"
-                         :to="item.ROUTE"
+                         :to="item.route"
                          class="menu-item"
                          v-for="(item, i) in menuItems"
                          :key="i">
-                <span>{{item.LABEL}}</span>
+                <span>{{item.label}}</span>
             </router-link>
         </div>
     </div>
@@ -26,7 +27,8 @@ import { MENU_ITEMS } from "../data/Header";
 
 @Component
 export default class HeaderMenu extends Vue {
-    @Prop enableMenu = p<boolean>({ required: false, default: true });
+    @Prop enableMenu = p<boolean>({ type: Boolean, required: false, default: true });
+
     private menuOpen: boolean = false;
 
     get open() {
