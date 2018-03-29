@@ -2,7 +2,9 @@ import { Module } from "vuex";
 import { RecordData } from "../data/RecordData";
 import { StrataConfig } from "../data/StrataConfig";
 import { ConstraintConfig } from "../data/ConstraintConfig";
+import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeStructure } from "../data/GroupNodeStructure";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 export const ResultsEditor = (namespaced: boolean = true) => {
     const stateModule: Module<State, State> = {
@@ -37,9 +39,11 @@ function InitState() {
         },
 
         groupNode: {
-            structure: {},
+            structure: {
+                roots: [],
+            },
             nameMap: {},
-            nodeRecordsMap: {},
+            nodeRecordArrayMap: {},
         },
 
         namingConfig: undefined,
