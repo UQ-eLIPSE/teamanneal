@@ -2,15 +2,17 @@
     <div class="header"
          :class="headerClasses">
 
-        <h1 v-if="!enableMenu">
-            <a :class="logoClasses"
+        <HeaderMenu v-if="enableMenu"></HeaderMenu>
+        <h1 v-else>
+            <a class="uq-logo"
+               :class="logoClasses"
                href="#">The University of Queensland</a>
         </h1>
-        <HeaderMenu :enableMenu="enableMenu"></HeaderMenu>
-        
         <h2>
             {{headerText}}
         </h2>
+
+
     </div>
 </template>
 
@@ -26,10 +28,9 @@ import HeaderMenu from "./HeaderMenu.vue";
     }
 })
 export default class Header extends Vue {
-    @Prop headerText = p<string>({ required: false, default: 'TeamAnneal' });
-    @Prop minimal = p<boolean>({ required: false, default: () => false });
-    @Prop enableMenu = p<boolean>({ required: false, default: () => true });
-
+    @Prop minimal = p<boolean>({ type: Boolean, required: true });
+    @Prop headerText = p<string>({ type: String, required: true });
+    @Prop enableMenu = p<boolean>({ type: Boolean, required: true });
 
     get headerClasses() {
         return {
@@ -39,7 +40,7 @@ export default class Header extends Vue {
 
     get logoClasses() {
         return {
-            "uq-logo": !this.enableMenu
+            "uq-logo-minimal": this.minimal
         }
     }
 }
@@ -99,6 +100,12 @@ export default class Header extends Vue {
     display: block;
     margin: 0;
     padding: 0;
+}
+
+.uq-logo-minimal {
+    background-size: 119px 33px;
+    height: 33px;
+    width: 121px;
 }
 
 .menu {
