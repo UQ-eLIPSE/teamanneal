@@ -1,8 +1,8 @@
 import { Module } from "vuex";
 import { RecordData } from "../data/RecordData";
 import { StrataConfig } from "../data/StrataConfig";
-import { GroupStructure } from "../data/GroupStructure";
 import { ConstraintConfig } from "../data/ConstraintConfig";
+import { GroupNodeStructure } from "../data/GroupNodeStructure";
 
 export const ResultsEditor = (namespaced: boolean = true) => {
     const stateModule: Module<State, State> = {
@@ -32,10 +32,14 @@ function InitState() {
             constraints: [],
         },
 
-        groupStructure: [],
-
         strataConfig: {
             strata: [],
+        },
+
+        groupNode: {
+            structure: {},
+            nameMap: {},
+            nodeRecordsMap: {},
         },
 
         namingConfig: undefined,
@@ -51,8 +55,15 @@ export interface State {
     constraintConfig: ConstraintConfig,
     /** Configuration of  */
     strataConfig: StrataConfig,
-    /** Current tree encoding the structure of how groups are assigned */
-    groupStructure: GroupStructure,
+
+    groupNode: {
+        /** Current tree encoding the structure of how groups are assigned */
+        structure: GroupNodeStructure,
+        /** Map for group nodes to their names */
+        nameMap: GroupNodeNameMap,
+        /** Group node records */
+        nodeRecordArrayMap: GroupNodeRecordArrayMap,
+    },
 
     // NOTE: `namingConfig` is NOT to be used; this is here to only indicate
     // what was previously once integrated into the `AnnealConfig` megaobject
