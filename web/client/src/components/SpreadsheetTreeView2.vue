@@ -1,8 +1,11 @@
 <template>
     <div class="spreadsheet-tree-view">
+        <SpreadsheetTreeView2ColumnsFilter class="column-display-checkboxes"
+                                           :items="columns"
+                                           @listUpdated="handleColumnListUpdate"></SpreadsheetTreeView2ColumnsFilter>
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
-                                        :headerRow="headerRow"
+                                        :headerRow="filteredHeaderRow"
                                         :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
         </table>
         <table class="contents">
@@ -22,11 +25,12 @@
                 <SpreadsheetTreeView2Header ref="sizingPhaseHeader"
                                             class="sizing-phase-header"
                                             :padCells="treeMaxDepth"
-                                            :headerRow="headerRow"></SpreadsheetTreeView2Header>
+                                            :headerRow="filteredHeaderRow"></SpreadsheetTreeView2Header>
             </tbody>
 
             <!-- Render node roots (partitions or highest stratum) -->
             <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in annealNodeRoots"
+                                                :isDataPartitioned="annealNodeRoots.length > 1"
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
                                                 @itemClick="onItemClickHandler"
@@ -46,11 +50,12 @@ import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
-
+import { Data as IColumnData } from "../data/ColumnData";
 import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
+import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
 
 function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
     switch (node.type) {
@@ -71,6 +76,7 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
     components: {
         SpreadsheetTreeView2Header,
         SpreadsheetTreeView2AnnealNodeRoot,
+        SpreadsheetTreeView2ColumnsFilter
     },
 })
 export default class SpreadsheetTreeView2 extends Vue {
@@ -81,9 +87,13 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
-
+    @Prop columns = p<IColumnData[]>({ required: true });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
+
+    // Private
+    /** Stores the column indices to be displayed */
+    displayColumns: number[] = [];
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -91,6 +101,14 @@ export default class SpreadsheetTreeView2 extends Vue {
     /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", data);
+    }
+
+    get columnsDisplayArray() {
+        return this.displayColumns;
+    }
+
+    set columnsDisplayArray(el: number[]) {
+        this.displayColumns = [...el];
     }
 
     get treeMaxDepth() {
@@ -101,7 +119,11 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     get numberOfDataColumns() {
-        return this.headerRow.length;
+        return this.filteredHeaderRow.length;
+    }
+
+    get filteredHeaderRow() {
+        return this.headerRow.filter((_columnLabel, i) => this.columnsDisplayArray.indexOf(i) !== -1);
     }
 
     get totalNumberOfColumns() {
@@ -113,7 +135,8 @@ export default class SpreadsheetTreeView2 extends Vue {
 
         return this.recordRows.reduce((map, record) => {
             const id = record[idColumnIndex];
-            map.set(id, record);
+            const filteredRecord = record.filter((_r, i) => this.columnsDisplayArray.indexOf(i) !== -1);
+            map.set(id, filteredRecord);
             return map;
         }, new Map<RecordElement, Record>());
     }
@@ -149,7 +172,6 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     sizeColumnWidths() {
         const headerEl = (this.$refs["sizingPhaseHeader"] as Vue).$el as HTMLTableRowElement;
-
         // "Show" the element for measurements
         headerEl.classList.add("show");
 
@@ -167,12 +189,20 @@ export default class SpreadsheetTreeView2 extends Vue {
         return widths;
     }
 
-    updateColumnWidths() {
-        this.columnWidths = this.sizeColumnWidths();
+    waitAndUpdateColumnWidths() {
+        this.columnWidths = undefined;
+        Vue.nextTick(() => {
+            this.columnWidths = this.sizeColumnWidths();
+        });
+    }
+
+    handleColumnListUpdate(columnList: number[]) {
+        this.columnsDisplayArray = [...columnList];
+        this.waitAndUpdateColumnWidths();
     }
 
     @Lifecycle mounted() {
-        this.updateColumnWidths();
+        this.waitAndUpdateColumnWidths();
     }
 }   
 </script>
@@ -191,7 +221,7 @@ export default class SpreadsheetTreeView2 extends Vue {
 
 .header {
     position: sticky;
-    top: 0;
+    top: 2rem;
 
     /* Overlap borders along bottom over data rows */
     margin-bottom: -1px;
@@ -225,5 +255,10 @@ export default class SpreadsheetTreeView2 extends Vue {
 
 .sizing-phase-header.show {
     display: table-row;
+}
+
+.column-display-checkboxes {
+    position: sticky;
+    top: 0;
 }
 </style>

@@ -1,11 +1,10 @@
 <template>
     <tbody class="anr-wrapper">
-        <tr>
+        <tr v-if="isDataPartitioned">
             <td class="anr-tree-indicator">
                 -
             </td>
-            <td v-once
-                class="anr-group-heading"
+            <td class="anr-group-heading"
                 :colspan="totalNumberOfColumns - depth"
                 @click="onHeadingClick">
                 <div class="anr-heading-content">
@@ -53,7 +52,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
-
+    /** True when anneal results have multiple partitions */
+    @Prop isDataPartitioned = p({ type: Boolean, required: true });
+    
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
         // The node is already appended to the array in the inner handler

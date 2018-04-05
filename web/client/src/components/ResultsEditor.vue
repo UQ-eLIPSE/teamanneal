@@ -4,6 +4,7 @@
             <SpreadsheetTreeView2 class="spreadsheet"
                                   :annealNodeRoots="modifiedAnnealNodeRoots"
                                   :headerRow="headerRow"
+                                  :columns="columns"
                                   :recordRows="recordRows"
                                   :nodeNameMap="nameMap"
                                   :nodeStyles="nodeStyles"
