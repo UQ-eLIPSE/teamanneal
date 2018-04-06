@@ -1,6 +1,5 @@
 <template>
     <div class="filter-checkboxes">
-        <h4>Columns</h4>
         <label class="filter-checkbox"
                v-for="(item, i) in items"
                :key="i">{{item.label}}
@@ -9,7 +8,6 @@
                    @change="updated"
                    v-model="selectedItems">
         </label>
-
     </div>
 </template>
 
@@ -46,9 +44,10 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     align-items: center;
     font-size: 0.8em;
     background: rgb(240, 240, 240);
-    height: 2rem;
-    max-height: 2rem;
+    max-width: 50%;
     padding: 0 0.5rem;
+    flex-flow: row;
+    overflow-x: scroll;
 }
 
 .filter-checkbox {
@@ -59,13 +58,14 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     border-right: 0.05em solid rgba(100, 100, 100, 0.2);
 }
 
-.filter-checkbox > input {
+.filter-checkbox>input {
     cursor: pointer;
 }
 
 .filter-checkbox:hover,
 .filter-checkbox:active,
 .filter-checkbox:focus {
-    background: rgba(80, 80, 80, 0.1);
+    background-color: rgba(73, 7, 94, 0.1);
+    outline: 0.01em solid rgba(73, 7, 94, 0.8);
 }
 </style>

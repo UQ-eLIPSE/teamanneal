@@ -1,7 +1,6 @@
 <template>
     <div class="spreadsheet-tree-view">
-        <SpreadsheetTreeView2ColumnsFilter class="column-display-checkboxes"
-                                           :items="columns"
+        <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                            @listUpdated="handleColumnListUpdate"></SpreadsheetTreeView2ColumnsFilter>
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
@@ -221,7 +220,7 @@ export default class SpreadsheetTreeView2 extends Vue {
 
 .header {
     position: sticky;
-    top: 2rem;
+    top: 0;
 
     /* Overlap borders along bottom over data rows */
     margin-bottom: -1px;
@@ -255,10 +254,5 @@ export default class SpreadsheetTreeView2 extends Vue {
 
 .sizing-phase-header.show {
     display: table-row;
-}
-
-.column-display-checkboxes {
-    position: sticky;
-    top: 0;
 }
 </style>
