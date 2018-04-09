@@ -19,3 +19,15 @@ export interface RecordData {
     /** Partitioning column (ColumnData minimal descriptor) */
     partitionColumn: IColumnData_MinimalDescriptor | undefined,
 }
+
+export function initNew() {
+    return {
+        source: {
+            name: undefined,
+            length: 0,
+        },
+        columns: [],
+        idColumn: undefined,
+        partitionColumn: undefined,
+    } as RecordData;
+}

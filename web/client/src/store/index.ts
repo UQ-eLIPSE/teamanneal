@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { ResultsEditor } from "./ResultsEditor";
+import * as _ResultsEditor from "./ResultsEditor";
 
 import { State, Data as IState } from "../data/State";
 import { Stratum, Data as IStratum } from "../data/Stratum";
@@ -19,7 +19,13 @@ Vue.use(Vuex);
 
 const state: IState = State.Init();
 
-const store = new Vuex.Store({
+// Module prefix information first
+// Remainder of module information is located AFTER the `store`
+export namespace ResultsEditor {
+    export const prefix = "resultsEditor";
+}
+
+export const store = new Vuex.Store({
     // strict: process.env.NODE_ENV !== "production",
     state,
     modules: {
@@ -28,7 +34,7 @@ const store = new Vuex.Store({
         //
         // TODO: Migrate everything over to the modules scheme so that this type
         // mismatch can be resolved
-        resultsEditor: ResultsEditor() as any,
+        [ResultsEditor.prefix]: _ResultsEditor.init() as any,
     },
     mutations: {
         /// General root state mutations
@@ -457,4 +463,9 @@ Delete constraints that use this column and try again.`;
     },
 });
 
-export default store;
+// Remainder of module information
+
+export namespace ResultsEditor {
+    export const action = _ResultsEditor.ResultsEditorAction;
+    export const dispatch = _ResultsEditor.dispatchFactory(store, prefix);
+}

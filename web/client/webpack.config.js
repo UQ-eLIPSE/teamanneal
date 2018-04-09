@@ -1,6 +1,7 @@
 module.exports = {
     mode: "development",
     entry: "./src/index.ts",
+    watch: true,
     output: {
         path: `${__dirname}/../build/client/build`,
         filename: "build.js",

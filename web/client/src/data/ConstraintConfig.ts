@@ -1,5 +1,11 @@
-import { Data as IConstraint } from "./Constraint";
+import { Data as Constraint } from "./Constraint";
 
 export interface ConstraintConfig {
-    constraints: IConstraint[],
+    constraints: Constraint[],
+}
+
+export function initNew() {
+    return {
+        constraints: [],
+    } as ConstraintConfig;
 }

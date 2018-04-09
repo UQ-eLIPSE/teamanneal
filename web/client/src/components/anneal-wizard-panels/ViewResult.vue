@@ -85,13 +85,13 @@ import { Component, Mixin } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
 
-import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { unparseFile } from "../../util/CSV";
 import { replaceAll } from "../../util/String";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";

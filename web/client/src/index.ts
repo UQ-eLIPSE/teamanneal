@@ -7,7 +7,7 @@ import "./static/stylesheet.css";
 import TeamAnneal from "./components/TeamAnneal.vue";
 
 // Router and store
-import store from "./store";
+import { store } from "./store";
 import router from "./router";
 
 // Bootstrap TeamAnneal component into #teamanneal
