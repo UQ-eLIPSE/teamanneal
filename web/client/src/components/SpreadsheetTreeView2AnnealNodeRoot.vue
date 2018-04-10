@@ -26,7 +26,7 @@
                                                    :constraintSatisfactionMap="constraintSatisfactionMap"
                                                    :nodeStyles="nodeStyles"
                                                    :onItemClick="onItemClickHandler"
-                                                   :onItemHide="toggleStratumVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
+                                                   :onToggleItemVisibility="toggleStratumVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
         </template>
     </tbody>
 </template>
@@ -91,8 +91,6 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     }
 
     toggleStratumVisibility(node: AnnealNode.Node) {
-        console.log('Toggle');
-        console.log(node);
         if (node.type === "stratum-stratum") {
             node.children.forEach((child) => {
                 if (this.hiddenStrata.Strata[child._id] === undefined) {
@@ -102,15 +100,14 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
                 }
             });
         } else if (node.type === "stratum-records") {
-            // Vue.set(this.hiddenStrata.Records, node._id, node.recordIds);
             node.recordIds.forEach((recordId) => {
-                if (this.hiddenStrata.Records[recordId+''] === undefined) {
-                    Vue.set(this.hiddenStrata.Records, recordId + '', recordId);
+                const recordKey = recordId + '';
+                if (this.hiddenStrata.Records[recordKey] === undefined) {
+                    Vue.set(this.hiddenStrata.Records, recordKey, recordId);
                 } else {
-                    Vue.delete(this.hiddenStrata.Records, (recordId + ''));
+                    Vue.delete(this.hiddenStrata.Records, (recordKey));
                 }
             });
-
         }
     }
 
