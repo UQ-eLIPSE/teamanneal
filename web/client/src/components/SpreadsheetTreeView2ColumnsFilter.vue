@@ -44,7 +44,6 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     align-items: center;
     font-size: 0.8em;
     background: rgb(240, 240, 240);
-    max-width: 50%;
     padding: 0 0.5rem;
     flex-flow: row;
     overflow-x: scroll;

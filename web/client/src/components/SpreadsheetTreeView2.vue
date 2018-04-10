@@ -37,6 +37,7 @@
                                                 :recordLookupMap="recordLookupMap"
                                                 :nodeNameMap="nodeNameMap"
                                                 :nodeStyles="nodeStyles"
+                                                @toggledStratumVisibility="toggledStratumVisibilityHandler"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
@@ -197,6 +198,10 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     handleColumnListUpdate(columnList: number[]) {
         this.columnsDisplayArray = [...columnList];
+        this.waitAndUpdateColumnWidths();
+    }
+
+    toggledStratumVisibilityHandler() {
         this.waitAndUpdateColumnWidths();
     }
 

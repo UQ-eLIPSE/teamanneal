@@ -2,7 +2,8 @@
     <tbody class="anr-wrapper">
         <tr v-if="isDataPartitioned">
             <td class="anr-tree-indicator">
-                -
+                <button class="collapse-row-button"
+                        @click.prevent="toggleNodeRootVisibility">{{displayNodes?'-':'+'}}</button>
             </td>
             <td class="anr-group-heading"
                 :colspan="totalNumberOfColumns - depth"
@@ -13,16 +14,20 @@
                 </div>
             </td>
         </tr>
-        <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
-                                               :key="node._id"
-                                               :node="node"
-                                               :depth="depth + 1"
-                                               :totalNumberOfColumns="totalNumberOfColumns"
-                                               :recordLookupMap="recordLookupMap"
-                                               :nodeNameMap="nodeNameMap"
-                                               :constraintSatisfactionMap="constraintSatisfactionMap"
-                                               :nodeStyles="nodeStyles"
-                                               :onItemClick="onItemClickHandler"></SpreadsheetTreeView2AnnealNodeStratum>
+        <template v-if="displayNodes">
+            <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
+                                                   :hiddenStrata="hiddenStrata"
+                                                   :key="node._id"
+                                                   :node="node"
+                                                   :depth="depth + 1"
+                                                   :totalNumberOfColumns="totalNumberOfColumns"
+                                                   :recordLookupMap="recordLookupMap"
+                                                   :nodeNameMap="nodeNameMap"
+                                                   :constraintSatisfactionMap="constraintSatisfactionMap"
+                                                   :nodeStyles="nodeStyles"
+                                                   :onItemClick="onItemClickHandler"
+                                                   :onItemHide="toggleStratumVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
+        </template>
     </tbody>
 </template>
 
@@ -37,6 +42,21 @@ import { Record, RecordElement } from "../../../common/Record";
 import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
+
+interface HiddenNodes {
+    Records: HiddenNodesWithRecordChildren,
+    Strata: HiddenNodesWithStratumChildren
+}
+
+interface HiddenNodesWithRecordChildren {
+    [key: string]: RecordElement[]
+}
+
+interface HiddenNodesWithStratumChildren {
+    [key: string]: AnnealNode.NodeStratumWithStratumChildren
+}
+
+
 
 @Component({
     components: {
@@ -54,7 +74,11 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
-    
+
+    hiddenStrata: HiddenNodes = { Strata: {}, Records: {} };
+    // Private
+    displayInnerNodes: boolean = true;
+
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
         // The node is already appended to the array in the inner handler
@@ -66,6 +90,43 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
+    toggleStratumVisibility(node: AnnealNode.Node) {
+        console.log('Toggle');
+        console.log(node);
+        if (node.type === "stratum-stratum") {
+            node.children.forEach((child) => {
+                if (this.hiddenStrata.Strata[child._id] === undefined) {
+                    Vue.set(this.hiddenStrata.Strata, child._id, child);
+                } else {
+                    Vue.delete(this.hiddenStrata.Strata, child._id);
+                }
+            });
+        } else if (node.type === "stratum-records") {
+            // Vue.set(this.hiddenStrata.Records, node._id, node.recordIds);
+            node.recordIds.forEach((recordId) => {
+                if (this.hiddenStrata.Records[recordId+''] === undefined) {
+                    Vue.set(this.hiddenStrata.Records, recordId + '', recordId);
+                } else {
+                    Vue.delete(this.hiddenStrata.Records, (recordId + ''));
+                }
+            });
+
+        }
+    }
+
+    toggleNodeRootVisibility() {
+        this.displayNodes = !this.displayNodes;
+        // Emit event so that parent can recalculate widths
+        this.$emit("toggledStratumVisibility");
+    }
+
+    get displayNodes() {
+        return this.displayInnerNodes;
+    }
+
+    set displayNodes(display: boolean) {
+        this.displayInnerNodes = display;
+    }
     get label() {
         if (this.nodeNameMap === undefined) {
             return this.node._id;
@@ -123,5 +184,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 .anr-heading-content .anr-label {
     flex-grow: 1;
     flex-shrink: 1;
+}
+
+.anr-tree-indicator .collapse-row-button {
+    cursor: pointer;
 }
 </style>
