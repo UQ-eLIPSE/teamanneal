@@ -91,6 +91,8 @@ import { State } from "../../data/State";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import * as Store from "../../store";
+
 import { unparseFile } from "../../util/CSV";
 import { replaceAll } from "../../util/String";
 
@@ -243,11 +245,21 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         throw new Error("Not yet implemented");
     }
 
-    onEditResultButtonClick() {
-        // TODO: This is currently just going to the appropriate route; in 
-        // future this should be an actual export-import process for the 
-        // editor component so that data is reliably copied and not have state 
-        // mutated in the editor directly
+    async onEditResultButtonClick() {
+        // TODO: This state data copying process will need to be reviewed when
+        // state (de)hydration is properly implemented; currently this just does
+        // a straight copy which is not optimal
+
+        // TODO: Not everything is being copied at the moment
+
+        // Copy over record data
+        const recordData = this.state.recordData;
+        const recordDataCopy: typeof recordData = JSON.parse(JSON.stringify(recordData));
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
+
+        // Copy over group nodes
+
+        // Go to results editor
         this.$router.push({
             name: "results-editor",
         });

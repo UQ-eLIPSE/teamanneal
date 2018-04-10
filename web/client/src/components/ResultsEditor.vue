@@ -21,6 +21,8 @@ import { Vue, Component, Lifecycle } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse";
 
+import * as Store from "../store";
+
 import { ColumnData } from "../data/ColumnData";
 import { ResultTree } from "../data/ResultTree";
 import { AxiosResponse } from "../data/AnnealResponse";
@@ -46,27 +48,41 @@ export default class ResultsEditor extends Vue {
      */
     modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
 
-    get state() {
+    /** 
+     * Old reference to central state 
+     * 
+     * @deprecated
+     */
+    get __state() {
         return this.$store.state as IState;
     }
 
+    /** New reference to module state */
+    get state() {
+        return Store.ResultsEditor.state;
+    }
+
+    get recordData() {
+        return this.state.recordData;
+    }
+
     get columns() {
-        return this.state.recordData.columns;
+        return this.recordData.columns;
     }
 
     get strata() {
-        return this.state.annealConfig.strata;
+        return this.__state.annealConfig.strata;
     }
 
     get constraints() {
-        return this.state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
+        return this.__state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
             cObj[constraint._id] = constraint;
             return cObj;
         }, {});
     }
 
     get partitionColumn() {
-        const partitionColumnDesc = this.state.recordData.partitionColumn;
+        const partitionColumnDesc = this.recordData.partitionColumn;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -92,7 +108,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get idColumn() {
-        const idColumnDesc = this.state.recordData.idColumn;
+        const idColumnDesc = this.__state.recordData.idColumn;
 
         if (idColumnDesc === undefined) {
             throw new Error("No ID column set");
@@ -115,7 +131,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get annealResults() {
-        const responseContent = this.state.annealResponse!.content as AxiosResponse;
+        const responseContent = this.__state.annealResponse!.content as AxiosResponse;
         const responseData = responseContent.data as ToClientAnnealResponse.Root;
 
         // We're working on the presumption that we definitely have results

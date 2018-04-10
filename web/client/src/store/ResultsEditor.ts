@@ -19,4 +19,5 @@ export function init(namespaced: boolean = true) {
     return stateModule;
 }
 
-export { ResultsEditorAction, dispatchFactory } from "./ResultsEditorAction";
+export { ResultsEditorState as State } from "./ResultsEditorState";
+export { ResultsEditorAction as Action, dispatchFactory } from "./ResultsEditorAction";

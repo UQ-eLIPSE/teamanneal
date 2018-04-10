@@ -17,25 +17,15 @@ import { replaceAll } from "../util/String";
 
 Vue.use(Vuex);
 
-const state: IState = State.Init();
-
-// Module prefix information first
-// Remainder of module information is located AFTER the `store`
-export namespace ResultsEditor {
-    export const prefix = "resultsEditor";
+enum ModulePrefix {
+    ResultsEditor = "ResultsEditor",
 }
 
+// State store initialisation
+const state: IState = State.Init();
 export const store = new Vuex.Store({
     // strict: process.env.NODE_ENV !== "production",
     state,
-    modules: {
-        // NOTE: Injecting the ResultsEditor with `any` type as the type
-        // conflicts with the existing `state` type
-        //
-        // TODO: Migrate everything over to the modules scheme so that this type
-        // mismatch can be resolved
-        [ResultsEditor.prefix]: _ResultsEditor.init() as any,
-    },
     mutations: {
         /// General root state mutations
 
@@ -463,9 +453,25 @@ Delete constraints that use this column and try again.`;
     },
 });
 
-// Remainder of module information
+// Module definitions
+export const ResultsEditor = {
+    prefix: ModulePrefix.ResultsEditor,
 
-export namespace ResultsEditor {
-    export const action = _ResultsEditor.ResultsEditorAction;
-    export const dispatch = _ResultsEditor.dispatchFactory(store, prefix);
-}
+    action: _ResultsEditor.Action,
+    dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
+
+    get state() {
+        // Using `any` type to get around state type which does not recognise
+        // the module
+        return (store.state as any)[ModulePrefix.ResultsEditor] as _ResultsEditor.State;
+    },
+};
+
+// Register modules separately
+//
+// NOTE: Injecting the ResultsEditor with `any` type as the type
+// conflicts with the existing `state` type
+//
+// TODO: Migrate everything over to the modules scheme so that this type
+// mismatch can be resolved
+store.registerModule(ModulePrefix.ResultsEditor, _ResultsEditor.init() as any);
