@@ -2,7 +2,7 @@
     <tbody class="anr-wrapper">
         <tr v-if="isDataPartitioned">
             <td class="anr-tree-indicator">
-                <button class="collapse-row-button"
+                <button class="toggle-visibility-button"
                         @click.prevent="toggleNodeRootVisibility">{{displayNodes?'-':'+'}}</button>
             </td>
             <td class="anr-group-heading"
@@ -43,21 +43,6 @@ import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
 
-interface HiddenNodes {
-    Records: HiddenNodesWithRecordChildren,
-    Strata: HiddenNodesWithStratumChildren
-}
-
-interface HiddenNodesWithRecordChildren {
-    [key: string]: RecordElement[]
-}
-
-interface HiddenNodesWithStratumChildren {
-    [key: string]: AnnealNode.NodeStratumWithStratumChildren
-}
-
-
-
 @Component({
     components: {
         SpreadsheetTreeView2AnnealNodeStratum,
@@ -75,7 +60,8 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
 
-    hiddenStrata: HiddenNodes = { Strata: {}, Records: {} };
+    // hiddenStrata = new Set<String>();
+    hiddenStrata: { [key: string]: true } = {};
     // Private
     displayInnerNodes: boolean = true;
 
@@ -90,24 +76,15 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
+    isNodeVisible(node: AnnealNode.Node) {
+        return this.hiddenStrata[node._id] === undefined;
+    }
+
     toggleStratumVisibility(node: AnnealNode.Node) {
-        if (node.type === "stratum-stratum") {
-            node.children.forEach((child) => {
-                if (this.hiddenStrata.Strata[child._id] === undefined) {
-                    Vue.set(this.hiddenStrata.Strata, child._id, child);
-                } else {
-                    Vue.delete(this.hiddenStrata.Strata, child._id);
-                }
-            });
-        } else if (node.type === "stratum-records") {
-            node.recordIds.forEach((recordId) => {
-                const recordKey = recordId + '';
-                if (this.hiddenStrata.Records[recordKey] === undefined) {
-                    Vue.set(this.hiddenStrata.Records, recordKey, recordId);
-                } else {
-                    Vue.delete(this.hiddenStrata.Records, (recordKey));
-                }
-            });
+        if (this.isNodeVisible(node)) {
+            Vue.set(this.hiddenStrata, node._id, true);
+        } else {
+            Vue.delete(this.hiddenStrata, node._id);
         }
     }
 
@@ -183,7 +160,27 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     flex-shrink: 1;
 }
 
-.anr-tree-indicator .collapse-row-button {
+.anr-tree-indicator {
     cursor: pointer;
 }
+
+.toggle-visibility-button {
+    border: 0.1em solid rgba(100, 80, 80, 0.5);
+    color: #3c3c3c;
+    background: rgba(119, 129, 139, 0.25);
+    cursor: pointer;
+    border-radius: 0.1rem;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    text-align: center;
+    font-size: 0.7em;
+}
+
+.toggle-visibility-button:hover,
+.toggle-visibility-button:active,
+.toggle-visibility-button:focus {
+    background: rgba(119, 129, 139, 0.1);
+}
+
 </style>
