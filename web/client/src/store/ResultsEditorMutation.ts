@@ -53,72 +53,72 @@ export function commit<M extends ResultsEditorMutation, F extends MutationFuncti
 }
 
 /** Store mutation functions */
-const mutations: MutationTree<ResultsEditorState> = {
-    [M.SET_RECORD_DATA](state, recordData: RecordData) {
+const mutations = {
+    [M.SET_RECORD_DATA](state: ResultsEditorState, recordData: RecordData) {
         set(state, "recordData", recordData);
     },
 
-    [M.CLEAR_RECORD_DATA](state) {
+    [M.CLEAR_RECORD_DATA](state: ResultsEditorState) {
         set(state, "recordData", initRecordData());
     },
 
-    [M.INSERT_CONSTRAINT](state, constraint: Constraint) {
+    [M.INSERT_CONSTRAINT](state: ResultsEditorState, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
 
-    [M.SET_CONSTRAINT](state, { constraint, index }: { constraint: Constraint, index: number }) {
+    [M.SET_CONSTRAINT](state: ResultsEditorState, { constraint, index }: { constraint: Constraint, index: number }) {
         set(state.constraintConfig.constraints, index, constraint);
     },
 
-    [M.DELETE_CONSTRAINT](state, index: number) {
+    [M.DELETE_CONSTRAINT](state: ResultsEditorState, index: number) {
         del(state.constraintConfig.constraints, index);
     },
 
-    [M.CLEAR_CONSTRAINTS](state) {
+    [M.CLEAR_CONSTRAINTS](state: ResultsEditorState) {
         set(state, "constraintConfig", initConstraintConfig());
     },
 
-    [M.INSERT_STRATUM](state, stratum: Stratum) {
+    [M.INSERT_STRATUM](state: ResultsEditorState, stratum: Stratum) {
         state.strataConfig.strata.push(stratum);
     },
 
-    [M.SET_STRATUM](state, { stratum, index }: { stratum: Stratum, index: number }) {
+    [M.SET_STRATUM](state: ResultsEditorState, { stratum, index }: { stratum: Stratum, index: number }) {
         set(state.strataConfig.strata, index, stratum);
     },
 
-    [M.DELETE_STRATUM](state, index: number) {
+    [M.DELETE_STRATUM](state: ResultsEditorState, index: number) {
         del(state.strataConfig.strata, index);
     },
 
-    [M.CLEAR_STRATA](state) {
+    [M.CLEAR_STRATA](state: ResultsEditorState) {
         set(state, "strataConfig", initStrataConfig());
     },
 
-    [M.SET_GROUP_NODE_STRUCTURE](state, structure: GroupNodeStructure) {
+    [M.SET_GROUP_NODE_STRUCTURE](state: ResultsEditorState, structure: GroupNodeStructure) {
         set(state.groupNode, "structure", structure);
     },
 
-    [M.CLEAR_GROUP_NODE_STRUCTURE](state) {
+    [M.CLEAR_GROUP_NODE_STRUCTURE](state: ResultsEditorState) {
         set(state.groupNode, "structure", initGroupNodeStructure());
     },
 
-    [M.SET_GROUP_NODE_NAME_MAP](state, nameMap: GroupNodeNameMap) {
+    [M.SET_GROUP_NODE_NAME_MAP](state: ResultsEditorState, nameMap: GroupNodeNameMap) {
         set(state.groupNode, "nameMap", nameMap);
     },
 
-    [M.CLEAR_GROUP_NODE_NAME_MAP](state) {
+    [M.CLEAR_GROUP_NODE_NAME_MAP](state: ResultsEditorState) {
         set(state.groupNode, "nameMap", initGroupNodeNameMap());
     },
 
-    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
+    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
         set(state.groupNode, "nodeRecordArrayMap", nodeRecordArrayMap);
     },
 
-    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state) {
+    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState) {
         set(state.groupNode, "nodeRecordArrayMap", initGroupNodeRecordArrayMap());
     },
 };
 
 export function init() {
-    return mutations;
+    return mutations as MutationTree<ResultsEditorState>;
 }
