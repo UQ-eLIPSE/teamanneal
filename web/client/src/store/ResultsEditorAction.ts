@@ -7,6 +7,7 @@ import { RecordData } from "../data/RecordData";
 import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeStructure } from "../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { DataWithoutNamingConfig as Stratum } from "../data/Stratum";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
@@ -20,6 +21,8 @@ export enum ResultsEditorAction {
     RESET_STATE = "Resetting state",
 
     SET_RECORD_DATA = "Setting record data",
+
+    SET_STRATA = "Setting strata",
 
     SET_GROUP_NODE_STRUCTURE = "Setting group node structure",
 
@@ -57,6 +60,12 @@ const actions = {
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {
         commit(context, M.SET_RECORD_DATA, recordData);
+    },
+
+    async [A.SET_STRATA](context: Context, strata: Stratum[]) {
+        // Clear all strata, then iterate through array and insert
+        commit(context, M.CLEAR_STRATA, undefined);
+        strata.forEach(s => commit(context, M.INSERT_STRATUM, s));
     },
 
     async [A.SET_GROUP_NODE_STRUCTURE](context: Context, structure: GroupNodeStructure) {
