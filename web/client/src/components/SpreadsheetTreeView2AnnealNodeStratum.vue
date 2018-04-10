@@ -1,10 +1,13 @@
 <script lang="ts">
 import Vue, { VNode, CreateElement } from "vue";
 
-import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
-import { NodeNameMapNameGenerated } from "../data/ResultTree";
+import { GroupNode } from "../data/GroupNode";
+import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
+import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
+import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 type Props = (
     Props_NodeStratumWithRecordChildren |
@@ -12,31 +15,33 @@ type Props = (
 )
 
 interface Props_NodeStratumWithRecordChildren {
-    node: AnnealNode.NodeStratumWithRecordChildren,
+    node: GroupNodeLeafStratum,
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
-    nodeNameMap: NodeNameMapNameGenerated | undefined,
-    nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
+    nodeNameMap: GroupNodeNameMap | undefined,
+    nodeRecordMap: GroupNodeRecordArrayMap | undefined,
+    nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
-    onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
+    onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
 }
 
 interface Props_NodeStratumWithStratumChildren {
-    node: AnnealNode.NodeStratumWithStratumChildren,
+    node: GroupNodeIntermediateStratum,
     depth: number,
     totalNumberOfColumns: number,
     recordLookupMap: Map<RecordElement, Record>,
-    nodeNameMap: NodeNameMapNameGenerated | undefined,
-    nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
+    nodeNameMap: GroupNodeNameMap | undefined,
+    nodeRecordMap: GroupNodeRecordArrayMap | undefined,
+    nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
 
-    onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
+    onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
 }
 
 function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
-    return p.node.type === "stratum-records";
+    return p.node.type === "leaf-stratum";
 }
 
 function getGroupHeadingLabel(p: Props) {
@@ -44,17 +49,25 @@ function getGroupHeadingLabel(p: Props) {
         return p.node._id;
     }
 
-    const name = p.nodeNameMap.get(p.node);
+    const name = p.nodeNameMap[p.node._id];
 
     if (name === undefined) {
         return p.node._id;
     }
 
-    return `${name.stratumLabel} ${name.nodeGeneratedName}`;
+    return name;
 }
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
-    return p.node.recordIds.map(id => ({ id, data: p.recordLookupMap.get(id)! }));
+    const recordMap = p.nodeRecordMap;
+
+    if (recordMap === undefined) {
+        throw new Error("Node record array map not defined; cannot fetch record");
+    }
+
+    const recordIds = recordMap[p.node._id];
+
+    return recordIds.map(id => ({ id, data: p.recordLookupMap.get(id)! }));
 }
 
 function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
@@ -62,7 +75,7 @@ function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
 }
 
 /** Creates the heading elements for stratum nodes */
-function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, p: Props) {
+function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void, p: Props) {
     const leadingPadCells = p.depth;
     const totalNumberOfColumns = p.totalNumberOfColumns;
     const heading = getGroupHeadingLabel(p);
@@ -117,7 +130,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
 /** Creates elements for records */
 // TODO: Fix `any` type for style
-function createRecordContentRow(createElement: CreateElement, onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void, recordId: RecordElement, cells: Record, p: Props_NodeStratumWithRecordChildren) {
+function createRecordContentRow(createElement: CreateElement, onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void, recordId: RecordElement, cells: Record, p: Props_NodeStratumWithRecordChildren) {
     // Get style information from node style map
     const style = p.nodeStyles && p.nodeStyles.get(recordId);
 
@@ -179,6 +192,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         totalNumberOfColumns: { type: Number, required: true, },
         recordLookupMap: { required: true, },
         nodeNameMap: { required: false, },
+        nodeRecordMap: { required: false, },
         nodeStyles: { required: false },
         constraintSatisfactionMap: { required: false, },
 
@@ -190,7 +204,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 
         // This appends information about the current stratum node to the item
         // click chain
-        const __onItemClick = (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => {
+        const __onItemClick = (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => {
             p.onItemClick([{ node: p.node }, ...data]);
         }
 
@@ -218,6 +232,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                         totalNumberOfColumns: p.totalNumberOfColumns,
                         recordLookupMap: p.recordLookupMap,
                         nodeNameMap: p.nodeNameMap,
+                        nodeRecordMap: p.nodeRecordMap,
                         nodeStyles: p.nodeStyles,
                         constraintSatisfactionMap: p.constraintSatisfactionMap,
 

@@ -2,10 +2,11 @@
     <div class="results-editor">
         <div class="workspace">
             <SpreadsheetTreeView2 class="spreadsheet"
-                                  :annealNodeRoots="modifiedAnnealNodeRoots"
+                                  :nodeRoots="nodeRoots"
                                   :headerRow="headerRow"
                                   :recordRows="recordRows"
                                   :nodeNameMap="nameMap"
+                                  :nodeRecordMap="nodeRecordMap"
                                   :nodeStyles="nodeStyles"
                                   :idColumnIndex="idColumnIndex"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
@@ -17,20 +18,14 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
-
-import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse";
+import { Vue, Component } from "av-ts";
 
 import * as Store from "../store";
 
+import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
-import { ResultTree } from "../data/ResultTree";
-import { AxiosResponse } from "../data/AnnealResponse";
-import { Data as IState } from "../data/State";
-import { Data as IConstraint } from "../data/Constraint";
 
 import { RecordElement } from "../../../common/Record";
-import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
@@ -42,21 +37,6 @@ import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
     },
 })
 export default class ResultsEditor extends Vue {
-    /**
-     * Holds a new deep copy of the annealed nodes that may be modified by the 
-     * user
-     */
-    modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
-
-    /** 
-     * Old reference to central state 
-     * 
-     * @deprecated
-     */
-    get __state() {
-        return this.$store.state as IState;
-    }
-
     /** New reference to module state */
     get state() {
         return Store.ResultsEditor.state;
@@ -71,14 +51,15 @@ export default class ResultsEditor extends Vue {
     }
 
     get strata() {
-        return this.__state.annealConfig.strata;
+        return this.state.strataConfig.strata;
     }
 
-    get constraints() {
-        return this.__state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
-            cObj[constraint._id] = constraint;
-            return cObj;
-        }, {});
+    get nodeRoots() {
+        return this.state.groupNode.structure.roots;
+    }
+
+    get nodeRecordMap() {
+        return this.state.groupNode.nodeRecordArrayMap;
     }
 
     get partitionColumn() {
@@ -100,15 +81,11 @@ export default class ResultsEditor extends Vue {
     }
 
     get nameMap() {
-        if (this.modifiedAnnealNodeRoots === undefined) {
-            return undefined;
-        }
-
-        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.modifiedAnnealNodeRoots);
+        return this.state.groupNode.nameMap;
     }
 
     get idColumn() {
-        const idColumnDesc = this.__state.recordData.idColumn;
+        const idColumnDesc = this.state.recordData.idColumn;
 
         if (idColumnDesc === undefined) {
             throw new Error("No ID column set");
@@ -128,69 +105,6 @@ export default class ResultsEditor extends Vue {
         const idColumnIndex = this.columns.indexOf(idColumn);
 
         return idColumnIndex;
-    }
-
-    get annealResults() {
-        const responseContent = this.__state.annealResponse!.content as AxiosResponse;
-        const responseData = responseContent.data as ToClientAnnealResponse.Root;
-
-        // We're working on the presumption that we definitely have results
-        return responseData.results!;
-    }
-
-    get annealSatisfactionMap() {
-        return this.annealResults
-            .map(res => res.result!.satisfaction)
-            .reduce((carry, sMap) => Object.assign(carry, sMap), {});
-    }
-
-    get nodeToOverallSatisfactionMap() {
-        const asMap = this.annealSatisfactionMap;
-
-        return Object.keys(asMap)
-            .reduce<{ [nodeId: string]: number | undefined }>((mapObj, nodeId) => {
-                // Satisfaction of constraints for this node
-                const nodeSatisfactionObject = asMap[nodeId];
-
-                let constraintIds = Object.keys(nodeSatisfactionObject);
-
-                // // If there is a selected constraint, then only generate the 
-                // // satisfaction map with that constraint
-                // if (this.selectedConstraint !== undefined) {
-                //     const selectedConstraintId = this.selectedConstraint._id;
-                //     constraintIds = constraintIds.filter(constraintId => selectedConstraintId === constraintId);
-                // }
-
-                // If there are no constraints to apply, then there is nothing 
-                // to add to the object
-                if (constraintIds.length === 0) {
-                    return mapObj;
-                }
-
-                // Do a weighted satisfaction sum scaled to [0,1]
-                const satisfaction = constraintIds.reduce<[number, number]>((satTuple, constraintId) => {
-                    const constraint = this.constraints[constraintId];
-
-                    if (constraint === undefined) {
-                        throw new Error("Constraint not found");
-                    }
-
-                    const constraintWeight = constraint.weight;
-
-                    // 0th index = sum of (weight * raw satisfaction)
-                    satTuple[0] += constraintWeight * (nodeSatisfactionObject[constraintId] || 0);
-
-                    // 1th index = sum of weights
-                    satTuple[1] += constraintWeight;
-
-                    return satTuple;
-                }, [0, 0]);
-
-                // Assign overall satisfaction to node ID
-                mapObj[nodeId] = satisfaction[0] / satisfaction[1];
-
-                return mapObj;
-            }, {});
     }
 
     /** A map of nodes or records which are to be styled in the spreadsheet */
@@ -250,7 +164,7 @@ export default class ResultsEditor extends Vue {
     //     this.selectedConstraint = constraint;
     // }
 
-    onItemClickHandler(_data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+    onItemClickHandler(_data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         // // Only continue if we're in an editing operation
         // if (this.pendingEditOperation === undefined) {
         //     return;
@@ -514,18 +428,6 @@ export default class ResultsEditor extends Vue {
 
         // // TODO: Fix type narrowing
         // this.pendingEditOperation.cursor = cursor as any;
-    }
-
-    @Lifecycle created() {
-        // Copy out the data from the state so that modifications are separate 
-        // from the anneal result which is consistent with constraints
-        //
-        // This is NOT persistent - if you leave this component, the changes you
-        // made will disappear
-        //
-        // TODO: This needs some persistence of some sort but this will heavily
-        // depend on how we will be managing the data
-        this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
     }
 }
 </script>

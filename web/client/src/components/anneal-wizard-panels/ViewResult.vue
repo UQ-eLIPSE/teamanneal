@@ -92,10 +92,11 @@ import { State } from "../../data/State";
 import { DataWithoutNamingConfig as Stratum } from "../../data/Stratum";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNode } from "../../data/GroupNode";
 import { GroupNodeRoot } from "../../data/GroupNodeRoot";
 import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
 import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
+import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 
 import * as Store from "../../store";
@@ -288,7 +289,7 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         const newNameMap: GroupNodeNameMap = {};
         const newNodeRecordArrayMap: GroupNodeRecordArrayMap = {};
 
-        const walkAnnealTreeAndTransform = (node: AnnealNode.Node): GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum => {
+        const walkAnnealTreeAndTransform = (node: AnnealNode.Node): GroupNode => {
             const nodeId = node._id;
             const nameInfo = nameMap.get(node)!;
 

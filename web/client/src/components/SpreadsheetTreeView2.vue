@@ -26,13 +26,14 @@
             </tbody>
 
             <!-- Render node roots (partitions or highest stratum) -->
-            <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in annealNodeRoots"
+            <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in nodeRoots"
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
                                                 @itemClick="onItemClickHandler"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"
                                                 :nodeNameMap="nodeNameMap"
+                                                :nodeRecordMap="nodeRecordMap"
                                                 :nodeStyles="nodeStyles"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
@@ -44,23 +45,26 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
-import * as AnnealNode from "../../../common/AnnealNode";
+// import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
-import { NodeNameMapNameGenerated } from "../data/ResultTree";
+import { GroupNode } from "../data/GroupNode";
+import { GroupNodeRoot } from "../data/GroupNodeRoot";
+import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
 
-function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
+function getMaxChildrenDepth(node: GroupNode, depth = 0): number {
     switch (node.type) {
         case "root":
-        case "stratum-stratum":
+        case "intermediate-stratum":
             return node.children.reduce((carry, child) => {
                 return Math.max(carry, getMaxChildrenDepth(child, depth + 1));
             }, depth + 1);
 
-        case "stratum-records":
+        case "leaf-stratum":
             return depth + 1;
     }
 
@@ -75,11 +79,12 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
 })
 export default class SpreadsheetTreeView2 extends Vue {
     // Props
-    @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
+    @Prop nodeRoots = p<ReadonlyArray<GroupNodeRoot>>({ type: Array, required: true, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
-    @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
-    @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
-    @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
+    @Prop recordRows = p<ReadonlyArray<Record>>({ type: Array, required: true, });
+    @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
+    @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
+    @Prop nodeStyles = p<Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
 
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
@@ -89,13 +94,13 @@ export default class SpreadsheetTreeView2 extends Vue {
     columnWidths: number[] | undefined = undefined;
 
     /** Handles item clicks that were delivered from children component */
-    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+    onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", data);
     }
 
     get treeMaxDepth() {
         // Get the maximum depth of all children
-        return this.annealNodeRoots.reduce((carry, node) => {
+        return this.nodeRoots.reduce((carry, node) => {
             return Math.max(carry, getMaxChildrenDepth(node));
         }, 0);
     }

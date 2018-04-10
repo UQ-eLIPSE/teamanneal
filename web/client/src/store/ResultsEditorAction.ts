@@ -18,6 +18,10 @@ type FunctionParam2<T> =
 type Context = ActionContext<ResultsEditorState, ResultsEditorState>;
 
 export enum ResultsEditorAction {
+    // TODO: [WIP] Hydration/dehydration test actions
+    __HYDRATE = "__HYDRATE",
+    __DEHYDRATE = "__DEHYDRATE",
+
     RESET_STATE = "Resetting state",
 
     SET_RECORD_DATA = "Setting record data",
@@ -47,8 +51,29 @@ export function dispatchFactory<T>(store: Store<T>, modulePrefix?: string) {
     }
 }
 
+/** Internal dispatch function */
+function dispatch<A extends ResultsEditorAction, F extends ActionFunction<A>>(context: Context, action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
+    return context.dispatch(action, payload, options) as ReturnType<F>;
+}
+
 /** Store action functions */
 const actions = {
+    // TODO: [WIP]
+    async [A.__HYDRATE](context: Context, dehydratedState: string) {
+        const state = JSON.parse(dehydratedState) as ResultsEditorState;
+
+        await dispatch(context, A.SET_RECORD_DATA, state.recordData);
+        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
+        await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
+        await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
+        await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
+    },
+
+    // TODO: [WIP]
+    async [A.__DEHYDRATE](context: Context) {
+        return JSON.stringify(context.state);
+    },
+
     async [A.RESET_STATE](context: Context) {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);

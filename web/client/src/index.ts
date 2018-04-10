@@ -11,10 +11,18 @@ import { store } from "./store";
 import router from "./router";
 
 // Bootstrap TeamAnneal component into #teamanneal
-new Vue({
+const teamanneal = new Vue({
     el: "#teamanneal",
     render: h => h(TeamAnneal),
 
     store,
     router: router(store),
 });
+
+// Expose information when environment is dev
+if (process.env.NODE_ENV === "development") {
+    (window as any).__TA = {
+        instance: teamanneal,
+        store,
+    };
+}
