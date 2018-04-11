@@ -60,6 +60,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
     @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    /** Function passed down by parent to toggle a node's visibility */
     @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
 
 

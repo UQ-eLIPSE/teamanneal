@@ -88,8 +88,8 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
     @Prop columnsDisplayIndices = p<number[]>({ required: true });
-    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
-    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true });
+    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true });
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -184,16 +184,23 @@ export default class SpreadsheetTreeView2 extends Vue {
         });
     }
 
+    /** Recalculates width when columns are changed from the column display filter checkboxes */
     @Watch('columnsDisplayIndices')
     columnChangeWidthHandler(_n: any, _o: any) {
         this.waitAndUpdateColumnWidths();
     }
 
-    // TODO: Decide if this is required
-    // @Watch('hiddenNodes')
-    // strataChangeWidthHandler(_n: any, _o: any) {
-    //     this.waitAndUpdateColumnWidths();
-    // }
+    // Watcher added  to avoid the following error situation: 
+    // Error reproduction (before this watcher was implemented):
+    // 1. Collapse all partitions
+    // 2. Change selected columns from the column checkbox filter
+    // 3. Re-open the partition
+    // Error: Column widths do not align with the table rows until the checkbox filter is modified again.
+    // (Header loses reference to the widths because no table row was rendered)
+    @Watch('hiddenNodes')
+    strataChangeWidthHandler(_n: any, _o: any) {
+        this.waitAndUpdateColumnWidths();
+    }
 
     @Lifecycle mounted() {
         this.waitAndUpdateColumnWidths();
