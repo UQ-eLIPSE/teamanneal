@@ -34,7 +34,8 @@
         </div>
         <div class="form-block"
              style="text-align: right;">
-            <button class="button small">Move</button>
+            <button class="button small"
+                    @click="commitMove">Move</button>
         </div>
     </div>
 </template>
@@ -44,6 +45,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
+import * as Store from "../../store";
+
 import { GroupNode } from "../../data/GroupNode";
 
 import { RecordElement } from "../../../../common/Record";
@@ -52,7 +55,7 @@ import { set, del } from "../../util/Vue";
 
 interface MoveSidePanelToolData {
     cursor: "sourcePerson" | "targetGroup",
-    sourcePerson: RecordElement,
+    sourcePerson: { node: GroupNode, id: RecordElement },
     targetGroup: GroupNode,
 }
 
@@ -73,7 +76,7 @@ export default class Move extends Vue {
     }
 
     get sourcePersonFieldBlockText() {
-        return this.data.sourcePerson;
+        return this.data.sourcePerson && this.data.sourcePerson.id;
     }
 
     get targetGroupFieldBlockText() {
@@ -90,6 +93,20 @@ export default class Move extends Vue {
 
     clearTargetGroup() {
         del(this.data, "targetGroup");
+    }
+
+    async commitMove() {
+        const { sourcePerson, targetGroup } = this.data;
+
+        if (sourcePerson === undefined || targetGroup === undefined) {
+            // TODO: Proper error handling
+            throw new Error("Underspecified move operation");
+        }
+
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
+
+        // TODO: Review whether we should close the move side panel or not
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     }
 }
 </script>

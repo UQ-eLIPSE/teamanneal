@@ -181,7 +181,7 @@ export default class ResultsEditor extends Vue {
                 const moveToolData: any = activeSidePanelTool.data;
 
                 if (moveToolData.sourcePerson !== undefined) {
-                    nodeStyles.set(moveToolData.sourcePerson, { color: "#fff", backgroundColor: "#49075e" });
+                    nodeStyles.set(moveToolData.sourcePerson.id, { color: "#fff", backgroundColor: "#49075e" });
                 }
 
                 if (moveToolData.targetGroup !== undefined) {
@@ -216,16 +216,19 @@ export default class ResultsEditor extends Vue {
                 switch (cursor) {
                     case "sourcePerson": {
                         // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
                         const targetItem: any = data[data.length - 1];
 
-                        // Can only move records
-                        if (targetItem.recordId === undefined) {
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
                             return;
                         }
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(moveToolData, "sourcePerson", targetItem.recordId);
+                        set(moveToolData, "sourcePerson", { node: targetItemParent.node, id: targetItem.recordId });
 
                         return;
                     }
@@ -254,7 +257,7 @@ export default class ResultsEditor extends Vue {
                 return;
             }
         }
-        
+
         // switch (op.type) {
         //     case "swap-records": {
         //         switch (op.cursor) {

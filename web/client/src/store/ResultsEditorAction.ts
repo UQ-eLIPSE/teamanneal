@@ -4,10 +4,13 @@ import { ResultsEditorState } from "./ResultsEditorState";
 import { ResultsEditorMutation as M, commit } from "./ResultsEditorMutation";
 
 import { RecordData } from "../data/RecordData";
+import { GroupNode } from "../data/GroupNode";
 import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeStructure } from "../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 import { DataWithoutNamingConfig as Stratum } from "../data/Stratum";
+
+import { RecordElement } from "../../../common/Record";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
@@ -36,6 +39,8 @@ export enum ResultsEditorAction {
 
     SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME = "Setting side panel active tool by name",
     CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
+
+    MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
 }
 
 /** Shorthand for Action enum above */
@@ -109,11 +114,16 @@ const actions = {
     },
 
     async [A.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME](context: Context, name: string) {
-        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL, { name, });
+        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL, { name });
     },
 
     async [A.CLEAR_SIDE_PANEL_ACTIVE_TOOL](context: Context) {
         commit(context, M.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+    },
+
+    async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: GroupNode, id: RecordElement }, targetGroup: GroupNode }) {
+        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: sourcePerson.node, id: sourcePerson.id });
+        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: targetGroup, id: sourcePerson.id });
     },
 };
 
