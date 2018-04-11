@@ -8,7 +8,6 @@
             <SpreadsheetTreeView2 class="spreadsheet"
                                   :annealNodeRoots="modifiedAnnealNodeRoots"
                                   :headerRow="headerRow"
-                                  :columns="columns"
                                   :columnsDisplayIndices="columnsDisplayIndices"
                                   :recordRows="recordRows"
                                   :nodeNameMap="nameMap"

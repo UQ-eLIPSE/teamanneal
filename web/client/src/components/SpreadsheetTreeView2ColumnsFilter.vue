@@ -1,13 +1,21 @@
 <template>
-    <div class="filter-checkboxes">
-        <label class="filter-checkbox"
-               v-for="(item, i) in items"
-               :key="i">{{item.label}}
-            <input type="checkbox"
-                   :value="i"
-                   @change="updated"
-                   v-model="selectedItems">
-        </label>
+    <div class="filter">
+        <div class="controls">
+            <button class="control-button button secondary"
+                    @click.prevent="deselectAllItems">De-select all</button>
+            <button class="control-button button secondary"
+                    @click.prevent="selectAllItems">Select all</button>
+        </div>
+        <div class="filter-checkboxes">
+            <label class="filter-checkbox"
+                   v-for="(item, i) in items"
+                   :key="i">{{item.label}}
+                <input type="checkbox"
+                       :value="i"
+                       @change="updated"
+                       v-model="selectedItemIndices">
+            </label>
+        </div>
     </div>
 </template>
 
@@ -22,23 +30,53 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     @Prop items = p<IColumnData[]>({ required: true });
 
     // Private
-    selectedItems: number[] = [];
+    selectedItemIndices: number[] = [];
 
     updated() {
-        this.$emit("listUpdated", this.selectedItems);
+        this.$emit("listUpdated", this.selectedItemIndices);
+    }
+
+    selectAllItems() {
+        this.selectedItemIndices = this.items.map((_x: any, i: number) => i);
+        this.updated();
+    }
+
+    deselectAllItems() {
+        this.selectedItemIndices = [];
+        this.updated();
     }
 
     @Lifecycle
     created() {
-        this.selectedItems = this.items.map((_x: any, i: number) => i);
+        this.selectAllItems();
         this.updated();
     }
 }   
 </script>
 
 <!-- ####################################################################### -->
-
+<style scoped src="../static/stylesheet.css"></style>
 <style scoped>
+.filter {
+    display: flex;
+    flex-shrink: 0;
+    background: rgb(240, 240, 240);
+}
+
+.controls {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-evenly;
+    flex-direction: column;
+    padding: 0.2rem 1rem;
+    border-right: 0.05em solid rgba(100, 100, 100, 0.2);
+}
+
+.control-button {
+    font-size: 0.8em;
+    padding: 0.2rem;
+}
+
 .filter-checkboxes {
     display: flex;
     align-items: center;
@@ -46,7 +84,6 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     background: rgb(240, 240, 240);
     padding: 0 0.5rem;
     overflow-x: scroll;
-    flex-shrink: 0;
 }
 
 .filter-checkbox {

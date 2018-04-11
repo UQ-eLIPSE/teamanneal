@@ -49,7 +49,6 @@ import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
 
 import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
-import { Data as IColumnData } from "../data/ColumnData";
 import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
@@ -84,7 +83,6 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
-    @Prop columns = p<IColumnData[]>({ required: true });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
     @Prop columnsDisplayIndices = p<number[]>({ required: true });
