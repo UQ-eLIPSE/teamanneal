@@ -1,14 +1,21 @@
 <template>
     <div class="results-editor">
+
         <div class="workspace">
+            <SpreadsheetTreeView2ColumnsFilter :items="columns"
+                                               @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
+            
             <SpreadsheetTreeView2 class="spreadsheet"
                                   :annealNodeRoots="modifiedAnnealNodeRoots"
                                   :headerRow="headerRow"
                                   :columns="columns"
+                                  :columnsDisplayIndices="columnsDisplayIndices"
                                   :recordRows="recordRows"
                                   :nodeNameMap="nameMap"
                                   :nodeStyles="nodeStyles"
                                   :idColumnIndex="idColumnIndex"
+                                  :hiddenNodes="hiddenNodes"
+                                  :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <ResultsEditorSideToolArea class="side-tool-area"></ResultsEditorSideToolArea>
@@ -33,11 +40,13 @@ import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
+import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
 
 @Component({
     components: {
         SpreadsheetTreeView2,
         ResultsEditorSideToolArea,
+        SpreadsheetTreeView2ColumnsFilter
     },
 })
 export default class ResultsEditor extends Vue {
@@ -47,12 +56,28 @@ export default class ResultsEditor extends Vue {
      */
     modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
 
+    // Private
+    /** Stores the indices of the columns to be displayed */
+    visibleColumnIndices: number[] = [];
+
+    // Private
+    /** Stores `node` ids of nodes which were collapsed (hidden).   */
+    hiddenNodes: { [key: string]: true } = {};
+
     get state() {
         return this.$store.state as IState;
     }
 
     get columns() {
         return this.state.recordData.columns;
+    }
+
+    get columnsDisplayIndices() {
+        return this.visibleColumnIndices;
+    }
+
+    set columnsDisplayIndices(el: number[]) {
+        this.visibleColumnIndices = [...el];
     }
 
     get strata() {
@@ -176,6 +201,24 @@ export default class ResultsEditor extends Vue {
 
                 return mapObj;
             }, {});
+    }
+
+    visibleColumnListUpdateHandler(columnList: number[]) {
+        this.columnsDisplayIndices = columnList;
+    }
+
+    /** Checks if `node` id exists as a key in the `hiddenNodes` object. */
+    isNodeVisible(node: AnnealNode.Node) {
+        return this.hiddenNodes[node._id] === undefined;
+    }
+
+    /** Hides the selected `node` (Adds it to the `hiddenNodes` object). Passed down as a `prop` to child components. */
+    onToggleNodeVisibility(node: AnnealNode.Node) {
+        if (this.isNodeVisible(node)) {
+            Vue.set(this.hiddenNodes, node._id, true);
+        } else {
+            Vue.delete(this.hiddenNodes, node._id);
+        }
     }
 
     /** A map of nodes or records which are to be styled in the spreadsheet */
@@ -531,8 +574,11 @@ export default class ResultsEditor extends Vue {
 
 .workspace {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
     background: #fff;
     position: relative;
+    overflow: scroll;
 }
 
 .side-tool-area {
@@ -541,10 +587,13 @@ export default class ResultsEditor extends Vue {
 }
 
 .spreadsheet {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    /* TODO: Review styles when column display checkbox location is decided */
+    /* 
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0; 
+    */
 }
 </style>

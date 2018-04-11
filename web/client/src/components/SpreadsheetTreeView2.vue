@@ -1,7 +1,5 @@
 <template>
     <div class="spreadsheet-tree-view">
-        <SpreadsheetTreeView2ColumnsFilter :items="columns"
-                                           @listUpdated="handleColumnListUpdate"></SpreadsheetTreeView2ColumnsFilter>
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
                                         :headerRow="filteredHeaderRow"
@@ -37,7 +35,8 @@
                                                 :recordLookupMap="recordLookupMap"
                                                 :nodeNameMap="nodeNameMap"
                                                 :nodeStyles="nodeStyles"
-                                                @toggledStratumVisibility="toggledStratumVisibilityHandler"
+                                                :hiddenNodes="hiddenNodes"
+                                                :onToggleNodeVisibility="onToggleNodeVisibility"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
@@ -46,7 +45,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
 
 import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
@@ -55,7 +54,6 @@ import { NodeNameMapNameGenerated } from "../data/ResultTree";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
-import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
 
 function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
     switch (node.type) {
@@ -75,8 +73,7 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
 @Component({
     components: {
         SpreadsheetTreeView2Header,
-        SpreadsheetTreeView2AnnealNodeRoot,
-        SpreadsheetTreeView2ColumnsFilter
+        SpreadsheetTreeView2AnnealNodeRoot
     },
 })
 export default class SpreadsheetTreeView2 extends Vue {
@@ -90,10 +87,9 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop columns = p<IColumnData[]>({ required: true });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
-
-    // Private
-    /** Stores the column indices to be displayed */
-    displayColumns: number[] = [];
+    @Prop columnsDisplayIndices = p<number[]>({ required: true });
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -101,14 +97,6 @@ export default class SpreadsheetTreeView2 extends Vue {
     /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", data);
-    }
-
-    get columnsDisplayArray() {
-        return this.displayColumns;
-    }
-
-    set columnsDisplayArray(el: number[]) {
-        this.displayColumns = [...el];
     }
 
     get treeMaxDepth() {
@@ -123,7 +111,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     get filteredHeaderRow() {
-        return this.headerRow.filter((_columnLabel, i) => this.columnsDisplayArray.indexOf(i) !== -1);
+        return this.headerRow.filter((_columnLabel, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
     }
 
     get totalNumberOfColumns() {
@@ -135,7 +123,7 @@ export default class SpreadsheetTreeView2 extends Vue {
 
         return this.recordRows.reduce((map, record) => {
             const id = record[idColumnIndex];
-            const filteredRecord = record.filter((_r, i) => this.columnsDisplayArray.indexOf(i) !== -1);
+            const filteredRecord = record.filter((_r, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
             map.set(id, filteredRecord);
             return map;
         }, new Map<RecordElement, Record>());
@@ -196,14 +184,16 @@ export default class SpreadsheetTreeView2 extends Vue {
         });
     }
 
-    handleColumnListUpdate(columnList: number[]) {
-        this.columnsDisplayArray = [...columnList];
+    @Watch('columnsDisplayIndices')
+    columnChangeWidthHandler(_n: any, _o: any) {
         this.waitAndUpdateColumnWidths();
     }
 
-    toggledStratumVisibilityHandler() {
-        this.waitAndUpdateColumnWidths();
-    }
+    // TODO: Decide if this is required
+    // @Watch('hiddenNodes')
+    // strataChangeWidthHandler(_n: any, _o: any) {
+    //     this.waitAndUpdateColumnWidths();
+    // }
 
     @Lifecycle mounted() {
         this.waitAndUpdateColumnWidths();

@@ -45,8 +45,8 @@ export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
     font-size: 0.8em;
     background: rgb(240, 240, 240);
     padding: 0 0.5rem;
-    flex-flow: row;
     overflow-x: scroll;
+    flex-shrink: 0;
 }
 
 .filter-checkbox {

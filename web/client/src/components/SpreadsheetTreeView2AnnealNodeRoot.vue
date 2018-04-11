@@ -3,7 +3,7 @@
         <tr v-if="isDataPartitioned">
             <td class="anr-tree-indicator">
                 <button class="toggle-visibility-button"
-                        @click.prevent="toggleNodeRootVisibility">{{displayNodes?'-':'+'}}</button>
+                        @click.prevent="onToggleNodeVisibility(node)">{{displayInnerNodes?'-':'+'}}</button>
             </td>
             <td class="anr-group-heading"
                 :colspan="totalNumberOfColumns - depth"
@@ -14,9 +14,9 @@
                 </div>
             </td>
         </tr>
-        <template v-if="displayNodes">
+        <template v-if="displayInnerNodes">
             <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
-                                                   :hiddenStrata="hiddenStrata"
+                                                   :hiddenNodes="hiddenNodes"
                                                    :key="node._id"
                                                    :node="node"
                                                    :depth="depth + 1"
@@ -26,7 +26,7 @@
                                                    :constraintSatisfactionMap="constraintSatisfactionMap"
                                                    :nodeStyles="nodeStyles"
                                                    :onItemClick="onItemClickHandler"
-                                                   :onToggleItemVisibility="toggleStratumVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
+                                                   :onToggleNodeVisibility="onToggleNodeVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
         </template>
     </tbody>
 </template>
@@ -59,11 +59,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
 
-    // hiddenStrata = new Set<String>();
-    hiddenStrata: { [key: string]: true } = {};
-    // Private
-    displayInnerNodes: boolean = true;
 
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
@@ -76,31 +74,11 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
-    isNodeVisible(node: AnnealNode.Node) {
-        return this.hiddenStrata[node._id] === undefined;
+    /** Check if node id exists as a key in `hiddenNodes` */
+    get displayInnerNodes() {
+        return this.hiddenNodes[this.node._id] === undefined;
     }
 
-    toggleStratumVisibility(node: AnnealNode.Node) {
-        if (this.isNodeVisible(node)) {
-            Vue.set(this.hiddenStrata, node._id, true);
-        } else {
-            Vue.delete(this.hiddenStrata, node._id);
-        }
-    }
-
-    toggleNodeRootVisibility() {
-        this.displayNodes = !this.displayNodes;
-        // Emit event so that parent can recalculate widths
-        this.$emit("toggledStratumVisibility");
-    }
-
-    get displayNodes() {
-        return this.displayInnerNodes;
-    }
-
-    set displayNodes(display: boolean) {
-        this.displayInnerNodes = display;
-    }
     get label() {
         if (this.nodeNameMap === undefined) {
             return this.node._id;
