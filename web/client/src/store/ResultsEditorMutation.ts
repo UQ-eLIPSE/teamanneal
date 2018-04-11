@@ -42,6 +42,9 @@ export enum ResultsEditorMutation {
 
     SET_GROUP_NODE_RECORD_ARRAY_MAP = "Setting group node record array map",
     CLEAR_GROUP_NODE_RECORD_ARRAY_MAP = "Clearing group node record array map",
+
+    SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
+    CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
 }
 
 /** Shorthand for Mutation enum above */
@@ -116,6 +119,14 @@ const mutations = {
 
     [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState) {
         set(state.groupNode, "nodeRecordArrayMap", initGroupNodeRecordArrayMap());
+    },
+
+    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState, { name, data }: { name: string, data?: object }) {
+        set(state.sideToolArea, "activeItem", { name, data: data || {}, });
+    },
+
+    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState) {
+        set(state.sideToolArea, "activeItem", undefined);
     },
 };
 

@@ -44,6 +44,7 @@ h2 {
 
 .click-input-field-block>button.input-field {
     flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .click-input-field-block>button.input-field:empty {
@@ -53,4 +54,13 @@ h2 {
 
 .click-input-field-block>button.input-field:empty::before {
     content: attr(data-placeholder-text);
+}
+
+.click-input-field-block.active {
+    border-color: #09e;
+    outline: 1px solid #09e;
+}
+
+.click-input-field-block .input-field:focus {
+    outline: none;
 }

@@ -33,6 +33,9 @@ export enum ResultsEditorAction {
     SET_GROUP_NODE_NAME_MAP = "Setting group node name map",
 
     SET_GROUP_NODE_RECORD_ARRAY_MAP = "Setting group node record array map",
+
+    SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME = "Setting side panel active tool by name",
+    CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
 }
 
 /** Shorthand for Action enum above */
@@ -103,6 +106,14 @@ const actions = {
 
     async [A.SET_GROUP_NODE_RECORD_ARRAY_MAP](context: Context, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
         commit(context, M.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
+    },
+
+    async [A.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME](context: Context, name: string) {
+        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL, { name, });
+    },
+
+    async [A.CLEAR_SIDE_PANEL_ACTIVE_TOOL](context: Context) {
+        commit(context, M.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 };
 
