@@ -19,8 +19,9 @@ interface Props_NodeStratumWithRecordChildren {
     nodeNameMap: NodeNameMapNameGenerated | undefined,
     nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
-
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
+    onToggleNodeVisibility: (node: AnnealNode.Node) => void,
+    hiddenNodes: { [key: string]: true }
 }
 
 interface Props_NodeStratumWithStratumChildren {
@@ -31,8 +32,9 @@ interface Props_NodeStratumWithStratumChildren {
     nodeNameMap: NodeNameMapNameGenerated | undefined,
     nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
-
     onItemClick: (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => void,
+    onToggleNodeVisibility: (node: AnnealNode.Node) => void,
+    hiddenNodes: { [key: string]: true }
 }
 
 function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
@@ -55,10 +57,19 @@ function getGroupHeadingLabel(p: Props) {
 
 function getRows(p: Props_NodeStratumWithRecordChildren) {
     return p.node.recordIds.map(id => ({ id, data: p.recordLookupMap.get(id)! }));
+
 }
 
 function getInnerNodes(p: Props_NodeStratumWithStratumChildren) {
     return p.node.children;
+}
+
+function displayToggleVisibilityButtonText(p: Props) {
+    return isNodeVisible(p) ? "-" : "+";
+}
+
+function isNodeVisible(p: Props) {
+    return p.hiddenNodes[p.node._id] === undefined;
 }
 
 /** Creates the heading elements for stratum nodes */
@@ -95,7 +106,23 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
     const style = p.nodeStyles && p.nodeStyles.get(p.node);
 
     return createElement("tr", [
-        createElement("td", { class: "tree-indicator", attrs: { colspan: leadingPadCells } }, "-"),
+        createElement("td",
+            {
+                class: "tree-indicator",
+                attrs: { colspan: leadingPadCells }
+            },
+            [
+                createElement("button", {
+                    class: "toggle-visibility-button",
+                    on: {
+                        click: () => {
+                            // Call `onToggleNodeVisibility` (a function which was passed down as prop to toggle node visibility) with the current `node` as an argument.
+                            p.onToggleNodeVisibility(p.node);
+                        }
+                    }
+                }, displayToggleVisibilityButtonText(p))
+            ]
+        ),
         createElement("td",
             {
                 class: "group-heading",
@@ -181,50 +208,56 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         nodeNameMap: { required: false, },
         nodeStyles: { required: false },
         constraintSatisfactionMap: { required: false, },
-
+        onToggleNodeVisibility: { required: true },
         onItemClick: { required: true, },
+        hiddenNodes: { required: true }
     },
 
     render: function(h, ctx) {
         const p = ctx.props;
-
         // This appends information about the current stratum node to the item
         // click chain
         const __onItemClick = (data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) => {
             p.onItemClick([{ node: p.node }, ...data]);
         }
-
         // We're constructing the component manually due to restrictions on how
         // we can create multi-root-node components with Vue and templates in
         // vue-loader.
         // 
         // See https://github.com/vuejs/vue-loader/issues/1168
 
+        // Do not render if parent `node` is hidden
         const elements: VNode[] = [
             createGroupHeading(h, __onItemClick, p),
         ];
 
-        if (propsHasRecordChildren(p)) {
-            // Render records here
-            elements.push(...getRows(p).map(row => createRecordContentRow(h, __onItemClick, row.id, row.data, p)));
-        } else {
-            // Render further strata
-            elements.push(...getInnerNodes(p).map((child) =>
-                // Recurse down using this same component
-                h("SpreadsheetTreeView2AnnealNodeStratum", {
-                    props: {
-                        node: child,
-                        depth: p.depth + 1,
-                        totalNumberOfColumns: p.totalNumberOfColumns,
-                        recordLookupMap: p.recordLookupMap,
-                        nodeNameMap: p.nodeNameMap,
-                        nodeStyles: p.nodeStyles,
-                        constraintSatisfactionMap: p.constraintSatisfactionMap,
-
-                        onItemClick: __onItemClick,
-                    }
-                })
-            ));
+        // If the node is hidden, we let the heading be rendered;
+        // don't render anything else, including children
+        if (isNodeVisible(p)) {
+            // If `node` is not hidden, display children
+            if (propsHasRecordChildren(p)) {
+                // Render records here
+                elements.push(...getRows(p).map(row => createRecordContentRow(h, __onItemClick, row.id, row.data, p)));
+            } else {
+                // Render further strata
+                elements.push(...getInnerNodes(p).map((child) =>
+                    // Recurse down using this same component
+                    h("SpreadsheetTreeView2AnnealNodeStratum", {
+                        props: {
+                            node: child,
+                            depth: p.depth + 1,
+                            totalNumberOfColumns: p.totalNumberOfColumns,
+                            recordLookupMap: p.recordLookupMap,
+                            nodeNameMap: p.nodeNameMap,
+                            nodeStyles: p.nodeStyles,
+                            constraintSatisfactionMap: p.constraintSatisfactionMap,
+                            onItemClick: __onItemClick,
+                            onToggleNodeVisibility: p.onToggleNodeVisibility,
+                            hiddenNodes: p.hiddenNodes
+                        }
+                    })
+                ));
+            }
         }
 
         // NOTE: We're overriding the type annotation as functional components
@@ -316,5 +349,24 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 
 .heading-content .overall-constraint-satisfaction meter {
     margin-left: 0.7ch;
+}
+
+.toggle-visibility-button {
+    border: 0.1em solid rgba(100, 80, 80, 0.5);
+    color: #3c3c3c;
+    background: rgba(119, 129, 139, 0.25);
+    cursor: pointer;
+    border-radius: 0.1rem;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    text-align: center;
+    font-size: 0.7em;
+}
+
+.toggle-visibility-button:hover,
+.toggle-visibility-button:active,
+.toggle-visibility-button:focus {
+    background: rgba(119, 129, 139, 0.1);
 }
 </style>

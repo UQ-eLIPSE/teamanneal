@@ -1,11 +1,11 @@
 <template>
     <tbody class="anr-wrapper">
-        <tr>
+        <tr v-if="isDataPartitioned">
             <td class="anr-tree-indicator">
-                -
+                <button class="toggle-visibility-button"
+                        @click.prevent="onToggleNodeVisibility(node)">{{displayInnerNodes?'-':'+'}}</button>
             </td>
-            <td v-once
-                class="anr-group-heading"
+            <td class="anr-group-heading"
                 :colspan="totalNumberOfColumns - depth"
                 @click="onHeadingClick">
                 <div class="anr-heading-content">
@@ -14,16 +14,20 @@
                 </div>
             </td>
         </tr>
-        <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
-                                               :key="node._id"
-                                               :node="node"
-                                               :depth="depth + 1"
-                                               :totalNumberOfColumns="totalNumberOfColumns"
-                                               :recordLookupMap="recordLookupMap"
-                                               :nodeNameMap="nodeNameMap"
-                                               :constraintSatisfactionMap="constraintSatisfactionMap"
-                                               :nodeStyles="nodeStyles"
-                                               :onItemClick="onItemClickHandler"></SpreadsheetTreeView2AnnealNodeStratum>
+        <template v-if="displayInnerNodes">
+            <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
+                                                   :hiddenNodes="hiddenNodes"
+                                                   :key="node._id"
+                                                   :node="node"
+                                                   :depth="depth + 1"
+                                                   :totalNumberOfColumns="totalNumberOfColumns"
+                                                   :recordLookupMap="recordLookupMap"
+                                                   :nodeNameMap="nodeNameMap"
+                                                   :constraintSatisfactionMap="constraintSatisfactionMap"
+                                                   :nodeStyles="nodeStyles"
+                                                   :onItemClick="onItemClickHandler"
+                                                   :onToggleNodeVisibility="onToggleNodeVisibility"></SpreadsheetTreeView2AnnealNodeStratum>
+        </template>
     </tbody>
 </template>
 
@@ -53,6 +57,12 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
     @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    /** True when anneal results have multiple partitions */
+    @Prop isDataPartitioned = p({ type: Boolean, required: true });
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    /** Function passed down by parent to toggle a node's visibility */
+    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
+
 
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
@@ -63,6 +73,11 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
+    }
+
+    /** Check if node id exists as a key in `hiddenNodes` */
+    get displayInnerNodes() {
+        return this.hiddenNodes[this.node._id] === undefined;
     }
 
     get label() {
@@ -123,4 +138,28 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     flex-grow: 1;
     flex-shrink: 1;
 }
+
+.anr-tree-indicator {
+    cursor: pointer;
+}
+
+.toggle-visibility-button {
+    border: 0.1em solid rgba(100, 80, 80, 0.5);
+    color: #3c3c3c;
+    background: rgba(119, 129, 139, 0.25);
+    cursor: pointer;
+    border-radius: 0.1rem;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    text-align: center;
+    font-size: 0.7em;
+}
+
+.toggle-visibility-button:hover,
+.toggle-visibility-button:active,
+.toggle-visibility-button:focus {
+    background: rgba(119, 129, 139, 0.1);
+}
+
 </style>
