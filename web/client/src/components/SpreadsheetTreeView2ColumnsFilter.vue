@@ -12,7 +12,6 @@
                    :key="i">{{item.label}}
                 <input type="checkbox"
                        :value="i"
-                       @change="updated"
                        v-model="selectedItemIndices">
             </label>
         </div>
@@ -27,29 +26,23 @@ import { Data as IColumnData } from "../data/ColumnData";
 
 @Component
 export default class SpreadsheetTreeView2ColumnsFilter extends Vue {
-    @Prop items = p<IColumnData[]>({ required: true });
+    @Prop items = p<ReadonlyArray<IColumnData>>({ type: Array, required: true, });
+    @Prop selectedIndices = p<ReadonlyArray<number>>({ type: Array, required: true, });
 
-    // Private
-    selectedItemIndices: number[] = [];
+    get selectedItemIndices() {
+        return this.selectedIndices;
+    }
 
-    updated() {
-        this.$emit("listUpdated", this.selectedItemIndices);
+    set selectedItemIndices(indices: ReadonlyArray<number>) {
+        this.$emit("listUpdated", indices);
     }
 
     selectAllItems() {
         this.selectedItemIndices = this.items.map((_x: any, i: number) => i);
-        this.updated();
     }
 
     deselectAllItems() {
         this.selectedItemIndices = [];
-        this.updated();
-    }
-
-    @Lifecycle
-    created() {
-        this.selectAllItems();
-        this.updated();
     }
 }   
 </script>

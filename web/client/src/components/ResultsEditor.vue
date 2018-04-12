@@ -3,8 +3,9 @@
 
         <div class="workspace">
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
+                                               :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
-            
+
             <SpreadsheetTreeView2 class="spreadsheet"
                                   :annealNodeRoots="modifiedAnnealNodeRoots"
                                   :headerRow="headerRow"
@@ -57,7 +58,7 @@ export default class ResultsEditor extends Vue {
 
     // Private
     /** Stores the indices of the columns to be displayed */
-    visibleColumnIndices: number[] = [];
+    p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
     // Private
     /** Stores `node` ids of nodes which were collapsed (hidden).   */
@@ -69,14 +70,6 @@ export default class ResultsEditor extends Vue {
 
     get columns() {
         return this.state.recordData.columns;
-    }
-
-    get columnsDisplayIndices() {
-        return this.visibleColumnIndices;
-    }
-
-    set columnsDisplayIndices(el: number[]) {
-        this.visibleColumnIndices = [...el];
     }
 
     get strata() {
@@ -202,7 +195,16 @@ export default class ResultsEditor extends Vue {
             }, {});
     }
 
-    visibleColumnListUpdateHandler(columnList: number[]) {
+    get columnsDisplayIndices() {
+        // Return indices with a default initialised to all columns visible
+        return this.p_columnsDisplayIndices || this.columns.map((_, i) => i);
+    }
+
+    set columnsDisplayIndices(indices: ReadonlyArray<number>) {
+        this.p_columnsDisplayIndices = indices;
+    }
+
+    visibleColumnListUpdateHandler(columnList: ReadonlyArray<number>) {
         this.columnsDisplayIndices = columnList;
     }
 

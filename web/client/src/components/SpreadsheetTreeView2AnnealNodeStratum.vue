@@ -121,7 +121,8 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                         }
                     }
                 }, displayToggleVisibilityButtonText(p))
-            ]),
+            ]
+        ),
         createElement("td",
             {
                 class: "group-heading",
