@@ -41,6 +41,8 @@ export enum ResultsEditorAction {
     CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
 
     MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
+
+    SWAP_RECORDS = "Swapping records",
 }
 
 /** Shorthand for Action enum above */
@@ -124,6 +126,19 @@ const actions = {
     async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: GroupNode, id: RecordElement }, targetGroup: GroupNode }) {
         commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: sourcePerson.node, id: sourcePerson.id });
         commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: targetGroup, id: sourcePerson.id });
+    },
+
+    async [A.SWAP_RECORDS](context: Context, { personA, personB }: { personA: { node: GroupNode, id: RecordElement }, personB: { node: GroupNode, id: RecordElement } }) {
+        // Only permit unique IDs to be swapped
+        if (personA.id === personB.id) {
+            throw new Error("Only two unique records can be swapped");
+        }
+
+        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: personA.node, id: personA.id });
+        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: personB.node, id: personB.id });
+
+        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personB.node, id: personA.id });
+        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personA.node, id: personB.id });
     },
 };
 

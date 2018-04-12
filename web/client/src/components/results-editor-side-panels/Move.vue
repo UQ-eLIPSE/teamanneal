@@ -47,21 +47,13 @@ import { Vue, Component, Prop, p } from "av-ts";
 
 import * as Store from "../../store";
 
-import { GroupNode } from "../../data/GroupNode";
-
-import { RecordElement } from "../../../../common/Record";
+import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 
 import { set, del } from "../../util/Vue";
 
-interface MoveSidePanelToolData {
-    cursor: "sourcePerson" | "targetGroup",
-    sourcePerson: { node: GroupNode, id: RecordElement },
-    targetGroup: GroupNode,
-}
-
 @Component
 export default class Move extends Vue {
-    @Prop data = p<Partial<MoveSidePanelToolData>>({ required: true, });
+    @Prop data = p<MoveSidePanelToolData>({ required: true, });
 
     get sourcePersonFieldBlockClasses() {
         return {
@@ -89,10 +81,12 @@ export default class Move extends Vue {
 
     clearSourcePerson() {
         del(this.data, "sourcePerson");
+        this.setCursor("sourcePerson");
     }
 
     clearTargetGroup() {
         del(this.data, "targetGroup");
+        this.setCursor("targetGroup");
     }
 
     async commitMove() {

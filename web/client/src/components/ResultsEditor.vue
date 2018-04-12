@@ -26,6 +26,8 @@ import * as Store from "../store";
 import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
 import { MenuItem } from "../data/ResultsEditorMenuBar";
+import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
+import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
 
 import { set } from "../util/Vue";
 
@@ -177,8 +179,7 @@ export default class ResultsEditor extends Vue {
 
         switch (activeSidePanelTool.name) {
             case "move": {
-                // TODO: Prepare interface
-                const moveToolData: any = activeSidePanelTool.data;
+                const moveToolData: MoveSidePanelToolData = activeSidePanelTool.data;
 
                 if (moveToolData.sourcePerson !== undefined) {
                     nodeStyles.set(moveToolData.sourcePerson.id, { color: "#fff", backgroundColor: "#49075e" });
@@ -186,6 +187,20 @@ export default class ResultsEditor extends Vue {
 
                 if (moveToolData.targetGroup !== undefined) {
                     nodeStyles.set(moveToolData.targetGroup, { color: "#fff", backgroundColor: "#000" });
+                }
+
+                return nodeStyles;
+            }
+
+            case "swap": {
+                const swapToolData: SwapSidePanelToolData = activeSidePanelTool.data;
+
+                if (swapToolData.personA !== undefined) {
+                    nodeStyles.set(swapToolData.personA.id, { color: "#fff", backgroundColor: "#49075e" });
+                }
+
+                if (swapToolData.personB !== undefined) {
+                    nodeStyles.set(swapToolData.personB.id, { color: "#fff", backgroundColor: "#49075e" });
                 }
 
                 return nodeStyles;
@@ -209,9 +224,8 @@ export default class ResultsEditor extends Vue {
 
         switch (activeSidePanelTool.name) {
             case "move": {
-                // TODO: Prepare interface
-                const moveToolData: any = activeSidePanelTool.data;
-                const cursor: string | undefined = moveToolData.cursor;
+                const moveToolData: MoveSidePanelToolData = activeSidePanelTool.data;
+                const cursor = moveToolData.cursor;
 
                 switch (cursor) {
                     case "sourcePerson": {
@@ -256,166 +270,69 @@ export default class ResultsEditor extends Vue {
 
                 return;
             }
+
+            case "swap": {
+                const swapToolData: SwapSidePanelToolData = activeSidePanelTool.data;
+                const cursor = swapToolData.cursor;
+
+                switch (cursor) {
+                    case "personA": {
+                        // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
+                            return;
+                        }
+
+                        // If person B defined, do not set person A equal to B
+                        if (swapToolData.personB !== undefined &&
+                            targetItem.recordId === swapToolData.personB.id) {
+                            // TODO: Proper error handling
+                            throw new Error("Person selected must be different from that already selected as the other target for a swap operation");
+                        }
+
+                        // TODO: Encode richer information about the record, and
+                        // not just the ID?
+                        set(swapToolData, "personA", { node: targetItemParent.node, id: targetItem.recordId });
+
+                        return;
+                    }
+
+                    case "personB": {
+                        // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
+                        const targetItem: any = data[data.length - 1];
+
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
+                            return;
+                        }
+
+                        // If person A defined, do not set person B equal to A
+                        if (swapToolData.personA !== undefined &&
+                            targetItem.recordId === swapToolData.personA.id) {
+                            // TODO: Proper error handling
+                            throw new Error("Person selected must be different from that already selected as the other target for a swap operation");
+                        }
+
+                        // TODO: Encode richer information about the record, and
+                        // not just the ID?
+                        set(swapToolData, "personB", { node: targetItemParent.node, id: targetItem.recordId });
+
+                        return;
+                    }
+                }
+
+                return;
+            }
         }
-
-        // switch (op.type) {
-        //     case "swap-records": {
-        //         switch (op.cursor) {
-        //             case "recordA": {
-        //                 // TODO: Fix type narrowing
-        //                 const targetItem: any = data[data.length - 1];
-
-        //                 // Can only move records
-        //                 if (targetItem.recordId === undefined) {
-        //                     return;
-        //                 }
-
-        //                 // Split array, with the assumption that record only
-        //                 // appears at end once
-        //                 const recordId: RecordElement = targetItem.recordId;
-        //                 const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
-
-        //                 // Set operation path and cursor
-        //                 op.recordA = {
-        //                     path: targetPath,
-        //                     recordId,
-        //                 };
-
-        //                 // Move cursor to "recordB" if `recordB` not filled in
-        //                 if (op.recordB === undefined) {
-        //                     op.cursor = "recordB";
-        //                 } else {
-        //                     op.cursor = undefined;
-        //                 }
-
-        //                 return;
-        //             }
-
-        //             case "recordB": {
-        //                 // TODO: Fix type narrowing
-        //                 const targetItem: any = data[data.length - 1];
-
-        //                 // Can only move records
-        //                 if (targetItem.recordId === undefined) {
-        //                     return;
-        //                 }
-
-        //                 // Split array, with the assumption that record only
-        //                 // appears at end once
-        //                 const recordId: RecordElement = targetItem.recordId;
-        //                 const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
-
-        //                 // Set operation path and cursor
-        //                 op.recordB = {
-        //                     path: targetPath,
-        //                     recordId,
-        //                 };
-
-        //                 op.cursor = undefined;
-
-        //                 return;
-        //             }
-        //         }
-        //         return;
-        //     }
-        // }
     }
-
-    // onCommitEditOperation() {
-    //     // Perform the edit operation
-    //     const op = this.pendingEditOperation;
-
-    //     if (op === undefined) {
-    //         return;
-    //     }
-
-    //     switch (op.type) {
-    //         case "move-record": {
-    //             // Invalid state for commit
-    //             if (op.from === undefined || op.to === undefined) {
-    //                 throw new Error("Not enough information provided for move operation");
-    //             }
-
-    //             const from = op.from;
-    //             const fromPath = from.path;
-    //             const fromNode = fromPath[fromPath.length - 1];
-
-    //             const movedRecordId = from.recordId;
-
-    //             if (fromNode.type !== "stratum-records") {
-    //                 throw new Error("'From node' is not a record carrying stratum");
-    //             }
-
-    //             const to = op.to;
-    //             const toPath = to.path;
-    //             const toNode = toPath[toPath.length - 1];
-
-    //             if (toNode.type !== "stratum-records") {
-    //                 throw new Error("'To node' is not a record carrying stratum");
-    //             }
-
-    //             // TODO: Fix type `any`
-    //             // This is due to nodes being typed as being purely read-only
-    //             // for safety, but this prevents us from being able to modify 
-    //             // the node information as required here, unless we do a full
-    //             // recreation of the tree
-    //             (fromNode as any).recordIds = fromNode.recordIds.filter(x => x !== movedRecordId);
-    //             (toNode as any).recordIds = [...toNode.recordIds, movedRecordId];
-
-    //             break;
-    //         }
-
-    //         case "swap-records": {
-    //             // Invalid state for commit
-    //             if (op.recordA === undefined || op.recordB === undefined) {
-    //                 throw new Error("Not enough information provided for swap operation");
-    //             }
-
-    //             const { recordA, recordB } = op;
-
-    //             const recordAPath = recordA.path;
-    //             const recordANode = recordAPath[recordAPath.length - 1];
-    //             const recordAId = recordA.recordId;
-
-    //             if (recordANode.type !== "stratum-records") {
-    //                 throw new Error("'Record A node' is not a record carrying stratum");
-    //             }
-
-    //             const recordAIndex = recordANode.recordIds.indexOf(recordAId);
-
-    //             if (recordAIndex === -1) {
-    //                 throw new Error("'Record A node' not found");
-    //             }
-
-    //             const recordBPath = recordB.path;
-    //             const recordBNode = recordBPath[recordAPath.length - 1];
-    //             const recordBId = recordB.recordId;
-
-    //             if (recordBNode.type !== "stratum-records") {
-    //                 throw new Error("'Record B node' is not a record carrying stratum");
-    //             }
-
-    //             const recordBIndex = recordBNode.recordIds.indexOf(recordBId);
-
-    //             if (recordBIndex === -1) {
-    //                 throw new Error("'Record B node' not found");
-    //             }
-
-    //             // TODO: Fix type `any`
-    //             // This is due to nodes being typed as being purely read-only
-    //             // for safety, but this prevents us from being able to modify 
-    //             // the node information as required here, unless we do a full
-    //             // recreation of the tree
-    //             (recordANode as any).recordIds[recordAIndex] = recordBId;
-    //             (recordBNode as any).recordIds[recordBIndex] = recordAId;
-
-    //             break;
-    //         }
-    //     }
-
-    //     // Clear the pending edit operation now that we're done
-    //     this.pendingEditOperation = undefined;
-    // }
 }
 </script>
 
