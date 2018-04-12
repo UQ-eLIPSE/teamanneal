@@ -103,6 +103,7 @@ import * as Store from "../../store";
 
 import { unparseFile } from "../../util/CSV";
 import { replaceAll } from "../../util/String";
+import { deepCopy } from "../../util/Object";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
@@ -260,17 +261,17 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
 
         // TODO: Not everything is being copied at the moment
 
-        // TODO: Use a better, more structured copy than a straight JSON copy
-        const jsonCopy = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 
         // Copy over record data
         const recordData = this.state.recordData;
-        const recordDataCopy = jsonCopy(recordData);
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const recordDataCopy = deepCopy(recordData);
         await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
 
         // Copy over strata
         const strata = this.state.annealConfig.strata;
-        const strataCopy = jsonCopy(strata).map((stratum) => {
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const strataCopy = deepCopy(strata).map((stratum) => {
             // Remove naming configuration information from old strata objects
             const { namingConfig, ...strata } = stratum;
             return { ...strata } as Stratum;
