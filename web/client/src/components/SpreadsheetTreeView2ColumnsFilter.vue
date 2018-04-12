@@ -21,7 +21,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p, Lifecycle } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 import { Data as IColumnData } from "../data/ColumnData";
 
 @Component
