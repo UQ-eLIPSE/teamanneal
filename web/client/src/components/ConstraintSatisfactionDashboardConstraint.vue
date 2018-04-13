@@ -18,7 +18,7 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import { Data as IState } from "../data/State";
 import { Data as IConstraint } from "../data/Constraint";
-import { ConstraintPhraseMaps } from "../data/Constraint";
+import { ConstraintSentence } from "../data/Constraint";
 
 @Component
 export default class ConstraintSatisfactionDashboardConstraint extends Vue {
@@ -42,143 +42,8 @@ export default class ConstraintSatisfactionDashboardConstraint extends Vue {
         this.$emit("constraintSelected", this.constraint);
     }
 
-    /** Constructs a phrase from the key-values in the `constraint` prop. */
     get constraintSentence() {
-        let sentence = "";
-
-        sentence += this.selectedStratum.label + ' ';
-        sentence += this.getWeightText();
-        sentence += this.getConstraintConditionFunctionText();
-        sentence += this.getPersonUnitText();
-        sentence += this.getConstraintFilterText();
-        sentence += ' when ' + this.selectedStratum.label + ' has ';
-        sentence += this.getConstraintGroupApplicabilityText();
-
-        return sentence;
-    }
-
-    getWeightText() {
-        return this.findItemInList(ConstraintPhraseMaps.CostWeightList, "value", this.constraint.weight).text + ' ';
-    }
-
-    getConstraintConditionFunctionText() {
-        let phrase = this.findItemInList(ConstraintPhraseMaps.ConditionFunctionList, "value", this.constraint.condition.function).text + ' ';
-        if (this.showConditionCount) {
-            phrase += (this.constraint.condition as any).value + ' ';
-        }
-
-        return phrase;
-    }
-
-    getPersonUnitText() {
-        if (this.personUnitNounFollowsCondition) {
-            return this.personUnitNoun + ' with ';
-        }
-        return '';
-    }
-
-    getConstraintFilterText() {
-        let phrase = this.constraint.filter.column.label + ' ';
-
-        if (this.showFilterFunction) {
-            phrase += this.constraintFilterFunction + ' ' + (this.constraint.filter as any).values[0];
-        }
-
-        return phrase;
-    }
-
-    getConstraintGroupApplicabilityText() {
-        return this.constraintApplicabilityPhrase + ' ' + this.groupSizeApplicabilityConditionPersonUnitNoun;
-    }
-
-    // -------------------------------------------------
-    // Utility functions for building constraint phrases
-    // -------------------------------------------------
-
-    /**
-     * Determines if the person unit noun ("person" or "people") comes after
-     * the condition function text in the constraint sentence
-     */
-    get personUnitNounFollowsCondition() {
-        switch (this.constraint.condition.function) {
-            case "similar":
-            case "different":
-                return false;
-        }
-
-        return true;
-    }
-
-    get constraintApplicability() {
-        const groupSizeApplicability = this.constraint.applicability.find((applicabilityObject) => applicabilityObject.type === 'group-size');
-        if (groupSizeApplicability !== undefined) {
-            return groupSizeApplicability.value;
-        }
-
-        return undefined;
-    }
-
-    get constraintApplicabilityPhrase() {
-        return this.constraintApplicability || " any number of ";
-    }
-
-    get showFilterFunction() {
-        switch (this.constraint.condition.function) {
-            case "similar":
-            case "different":
-                return false;
-        }
-
-        return true;
-    }
-
-    get constraintFilterFunction() {
-        const filterType = this.constraint.filter.column.type;
-        const list = filterType === "number" ? ConstraintPhraseMaps.NumberFilterFunctionList : ConstraintPhraseMaps.StringFilterFunctionList;
-        return this.findItemInList(list, "value", (this.constraint.filter as any).function).text;
-    }
-
-    /**
-     * Generates the appropriate (pluralised) noun for the constraint sentence
-     */
-    get personUnitNoun() {
-        // If the count is exactly one, return "person"
-        if (this.showConditionCount && (this.constraint.condition as any).value === 1) {
-            return "person";
-        } else {
-            return "people";
-        }
-    }
-
-    get showConditionCount() {
-        switch (this.constraint.condition.function) {
-            case "low":
-            case "high":
-            case "similar":
-            case "different":
-                return false;
-        }
-
-        return true;
-    }
-
-    get groupSizeApplicabilityConditionPersonUnitNoun() {
-        if (this.constraintApplicability === undefined) {
-            return "people";
-        }
-
-        if (this.constraintApplicability === 1) {
-            return "person";
-        }
-
-        return "people";
-    }
-
-    /**
-     * A generic function used for finding array items for `value-text` maps in `ConstraintPhraseMaps` (see import)
-     */
-    findItemInList(list: any[], property: string, value: any) {
-        return list.find((listItem: any) => listItem[property] === value);
+        return ConstraintSentence.convertConstraintToSentence(this.constraint, this.selectedStratum.label);
     }
 
     get constraintItemClasses() {
