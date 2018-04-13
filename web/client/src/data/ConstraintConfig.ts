@@ -5,7 +5,9 @@ export interface ConstraintConfig {
 }
 
 export function initNew() {
-    return {
+    const obj: ConstraintConfig = {
         constraints: [],
-    } as ConstraintConfig;
+    };
+
+    return obj;
 }

@@ -3,5 +3,7 @@ export interface GroupNodeNameMap {
 }
 
 export function initNew() {
-    return {} as GroupNodeNameMap;
+    const obj: GroupNodeNameMap = {};
+
+    return obj;
 }

@@ -5,7 +5,9 @@ export interface StrataConfig {
 }
 
 export function initNew() {
-    return {
+    const obj: StrataConfig = {
         strata: [],
-    } as StrataConfig;
+    };
+
+    return obj;
 }

@@ -1,7 +1,7 @@
 import { MutationTree, ActionContext, CommitOptions } from "vuex";
 import { set, del } from "../util/Vue";
 
-import { ResultsEditorState } from "./ResultsEditorState";
+import { AnnealCreatorState } from "./AnnealCreatorState";
 
 import { Data as Constraint } from "../data/Constraint";
 import { DataWithoutNamingConfig as Stratum } from "../data/Stratum";
@@ -16,15 +16,15 @@ import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from 
 import { RecordElement } from "../../../common/Record";
 import { SidePanelActiveTool } from "../data/SidePanelActiveTool";
 
-type MutationFunction<M extends ResultsEditorMutation> = typeof mutations[M];
+type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
 type FunctionParam2<T> =
     T extends (x: any, y: undefined) => any ? undefined :
     T extends (x: any, y: infer U) => any ? U : never;
 
-type Context = ActionContext<ResultsEditorState, ResultsEditorState>;
+type Context = ActionContext<AnnealCreatorState, AnnealCreatorState>;
 
-export enum ResultsEditorMutation {
+export enum AnnealCreatorMutation {
     SET_RECORD_DATA = "Setting record data",
     CLEAR_RECORD_DATA = "Clearing record data",
 
@@ -55,97 +55,97 @@ export enum ResultsEditorMutation {
 }
 
 /** Shorthand for Mutation enum above */
-const M = ResultsEditorMutation;
+const M = AnnealCreatorMutation;
 
 /** Type-safe commit function */
-export function commit<M extends ResultsEditorMutation, F extends MutationFunction<M>>(context: Context, mutation: M, payload: FunctionParam2<F>, options?: CommitOptions): void {
+export function commit<M extends AnnealCreatorMutation, F extends MutationFunction<M>>(context: Context, mutation: M, payload: FunctionParam2<F>, options?: CommitOptions): void {
     return context.commit(mutation, payload, options);
 }
 
 /** Store mutation functions */
 const mutations = {
-    [M.SET_RECORD_DATA](state: ResultsEditorState, recordData: RecordData) {
+    [M.SET_RECORD_DATA](state: AnnealCreatorState, recordData: RecordData) {
         set(state, "recordData", recordData);
     },
 
-    [M.CLEAR_RECORD_DATA](state: ResultsEditorState) {
+    [M.CLEAR_RECORD_DATA](state: AnnealCreatorState) {
         set(state, "recordData", initRecordData());
     },
 
-    [M.INSERT_CONSTRAINT](state: ResultsEditorState, constraint: Constraint) {
+    [M.INSERT_CONSTRAINT](state: AnnealCreatorState, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
 
-    [M.SET_CONSTRAINT](state: ResultsEditorState, { constraint, index }: { constraint: Constraint, index: number }) {
+    [M.SET_CONSTRAINT](state: AnnealCreatorState, { constraint, index }: { constraint: Constraint, index: number }) {
         set(state.constraintConfig.constraints, index, constraint);
     },
 
-    [M.DELETE_CONSTRAINT](state: ResultsEditorState, index: number) {
+    [M.DELETE_CONSTRAINT](state: AnnealCreatorState, index: number) {
         del(state.constraintConfig.constraints, index);
     },
 
-    [M.CLEAR_CONSTRAINTS](state: ResultsEditorState) {
+    [M.CLEAR_CONSTRAINTS](state: AnnealCreatorState) {
         set(state, "constraintConfig", initConstraintConfig());
     },
 
-    [M.INSERT_STRATUM](state: ResultsEditorState, stratum: Stratum) {
+    [M.INSERT_STRATUM](state: AnnealCreatorState, stratum: Stratum) {
         state.strataConfig.strata.push(stratum);
     },
 
-    [M.SET_STRATUM](state: ResultsEditorState, { stratum, index }: { stratum: Stratum, index: number }) {
+    [M.SET_STRATUM](state: AnnealCreatorState, { stratum, index }: { stratum: Stratum, index: number }) {
         set(state.strataConfig.strata, index, stratum);
     },
 
-    [M.DELETE_STRATUM](state: ResultsEditorState, index: number) {
+    [M.DELETE_STRATUM](state: AnnealCreatorState, index: number) {
         del(state.strataConfig.strata, index);
     },
 
-    [M.CLEAR_STRATA](state: ResultsEditorState) {
+    [M.CLEAR_STRATA](state: AnnealCreatorState) {
         set(state, "strataConfig", initStrataConfig());
     },
 
-    [M.SET_GROUP_NODE_STRUCTURE](state: ResultsEditorState, structure: GroupNodeStructure) {
+    [M.SET_GROUP_NODE_STRUCTURE](state: AnnealCreatorState, structure: GroupNodeStructure) {
         set(state.groupNode, "structure", structure);
     },
 
-    [M.CLEAR_GROUP_NODE_STRUCTURE](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_STRUCTURE](state: AnnealCreatorState) {
         set(state.groupNode, "structure", initGroupNodeStructure());
     },
 
-    [M.SET_GROUP_NODE_NAME_MAP](state: ResultsEditorState, nameMap: GroupNodeNameMap) {
+    [M.SET_GROUP_NODE_NAME_MAP](state: AnnealCreatorState, nameMap: GroupNodeNameMap) {
         set(state.groupNode, "nameMap", nameMap);
     },
 
-    [M.CLEAR_GROUP_NODE_NAME_MAP](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_NAME_MAP](state: AnnealCreatorState) {
         set(state.groupNode, "nameMap", initGroupNodeNameMap());
     },
 
-    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
+    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: AnnealCreatorState, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
         set(state.groupNode, "nodeRecordArrayMap", nodeRecordArrayMap);
     },
 
-    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: AnnealCreatorState) {
         set(state.groupNode, "nodeRecordArrayMap", initGroupNodeRecordArrayMap());
     },
 
-    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState, data: SidePanelActiveTool) {
+    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: AnnealCreatorState, data: SidePanelActiveTool) {
         set(state.sideToolArea, "activeItem", data);
     },
 
-    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState) {
+    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: AnnealCreatorState) {
         set(state.sideToolArea, "activeItem", undefined);
     },
 
-    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: ResultsEditorState, { node, id }: { node: GroupNode, id: RecordElement }) {
+    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: AnnealCreatorState, { node, id }: { node: GroupNode, id: RecordElement }) {
         state.groupNode.nodeRecordArrayMap[node._id].push(id);
     },
 
-    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: ResultsEditorState, { node, id }: { node: GroupNode, id: RecordElement }) {
+    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: AnnealCreatorState, { node, id }: { node: GroupNode, id: RecordElement }) {
         const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node._id];
         del(recordsUnderNode, recordsUnderNode.indexOf(id));
     },
 };
 
 export function init() {
-    return mutations as MutationTree<ResultsEditorState>;
+    return mutations as MutationTree<AnnealCreatorState>;
 }

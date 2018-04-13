@@ -1,7 +1,7 @@
 import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
-import { ResultsEditorState } from "./ResultsEditorState";
-import { ResultsEditorMutation as M, commit } from "./ResultsEditorMutation";
+import { AnnealCreatorState } from "./AnnealCreatorState";
+import { AnnealCreatorMutation as M, commit } from "./AnnealCreatorMutation";
 
 import { RecordData } from "../data/RecordData";
 import { GroupNode } from "../data/GroupNode";
@@ -13,15 +13,15 @@ import { SidePanelActiveTool } from "../data/SidePanelActiveTool";
 
 import { RecordElement } from "../../../common/Record";
 
-type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
+type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
 type FunctionParam2<T> =
     T extends (x: any, y: undefined, ...args: any[]) => any ? undefined :
     T extends (x: any, y: infer U, ...args: any[]) => any ? U : never;
 
-type Context = ActionContext<ResultsEditorState, ResultsEditorState>;
+type Context = ActionContext<AnnealCreatorState, AnnealCreatorState>;
 
-export enum ResultsEditorAction {
+export enum AnnealCreatorAction {
     HYDRATE = "Hydrating module",
     DEHYDRATE = "Dehydrating module",
 
@@ -47,11 +47,11 @@ export enum ResultsEditorAction {
 }
 
 /** Shorthand for Action enum above */
-const A = ResultsEditorAction;
+const A = AnnealCreatorAction;
 
 /** Type-safe dispatch function factory */
 export function dispatchFactory<T>(store: Store<T>, modulePrefix?: string) {
-    return function dispatch<A extends ResultsEditorAction, F extends ActionFunction<A>>(action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
+    return function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
         let _action: string = action;
 
         if (modulePrefix !== undefined) {
@@ -63,14 +63,14 @@ export function dispatchFactory<T>(store: Store<T>, modulePrefix?: string) {
 }
 
 /** Internal dispatch function */
-function dispatch<A extends ResultsEditorAction, F extends ActionFunction<A>>(context: Context, action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
+function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(context: Context, action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
     return context.dispatch(action, payload, options) as ReturnType<F>;
 }
 
 /** Store action functions */
 const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
-        const state = JSON.parse(dehydratedState) as ResultsEditorState;
+        const state = JSON.parse(dehydratedState) as AnnealCreatorState;
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
         // TODO: Constraint config hydration
@@ -153,5 +153,5 @@ const actions = {
 };
 
 export function init() {
-    return actions as ActionTree<ResultsEditorState, ResultsEditorState>;
+    return actions as ActionTree<AnnealCreatorState, AnnealCreatorState>;
 }

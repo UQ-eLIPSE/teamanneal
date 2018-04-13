@@ -5,5 +5,7 @@ export interface GroupNodeRecordArrayMap {
 }
 
 export function initNew() {
-    return {} as GroupNodeRecordArrayMap;
+    const obj: GroupNodeRecordArrayMap = {};
+
+    return obj;
 }

@@ -21,7 +21,7 @@ export interface RecordData {
 }
 
 export function initNew() {
-    return {
+    const obj: RecordData = {
         source: {
             name: undefined,
             length: 0,
@@ -29,5 +29,7 @@ export function initNew() {
         columns: [],
         idColumn: undefined,
         partitionColumn: undefined,
-    } as RecordData;
+    };
+
+    return obj;
 }
