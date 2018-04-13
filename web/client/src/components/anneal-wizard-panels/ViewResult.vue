@@ -84,15 +84,26 @@
 import { Component, Mixin } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
+import * as AnnealNode from "../../../../common/AnnealNode";
 
-import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
+import { DataWithoutNamingConfig as Stratum } from "../../data/Stratum";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeRoot } from "../../data/GroupNodeRoot";
+import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
+import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
+import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 
+import * as Store from "../../store";
+
+import { unparseFile } from "../../util/CSV";
 import { replaceAll } from "../../util/String";
+import { deepCopy } from "../../util/Object";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
@@ -243,11 +254,96 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         throw new Error("Not yet implemented");
     }
 
-    onEditResultButtonClick() {
-        // TODO: This is currently just going to the appropriate route; in 
-        // future this should be an actual export-import process for the 
-        // editor component so that data is reliably copied and not have state 
-        // mutated in the editor directly
+    async onEditResultButtonClick() {
+        // TODO: This state data copying process will need to be reviewed when
+        // state (de)hydration is properly implemented; currently this just does
+        // a straight copy which is not optimal
+
+        // TODO: Not everything is being copied at the moment
+
+
+        // Copy over record data
+        const recordData = this.state.recordData;
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const recordDataCopy = deepCopy(recordData);
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
+
+        // Copy over strata
+        const strata = this.state.annealConfig.strata;
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const strataCopy = deepCopy(strata).map((stratum) => {
+            // Remove naming configuration information from old strata objects
+            const { namingConfig, ...strata } = stratum;
+            return { ...strata } as Stratum;
+        });
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_STRATA, strataCopy);
+
+        // Copy over group nodes
+        //
+        // This is a lot more involved because the old state and module state
+        // use different representations, and names are now stored in a concrete
+        // object rather than generated on-the-fly
+
+        // Walk the tree and decompose data
+        const nameMap = this.nameMap;
+        const newRoots: GroupNodeRoot[] = [];
+        const newNameMap: GroupNodeNameMap = {};
+        const newNodeRecordArrayMap: GroupNodeRecordArrayMap = {};
+
+        const walkAnnealTreeAndTransform = (node: AnnealNode.Node): GroupNode => {
+            const nodeId = node._id;
+            const nameInfo = nameMap.get(node)!;
+
+            switch (node.type) {
+                case "root": {
+                    const newRoot: GroupNodeRoot = {
+                        _id: nodeId,
+                        type: "root",
+                        children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
+                    };
+
+                    // Push root, name
+                    newRoots.push(newRoot);
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+
+                    return newRoot;
+                }
+
+                case "stratum-stratum": {
+                    const newIntStrNode: GroupNodeIntermediateStratum = {
+                        _id: nodeId,
+                        type: "intermediate-stratum",
+                        children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
+                    };
+
+                    // Push name
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+
+                    return newIntStrNode;
+                }
+
+                case "stratum-records": {
+                    const newLeafStrNode: GroupNodeLeafStratum = {
+                        _id: nodeId,
+                        type: "leaf-stratum",
+                    };
+
+                    // Push name, records
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+                    newNodeRecordArrayMap[nodeId] = [...node.recordIds];
+
+                    return newLeafStrNode;
+                }
+            }
+        }
+
+        this.annealNodeRoots.forEach(walkAnnealTreeAndTransform);
+
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_STRUCTURE, { roots: newRoots });
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_NAME_MAP, newNameMap);
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_RECORD_ARRAY_MAP, newNodeRecordArrayMap);
+
+        // Go to results editor
         this.$router.push({
             name: "results-editor",
         });

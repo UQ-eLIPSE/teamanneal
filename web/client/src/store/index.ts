@@ -1,20 +1,29 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { State, Data as IState, RecordData as IState_RecordData, AnnealConfig as IState_AnnealConfig } from "./data/State";
-import { Stratum, Data as IStratum } from "./data/Stratum";
-import { Constraint, Data as IConstraint } from "./data/Constraint";
-import { AnnealRequest, Data as IAnnealRequest } from "./data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "./data/AnnealResponse";
-import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./data/ColumnData";
+import * as _ResultsEditor from "./ResultsEditor";
 
-import { deepMerge } from "./util/Object";
-import { replaceAll } from "./util/String";
+import { State, Data as IState } from "../data/State";
+import { Stratum, Data as IStratum } from "../data/Stratum";
+import { Constraint, Data as IConstraint } from "../data/Constraint";
+import { RecordData as IState_RecordData } from "../data/RecordData";
+import { AnnealConfig as IState_AnnealConfig } from "../data/AnnealConfig";
+import { AnnealRequest, Data as IAnnealRequest } from "../data/AnnealRequest";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "../data/AnnealResponse";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
+
+import { deepMerge } from "../util/Object";
+import { replaceAll } from "../util/String";
+
 Vue.use(Vuex);
 
-const state: IState = State.Init();
+enum ModulePrefix {
+    ResultsEditor = "ResultsEditor",
+}
 
-const store = new Vuex.Store({
+// State store initialisation
+const state: IState = State.Init();
+export const store = new Vuex.Store({
     // strict: process.env.NODE_ENV !== "production",
     state,
     mutations: {
@@ -444,4 +453,25 @@ Delete constraints that use this column and try again.`;
     },
 });
 
-export default store;
+// Module definitions
+export const ResultsEditor = {
+    prefix: ModulePrefix.ResultsEditor,
+
+    action: _ResultsEditor.Action,
+    dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
+
+    get state() {
+        // Using `any` type to get around state type which does not recognise
+        // the module
+        return (store.state as any)[ModulePrefix.ResultsEditor] as _ResultsEditor.State;
+    },
+};
+
+// Register modules separately
+//
+// NOTE: Injecting the ResultsEditor with `any` type as the type
+// conflicts with the existing `state` type
+//
+// TODO: Migrate everything over to the modules scheme so that this type
+// mismatch can be resolved
+store.registerModule(ModulePrefix.ResultsEditor, _ResultsEditor.init() as any);
