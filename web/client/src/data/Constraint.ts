@@ -280,7 +280,7 @@ export namespace ConstraintSentence {
     /** Constructs a phrase from the key-values in the `constraint` prop. */
     export function convertConstraintToSentence(constraint: Data, selectedStratumLabel: string) {
         let sentence = "";
-
+        
         sentence += selectedStratumLabel + ' ';
         sentence += getWeightText(constraint);
         sentence += getConstraintConditionFunctionText(constraint);
@@ -312,7 +312,7 @@ export namespace ConstraintSentence {
         return '';
     }
 
-    function getConstraintFilterText(constraint: Data) {
+    export function getConstraintFilterText(constraint: Data) {
         let phrase = constraint.filter.column.label + ' ';
 
         if (showFilterFunction(constraint)) {

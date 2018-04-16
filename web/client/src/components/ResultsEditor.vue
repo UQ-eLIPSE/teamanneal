@@ -11,6 +11,12 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <ResultsEditorSideToolArea class="side-tool-area"></ResultsEditorSideToolArea>
+        <ConstraintOverview class="constraint-overview"
+                            :constraints="constraintsArray"
+                            :constraintSatisfactionMap="annealSatisfactionMap"
+                            @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                            :constraintThresholdMap="constraintThresholdPercMap"
+                            :strata="strata"></ConstraintOverview>
     </div>
 </template>
 
@@ -32,11 +38,13 @@ import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
+import ConstraintOverview from "./ConstraintOverview.vue";
 
 @Component({
     components: {
         SpreadsheetTreeView2,
         ResultsEditorSideToolArea,
+        ConstraintOverview
     },
 })
 export default class ResultsEditor extends Vue {
@@ -45,6 +53,13 @@ export default class ResultsEditor extends Vue {
      * user
      */
     modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
+
+
+    /** 
+     * TODO: Move to state store
+     *  Maps constraint ids to threshold
+     */
+    constraintThresholdPercMap: { [key: string]: number } = {};
 
     get state() {
         return this.$store.state as IState;
@@ -63,6 +78,10 @@ export default class ResultsEditor extends Vue {
             cObj[constraint._id] = constraint;
             return cObj;
         }, {});
+    }
+
+    get constraintsArray() {
+        return this.state.annealConfig.constraints;
     }
 
     get partitionColumn() {
@@ -175,6 +194,10 @@ export default class ResultsEditor extends Vue {
 
                 return mapObj;
             }, {});
+    }
+
+    constraintAcceptabilityChangeHandler(constraint: IConstraint, newValue: number) {
+        Vue.set(this.constraintThresholdPercMap, constraint._id, newValue);
     }
 
     /** A map of nodes or records which are to be styled in the spreadsheet */
@@ -510,6 +533,13 @@ export default class ResultsEditor extends Vue {
         // TODO: This needs some persistence of some sort but this will heavily
         // depend on how we will be managing the data
         this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
+        this.constraintsArray.forEach((constraint) => {
+            if (constraint.type === "limit") {
+                Vue.set(this.constraintThresholdPercMap, constraint._id, 50);
+            } else {
+                Vue.set(this.constraintThresholdPercMap, constraint._id, 100);
+            }
+        });
     }
 }
 </script>
@@ -545,5 +575,9 @@ export default class ResultsEditor extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+.constraint-overview {
+    max-width: 25%;
 }
 </style>
