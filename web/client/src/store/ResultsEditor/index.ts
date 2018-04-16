@@ -1,7 +1,7 @@
 import { Module } from "vuex";
-import { ResultsEditorState, init as initState } from "./ResultsEditorState";
-import { init as initMutations } from "./ResultsEditorMutation";
-import { init as initActions } from "./ResultsEditorAction";
+import { ResultsEditorState, init as initState } from "./state";
+import { init as initMutations } from "./mutation";
+import { init as initActions } from "./action";
 
 export function init(namespaced: boolean = true) {
     const stateModule: Module<ResultsEditorState, ResultsEditorState> = {
@@ -19,5 +19,5 @@ export function init(namespaced: boolean = true) {
     return stateModule;
 }
 
-export { ResultsEditorState as State } from "./ResultsEditorState";
-export { ResultsEditorAction as Action, dispatchFactory } from "./ResultsEditorAction";
+export { ResultsEditorState as State } from "./state";
+export { ResultsEditorAction as Action, dispatchFactory } from "./action";

@@ -20,15 +20,15 @@ export interface RecordData {
     partitionColumn: IColumnData_MinimalDescriptor | undefined,
 }
 
-export function initNew() {
+export function initNew(sourceName: string | undefined = undefined, sourceLength: number = 0, columns: IColumnData[] = [], idColumn: IColumnData_MinimalDescriptor | undefined = undefined, partitionColumn: IColumnData_MinimalDescriptor | undefined = undefined) {
     const obj: RecordData = {
         source: {
-            name: undefined,
-            length: 0,
+            name: sourceName,
+            length: sourceLength,
         },
-        columns: [],
-        idColumn: undefined,
-        partitionColumn: undefined,
+        columns,
+        idColumn,
+        partitionColumn,
     };
 
     return obj;

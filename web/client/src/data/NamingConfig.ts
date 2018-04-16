@@ -18,12 +18,12 @@ export interface NamingConfig {
     },
 }
 
-export function initNew() {
+export function initNew(combinedFormat: string | undefined = undefined, combinedFormatIsUserProvided: boolean = false) {
     const obj: NamingConfig = {
         combined: {
-            format: undefined,
-            userProvided: false,
-        }
+            format: combinedFormat,
+            userProvided: combinedFormatIsUserProvided,
+        },
     };
 
     return obj;

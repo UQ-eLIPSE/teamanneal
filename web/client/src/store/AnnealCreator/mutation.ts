@@ -1,26 +1,23 @@
 import { MutationTree, ActionContext, CommitOptions } from "vuex";
-import { set, del } from "../util/Vue";
+import { set, del } from "../../util/Vue";
 
-import { AnnealCreatorState } from "./AnnealCreatorState";
+import { AnnealCreatorState } from "./state";
 
-import { Data as Constraint } from "../data/Constraint";
-import { DataWithoutNamingConfig as Stratum } from "../data/Stratum";
-import { RecordData, initNew as initRecordData } from "../data/RecordData";
-import { initNew as initStrataConfig } from "../data/StrataConfig";
-import { initNew as initConstraintConfig } from "../data/ConstraintConfig";
-import { GroupNode } from "../data/GroupNode";
-import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../data/GroupNodeNameMap";
-import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { Data as Constraint } from "../../data/Constraint";
+import { Stratum } from "../../data/Stratum";
+import { RecordData, initNew as initRecordData } from "../../data/RecordData";
+import { initNew as initStrataConfig } from "../../data/StrataConfig";
+import { initNew as initConstraintConfig } from "../../data/ConstraintConfig";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../../data/GroupNodeStructure";
+import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { FunctionParam2 } from "../../data/FunctionParam2";
 
-import { RecordElement } from "../../../common/Record";
-import { SidePanelActiveTool } from "../data/SidePanelActiveTool";
+import { RecordElement } from "../../../../common/Record";
+import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
-
-type FunctionParam2<T> =
-    T extends (x: any, y: undefined) => any ? undefined :
-    T extends (x: any, y: infer U) => any ? U : never;
 
 type Context = ActionContext<AnnealCreatorState, AnnealCreatorState>;
 

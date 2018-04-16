@@ -1,7 +1,7 @@
 import * as Record from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
-import { Data as IStratum } from "./Stratum";
+import { Stratum } from "./Stratum";
 import { Data as IColumnData } from "./ColumnData";
 
 import * as ListCounter from "./ListCounter";
@@ -64,7 +64,7 @@ export namespace ResultTree {
     // Global shim node object
     const _GLOBAL_NODE: GlobalShimNode = { _id: "_GLOBAL" };
 
-    export function GenerateNodeNameMap(strata: ReadonlyArray<IStratum>, partitionColumn: IColumnData | undefined, nodes: ReadonlyArray<AnnealNode.NodeRoot>) {
+    export function GenerateNodeNameMap(strata: ReadonlyArray<Stratum>, partitionColumn: IColumnData | undefined, nodes: ReadonlyArray<AnnealNode.NodeRoot>) {
         const nameMap: NodeNameMapNameNotGenerated = new WeakMap();
         const contextMap: NodeNameContextMap = new WeakMap();
 
@@ -104,7 +104,7 @@ export namespace ResultTree {
      * @param nodePath Array of nodes that represents the path from the root node to the current parent node of the supplied child nodes
      * @param childNodes Child nodes which are children of the last node in the node path
      */
-    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, partitionColumn: IColumnData | undefined, nodePath: ReadonlyArray<AnnealNode.Node>, childNodes: ReadonlyArray<AnnealNode.Node>) {
+    function SetNodeNameDescObjectsRecursive(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<Stratum>, partitionColumn: IColumnData | undefined, nodePath: ReadonlyArray<AnnealNode.Node>, childNodes: ReadonlyArray<AnnealNode.Node>) {
         childNodes.forEach((node) => {
             // Go down into each child node and set name description objects
             const deeperNodePath = [...nodePath, node];
@@ -126,7 +126,7 @@ export namespace ResultTree {
      * Function that sets `NodeNameDescriptionNameNotGenerated` name
      * description object for one node
      */
-    function SetNodeNameDescObject(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, partitionColumn: IColumnData | undefined, nodePath: ReadonlyArray<AnnealNode.Node>) {
+    function SetNodeNameDescObject(nameMap: NodeNameMapNameNotGenerated, contextMap: NodeNameContextMap, strata: ReadonlyArray<Stratum>, partitionColumn: IColumnData | undefined, nodePath: ReadonlyArray<AnnealNode.Node>) {
         let stratumNamingContext: string;
         let nodeStratumId: string;
         let nodeStratumLabel: string;
@@ -244,7 +244,7 @@ export namespace ResultTree {
      * @param nodePath Array of nodes that represents the path from the root node to the current node being searched
      * @param childNodes Child nodes which are children of the last node in the node path
      */
-    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, nodePath: ReadonlyArray<AnnealNode.Node>, childNodes: ReadonlyArray<AnnealNode.Node>) {
+    function UpdateNodeNameDescObjectsWithGeneratedNamesRecursive(nameMap: NodeNameMap, contextMap: NodeNameContextMap, strata: ReadonlyArray<Stratum>, nodePath: ReadonlyArray<AnnealNode.Node>, childNodes: ReadonlyArray<AnnealNode.Node>) {
         childNodes.forEach((node) => {
             // Go down into each child node and set name description objects
             const deeperNodePath = [...nodePath, node];
@@ -271,7 +271,7 @@ export namespace ResultTree {
      * @param strata 
      * @param nodePath Array of nodes that represents the path from the root node to the current node having its name description object updated
      */
-    function UpdateNodeNameDescObjectWithGeneratedName(nameMap: NodeNameMap, contextMap: NodeNameContextMap, strata: ReadonlyArray<IStratum>, nodePath: ReadonlyArray<AnnealNode.Node>) {
+    function UpdateNodeNameDescObjectWithGeneratedName(nameMap: NodeNameMap, contextMap: NodeNameContextMap, strata: ReadonlyArray<Stratum>, nodePath: ReadonlyArray<AnnealNode.Node>) {
         // Get the name description object for this node
         const node = nodePath[nodePath.length - 1];
         const nodeNameDescObj = nameMap.get(node);

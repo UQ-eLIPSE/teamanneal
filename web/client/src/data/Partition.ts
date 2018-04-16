@@ -1,7 +1,7 @@
 import { allIndexOf, indexFilter } from "../util/Array";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
-export interface Data {
+export interface Partition {
     /** The actual value used to partition */
     value: number | string | null | undefined,
 
@@ -16,6 +16,17 @@ export interface Data {
      * the server.
      */
     notTruePartition: boolean,
+}
+
+export function initNew(value: number | string | null | undefined = undefined, columns: ReadonlyArray<IColumnData> = [], notTruePartition: boolean = false) {
+    const obj: Partition = {
+        value,
+        columns,
+
+        notTruePartition,
+    };
+
+    return obj;
 }
 
 export namespace Partition {

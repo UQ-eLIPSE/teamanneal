@@ -1,7 +1,7 @@
 import { Module } from "vuex";
-import { AnnealCreatorState, init as initState } from "./AnnealCreatorState";
-import { init as initMutations } from "./AnnealCreatorMutation";
-import { init as initActions } from "./AnnealCreatorAction";
+import { AnnealCreatorState, init as initState } from "./state";
+import { init as initMutations } from "./mutation";
+import { init as initActions } from "./action";
 
 export function init(namespaced: boolean = true) {
     const stateModule: Module<AnnealCreatorState, AnnealCreatorState> = {
@@ -19,5 +19,5 @@ export function init(namespaced: boolean = true) {
     return stateModule;
 }
 
-export { AnnealCreatorState as State } from "./AnnealCreatorState";
-export { AnnealCreatorAction as Action, dispatchFactory } from "./AnnealCreatorAction";
+export { AnnealCreatorState as State } from "./state";
+export { AnnealCreatorAction as Action, dispatchFactory } from "./action";

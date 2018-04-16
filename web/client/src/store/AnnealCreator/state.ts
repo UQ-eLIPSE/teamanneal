@@ -1,6 +1,7 @@
-import { RecordData, initNew as initRecordData } from "../data/RecordData";
-import { StrataConfig, initNew as initStrataConfig } from "../data/StrataConfig";
-import { ConstraintConfig, initNew as initConstraintConfig } from "../data/ConstraintConfig";
+import { RecordData, initNew as initRecordData } from "../../data/RecordData";
+import { StrataConfig, initNew as initStrataConfig } from "../../data/StrataConfig";
+import { ConstraintConfig, initNew as initConstraintConfig } from "../../data/ConstraintConfig";
+import { NamingConfig, initNew as initNamingConfig } from "../../data/NamingConfig";
 
 export interface AnnealCreatorState {
     /** Data for each leaf node in the group tree (individual records) */
@@ -11,6 +12,9 @@ export interface AnnealCreatorState {
 
     /** Configuration of strata  */
     strataConfig: StrataConfig,
+
+    /** Naming configuration for nodes */
+    nodeNamingConfig: NamingConfig,
 }
 
 export function init() {
@@ -20,6 +24,8 @@ export function init() {
         constraintConfig: initConstraintConfig(),
 
         strataConfig: initStrataConfig(),
+
+        nodeNamingConfig: initNamingConfig(),
     };
 
     return state;

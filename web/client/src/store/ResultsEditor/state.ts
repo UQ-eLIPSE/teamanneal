@@ -1,10 +1,10 @@
-import { RecordData, initNew as initRecordData } from "../data/RecordData";
-import { StrataConfig, initNew as initStrataConfig } from "../data/StrataConfig";
-import { ConstraintConfig, initNew as initConstraintConfig } from "../data/ConstraintConfig";
-import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../data/GroupNodeNameMap";
-import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
-import { SidePanelActiveTool } from "../data/SidePanelActiveTool";
+import { RecordData, initNew as initRecordData } from "../../data/RecordData";
+import { StrataConfig, initNew as initStrataConfig } from "../../data/StrataConfig";
+import { ConstraintConfig, initNew as initConstraintConfig } from "../../data/ConstraintConfig";
+import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../../data/GroupNodeStructure";
+import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 export interface ResultsEditorState {
     /** Data for each leaf node in the group tree (individual records) */

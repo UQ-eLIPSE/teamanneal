@@ -4,9 +4,9 @@ export interface ConstraintConfig {
     constraints: Constraint[],
 }
 
-export function initNew() {
+export function initNew(constraints: Constraint[] = []) {
     const obj: ConstraintConfig = {
-        constraints: [],
+        constraints,
     };
 
     return obj;

@@ -4,9 +4,9 @@ export interface GroupNodeStructure {
     roots: GroupNodeRoot[],
 }
 
-export function initNew() {
+export function initNew(roots: GroupNodeRoot[] = []) {
     const obj: GroupNodeStructure = {
-        roots: [],
+        roots,
     };
 
     return obj;

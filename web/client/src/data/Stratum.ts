@@ -1,167 +1,23 @@
-import * as GroupDistribution from "../../../common/GroupDistribution";
+import { StratumSize, initNew as initStratumSize } from "./StratumSize";
 
 import * as UUID from "../util/UUID";
-import { reverse } from "../util/Array";
 
-import * as ListCounter from "./ListCounter";
-
-export interface DataWithoutNamingConfig {
+export interface Stratum {
     _id: string,
-
     label: string,
-    size: Size,
+    size: StratumSize,
 }
 
-export interface Data extends DataWithoutNamingConfig {
-    namingConfig: {
-        /** Definition of the list used for naming nodes in stratum */
-        counter: ListCounter.ListCounterType | string[],
+export function initNew(label: string = "", size: StratumSize = initStratumSize()) {
+    const obj: Stratum = {
+        _id: UUID.generate(),
+        label,
+        size,
+    };
 
-        /** 
-         * The context under which names are generated
-         * 
-         * For example:
-         * - if set to the global context, names are unique globally
-         * - if set to some the parent stratum, names are unique only within the 
-         *   parent stratum
-         * 
-         * Values are either:
-         * - stratum object ID (to identify a stratum)
-         * - "_PARTITION" literal
-         * - "_GLOBAL" literal
-         */
-        context: string | "_PARTITION" | "_GLOBAL",
-    },
+    return obj;
 }
 
-/** The configured desired size for groups at this stratum level */
-export interface Size {
-    min: number,
-    ideal: number,
-    max: number,
-}
-
-export namespace Stratum {
-    export function Init(
-        label: string,
-        size: Size,
-        namingContext: "_GLOBAL" | "_PARTITION" | string,
-        namingCounter: ListCounter.ListCounterType | string[] = "decimal",
-    ) {
-        const data: Data = {
-            _id: UUID.generate(),
-
-            label,
-            size,
-
-            namingConfig: {
-                counter: namingCounter,
-                context: namingContext,
-            },
-        };
-
-        return data;
-    }
-
-    export function Equals(a: Data, b: Data) {
-        return a._id === b._id;
-    }
-
-    export function IsSizeMinGreaterThanIdeal(stratum: Data) {
-        return stratum.size.min > stratum.size.ideal;
-    }
-
-    export function IsSizeIdealGreaterThanMax(stratum: Data) {
-        return stratum.size.ideal > stratum.size.max;
-    }
-
-    export function IsSizeMinLessThanOne(stratum: Data) {
-        return stratum.size.min < 1;
-    }
-
-    export function IsSizeMinNotUint32(stratum: Data) {
-        const val = stratum.size.min;
-        return val >>> 0 !== val;
-    }
-
-    export function IsSizeIdealNotUint32(stratum: Data) {
-        const val = stratum.size.ideal;
-        return val >>> 0 !== val;
-    }
-
-    export function IsSizeMaxNotUint32(stratum: Data) {
-        const val = stratum.size.max;
-        return val >>> 0 !== val;
-    }
-
-    export function IsSizeMinEqualToMax(stratum: Data) {
-        return stratum.size.min === stratum.size.max;
-    }
-
-    /**
-     * Generates array where each element is the group size distribution of each 
-     * stratum as provided to the function
-     */
-    export function GenerateStrataGroupSizes(strata: ReadonlyArray<Data>, numMembersInPartition: number) {
-        // Iterate over strata and build up distribution
-        const strataGroupSizeDistributions: number[][] = [];
-
-        // Initial number of nodes = number of records in partition at first
-        let numberOfStratumNodes = numMembersInPartition;
-
-        // We get the strata in reverse order because the internal
-        // strata object is currently ordered:
-        //      [highest, ..., lowest]
-        // rather than:
-        //      [lowest, ..., highest]
-        // which is the order we build up groups from.
-        reverse(strata).forEach((stratum) => {
-            const { min, ideal, max } = stratum.size;
-
-            const groupSizeArray = GroupDistribution.generateGroupSizes(numberOfStratumNodes, min, ideal, max, false);
-
-            strataGroupSizeDistributions.unshift(groupSizeArray);
-
-            // Next stratum up contains the nodes as described by the group size
-            // array above
-            numberOfStratumNodes = groupSizeArray.length;
-        });
-
-        return strataGroupSizeDistributions;
-    }
-
-    export function GenerateRandomExampleName(stratum: Data) {
-        const counter = stratum.namingConfig.counter;
-
-        // Generate a random value for an example name
-        if (Array.isArray(counter)) {
-            return GenerateRandomExampleNameStringArray(counter);
-        } else {
-            const listCounters = ListCounter.SupportedListCounters;
-            const counterDesc = listCounters.find(x => x.type === counter);
-
-            if (counterDesc === undefined) {
-                throw new Error(`Counter "${counter}" not supported`);
-            }
-
-            // Generate sequence of 20 elements, and pick a random one from that
-            const randomIndex = ((Math.random() * 20) >>> 0);
-            return counterDesc.generator(randomIndex, 20);
-        }
-    }
-
-    export function GenerateRandomExampleNameStringArray(names: ReadonlyArray<string>) {
-        const counterArray = names
-            .map(name => name.trim())
-            .filter(name => name.length !== 0);
-
-        // Return empty string if there are no suitable name values to use
-        if (counterArray.length === 0) {
-            return "";
-        }
-
-        const randomIndex = (Math.random() * counterArray.length) >>> 0;
-
-        return counterArray[randomIndex];
-    }
+export function equals(a: Stratum, b: Stratum) {
+    return a._id === b._id;
 }
