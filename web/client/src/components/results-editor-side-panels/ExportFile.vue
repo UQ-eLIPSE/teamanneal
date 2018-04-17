@@ -28,6 +28,8 @@ export default class ExportFile extends Vue {
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/results-editor-side-panel.css"></style>
+
 <style scoped>
 
 </style>

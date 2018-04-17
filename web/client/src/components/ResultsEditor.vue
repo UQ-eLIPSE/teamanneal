@@ -7,40 +7,95 @@
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
             <SpreadsheetTreeView2 class="spreadsheet"
-                                  :annealNodeRoots="modifiedAnnealNodeRoots"
+                                  :nodeRoots="nodeRoots"
                                   :headerRow="headerRow"
                                   :columnsDisplayIndices="columnsDisplayIndices"
                                   :recordRows="recordRows"
                                   :nodeNameMap="nameMap"
+                                  :nodeRecordMap="nodeRecordMap"
                                   :nodeStyles="nodeStyles"
                                   :idColumnIndex="idColumnIndex"
                                   :hiddenNodes="hiddenNodes"
                                   :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
-        <ResultsEditorSideToolArea class="side-tool-area"></ResultsEditorSideToolArea>
+        <ResultsEditorSideToolArea class="side-tool-area"
+                                   :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
 </template>
 
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component } from "av-ts";
 
-import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse";
+import * as Store from "../store";
 
+import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
-import { ResultTree } from "../data/ResultTree";
-import { AxiosResponse } from "../data/AnnealResponse";
-import { Data as IState } from "../data/State";
-import { Data as IConstraint } from "../data/Constraint";
+import { MenuItem } from "../data/ResultsEditorMenuBar";
+import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
+import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
+
+import { set } from "../util/Vue";
 
 import { RecordElement } from "../../../common/Record";
-import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
+
+import ImportFile from "./results-editor-side-panels/ImportFile.vue";
+import ExportFile from "./results-editor-side-panels/ExportFile.vue";
+import Move from "./results-editor-side-panels/Move.vue";
+import Swap from "./results-editor-side-panels/Swap.vue";
+import Print from "./results-editor-side-panels/Print.vue";
+import Help from "./results-editor-side-panels/Help.vue";
+
+const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
+    {
+        name: "import",
+        label: "Import",
+        region: "start",
+        component: ImportFile,
+    },
+    {
+        name: "export",
+        label: "Export",
+        region: "start",
+        component: ExportFile,
+    },
+    {
+        name: "print",
+        label: "Print",
+        region: "start",
+        component: Print,
+    },
+    {
+        name: "move",
+        label: "Move a person",
+        component: Move,
+    },
+    {
+        name: "swap",
+        label: "Swap people",
+        component: Swap,
+    },
+    {
+        name: "add",
+        label: "Add a person or group",
+    },
+    {
+        name: "remove",
+        label: "Remove a person or group",
+    },
+    {
+        name: "help",
+        label: "Help",
+        region: "end",
+        component: Help,
+    },
+];
 
 @Component({
     components: {
@@ -50,12 +105,6 @@ import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilt
     },
 })
 export default class ResultsEditor extends Vue {
-    /**
-     * Holds a new deep copy of the annealed nodes that may be modified by the 
-     * user
-     */
-    modifiedAnnealNodeRoots: AnnealNode.NodeRoot[] | undefined = undefined;
-
     // Private
     /** Stores the indices of the columns to be displayed */
     p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
@@ -64,27 +113,33 @@ export default class ResultsEditor extends Vue {
     /** Stores `node` ids of nodes which were collapsed (hidden).   */
     hiddenNodes: { [key: string]: true } = {};
 
+    /** New reference to module state */
     get state() {
-        return this.$store.state as IState;
+        return Store.ResultsEditor.state;
+    }
+
+    get recordData() {
+        return this.state.recordData;
     }
 
     get columns() {
-        return this.state.recordData.columns;
+        return this.recordData.columns;
     }
 
     get strata() {
-        return this.state.annealConfig.strata;
+        return this.state.strataConfig.strata;
     }
 
-    get constraints() {
-        return this.state.annealConfig.constraints.reduce<{ [constraintId: string]: IConstraint | undefined }>((cObj, constraint) => {
-            cObj[constraint._id] = constraint;
-            return cObj;
-        }, {});
+    get nodeRoots() {
+        return this.state.groupNode.structure.roots;
+    }
+
+    get nodeRecordMap() {
+        return this.state.groupNode.nodeRecordArrayMap;
     }
 
     get partitionColumn() {
-        const partitionColumnDesc = this.state.recordData.partitionColumn;
+        const partitionColumnDesc = this.recordData.partitionColumn;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -102,11 +157,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get nameMap() {
-        if (this.modifiedAnnealNodeRoots === undefined) {
-            return undefined;
-        }
-
-        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.modifiedAnnealNodeRoots);
+        return this.state.groupNode.nameMap;
     }
 
     get idColumn() {
@@ -132,67 +183,49 @@ export default class ResultsEditor extends Vue {
         return idColumnIndex;
     }
 
-    get annealResults() {
-        const responseContent = this.state.annealResponse!.content as AxiosResponse;
-        const responseData = responseContent.data as ToClientAnnealResponse.Root;
+    /** A map of nodes or records which are to be styled in the spreadsheet */
+    get nodeStyles() {
+        // When we have an active side panel tool open
+        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
 
-        // We're working on the presumption that we definitely have results
-        return responseData.results!;
-    }
+        if (activeSidePanelTool === undefined) {
+            return;
+        }
 
-    get annealSatisfactionMap() {
-        return this.annealResults
-            .map(res => res.result!.satisfaction)
-            .reduce((carry, sMap) => Object.assign(carry, sMap), {});
-    }
+        // TODO: Proper UI design for this feature
+        const nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
 
-    get nodeToOverallSatisfactionMap() {
-        const asMap = this.annealSatisfactionMap;
+        switch (activeSidePanelTool.name) {
+            case "move": {
+                const moveToolData: MoveSidePanelToolData = activeSidePanelTool.data;
 
-        return Object.keys(asMap)
-            .reduce<{ [nodeId: string]: number | undefined }>((mapObj, nodeId) => {
-                // Satisfaction of constraints for this node
-                const nodeSatisfactionObject = asMap[nodeId];
-
-                let constraintIds = Object.keys(nodeSatisfactionObject);
-
-                // // If there is a selected constraint, then only generate the 
-                // // satisfaction map with that constraint
-                // if (this.selectedConstraint !== undefined) {
-                //     const selectedConstraintId = this.selectedConstraint._id;
-                //     constraintIds = constraintIds.filter(constraintId => selectedConstraintId === constraintId);
-                // }
-
-                // If there are no constraints to apply, then there is nothing 
-                // to add to the object
-                if (constraintIds.length === 0) {
-                    return mapObj;
+                if (moveToolData.sourcePerson !== undefined) {
+                    nodeStyles.set(moveToolData.sourcePerson.id, { color: "#fff", backgroundColor: "#49075e" });
                 }
 
-                // Do a weighted satisfaction sum scaled to [0,1]
-                const satisfaction = constraintIds.reduce<[number, number]>((satTuple, constraintId) => {
-                    const constraint = this.constraints[constraintId];
+                if (moveToolData.targetGroup !== undefined) {
+                    nodeStyles.set(moveToolData.targetGroup, { color: "#fff", backgroundColor: "#000" });
+                }
 
-                    if (constraint === undefined) {
-                        throw new Error("Constraint not found");
-                    }
+                return nodeStyles;
+            }
 
-                    const constraintWeight = constraint.weight;
+            case "swap": {
+                const swapToolData: SwapSidePanelToolData = activeSidePanelTool.data;
 
-                    // 0th index = sum of (weight * raw satisfaction)
-                    satTuple[0] += constraintWeight * (nodeSatisfactionObject[constraintId] || 0);
+                if (swapToolData.personA !== undefined) {
+                    nodeStyles.set(swapToolData.personA.id, { color: "#fff", backgroundColor: "#49075e" });
+                }
 
-                    // 1th index = sum of weights
-                    satTuple[1] += constraintWeight;
+                if (swapToolData.personB !== undefined) {
+                    nodeStyles.set(swapToolData.personB.id, { color: "#fff", backgroundColor: "#49075e" });
+                }
 
-                    return satTuple;
-                }, [0, 0]);
+                return nodeStyles;
+            }
+        }
 
-                // Assign overall satisfaction to node ID
-                mapObj[nodeId] = satisfaction[0] / satisfaction[1];
-
-                return mapObj;
-            }, {});
+        return nodeStyles;
     }
 
     get columnsDisplayIndices() {
@@ -209,12 +242,12 @@ export default class ResultsEditor extends Vue {
     }
 
     /** Checks if `node` id exists as a key in the `hiddenNodes` object. */
-    isNodeVisible(node: AnnealNode.Node) {
+    isNodeVisible(node: GroupNode) {
         return this.hiddenNodes[node._id] === undefined;
     }
 
     /** Hides the selected `node` (Adds it to the `hiddenNodes` object). Passed down as a `prop` to child components. */
-    onToggleNodeVisibility(node: AnnealNode.Node) {
+    onToggleNodeVisibility(node: GroupNode) {
         if (this.isNodeVisible(node)) {
             Vue.set(this.hiddenNodes, node._id, true);
         } else {
@@ -222,339 +255,128 @@ export default class ResultsEditor extends Vue {
         }
     }
 
-    /** A map of nodes or records which are to be styled in the spreadsheet */
-    get nodeStyles() {
-        // // We currently only style things being edited
-        // const op = this.pendingEditOperation;
-
-        // if (op === undefined) {
-        //     return undefined;
-        // }
-
-        // // TODO: Proper UI design for this feature
-        // const nodeStyles: Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
-
-        // switch (op.type) {
-        //     case "move-record": {
-        //         if (op.from !== undefined) {
-        //             nodeStyles.set(op.from.recordId, { color: "#fff", backgroundColor: "#49075e" });
-        //         }
-
-        //         if (op.to !== undefined) {
-        //             nodeStyles.set(op.to.path[op.to.path.length - 1], { color: "#fff", backgroundColor: "#000" });
-        //         }
-
-        //         return nodeStyles;
-        //     }
-
-        //     case "swap-records": {
-        //         if (op.recordA !== undefined) {
-        //             nodeStyles.set(op.recordA.recordId, { color: "#fff", backgroundColor: "#49075e" });
-        //         }
-
-        //         if (op.recordB !== undefined) {
-        //             nodeStyles.set(op.recordB.recordId, { color: "#fff", backgroundColor: "#49075e" });
-        //         }
-
-        //         return nodeStyles;
-        //     }
-        // }
-        return new Map();
+    get menuBarItems() {
+        return MENU_BAR_ITEMS;
     }
 
-    // onConstraintSelected(constraint: IConstraint) {
-    //     // Set the selected constraint when the previous value is undefined
-    //     if (this.selectedConstraint === undefined) {
-    //         this.selectedConstraint = constraint;
-    //         return;
-    //     }
+    onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
+        // When we have an active side panel tool open
+        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
 
-    //     // Unset selected constraint if constraint selected again
-    //     if (this.selectedConstraint._id === constraint._id) {
-    //         this.selectedConstraint = undefined;
-    //         return;
-    //     }
+        if (activeSidePanelTool === undefined) {
+            return;
+        }
 
-    //     // Otherwise, overwrite the value of the selected constraint
-    //     this.selectedConstraint = constraint;
-    // }
+        switch (activeSidePanelTool.name) {
+            case "move": {
+                const moveToolData: MoveSidePanelToolData = activeSidePanelTool.data;
+                const cursor = moveToolData.cursor;
 
-    onItemClickHandler(_data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
-        // // Only continue if we're in an editing operation
-        // if (this.pendingEditOperation === undefined) {
-        //     return;
-        // }
+                switch (cursor) {
+                    case "sourcePerson": {
+                        // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
+                        const targetItem: any = data[data.length - 1];
 
-        // // Each operation type has different behaviours
-        // const op = this.pendingEditOperation;
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
+                            return;
+                        }
 
-        // switch (op.type) {
-        //     case "move-record": {
-        //         switch (op.cursor) {
-        //             case "from": {
-        //                 // TODO: Fix type narrowing
-        //                 const targetItem: any = data[data.length - 1];
+                        // TODO: Encode richer information about the record, and
+                        // not just the ID?
+                        set(moveToolData, "sourcePerson", { node: targetItemParent.node, id: targetItem.recordId });
 
-        //                 // Can only move records
-        //                 if (targetItem.recordId === undefined) {
-        //                     return;
-        //                 }
+                        return;
+                    }
 
-        //                 // Split array, with the assumption that record only
-        //                 // appears at end once
-        //                 const recordId: RecordElement = targetItem.recordId;
-        //                 const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+                    case "targetGroup": {
+                        // Get the lowest stratum selected
+                        const targetNodeReversedIndex = [...data].reverse().findIndex((item: any) => item.node !== undefined);
+                        const arrayCopyLength = (targetNodeReversedIndex === -1) ? data.length : data.length - targetNodeReversedIndex;
+                        // TODO: Fix type narrowing
+                        const targetPath = (data.slice(0, arrayCopyLength) as { node: GroupNode }[]).map(item => item.node);
+                        const targetNode = targetPath[targetPath.length - 1];
 
-        //                 // Set operation path and cursor
-        //                 op.from = {
-        //                     path: targetPath,
-        //                     recordId,
-        //                 };
+                        // Can only move records to other leaf stratum nodes
+                        if (targetNode.type !== "leaf-stratum") {
+                            return;
+                        }
 
-        //                 // Move cursor to "to" if `to` not filled in
-        //                 if (op.to === undefined) {
-        //                     op.cursor = "to";
-        //                 } else {
-        //                     op.cursor = undefined;
-        //                 }
+                        // TODO: Encode richer information about the node like
+                        // the path?
+                        set(moveToolData, "targetGroup", targetNode);
 
-        //                 return;
-        //             }
+                        return;
+                    }
+                }
 
-        //             case "to": {
-        //                 // Get the lowest stratum selected
-        //                 const targetNodeReversedIndex = [...data].reverse().findIndex((item: any) => item.node !== undefined);
-        //                 const arrayCopyLength = (targetNodeReversedIndex === -1) ? data.length : data.length - targetNodeReversedIndex;
-        //                 // TODO: Fix type narrowing
-        //                 const targetPath = (data.slice(0, arrayCopyLength) as { node: AnnealNode.Node }[]).map(item => item.node);
-        //                 const targetNode = targetPath[targetPath.length - 1];
+                return;
+            }
 
-        //                 // Can only move records to other "stratum-records"
-        //                 if (targetNode.type !== "stratum-records") {
-        //                     return;
-        //                 }
+            case "swap": {
+                const swapToolData: SwapSidePanelToolData = activeSidePanelTool.data;
+                const cursor = swapToolData.cursor;
 
-        //                 // Set operation path and cursor
-        //                 op.to = {
-        //                     path: targetPath,
-        //                 };
+                switch (cursor) {
+                    case "personA": {
+                        // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
+                        const targetItem: any = data[data.length - 1];
 
-        //                 op.cursor = undefined;
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
+                            return;
+                        }
 
-        //                 return;
-        //             }
-        //         }
-        //         return;
-        //     }
+                        // If person B defined, do not set person A equal to B
+                        if (swapToolData.personB !== undefined &&
+                            targetItem.recordId === swapToolData.personB.id) {
+                            // TODO: Proper error handling
+                            throw new Error("Person selected must be different from that already selected as the other target for a swap operation");
+                        }
 
-        //     case "swap-records": {
-        //         switch (op.cursor) {
-        //             case "recordA": {
-        //                 // TODO: Fix type narrowing
-        //                 const targetItem: any = data[data.length - 1];
+                        // TODO: Encode richer information about the record, and
+                        // not just the ID?
+                        set(swapToolData, "personA", { node: targetItemParent.node, id: targetItem.recordId });
 
-        //                 // Can only move records
-        //                 if (targetItem.recordId === undefined) {
-        //                     return;
-        //                 }
+                        return;
+                    }
 
-        //                 // Split array, with the assumption that record only
-        //                 // appears at end once
-        //                 const recordId: RecordElement = targetItem.recordId;
-        //                 const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
+                    case "personB": {
+                        // TODO: Fix type narrowing
+                        const targetItemParent: any = data[data.length - 2];
+                        const targetItem: any = data[data.length - 1];
 
-        //                 // Set operation path and cursor
-        //                 op.recordA = {
-        //                     path: targetPath,
-        //                     recordId,
-        //                 };
+                        // Can only move records with valid parent
+                        if (targetItem.recordId === undefined ||
+                            targetItemParent.node === undefined ||
+                            targetItemParent.node.type !== "leaf-stratum") {
+                            return;
+                        }
 
-        //                 // Move cursor to "recordB" if `recordB` not filled in
-        //                 if (op.recordB === undefined) {
-        //                     op.cursor = "recordB";
-        //                 } else {
-        //                     op.cursor = undefined;
-        //                 }
+                        // If person A defined, do not set person B equal to A
+                        if (swapToolData.personA !== undefined &&
+                            targetItem.recordId === swapToolData.personA.id) {
+                            // TODO: Proper error handling
+                            throw new Error("Person selected must be different from that already selected as the other target for a swap operation");
+                        }
 
-        //                 return;
-        //             }
+                        // TODO: Encode richer information about the record, and
+                        // not just the ID?
+                        set(swapToolData, "personB", { node: targetItemParent.node, id: targetItem.recordId });
 
-        //             case "recordB": {
-        //                 // TODO: Fix type narrowing
-        //                 const targetItem: any = data[data.length - 1];
+                        return;
+                    }
+                }
 
-        //                 // Can only move records
-        //                 if (targetItem.recordId === undefined) {
-        //                     return;
-        //                 }
-
-        //                 // Split array, with the assumption that record only
-        //                 // appears at end once
-        //                 const recordId: RecordElement = targetItem.recordId;
-        //                 const targetPath = (data.slice(0, -1) as { node: AnnealNode.Node }[]).map(item => item.node);
-
-        //                 // Set operation path and cursor
-        //                 op.recordB = {
-        //                     path: targetPath,
-        //                     recordId,
-        //                 };
-
-        //                 op.cursor = undefined;
-
-        //                 return;
-        //             }
-        //         }
-        //         return;
-        //     }
-        // }
-    }
-
-    // TODO: Correct `keyof` type for the operation type parameter
-    onSelectEditOperation(_operationType: string) {
-        // switch (operationType) {
-        //     case "move-record": {
-        //         this.pendingEditOperation = {
-        //             type: "move-record",
-        //             cursor: "from",
-        //             from: undefined,
-        //             to: undefined,
-        //         };
-
-        //         return;
-        //     }
-
-        //     case "swap-records": {
-        //         this.pendingEditOperation = {
-        //             type: "swap-records",
-        //             cursor: "recordA",
-        //             recordA: undefined,
-        //             recordB: undefined,
-        //         };
-
-        //         break;
-        //     }
-        // }
-    }
-
-    // onCancelEditOperation() {
-    //     this.pendingEditOperation = undefined;
-    // }
-
-    onCommitEditOperation() {
-        // // Perform the edit operation
-        // const op = this.pendingEditOperation;
-
-        // if (op === undefined) {
-        //     return;
-        // }
-
-        // switch (op.type) {
-        //     case "move-record": {
-        //         // Invalid state for commit
-        //         if (op.from === undefined || op.to === undefined) {
-        //             throw new Error("Not enough information provided for move operation");
-        //         }
-
-        //         const from = op.from;
-        //         const fromPath = from.path;
-        //         const fromNode = fromPath[fromPath.length - 1];
-
-        //         const movedRecordId = from.recordId;
-
-        //         if (fromNode.type !== "stratum-records") {
-        //             throw new Error("'From node' is not a record carrying stratum");
-        //         }
-
-        //         const to = op.to;
-        //         const toPath = to.path;
-        //         const toNode = toPath[toPath.length - 1];
-
-        //         if (toNode.type !== "stratum-records") {
-        //             throw new Error("'To node' is not a record carrying stratum");
-        //         }
-
-        //         // TODO: Fix type `any`
-        //         // This is due to nodes being typed as being purely read-only
-        //         // for safety, but this prevents us from being able to modify 
-        //         // the node information as required here, unless we do a full
-        //         // recreation of the tree
-        //         (fromNode as any).recordIds = fromNode.recordIds.filter(x => x !== movedRecordId);
-        //         (toNode as any).recordIds = [...toNode.recordIds, movedRecordId];
-
-        //         break;
-        //     }
-
-        //     case "swap-records": {
-        //         // Invalid state for commit
-        //         if (op.recordA === undefined || op.recordB === undefined) {
-        //             throw new Error("Not enough information provided for swap operation");
-        //         }
-
-        //         const { recordA, recordB } = op;
-
-        //         const recordAPath = recordA.path;
-        //         const recordANode = recordAPath[recordAPath.length - 1];
-        //         const recordAId = recordA.recordId;
-
-        //         if (recordANode.type !== "stratum-records") {
-        //             throw new Error("'Record A node' is not a record carrying stratum");
-        //         }
-
-        //         const recordAIndex = recordANode.recordIds.indexOf(recordAId);
-
-        //         if (recordAIndex === -1) {
-        //             throw new Error("'Record A node' not found");
-        //         }
-
-        //         const recordBPath = recordB.path;
-        //         const recordBNode = recordBPath[recordAPath.length - 1];
-        //         const recordBId = recordB.recordId;
-
-        //         if (recordBNode.type !== "stratum-records") {
-        //             throw new Error("'Record B node' is not a record carrying stratum");
-        //         }
-
-        //         const recordBIndex = recordBNode.recordIds.indexOf(recordBId);
-
-        //         if (recordBIndex === -1) {
-        //             throw new Error("'Record B node' not found");
-        //         }
-
-        //         // TODO: Fix type `any`
-        //         // This is due to nodes being typed as being purely read-only
-        //         // for safety, but this prevents us from being able to modify 
-        //         // the node information as required here, unless we do a full
-        //         // recreation of the tree
-        //         (recordANode as any).recordIds[recordAIndex] = recordBId;
-        //         (recordBNode as any).recordIds[recordBIndex] = recordAId;
-
-        //         break;
-        //     }
-        // }
-
-        // // Clear the pending edit operation now that we're done
-        // this.pendingEditOperation = undefined;
-    }
-
-    onEditOperationCursorChange(_cursor: string | undefined) {
-        // if (this.pendingEditOperation === undefined) {
-        //     return;
-        // }
-
-        // // TODO: Fix type narrowing
-        // this.pendingEditOperation.cursor = cursor as any;
-    }
-
-    @Lifecycle created() {
-        // Copy out the data from the state so that modifications are separate 
-        // from the anneal result which is consistent with constraints
-        //
-        // This is NOT persistent - if you leave this component, the changes you
-        // made will disappear
-        //
-        // TODO: This needs some persistence of some sort but this will heavily
-        // depend on how we will be managing the data
-        this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
+                return;
+            }
+        }
     }
 }
 </script>

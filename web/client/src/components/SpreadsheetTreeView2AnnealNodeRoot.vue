@@ -23,6 +23,7 @@
                                                    :totalNumberOfColumns="totalNumberOfColumns"
                                                    :recordLookupMap="recordLookupMap"
                                                    :nodeNameMap="nodeNameMap"
+                                                   :nodeRecordMap="nodeRecordMap"
                                                    :constraintSatisfactionMap="constraintSatisfactionMap"
                                                    :nodeStyles="nodeStyles"
                                                    :onItemClick="onItemClickHandler"
@@ -36,10 +37,12 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
-import { NodeNameMapNameGenerated } from "../data/ResultTree";
+import { GroupNode } from "../data/GroupNode";
+import { GroupNodeRoot } from "../data/GroupNodeRoot";
+import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
 
@@ -50,18 +53,19 @@ import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealN
 })
 export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     // Props
-    @Prop node = p<AnnealNode.NodeRoot>({ required: true, });
+    @Prop node = p<GroupNodeRoot>({ required: true, });
     @Prop depth = p({ type: Number, required: false, default: 1, });
     @Prop totalNumberOfColumns = p({ type: Number, required: true, });
     @Prop recordLookupMap = p<Map<RecordElement, Record>>({ required: true, });
-    @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
-    @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
+    @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
+    @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
+    @Prop nodeStyles = p<Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
     @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
     /** Function passed down by parent to toggle a node's visibility */
-    @Prop onToggleNodeVisibility = p<(node: AnnealNode.Node) => void>({ required: true});
+    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true});
 
 
     /** Handles click on the heading rendered in this component */
@@ -71,7 +75,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     }
 
     /** Handles item clicks that were delivered from children component */
-    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+    onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
@@ -85,13 +89,13 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
             return this.node._id;
         }
 
-        const name = this.nodeNameMap.get(this.node);
+        const name = this.nodeNameMap[this.node._id];
 
         if (name === undefined) {
             return this.node._id;
         }
 
-        return `${name.stratumLabel} ${name.nodeGeneratedName}`;
+        return name;
     }
 
     get innerNodes() {

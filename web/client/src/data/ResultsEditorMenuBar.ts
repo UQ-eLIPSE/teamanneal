@@ -1,4 +1,8 @@
 export interface MenuItem {
+    /** Unique name for each item */
+    name: string,
+
+    /** Label attached to menu item entry */
     label: string,
 
     /** 

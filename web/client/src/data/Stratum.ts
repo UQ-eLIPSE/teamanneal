@@ -5,12 +5,14 @@ import { reverse } from "../util/Array";
 
 import * as ListCounter from "./ListCounter";
 
-export interface Data {
+export interface DataWithoutNamingConfig {
     _id: string,
 
     label: string,
     size: Size,
+}
 
+export interface Data extends DataWithoutNamingConfig {
     namingConfig: {
         /** Definition of the list used for naming nodes in stratum */
         counter: ListCounter.ListCounterType | string[],
@@ -32,6 +34,7 @@ export interface Data {
     },
 }
 
+/** The configured desired size for groups at this stratum level */
 export interface Size {
     min: number,
     ideal: number,

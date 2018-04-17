@@ -58,7 +58,7 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { parseFile } from "../../data/CSV";
+import { parseFile } from "../../util/CSV";
 import { fillGaps, transpose } from "../../util/Array";
 
 import { ColumnData } from "../../data/ColumnData";
