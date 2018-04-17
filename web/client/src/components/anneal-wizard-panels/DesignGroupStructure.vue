@@ -44,11 +44,11 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { State } from "../../data/State";
-
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+
+import { AnnealCreator as S } from "../../store";
 
 import StrataStructureEditor from "../StrataStructureEditor.vue";
 
@@ -63,7 +63,7 @@ export default class DesignGroupStructure extends Mixin(AnnealProcessWizardPanel
     readonly thisWizardStep = AnnealProcessWizardEntries.designGroupStructure;
 
     get isStrataConfigNamesValid() {
-        return State.IsStrataConfigNamesValid(this.state);
+        return S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID);
     }
 }
 </script>

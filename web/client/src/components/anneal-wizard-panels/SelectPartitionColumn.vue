@@ -129,6 +129,8 @@ import { Component, Mixin } from "av-ts";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { AnnealCreator as S } from "../../store";
+
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
 @Component
@@ -144,14 +146,15 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 
     async skipPartitioning() {
         // Delete partition column
-        await this.$store.dispatch("deletePartitionColumn");
+        await S.dispatch(S.action.CLEAR_RECORD_PARTITION_COLUMN, undefined);
 
         this.emitWizardNavNext();
     }
 
     get possiblePartitionColumns() {
-        const columns = this.state.recordData.columns;
-        const recordDataRawLength = this.state.recordData.source.length;
+        const recordData = S.state.recordData;
+        const columns = recordData.columns;
+        const recordDataRawLength = recordData.source.length;
 
         // No data to even process
         if (columns.length === 0) { return []; }
@@ -174,7 +177,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
     }
 
     get partitionColumn(): IColumnData_MinimalDescriptor | undefined {
-        const partitionColumn = this.state.recordData.partitionColumn;
+        const partitionColumn = S.state.recordData.partitionColumn;
 
         if (partitionColumn === undefined) {
             return undefined;
@@ -185,9 +188,9 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 
     set partitionColumn(val: IColumnData_MinimalDescriptor | undefined) {
         if (val === undefined) {
-            this.$store.dispatch("deletePartitionColumn");
+            S.dispatch(S.action.CLEAR_RECORD_PARTITION_COLUMN, undefined);
         } else {
-            this.$store.dispatch("setPartitionColumn", val);
+            S.dispatch(S.action.SET_RECORD_PARTITION_COLUMN, val);
         }
     }
 }

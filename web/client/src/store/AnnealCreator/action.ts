@@ -5,8 +5,8 @@ import { AnnealCreatorMutation as M, commit } from "./mutation";
 
 import { FunctionParam2 } from "../../data/FunctionParam2";
 
-import { Data as IConstraint, Constraint } from "../../data/Constraint";
-import { Data as IColumnData, ColumnData } from "../../data/ColumnData";
+import { Constraint, Data as IConstraint } from "../../data/Constraint";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
 import { RecordData } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
@@ -35,6 +35,7 @@ export enum AnnealCreatorAction {
     UPDATE_RECORD_COLUMN_DATA = "Updating a record column's data",
 
     SET_RECORD_ID_COLUMN = "Setting record ID column",
+    CLEAR_RECORD_ID_COLUMN = "Clearing record ID column",
 
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
@@ -241,11 +242,15 @@ Delete constraints that use this column and try again.`;
         commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
     },
 
-    async [A.SET_RECORD_ID_COLUMN](context: Context, idColumn: IColumnData) {
+    async [A.SET_RECORD_ID_COLUMN](context: Context, idColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_ID_COLUMN, idColumn);
     },
 
-    async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData) {
+    async [A.CLEAR_RECORD_ID_COLUMN](context: Context) {
+        commit(context, M.CLEAR_RECORD_ID_COLUMN, undefined);
+    },
+
+    async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_PARTITION_COLUMN, partitionColumn);
 
         await dispatch(context, "updateSystemGeneratedCombinedNameFormat", undefined);

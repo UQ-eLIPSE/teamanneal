@@ -16,7 +16,7 @@ const teamanneal = new Vue({
     render: h => h(TeamAnneal),
 
     store,
-    router: router(store),
+    router: router(),
 });
 
 // Expose information when environment is dev

@@ -1,7 +1,6 @@
-import { State, Data as IState } from "../data/State";
-import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
+import { WizardNavigationEntry as WNE } from "../data/WizardNavigationEntry";
 
-type WNE = WizardNavigationEntry.WizardNavigationEntry<IState>;
+import { AnnealCreator as S } from "../store";
 
 // These currently undefined variable placeholders are used in the entries
 // objects below to refer to each other at runtime
@@ -20,15 +19,15 @@ export let
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     provideRecordsFile = {
-        label: (state) => {
-            if (State.HasSourceFileData(state)) {
-                return `${state.recordData.source.name}`;
+        label: () => {
+            if (S.get(S.getter.HAS_SOURCE_FILE_DATA)) {
+                return `${S.state.recordData.source.name}`;
             } else {
                 return "Select records file";
             }
         },
         path: "/anneal/provide-records-file",
-        disabled: (state) => {
+        disabled: () => {
             return !(
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -40,10 +39,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     reviewRecords = {
         label: "Review data",
         path: "/anneal/review-records",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there is no source file data
             return !(
-                State.HasSourceFileData(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -55,16 +54,16 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectIdColumn = {
         label: "Select ID column",
         path: "/anneal/select-id-column",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there is no source file data
             return !(
-                State.HasSourceFileData(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state) &&
 
-                //Disable if duplicate column names encountered
-                !State.HasDuplicateColumnNames(state)
+                // Disable if duplicate column names encountered
+                !S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES)
             );
         },
 
@@ -73,11 +72,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectPartitionColumn = {
         label: "Select partition column",
         path: "/anneal/select-partition-column",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                State.HasSourceFileData(state) &&
-                State.HasValidIdColumnIndex(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -89,11 +88,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     designGroupStructure = {
         label: "Define group structure",
         path: "/anneal/define-group-structure",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
-                State.HasSourceFileData(state) &&
-                State.HasValidIdColumnIndex(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -105,13 +104,13 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureGroups = {
         label: "Configure groups",
         path: "/anneal/configure-groups",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.HasSourceFileData(state) &&
-                State.HasValidIdColumnIndex(state) &&
-                State.HasStrata(state) &&
-                State.IsStrataConfigNamesValid(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
+                S.get(S.getter.HAS_STRATA) &&
+                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -123,14 +122,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureConstraints = {
         label: "Set constraints",
         path: "/anneal/set-constraints",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.HasSourceFileData(state) &&
-                State.HasValidIdColumnIndex(state) &&
-                State.HasStrata(state) &&
-                State.IsStrataConfigNamesValid(state) &&
-                State.IsStrataConfigSizesValid(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
+                S.get(S.getter.HAS_STRATA) &&
+                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
+                S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
 
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -142,14 +141,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     viewResult = {
         label: "View result",
         path: "/anneal/view-result",
-        disabled: (state) => {
+        disabled: () => {
             // Disabled when there are no strata (output groups)
             return !(
-                State.HasSourceFileData(state) &&
-                State.HasValidIdColumnIndex(state) &&
-                State.HasStrata(state) &&
-                State.IsStrataConfigNamesValid(state) &&
-                State.IsStrataConfigSizesValid(state) &&
+                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
+                S.get(S.getter.HAS_STRATA) &&
+                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
+                S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
 
                 // Enable only when the anneal request is actually created
                 State.IsAnnealRequestCreated(state)

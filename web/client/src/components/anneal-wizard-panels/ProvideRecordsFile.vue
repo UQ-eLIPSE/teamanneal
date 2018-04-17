@@ -59,12 +59,10 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-
 import * as RecordData from "../../data/RecordData";
-
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
-import { AnnealCreator as Store } from "../../store";
+import { AnnealCreator as S } from "../../store";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -75,7 +73,7 @@ export default class ProvideRecordsFile extends Mixin(AnnealProcessWizardPanel) 
     readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
     async clearFile() {
-        await Store.dispatch(Store.action.CLEAR_RECORD_DATA, undefined);
+        await S.dispatch(S.action.CLEAR_RECORD_DATA, undefined);
     }
 
     openFilePicker() {
@@ -83,7 +81,7 @@ export default class ProvideRecordsFile extends Mixin(AnnealProcessWizardPanel) 
     }
 
     get isFileSetInStore() {
-        return Store.get(Store.getter.HAS_SOURCE_FILEnvs_DATA);
+        return S.get(S.getter.HAS_SOURCE_FILE_DATA);
     }
 
     async onFileInputChanged($event: Event) {
@@ -94,7 +92,7 @@ export default class ProvideRecordsFile extends Mixin(AnnealProcessWizardPanel) 
         const recordData = await RecordData.parseFileToRecordData(file);
 
         // Save to state
-        await Store.dispatch(Store.action.SET_NEW_RECORD_DATA, recordData);
+        await S.dispatch(S.action.SET_RECORD_DATA, recordData);
 
         // Move on to the next step
         this.emitWizardNavNext();

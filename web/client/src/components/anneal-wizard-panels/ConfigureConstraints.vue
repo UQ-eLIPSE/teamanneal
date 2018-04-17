@@ -43,7 +43,7 @@
                     </tbody>
                 </table>
                 <p>This means that a "must have" constraint is considered with 500 times greater importance than a "may have" constraint.</p>
-    
+
                 <h2>Constraint applicability to groups only of a certain size</h2>
                 <p>In general, constraints will apply to all groups being formed. This is indicated in each constraint by "when
                     <i>group</i> has
@@ -72,9 +72,10 @@ import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { AnnealRequest } from "../../data/AnnealRequest";
-import { State } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+
+import { AnnealCreator as S } from "../../store";
 
 import ConstraintsEditor from "../ConstraintsEditor.vue";
 
@@ -90,7 +91,7 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
 
     get isAnnealButtonDisabled() {
         // If no constraints, the anneal button is disabled
-        if (!State.HasConstraints(this.state)) {
+        if (!S.get(S.getter.HAS_CONSTRAINTS)) {
             return true;
         }
 
@@ -99,10 +100,10 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
 
     async onAnnealButtonClick() {
         // Convert state to anneal request input 
-        const annealRequest = AnnealRequest.InitFromState(this.state);
-    
+        const annealRequest = AnnealRequest.InitFromState(S.state);
+
         // Fire off the anneal request
-        await this.$store.dispatch("setAnnealRequest", annealRequest);
+        await S.dispatch(S.action.SET_ANNEAL_REQUEST, annealRequest);
 
         // Go to next step regardless of what happens at this point
         this.emitWizardNavNext();

@@ -1,14 +1,11 @@
-import * as store from "../store";
-
 import { Vue, Trait } from "av-ts";
 
-import { Data as IState } from "../data/State";
 import { WizardNavigationEntry } from "../data/WizardNavigationEntry";
 
 @Trait
 export class AnnealProcessWizardPanel extends Vue {
     // We assert that `thisWizardStep` will be definitely assigned at runtime
-    readonly thisWizardStep!: WizardNavigationEntry<IState>;
+    readonly thisWizardStep!: WizardNavigationEntry;
     showHelp: boolean = false;
 
     /**
@@ -35,18 +32,16 @@ export class AnnealProcessWizardPanel extends Vue {
         // return true (button is disabled)
         if (this._isWizardNavNextDisabled()) { return true; }
 
-        const state = this.$store.state;
-
         // Check if we have a next step defined
         if (this.thisWizardStep.next === undefined) { return false; }
 
         // Get the next step
-        const next = this.thisWizardStep.next(state);
+        const next = this.thisWizardStep.next();
 
         // Get the disabled check function or say it is not disabled if the
         // function does not exist
         if (next.disabled === undefined) { return false; }
-        const disabled = next.disabled(state);
+        const disabled = next.disabled();
 
         return disabled;
     }
@@ -55,7 +50,3 @@ export class AnnealProcessWizardPanel extends Vue {
         return this.showHelp = !this.showHelp;
     }
 }
-
-// To satisfy TypeScript's "noUnusedLocals" check, we reference "store" at
-// least once by doing a no-op expression
-store;

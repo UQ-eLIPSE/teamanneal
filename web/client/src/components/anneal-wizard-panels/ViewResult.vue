@@ -108,6 +108,9 @@ import { deepCopy } from "../../util/Object";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
+/** Shorthand for `AnnealCreator` store module */
+const S = Store.AnnealCreator;
+
 @Component({
     components: {
         SpreadsheetTreeView,
@@ -119,15 +122,15 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;
 
     get columns() {
-        return this.state.recordData.columns;
+        return S.state.recordData.columns;
     }
 
     get strata() {
-        return this.state.annealConfig.strata;
+        return S.state.strataConfig.strata;
     }
 
     get partitionColumn() {
-        const partitionColumnDesc = this.state.recordData.partitionColumn;
+        const partitionColumnDesc = S.state.recordData.partitionColumn;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -149,7 +152,7 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
     }
 
     get idColumn() {
-        const idColumnDesc = this.state.recordData.idColumn;
+        const idColumnDesc = S.state.recordData.idColumn;
 
         if (idColumnDesc === undefined) {
             throw new Error("No ID column set");
@@ -174,7 +177,7 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
     onExportButtonClick() {
         // Get node name map
         const nodes = this.annealNodeRoots;
-        const strata = this.state.annealConfig.strata;
+        const strata = this.strata;
         const nameMap = this.nameMap;
 
         // Convert into record node name map
@@ -243,7 +246,7 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
         });
 
         // Export as CSV
-        const sourceFileName = this.state.recordData.source.name;
+        const sourceFileName = S.state.recordData.source.name;
         unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
@@ -262,19 +265,15 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
 
 
         // Copy over record data
-        const recordData = this.state.recordData;
+        const recordData = S.state.recordData;
         // TODO: Use a better, more structured copy than a straight JSON copy
         const recordDataCopy = deepCopy(recordData);
         await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
 
         // Copy over strata
-        const strata = this.state.annealConfig.strata;
+        const strata = this.strata;
         // TODO: Use a better, more structured copy than a straight JSON copy
-        const strataCopy = deepCopy(strata).map((stratum) => {
-            // Remove naming configuration information from old strata objects
-            const { namingConfig, ...strata } = stratum;
-            return { ...strata } as Stratum;
-        });
+        const strataCopy = deepCopy(strata);
         await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_STRATA, strataCopy);
 
         // Copy over group nodes

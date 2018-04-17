@@ -9,7 +9,7 @@ import { RecordData, init as initRecordData } from "../../data/RecordData";
 import { init as initStrataConfig } from "../../data/StrataConfig";
 import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { FunctionParam2 } from "../../data/FunctionParam2";
-import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
@@ -107,7 +107,7 @@ const mutations = {
         set(state.recordData, "columns", []);
     },
 
-    [M.SET_RECORD_ID_COLUMN](state: AnnealCreatorState, idColumn: IColumnData) {
+    [M.SET_RECORD_ID_COLUMN](state: AnnealCreatorState, idColumn: IColumnData_MinimalDescriptor) {
         const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(idColumn);
         set(state.recordData, "idColumn", minimalDescriptor);
     },
@@ -116,7 +116,7 @@ const mutations = {
         set(state.recordData, "idColumn", undefined);
     },
 
-    [M.SET_RECORD_PARTITION_COLUMN](state: AnnealCreatorState, partitionColumn: IColumnData) {
+    [M.SET_RECORD_PARTITION_COLUMN](state: AnnealCreatorState, partitionColumn: IColumnData_MinimalDescriptor) {
         const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(partitionColumn);
         set(state.recordData, "partitionColumn", minimalDescriptor);
     },

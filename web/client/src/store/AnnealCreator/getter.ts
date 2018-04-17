@@ -1,6 +1,7 @@
 import { Store } from "vuex";
 import { AnnealCreatorState as State } from "./state";
 
+import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
@@ -111,12 +112,12 @@ const getters = {
         const columns = state.recordData.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
-        const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
         try {
             partitions.forEach((partition) => {
                 // Attempt group sizes for each partition
-                const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
+                const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
                 return StratumSize.generateStrataGroupSizes(strataSizes, numberOfRecordsInPartition);
             });
         } catch (e) {
