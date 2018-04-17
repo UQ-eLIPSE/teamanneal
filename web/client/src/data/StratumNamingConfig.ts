@@ -16,7 +16,7 @@ export interface StratumNamingConfig {
     context: StratumNamingConfigContext,
 }
 
-export function initNew(counter: ListCounter.ListCounterType | string[] = "decimal", context: StratumNamingConfigContext = Context.GLOBAL) {
+export function init(counter: ListCounter.ListCounterType | string[] = "decimal", context: StratumNamingConfigContext = Context.GLOBAL) {
     const obj: StratumNamingConfig = {
         counter,
         context,

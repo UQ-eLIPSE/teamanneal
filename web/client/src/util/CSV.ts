@@ -26,6 +26,17 @@ export async function parseFile(file: File) {
     return parseResult;
 }
 
+/**
+ * Filters out rows which are wholly:
+ * - strings which are empty when `.trim()`ed, or
+ * - `null`s
+ */
+export function trimWhollyEmptyRows(rows: (string | null)[][]) {
+    return rows.filter((row) => {
+        return !row.every(cell => cell === null || cell.trim().length === 0);
+    });
+}
+
 export async function unparseFile(rows: (string | null)[][], filename: string) {
     const csvString = Papa.unparse(rows);
     const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8" });

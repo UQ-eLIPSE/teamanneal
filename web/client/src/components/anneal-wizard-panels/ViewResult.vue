@@ -89,7 +89,7 @@ import * as AnnealNode from "../../../../common/AnnealNode";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
-import { DataWithoutNamingConfig as Stratum } from "../../data/Stratum";
+import { Stratum } from "../../data/Stratum";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { GroupNode } from "../../data/GroupNode";
@@ -106,7 +106,6 @@ import { replaceAll } from "../../util/String";
 import { deepCopy } from "../../util/Object";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
 
 @Component({
@@ -114,7 +113,7 @@ import SpreadsheetTreeView from "../SpreadsheetTreeView.vue";
         SpreadsheetTreeView,
     },
 })
-export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.viewResult;

@@ -5,17 +5,11 @@ import { AnnealCreatorState } from "./state";
 
 import { Data as Constraint } from "../../data/Constraint";
 import { Stratum } from "../../data/Stratum";
-import { RecordData, initNew as initRecordData } from "../../data/RecordData";
-import { initNew as initStrataConfig } from "../../data/StrataConfig";
-import { initNew as initConstraintConfig } from "../../data/ConstraintConfig";
-import { GroupNode } from "../../data/GroupNode";
-import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
-import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { init as initStrataConfig } from "../../data/StrataConfig";
+import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { FunctionParam2 } from "../../data/FunctionParam2";
-
-import { RecordElement } from "../../../../common/Record";
-import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
+import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
@@ -35,20 +29,16 @@ export enum AnnealCreatorMutation {
     DELETE_STRATUM = "Deleting stratum",
     CLEAR_STRATA = "Clearing strata",
 
-    SET_GROUP_NODE_STRUCTURE = "Setting group node structure",
-    CLEAR_GROUP_NODE_STRUCTURE = "Clearing group node structure",
+    INSERT_RECORD_COLUMN_DATA = "Inserting record column data",
+    SET_RECORD_COLUMN_DATA = "Setting record column data",
+    DELETE_RECORD_COLUMN_DATA = "Deleting record column data",
+    CLEAR_RECORD_COLUMN_DATA = "Clearing record column data",
 
-    SET_GROUP_NODE_NAME_MAP = "Setting group node name map",
-    CLEAR_GROUP_NODE_NAME_MAP = "Clearing group node name map",
+    SET_RECORD_ID_COLUMN = "Setting record ID column",
+    CLEAR_RECORD_ID_COLUMN = "Clearing record ID column",
 
-    SET_GROUP_NODE_RECORD_ARRAY_MAP = "Setting group node record array map",
-    CLEAR_GROUP_NODE_RECORD_ARRAY_MAP = "Clearing group node record array map",
-
-    SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
-    CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
-
-    INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
-    DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
+    SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
+    CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 }
 
 /** Shorthand for Mutation enum above */
@@ -101,45 +91,38 @@ const mutations = {
         set(state, "strataConfig", initStrataConfig());
     },
 
-    [M.SET_GROUP_NODE_STRUCTURE](state: AnnealCreatorState, structure: GroupNodeStructure) {
-        set(state.groupNode, "structure", structure);
+    [M.INSERT_RECORD_COLUMN_DATA](state: AnnealCreatorState, column: IColumnData) {
+        state.recordData.columns.push(column);
     },
 
-    [M.CLEAR_GROUP_NODE_STRUCTURE](state: AnnealCreatorState) {
-        set(state.groupNode, "structure", initGroupNodeStructure());
+    [M.SET_RECORD_COLUMN_DATA](state: AnnealCreatorState, { column, index }: { column: IColumnData, index: number }) {
+        set(state.recordData.columns, index, column);
     },
 
-    [M.SET_GROUP_NODE_NAME_MAP](state: AnnealCreatorState, nameMap: GroupNodeNameMap) {
-        set(state.groupNode, "nameMap", nameMap);
+    [M.DELETE_RECORD_COLUMN_DATA](state: AnnealCreatorState, index: number) {
+        del(state.recordData.columns, index);
     },
 
-    [M.CLEAR_GROUP_NODE_NAME_MAP](state: AnnealCreatorState) {
-        set(state.groupNode, "nameMap", initGroupNodeNameMap());
+    [M.CLEAR_RECORD_COLUMN_DATA](state: AnnealCreatorState) {
+        set(state.recordData, "columns", []);
     },
 
-    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: AnnealCreatorState, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
-        set(state.groupNode, "nodeRecordArrayMap", nodeRecordArrayMap);
+    [M.SET_RECORD_ID_COLUMN](state: AnnealCreatorState, idColumn: IColumnData) {
+        const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(idColumn);
+        set(state.recordData, "idColumn", minimalDescriptor);
     },
 
-    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: AnnealCreatorState) {
-        set(state.groupNode, "nodeRecordArrayMap", initGroupNodeRecordArrayMap());
+    [M.CLEAR_RECORD_ID_COLUMN](state: AnnealCreatorState) {
+        set(state.recordData, "idColumn", undefined);
     },
 
-    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: AnnealCreatorState, data: SidePanelActiveTool) {
-        set(state.sideToolArea, "activeItem", data);
+    [M.SET_RECORD_PARTITION_COLUMN](state: AnnealCreatorState, partitionColumn: IColumnData) {
+        const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(partitionColumn);
+        set(state.recordData, "partitionColumn", minimalDescriptor);
     },
 
-    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: AnnealCreatorState) {
-        set(state.sideToolArea, "activeItem", undefined);
-    },
-
-    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: AnnealCreatorState, { node, id }: { node: GroupNode, id: RecordElement }) {
-        state.groupNode.nodeRecordArrayMap[node._id].push(id);
-    },
-
-    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: AnnealCreatorState, { node, id }: { node: GroupNode, id: RecordElement }) {
-        const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node._id];
-        del(recordsUnderNode, recordsUnderNode.indexOf(id));
+    [M.CLEAR_RECORD_PARTITION_COLUMN](state: AnnealCreatorState) {
+        set(state.recordData, "partitionColumn", undefined);
     },
 };
 

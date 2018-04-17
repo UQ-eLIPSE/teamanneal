@@ -41,7 +41,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin, Prop, p } from "av-ts";
+import { Component, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
@@ -49,14 +49,12 @@ import { Data as IStratum } from "../data/Stratum";
 import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter, CountCondition as IConstraint_CountCondition } from "../data/Constraint";
 import { ColumnData } from "../data/ColumnData";
 
-import { StoreState } from "./StoreState";
-
 @Component({
     components: {
         ConstraintsEditorConstraintItem,
     },
 })
-export default class ConstraintsEditorStratum extends Mixin(StoreState) {
+export default class ConstraintsEditorStratum {
     // Props
     @Prop stratum = p<IStratum>({ required: true, });
     @Prop stratumConstraints = p<ReadonlyArray<IConstraint>>({ type: Array, required: true, });

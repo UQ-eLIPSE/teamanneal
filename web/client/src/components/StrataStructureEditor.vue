@@ -29,20 +29,18 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Component } from "av-ts";
 
 import { Stratum } from "../data/Stratum";
 
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
-
-import { StoreState } from "./StoreState";
 
 @Component({
     components: {
         StrataStructureEditorStratumItem,
     },
 })
-export default class StrataStructureEditor extends Mixin(StoreState) {
+export default class StrataStructureEditor {
     get strata() {
         return this.state.annealConfig.strata;
     }

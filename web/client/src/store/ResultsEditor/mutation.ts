@@ -5,13 +5,13 @@ import { ResultsEditorState } from "./state";
 
 import { Data as Constraint } from "../../data/Constraint";
 import { Stratum } from "../../data/Stratum";
-import { RecordData, initNew as initRecordData } from "../../data/RecordData";
-import { initNew as initStrataConfig } from "../../data/StrataConfig";
-import { initNew as initConstraintConfig } from "../../data/ConstraintConfig";
+import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { init as initStrataConfig } from "../../data/StrataConfig";
+import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { GroupNode } from "../../data/GroupNode";
-import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
-import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { GroupNodeNameMap, init as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/GroupNodeStructure";
+import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { RecordElement } from "../../../../common/Record";

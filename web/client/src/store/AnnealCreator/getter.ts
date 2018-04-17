@@ -19,10 +19,10 @@ export enum AnnealCreatorGetter {
 const G = AnnealCreatorGetter;
 
 /** Type-safe getter function factory */
-export function getterFactory<T>(store: Store<T>, modulePrefix?: string) {
+export function getFactory<T>(store: Store<T>, modulePrefix?: string) {
     const prefix = (modulePrefix !== undefined) ? `${modulePrefix}/` : "";
 
-    return function getter<G extends AnnealCreatorGetter, F extends GetterFunction<G>>(getter: G): ReturnType<F> {
+    return function get<G extends AnnealCreatorGetter, F extends GetterFunction<G>>(getter: G): ReturnType<F> {
         return store.getters[prefix + getter] as ReturnType<F>;
     }
 }

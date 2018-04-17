@@ -11,7 +11,7 @@ interface StrataConfigNamingConfigMap {
     [stratumId: string]: StratumNamingConfig,
 }
 
-export function initNew(strata: Stratum[] = [], namingConfig?: StrataConfigNamingConfigMap) {
+export function init(strata: Stratum[] = [], namingConfig?: StrataConfigNamingConfigMap) {
     const obj: StrataConfig = {
         strata,
         namingConfig,

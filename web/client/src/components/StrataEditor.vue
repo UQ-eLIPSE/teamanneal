@@ -49,7 +49,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Component } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
@@ -60,14 +60,12 @@ import { Partition } from "../data/Partition";
 import { concat } from "../util/Array";
 import { replaceAll } from "../util/String";
 
-import { StoreState } from "./StoreState";
-
 @Component({
     components: {
         StrataEditorStratumItem,
     },
 })
-export default class StrataEditor extends Mixin(StoreState) {
+export default class StrataEditor {
     get columns() {
         return this.state.recordData.columns;
     }

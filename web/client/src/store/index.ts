@@ -26,8 +26,11 @@ export const AnnealCreator = {
     prefix: ModulePrefix.AnnealCreator,
 
     action: _AnnealCreator.Action,
-    dispatch: _AnnealCreator.dispatchFactory(store, ModulePrefix.AnnealCreator),
+    getter: _AnnealCreator.Getter,
 
+    dispatch: _AnnealCreator.dispatchFactory(store, ModulePrefix.AnnealCreator),
+    get: _AnnealCreator.getFactory(store, ModulePrefix.AnnealCreator),
+    
     get state() {
         return store.state[ModulePrefix.AnnealCreator] as _AnnealCreator.State;
     },

@@ -1,4 +1,4 @@
-import { StratumSize, initNew as initStratumSize } from "./StratumSize";
+import { StratumSize, init as initStratumSize } from "./StratumSize";
 
 import * as UUID from "../util/UUID";
 
@@ -8,7 +8,7 @@ export interface Stratum {
     size: StratumSize,
 }
 
-export function initNew(label: string = "", size: StratumSize = initStratumSize()) {
+export function init(label: string = "", size: StratumSize = initStratumSize()) {
     const obj: Stratum = {
         _id: UUID.generate(),
         label,

@@ -61,7 +61,6 @@ import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { Data as IColumnData } from "../../data/ColumnData";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 import { State } from "../../data/State";
 import SpreadsheetView from "../SpreadsheetView.vue";
 
@@ -75,7 +74,7 @@ interface ColumnIndexInfo {
         SpreadsheetView,
     },
 })
-export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;

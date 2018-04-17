@@ -47,10 +47,9 @@ import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 
 @Component
-export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectIdColumn;

@@ -3,16 +3,15 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 import { AnnealCreatorState } from "./state";
 import { AnnealCreatorMutation as M, commit } from "./mutation";
 
-import { RecordData } from "../../data/RecordData";
-import { GroupNode } from "../../data/GroupNode";
-import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
-import { GroupNodeStructure } from "../../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
-import { Stratum } from "../../data/Stratum";
-import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 import { FunctionParam2 } from "../../data/FunctionParam2";
 
-import { RecordElement } from "../../../../common/Record";
+import { Data as IConstraint, Constraint } from "../../data/Constraint";
+import { Data as IColumnData, ColumnData } from "../../data/ColumnData";
+
+import { RecordData } from "../../data/RecordData";
+import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
+import { init as initStratumSize } from "../../data/StratumSize";
+import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../../data/StratumNamingConfigContext";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
@@ -25,22 +24,22 @@ export enum AnnealCreatorAction {
     RESET_STATE = "Resetting state",
 
     SET_RECORD_DATA = "Setting record data",
+    CLEAR_RECORD_DATA = "Clearing record data",
 
-    SET_STRATA = "Setting strata",
+    UPSERT_STRATUM = "Upserting stratum",
+    DELETE_STRATUM_CONFIRM_SIDE_EFFECT = "Confirming user is aware that constraints will be deleted as side effect, then deleting stratum",
 
-    SET_GROUP_NODE_STRUCTURE = "Setting group node structure",
+    UPSERT_CONSTRAINT = "Upserting constraint",
+    DELETE_CONSTRAINT = "Deleting constraint",
 
-    SET_GROUP_NODE_NAME_MAP = "Setting group node name map",
+    UPDATE_RECORD_COLUMN_DATA = "Updating a record column's data",
 
-    SET_GROUP_NODE_RECORD_ARRAY_MAP = "Setting group node record array map",
+    SET_RECORD_ID_COLUMN = "Setting record ID column",
 
-    SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
-    SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME = "Setting side panel active tool by name",
-    CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
+    SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
+    CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 
-    MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
 
-    SWAP_RECORDS = "Swapping records",
 }
 
 /** Shorthand for Action enum above */
@@ -63,20 +62,22 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 /** Store action functions */
 const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
-        const state = JSON.parse(dehydratedState) as AnnealCreatorState;
+        throw new Error("Not implemented");
 
-        await dispatch(context, A.SET_RECORD_DATA, state.recordData);
-        // TODO: Constraint config hydration
-        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
-        await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
-        await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
-        await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
+        // const state = JSON.parse(dehydratedState) as AnnealCreatorState;
 
-        if (state.sideToolArea.activeItem !== undefined) {
-            await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
-        } else {
-            await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
-        }
+        // await dispatch(context, A.SET_RECORD_DATA, state.recordData);
+        // // TODO: Constraint config hydration
+        // await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
+        // await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
+        // await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
+        // await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
+
+        // if (state.sideToolArea.activeItem !== undefined) {
+        //     await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
+        // } else {
+        //     await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+        // }
     },
 
     async [A.DEHYDRATE](context: Context) {
@@ -87,61 +88,193 @@ const actions = {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
     },
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {
+        // Wipe record data first
+        await dispatch(context, A.CLEAR_RECORD_DATA, undefined);
+
+        // Set the record data
         commit(context, M.SET_RECORD_DATA, recordData);
+
+        // Add a generic stratum now for users to get started with
+        const stratumLabel = "Team";
+        const stratumSize = initStratumSize(2, 3, 4);
+
+        const genericStratum = initStratum(stratumLabel, stratumSize);
+
+        await dispatch(context, A.UPSERT_STRATUM, genericStratum);
     },
 
-    async [A.SET_STRATA](context: Context, strata: Stratum[]) {
-        // Clear all strata, then iterate through array and insert
+    async [A.CLEAR_RECORD_DATA](context: Context) {
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        strata.forEach(s => commit(context, M.INSERT_STRATUM, s));
     },
 
-    async [A.SET_GROUP_NODE_STRUCTURE](context: Context, structure: GroupNodeStructure) {
-        commit(context, M.SET_GROUP_NODE_STRUCTURE, structure);
-    },
+    async [A.UPSERT_STRATUM](context: Context, stratum: Stratum) {
+        const strata = context.state.strataConfig.strata;
 
-    async [A.SET_GROUP_NODE_NAME_MAP](context: Context, nameMap: GroupNodeNameMap) {
-        commit(context, M.SET_GROUP_NODE_NAME_MAP, nameMap);
-    },
+        // Check if element exists
+        const index = strata.findIndex(s => stratumEquals(stratum, s));
 
-    async [A.SET_GROUP_NODE_RECORD_ARRAY_MAP](context: Context, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
-        commit(context, M.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
-    },
-
-    async [A.SET_SIDE_PANEL_ACTIVE_TOOL](context: Context, data: SidePanelActiveTool) {
-        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL, data);
-    },
-
-    async [A.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME](context: Context, name: string) {
-        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL, { name, data: {} });
-    },
-
-    async [A.CLEAR_SIDE_PANEL_ACTIVE_TOOL](context: Context) {
-        commit(context, M.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
-    },
-
-    async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: GroupNode, id: RecordElement }, targetGroup: GroupNode }) {
-        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: sourcePerson.node, id: sourcePerson.id });
-        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: targetGroup, id: sourcePerson.id });
-    },
-
-    async [A.SWAP_RECORDS](context: Context, { personA, personB }: { personA: { node: GroupNode, id: RecordElement }, personB: { node: GroupNode, id: RecordElement } }) {
-        // Only permit unique IDs to be swapped
-        if (personA.id === personB.id) {
-            throw new Error("Only two unique records can be swapped");
+        if (index > -1) {
+            // Update
+            commit(context, M.SET_STRATUM, { stratum, index });
+        } else {
+            // Insert
+            commit(context, M.INSERT_STRATUM, stratum);
         }
 
-        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: personA.node, id: personA.id });
-        commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: personB.node, id: personB.id });
+        await dispatch(context, A.updateSystemGeneratedCombinedNameFormat, undefined);
+    },
 
-        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personB.node, id: personA.id });
-        commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personA.node, id: personB.id });
+    async [A.DELETE_STRATUM_CONFIRM_SIDE_EFFECT](context: Context, stratum: Stratum) {
+        const $state = context.state;
+        const strata = $state.strataConfig.strata;
+
+        // Check if there are constraints that depend on this stratum
+        const constraints = $state.constraintConfig.constraints || [];
+        const stratumId = stratum._id;
+        const stratumLabel = stratum.label;
+        const dependentConstraints = constraints.filter(c => c.stratum === stratumId);
+
+        if (dependentConstraints.length > 0) {
+            const confirmationMessage = `Deleting "${stratumLabel}" will also result in dependent constraints being deleted.`;
+
+            const proceed = confirm(confirmationMessage);
+
+            // Stop if the user selected Cancel
+            if (!proceed) {
+                return;
+            }
+        }
+
+        // Find index of stratum and delete that one
+        const stratumIndex = strata.findIndex(s => stratumEquals(stratum, s));
+        commit(context, M.DELETE_STRATUM, stratumIndex);
+
+        dependentConstraints.forEach((constraint) => {
+            const constraintIndex = constraints.findIndex(c => Constraint.Equals(constraint, c));
+            commit(context, M.DELETE_CONSTRAINT, constraintIndex);
+        });
+
+        // Check if there are stratum naming contexts which used this 
+        // stratum ID; if so, move to parent stratum or to the global naming 
+        // context
+        const parentStratumId: StratumNamingConfigContext =
+            stratumIndex === 0 ?
+                StratumNamingConfigContextEnum.GLOBAL :
+                strata[stratumIndex - 1]._id;
+
+        for (let stratum of strata) {
+            if (stratum.namingConfig.context === stratumId) {
+                // We need to copy out the object and merge in the naming 
+                // context because we can't do direct object mutations as 
+                // the object sits in the state store and non-tracked 
+                // mutations are a big no-no
+
+                // TODO: Naming configuration in state store has changed; this 
+                // needs rewriting
+                await dispatch(context, "upsertStratum",
+                    // TODO: Figure out how to best handle the types for this
+                    deepMerge<any, any>({}, stratum, {
+                        namingConfig: {
+                            context: parentStratumId,
+                        },
+                    })
+                );
+            }
+        }
+
+        // Replace the combined name format with a new version that has the 
+        // reference to this stratum erased
+        const combinedNameFormat = $state.annealConfig.namingConfig.combined.format;
+
+        if (combinedNameFormat !== undefined) {
+            const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
+            await dispatch(context, A.SET_COMBINED_NAME_FORMAT, newCombinedNameFormat);
+        }
+
+        await dispatch(context, "updateSystemGeneratedCombinedNameFormat", undefined);
+    },
+
+    async [A.UPSERT_CONSTRAINT](context: Context, constraint: IConstraint) {
+        const constraints = context.state.constraintConfig.constraints;
+
+        // Check if element exists
+        const index = constraints.findIndex(c => Constraint.Equals(constraint, c));
+
+        if (index > -1) {
+            // Update
+            return commit(context, M.SET_CONSTRAINT, { constraint, index });
+        } else {
+            // Insert
+            return commit(context, M.INSERT_CONSTRAINT, constraint);
+        }
+    },
+
+    async [A.DELETE_CONSTRAINT](context: Context, constraint: IConstraint) {
+        // Find index of constraint and delete that one
+        const index = context.state.constraintConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
+        commit(context, M.DELETE_CONSTRAINT, index);
+    },
+
+    async [A.UPDATE_RECORD_COLUMN_DATA](context: Context, column: IColumnData) {
+        const $state = context.state;
+
+        // Check that the column isn't used by any constraints
+        const constraints = $state.constraintConfig.constraints;
+
+        if (constraints.some(c => ColumnData.Equals(column, c.filter.column))) {
+            const message =
+                `Column "${column.label}" is currently used by at least one constraint and cannot have its type changed.
+
+Delete constraints that use this column and try again.`;
+
+            alert(message);
+            return;
+        }
+
+        // Find index of column and update it
+        const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
+        commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
+    },
+
+    async [A.SET_RECORD_ID_COLUMN](context: Context, idColumn: IColumnData) {
+        commit(context, M.SET_RECORD_ID_COLUMN, idColumn);
+    },
+
+    async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData) {
+        commit(context, M.SET_RECORD_PARTITION_COLUMN, partitionColumn);
+
+        await dispatch(context, "updateSystemGeneratedCombinedNameFormat", undefined);
+    },
+
+    async [A.CLEAR_RECORD_PARTITION_COLUMN](context: Context) {
+        commit(context, M.CLEAR_RECORD_PARTITION_COLUMN, undefined);
+
+        // Check if there are stratum naming contexts which used the 
+        // partition naming context; if so, move to the global naming context
+        for (let stratum of context.state.strataConfig.strata) {
+            if (stratum.namingConfig.context === StratumNamingConfigContextEnum.PARTITION) {
+                // We need to copy out the object and merge in the naming 
+                // context because we can't do direct object mutations as 
+                // the object sits in the state store and non-tracked 
+                // mutations are a big no-no
+
+                // TODO: Naming configuration in state store has changed; this 
+                // needs rewriting
+                await dispatch(context, "upsertStratum",
+                    // TODO: Figure out how to best handle the types for this
+                    deepMerge<any, any>({}, stratum, {
+                        namingConfig: {
+                            context: StratumNamingConfigContextEnum.GLOBAL,
+                        },
+                    })
+                );
+            }
+        }
     },
 };
 

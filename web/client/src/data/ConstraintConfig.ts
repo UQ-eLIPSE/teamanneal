@@ -4,7 +4,7 @@ export interface ConstraintConfig {
     constraints: Constraint[],
 }
 
-export function initNew(constraints: Constraint[] = []) {
+export function init(constraints: Constraint[] = []) {
     const obj: ConstraintConfig = {
         constraints,
     };

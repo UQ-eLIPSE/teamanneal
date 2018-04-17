@@ -18,7 +18,12 @@ export interface NamingConfig {
     },
 }
 
-export function initNew(combinedFormat: string | undefined = undefined, combinedFormatIsUserProvided: boolean = false) {
+/**
+ * 
+ * @param combinedFormat 
+ * @param combinedFormatIsUserProvided Default = false (We always start off assuming the system is responsible for the combined name format)
+ */
+export function init(combinedFormat: string | undefined = undefined, combinedFormatIsUserProvided: boolean = false) {
     const obj: NamingConfig = {
         combined: {
             format: combinedFormat,

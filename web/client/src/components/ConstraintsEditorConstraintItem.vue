@@ -57,7 +57,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin, Prop, p } from "av-ts";
+import { Component, Prop, p } from "av-ts";
 
 import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
@@ -69,7 +69,6 @@ import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
-import { StoreState } from "./StoreState";
 import { ConstraintPhraseMaps } from "../data/Constraint";
 /*
  * Example sentence structures
@@ -90,7 +89,7 @@ import { ConstraintPhraseMaps } from "../data/Constraint";
         DynamicWidthInputField,
     },
 })
-export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
+export default class ConstraintsEditorConstraintItem {
     // Props
     @Prop stratum = p<IStratum>({ required: true, });
     @Prop constraint = p<IConstraint>({ required: true, });

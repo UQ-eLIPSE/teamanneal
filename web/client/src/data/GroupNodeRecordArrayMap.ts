@@ -4,7 +4,7 @@ export interface GroupNodeRecordArrayMap {
     [nodeId: string]: RecordElement[],
 }
 
-export function initNew() {
+export function init() {
     const obj: GroupNodeRecordArrayMap = {};
 
     return obj;

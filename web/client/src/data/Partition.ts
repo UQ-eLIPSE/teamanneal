@@ -18,7 +18,7 @@ export interface Partition {
     notTruePartition: boolean,
 }
 
-export function initNew(value: number | string | null | undefined = undefined, columns: ReadonlyArray<IColumnData> = [], notTruePartition: boolean = false) {
+export function init(value: number | string | null | undefined = undefined, columns: ReadonlyArray<IColumnData> = [], notTruePartition: boolean = false) {
     const obj: Partition = {
         value,
         columns,

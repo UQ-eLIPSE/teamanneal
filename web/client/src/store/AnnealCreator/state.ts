@@ -1,7 +1,7 @@
-import { RecordData, initNew as initRecordData } from "../../data/RecordData";
-import { StrataConfig, initNew as initStrataConfig } from "../../data/StrataConfig";
-import { ConstraintConfig, initNew as initConstraintConfig } from "../../data/ConstraintConfig";
-import { NamingConfig, initNew as initNamingConfig } from "../../data/NamingConfig";
+import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { StrataConfig, init as initStrataConfig } from "../../data/StrataConfig";
+import { ConstraintConfig, init as initConstraintConfig } from "../../data/ConstraintConfig";
+import { NamingConfig, init as initNamingConfig } from "../../data/NamingConfig";
 
 export interface AnnealCreatorState {
     /** Data for each leaf node in the group tree (individual records) */

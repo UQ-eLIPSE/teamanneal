@@ -45,7 +45,6 @@ import { Component, Mixin } from "av-ts";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 
 import StrataEditor from "../StrataEditor.vue";
 
@@ -54,7 +53,7 @@ import StrataEditor from "../StrataEditor.vue";
         StrataEditor,
     },
 })
-export default class ConfigureGroups extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ConfigureGroups extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureGroups;

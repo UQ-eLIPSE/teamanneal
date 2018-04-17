@@ -22,7 +22,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Component } from "av-ts";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
 import { Partition } from "../data/Partition";
@@ -31,14 +31,12 @@ import { concat } from "../util/Array";
 
 import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
-import { StoreState } from "./StoreState";
-
 @Component({
     components: {
         ConstraintsEditorStratum,
     },
 })
-export default class ConstraintsEditor extends Mixin(StoreState) {
+export default class ConstraintsEditor {
     get strata() {
         return this.state.annealConfig.strata;
     }

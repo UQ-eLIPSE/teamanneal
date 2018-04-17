@@ -75,7 +75,6 @@ import { AnnealRequest } from "../../data/AnnealRequest";
 import { State } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 
 import ConstraintsEditor from "../ConstraintsEditor.vue";
 
@@ -84,7 +83,7 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
         ConstraintsEditor,
     },
 })
-export default class ConfigureConstraints extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;

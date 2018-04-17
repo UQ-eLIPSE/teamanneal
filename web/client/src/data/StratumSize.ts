@@ -8,7 +8,7 @@ export interface StratumSize {
     max: number,
 }
 
-export function initNew(min: number = 0, ideal: number = 0, max: number = 0) {
+export function init(min: number = 0, ideal: number = 0, max: number = 0) {
     const obj: StratumSize = {
         min,
         ideal,

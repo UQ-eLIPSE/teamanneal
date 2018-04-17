@@ -21,3 +21,4 @@ export function init(namespaced: boolean = true) {
 
 export { AnnealCreatorState as State } from "./state";
 export { AnnealCreatorAction as Action, dispatchFactory } from "./action";
+export { AnnealCreatorGetter as Getter, getFactory } from "./getter";
