@@ -17,6 +17,7 @@
     "build_client": "cd ./client && webpack --config webpack.config.js && npm run build_client_copy_index",
     "build_client_prod": "cd ./client && webpack -p --config webpack.config.js && npm run build_client_copy_index",
     "build_client_copy_index": "node ./scripts/CopyClientToBuild.js",
+    "build_client_watch": "cd ./client && npm run build_client_copy_index && webpack --watch --config webpack.config.js",
     "build_server": "tsc --project ./server"
   },
   "engines": {
