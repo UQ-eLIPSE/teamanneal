@@ -1,5 +1,6 @@
 import * as ListCounter from "./ListCounter";
 import { StratumNamingConfigContext, Context } from "./StratumNamingConfigContext";
+import { StrataConfig } from "./StrataConfig";
 
 export interface StratumNamingConfig {
     /** Definition of the list used for naming nodes in stratum */
@@ -58,4 +59,20 @@ export function generateRandomExampleNameStringArray(names: ReadonlyArray<string
     const randomIndex = (Math.random() * counterArray.length) >>> 0;
 
     return counterArray[randomIndex];
+}
+
+export function getStratumNamingConfig(strataConfig: StrataConfig, stratumId: string) {
+    const namingConfig = strataConfig.namingConfig;
+
+    if (namingConfig === undefined) {
+        throw new Error("Strata naming config object does not exist");
+    }
+
+    const stratumNamingConfig = namingConfig[stratumId];
+
+    if (stratumNamingConfig === undefined) {
+        throw new Error(`Stratum ID ${stratumId} does not exist in stratum naming config object`);
+    }
+
+    return stratumNamingConfig;
 }

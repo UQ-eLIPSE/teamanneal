@@ -1,6 +1,6 @@
 export type StratumNamingConfigContext = string | Context;
 
 export enum Context {
-    GLOBAL,
-    PARTITION,
+    GLOBAL = 0,
+    PARTITION = 1,
 }

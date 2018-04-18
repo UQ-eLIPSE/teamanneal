@@ -32,7 +32,8 @@
 import { Vue, Component } from "av-ts";
 
 import * as Stratum from "../data/Stratum";
-import { StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
+import * as StratumSize from "../data/StratumSize";
+import { Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 
 import { AnnealCreator as S } from "../store";
 
@@ -64,11 +65,7 @@ export default class StrataStructureEditor extends Vue {
 
     async addNewStratum() {
         const stratumLabel = this.generateRandomStratumName();
-        const stratumSize = {
-            min: 2,
-            ideal: 3,
-            max: 4,
-        };
+        const stratumSize = StratumSize.init(2, 3, 4);
 
         // This is used to get the naming context (by default we set the 
         // contexts to the parent stratum)

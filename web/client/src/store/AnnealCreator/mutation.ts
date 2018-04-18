@@ -11,7 +11,8 @@ import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { FunctionParam2 } from "../../data/FunctionParam2";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import { StratumNamingConfigContext } from "../../data/StratumNamingConfigContext";
-import { StratumNamingConfig } from "../../data/StratumNamingConfig";
+import { StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
+import { ListCounterType } from "../../data/ListCounter";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
@@ -35,6 +36,7 @@ export enum AnnealCreatorMutation {
 
     SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
     SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
+    SET_STRATUM_NAMING_CONFIG_COUNTER = "Setting stratum's naming config counter",
 
     INSERT_RECORD_COLUMN_DATA = "Inserting record column data",
     SET_RECORD_COLUMN_DATA = "Setting record column data",
@@ -118,19 +120,13 @@ const mutations = {
     },
 
     [M.SET_STRATUM_NAMING_CONFIG_CONTEXT](state: AnnealCreatorState, { stratumId, context }: { stratumId: string, context: StratumNamingConfigContext }) {
-        const namingConfigStore = state.strataConfig.namingConfig;
-
-        if (namingConfigStore === undefined) {
-            throw new Error("Stratum naming config object does not exist");
-        }
-
-        const stratumNamingConfig = namingConfigStore[stratumId];
-
-        if (stratumNamingConfig === undefined) {
-            throw new Error(`Stratum ID ${stratumId} does not exist in stratum naming config object`);
-        }
-
+        const stratumNamingConfig = getStratumNamingConfig(state.strataConfig, stratumId);
         set(stratumNamingConfig, "context", context);
+    },
+
+    [M.SET_STRATUM_NAMING_CONFIG_COUNTER](state: AnnealCreatorState, { stratumId, counter }: { stratumId: string, counter: ListCounterType | string[] }) {
+        const stratumNamingConfig = getStratumNamingConfig(state.strataConfig, stratumId);
+        set(stratumNamingConfig, "counter", counter);
     },
 
     [M.INSERT_RECORD_COLUMN_DATA](state: AnnealCreatorState, column: IColumnData) {

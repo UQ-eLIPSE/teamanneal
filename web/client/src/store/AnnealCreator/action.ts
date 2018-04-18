@@ -11,8 +11,9 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import { RecordData } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
-import { init as initStratumNamingConfig, StratumNamingConfig } from "../../data/StratumNamingConfig";
+import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
 import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../../data/StratumNamingConfigContext";
+import { ListCounterType } from "../../data/ListCounter";
 
 import { replaceAll } from "../../util/String";
 
@@ -36,6 +37,7 @@ export enum AnnealCreatorAction {
 
     SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
     SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
+    SET_STRATUM_NAMING_CONFIG_COUNTER = "Setting stratum's naming config counter",
 
     UPSERT_CONSTRAINT = "Upserting constraint",
     DELETE_CONSTRAINT = "Deleting constraint",
@@ -185,7 +187,7 @@ const actions = {
                 strata[stratumIndex - 1]._id;
 
         for (let stratum of strata) {
-            if (context.state.strataConfig.namingConfig![stratum._id].context === stratumId) {
+            if (getStratumNamingConfig(context.state.strataConfig, stratum._id).context === stratumId) {
                 await dispatch(context, A.SET_STRATUM_NAMING_CONFIG_CONTEXT, {
                     stratum,
                     context: parentStratumId,
@@ -218,14 +220,12 @@ const actions = {
 
     async [A.SET_STRATUM_NAMING_CONFIG_CONTEXT](stateContext: Context, { stratum, context }: { stratum: Stratum, context: StratumNamingConfigContext }) {
         await dispatch(stateContext, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
-
-        // If naming config for this stratum does not exist, throw
-        const stratumNamingConfig = stateContext.state.strataConfig.namingConfig![stratum._id];
-        if (stratumNamingConfig === undefined) {
-            throw new Error(`Stratum ID ${stratum._id} does not exist in stratum naming config object`);
-        }
-
         commit(stateContext, M.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratumId: stratum._id, context });
+    },
+
+    async [A.SET_STRATUM_NAMING_CONFIG_COUNTER](stateContext: Context, { stratum, counter }: { stratum: Stratum, counter: ListCounterType | string[] }) {
+        await dispatch(stateContext, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
+        commit(stateContext, M.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratumId: stratum._id, counter });
     },
 
     async [A.UPSERT_CONSTRAINT](context: Context, constraint: IConstraint) {
@@ -290,7 +290,7 @@ Delete constraints that use this column and try again.`;
         // Check if there are stratum naming contexts which used the 
         // partition naming context; if so, move to the global naming context
         for (let stratum of context.state.strataConfig.strata) {
-            if (context.state.strataConfig.namingConfig![stratum._id].context === StratumNamingConfigContextEnum.PARTITION) {
+            if (getStratumNamingConfig(context.state.strataConfig, stratum._id).context === StratumNamingConfigContextEnum.PARTITION) {
                 await dispatch(context, A.SET_STRATUM_NAMING_CONFIG_CONTEXT, {
                     stratum,
                     context: StratumNamingConfigContextEnum.GLOBAL,

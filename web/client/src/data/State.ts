@@ -1,7 +1,4 @@
-import { Stratum } from "./Stratum";
-import { Partition } from "./Partition";
 import { RecordData } from "./RecordData";
-import { AnnealConfig } from "./AnnealConfig";
 import { Data as IAnnealRequest } from "./AnnealRequest";
 import { AnnealResponse, Data as IAnnealResponse } from "./AnnealResponse";
 

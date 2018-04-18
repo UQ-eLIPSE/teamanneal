@@ -100,8 +100,11 @@ import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum } from "../data/Stratum";
 import * as StratumSize from "../data/StratumSize";
+import { StratumNamingConfig } from "../data/StratumNamingConfig";
+import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
+import { DeepPartial } from "../data/DeepPartial";
 
 import { AnnealCreator as S } from "../store";
 
@@ -135,6 +138,7 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 export default class StrataEditorStratumItem extends Vue {
     // Props
     @Prop stratum = p<Stratum>({ required: true, });
+    @Prop stratumNamingConfig = p<StratumNamingConfig>({ required: true, });
     @Prop childUnit = p({ type: String, required: true, });
     @Prop groupSizes = p<{ [groupSize: number]: number }>({ required: false, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
@@ -237,7 +241,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     get counterType() {
-        const counter = this.stratum.namingConfig.counter;
+        const counter = this.stratumNamingConfig.counter;
 
         if (Array.isArray(counter)) {
             return "custom";
@@ -247,7 +251,7 @@ export default class StrataEditorStratumItem extends Vue {
     }
 
     set counterType(newValue: string) {
-        const oldCounterValue = this.stratum.namingConfig.counter;
+        const oldCounterValue = this.stratumNamingConfig.counter;
 
         if (newValue === "custom") {
             // If already a custom array, do nothing
@@ -256,40 +260,27 @@ export default class StrataEditorStratumItem extends Vue {
             }
 
             // Otherwise set the counter to a default array
-            this.updateStratum({
-                namingConfig: {// Default custom list is "Red", "Green", "Blue"
-                    counter: ["Red", "Green", "Blue"],
-                }
-            });
+            // Default custom list is "Red", "Green", "Blue"
+            S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: ["Red", "Green", "Blue"] });
         } else {
-            this.updateStratum({
-                namingConfig: {
-                    counter: newValue,
-                }
-            });
+            S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: newValue as ListCounter.ListCounterType });
         }
     }
 
     get isCounterCustomList() {
-        return Array.isArray(this.stratum.namingConfig.counter);
+        return Array.isArray(this.stratumNamingConfig.counter);
     }
-
-
 
     get namingContext() {
-        return this.stratum.namingConfig.context;
+        return this.stratumNamingConfig.context;
     }
 
-    set namingContext(newValue: string) {
-        this.updateStratum({
-            namingConfig: {
-                context: newValue,
-            },
-        });
+    set namingContext(newValue: StratumNamingConfigContext) {
+        S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratum: this.stratum, context: newValue });
     }
 
     get namingContextOptionList() {
-        const list = this.namingContexts.map((stratum) => {
+        const list: { value: StratumNamingConfigContext, text: string }[] = this.namingContexts.map((stratum) => {
             return {
                 value: stratum._id,
                 text: `per ${stratum.label}`,
@@ -299,14 +290,14 @@ export default class StrataEditorStratumItem extends Vue {
         // Add partition option where set
         if (this.partitionColumnData !== undefined) {
             list.unshift({
-                value: "_PARTITION",
+                value: StratumNamingConfigContextEnum.PARTITION,
                 text: `per partition (${this.partitionColumnData.label})`,
             });
         }
 
         // Global is always available
         list.unshift({
-            value: "_GLOBAL",
+            value: StratumNamingConfigContextEnum.GLOBAL,
             text: "globally",
         });
 
@@ -317,12 +308,12 @@ export default class StrataEditorStratumItem extends Vue {
         return this.namingContextOptionList.length > 1;
     }
 
-    // async updateStratum(diff: any) {
-    //     // Deep copy and merge in diff
-    //     const newStratum = deepMerge(deepCopy(this.stratum), diff);
+    async updateStratum(diff: DeepPartial<Stratum>) {
+        // Deep copy and merge in diff
+        const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
-    //     await this.$store.dispatch("upsertStratum", newStratum);
-    // }
+        await S.dispatch(S.action.UPSERT_STRATUM, newStratum);
+    }
 
     get stratumSizeMin() {
         return this.stratum.size.min;
@@ -387,15 +378,11 @@ export default class StrataEditorStratumItem extends Vue {
     get customNameList() {
         // We assume that this is only used when the custom name functionality
         // is enabled, and so assert that we're delivering a string array
-        return this.stratum.namingConfig.counter as string[];
+        return this.stratumNamingConfig.counter as string[];
     }
 
     set customNameList(names: string[]) {
-        this.updateStratum({
-            namingConfig: {
-                counter: names,
-            }
-        });
+        S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: names });
     }
 }
 </script>

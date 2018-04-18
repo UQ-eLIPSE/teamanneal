@@ -4,12 +4,14 @@
             <ul>
                 <li v-if="isPartitionColumnSet">
                     <StrataEditorStratumItem :stratum="partitionStratumShimObject"
+                                             :stratumNamingConfig="partitionStratumShimObject"
                                              :childUnit="strata[0].label"
                                              :isPartition="true"></StrataEditorStratumItem>
                 </li>
                 <li v-for="(stratum, i) in strata"
                     :key="stratum._id">
                     <StrataEditorStratumItem :stratum="stratum"
+                                             :stratumNamingConfig="getStratumNamingConfig(stratum._id)"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupDistribution[i]"
                                              :isPartition="false"
@@ -49,7 +51,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
@@ -69,13 +71,21 @@ import { replaceAll } from "../util/String";
         StrataEditorStratumItem,
     },
 })
-export default class StrataEditor {
+export default class StrataEditor extends Vue {
     get columns() {
         return S.state.recordData.columns;
     }
 
+    get strataConfig() {
+        return S.state.strataConfig;
+    }
+
     get strata() {
-        return S.state.strataConfig.strata;
+        return this.strataConfig.strata;
+    }
+
+    getStratumNamingConfig(stratumId: string) {
+        return StratumNamingConfig.getStratumNamingConfig(this.strataConfig, stratumId);
     }
 
     get partitionColumn() {
@@ -221,7 +231,8 @@ export default class StrataEditor {
 
         // Set stratum names
         this.strata.forEach((stratum) => {
-            const randomStratumName = StratumNamingConfig.generateRandomExampleName(stratum);
+            const stratumNamingConfig = this.getStratumNamingConfig(stratum._id);
+            const randomStratumName = StratumNamingConfig.generateRandomExampleName(stratumNamingConfig);
 
             combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
         });

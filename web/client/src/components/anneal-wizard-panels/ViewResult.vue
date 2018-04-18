@@ -125,8 +125,12 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
         return S.state.recordData.columns;
     }
 
+    get strataConfig() {
+        return S.state.strataConfig;
+    }
+
     get strata() {
-        return S.state.strataConfig.strata;
+        return this.strataConfig.strata;
     }
 
     get partitionColumn() {
@@ -148,7 +152,7 @@ export default class ViewResult extends Mixin(AnnealProcessWizardPanel) {
     }
 
     get nameMap() {
-        return ResultTree.GenerateNodeNameMap(this.strata, this.partitionColumn, this.annealNodeRoots);
+        return ResultTree.GenerateNodeNameMap(this.strataConfig, this.partitionColumn, this.annealNodeRoots);
     }
 
     get idColumn() {
