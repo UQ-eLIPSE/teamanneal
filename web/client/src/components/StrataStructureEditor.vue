@@ -32,6 +32,7 @@
 import { Vue, Component } from "av-ts";
 
 import * as Stratum from "../data/Stratum";
+import { StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 
 import { AnnealCreator as S } from "../store";
 
@@ -72,11 +73,12 @@ export default class StrataStructureEditor extends Vue {
         // This is used to get the naming context (by default we set the 
         // contexts to the parent stratum)
         const parentStratum = this.strata[this.strata.length - 1];
-        const parentStratumId = parentStratum !== undefined ? parentStratum._id : "_GLOBAL";
+        const stratumNamingConfigContext = parentStratum !== undefined ? parentStratum._id : StratumNamingConfigContextEnum.GLOBAL;
 
-        const newStratum = Stratum.init(stratumLabel, stratumSize, parentStratumId);
+        const newStratum = Stratum.init(stratumLabel, stratumSize);
 
-        await S.dispatch("upsertStratum", newStratum);
+        await S.dispatch(S.action.UPSERT_STRATUM, newStratum);
+        await S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratum: newStratum, context: stratumNamingConfigContext });
     }
 
     isStratumDeletable(i: number) {

@@ -12,8 +12,9 @@ import * as RecordDataColumn from "../../../common/RecordDataColumn";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
-import { Data as IState } from "./State";
-import { Partition } from "./Partition";
+import { AnnealCreator as S } from "../store";
+
+import * as Partition from "./Partition";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 
 export interface Data {
@@ -42,7 +43,7 @@ export namespace AnnealRequest {
         return annealRequestObject;
     }
 
-    export function InitFromState(state: IState) {
+    export function InitFromState(state: typeof S.state) {
         // Translate state into request body and create AJAX request
         const body = ConvertStateToAnnealRequestBody(state);
         const { request, cancelTokenSource } = CreateAnnealAjaxRequest(body);
@@ -53,7 +54,7 @@ export namespace AnnealRequest {
         return annealRequestObject;
     }
 
-    export function ConvertStateToAnnealRequestBody(state: IState) {
+    export function ConvertStateToAnnealRequestBody(state: typeof S.state) {
         // =====================================================================
         // Record data
         // =====================================================================
@@ -114,7 +115,7 @@ export namespace AnnealRequest {
         // rather than:
         //      [lowest, ..., highest]
         // which is what the server receives as input to the anneal endpoint.
-        const stateStrata = state.annealConfig.strata;
+        const stateStrata = state.strataConfig.strata;
         const strataServerOrder = reverse(stateStrata);
 
         const strata =
@@ -136,7 +137,7 @@ export namespace AnnealRequest {
 
         // Each node represents each partition to anneal over
         const partitionColumnDescriptor = state.recordData.partitionColumn;
-        const statePartitions = Partition.InitManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
+        const statePartitions = Partition.initManyFromPartitionColumnDescriptor(stateColumns, partitionColumnDescriptor);
 
         // Create anneal nodes from the ID values of each partition
         const annealNodes =
@@ -243,7 +244,7 @@ export namespace AnnealRequest {
             return value;
         }
 
-        const stateConstraints = state.annealConfig.constraints;
+        const stateConstraints = state.constraintConfig.constraints;
         const constraints = stateConstraints.map(
             (internalConstraint) => {
                 // Get the index of the stratum for the constraint

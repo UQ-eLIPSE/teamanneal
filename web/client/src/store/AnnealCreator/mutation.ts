@@ -10,6 +10,8 @@ import { init as initStrataConfig } from "../../data/StrataConfig";
 import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { FunctionParam2 } from "../../data/FunctionParam2";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
+import { StratumNamingConfigContext } from "../../data/StratumNamingConfigContext";
+import { StratumNamingConfig } from "../../data/StratumNamingConfig";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
@@ -28,6 +30,11 @@ export enum AnnealCreatorMutation {
     SET_STRATUM = "Setting stratum",
     DELETE_STRATUM = "Deleting stratum",
     CLEAR_STRATA = "Clearing strata",
+
+    INIT_STRATA_NAMING_CONFIG = "Initialising strata naming config",
+
+    SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
+    SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
 
     INSERT_RECORD_COLUMN_DATA = "Inserting record column data",
     SET_RECORD_COLUMN_DATA = "Setting record column data",
@@ -94,6 +101,36 @@ const mutations = {
 
     [M.CLEAR_STRATA](state: AnnealCreatorState) {
         set(state, "strataConfig", initStrataConfig());
+    },
+
+    [M.INIT_STRATA_NAMING_CONFIG](state: AnnealCreatorState) {
+        set(state.strataConfig, "namingConfig", {});
+    },
+
+    [M.SET_STRATUM_NAMING_CONFIG](state: AnnealCreatorState, { stratumId, namingConfig }: { stratumId: string, namingConfig: StratumNamingConfig }) {
+        const namingConfigStore = state.strataConfig.namingConfig;
+
+        if (namingConfigStore === undefined) {
+            throw new Error("Stratum naming config object does not exist");
+        }
+
+        set(namingConfigStore, stratumId, namingConfig);
+    },
+
+    [M.SET_STRATUM_NAMING_CONFIG_CONTEXT](state: AnnealCreatorState, { stratumId, context }: { stratumId: string, context: StratumNamingConfigContext }) {
+        const namingConfigStore = state.strataConfig.namingConfig;
+
+        if (namingConfigStore === undefined) {
+            throw new Error("Stratum naming config object does not exist");
+        }
+
+        const stratumNamingConfig = namingConfigStore[stratumId];
+
+        if (stratumNamingConfig === undefined) {
+            throw new Error(`Stratum ID ${stratumId} does not exist in stratum naming config object`);
+        }
+
+        set(stratumNamingConfig, "context", context);
     },
 
     [M.INSERT_RECORD_COLUMN_DATA](state: AnnealCreatorState, column: IColumnData) {

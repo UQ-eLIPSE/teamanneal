@@ -11,6 +11,7 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import { RecordData } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
+import { init as initStratumNamingConfig, StratumNamingConfig } from "../../data/StratumNamingConfig";
 import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../../data/StratumNamingConfigContext";
 
 import { replaceAll } from "../../util/String";
@@ -30,6 +31,11 @@ export enum AnnealCreatorAction {
 
     UPSERT_STRATUM = "Upserting stratum",
     DELETE_STRATUM_CONFIRM_SIDE_EFFECT = "Confirming user is aware that constraints will be deleted as side effect, then deleting stratum",
+
+    INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT = "Initialising strata naming config if it is not currently present",
+
+    SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
+    SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
 
     UPSERT_CONSTRAINT = "Upserting constraint",
     DELETE_CONSTRAINT = "Deleting constraint",
@@ -69,7 +75,7 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 
 /** Store action functions */
 const actions = {
-    async [A.HYDRATE](context: Context, dehydratedState: string) {
+    async [A.HYDRATE](_context: Context, _dehydratedState: string) {
         throw new Error("Not implemented");
 
         // const state = JSON.parse(dehydratedState) as AnnealCreatorState;
@@ -132,6 +138,9 @@ const actions = {
         } else {
             // Insert
             commit(context, M.INSERT_STRATUM, stratum);
+
+            // Create new naming config by default
+            await dispatch(context, A.SET_STRATUM_NAMING_CONFIG, { stratum, namingConfig: initStratumNamingConfig() });
         }
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
@@ -176,22 +185,11 @@ const actions = {
                 strata[stratumIndex - 1]._id;
 
         for (let stratum of strata) {
-            if (stratum.namingConfig.context === stratumId) {
-                // We need to copy out the object and merge in the naming 
-                // context because we can't do direct object mutations as 
-                // the object sits in the state store and non-tracked 
-                // mutations are a big no-no
-
-                // TODO: Naming configuration in state store has changed; this 
-                // needs rewriting
-                await dispatch(context, "upsertStratum",
-                    // TODO: Figure out how to best handle the types for this
-                    deepMerge<any, any>({}, stratum, {
-                        namingConfig: {
-                            context: parentStratumId,
-                        },
-                    })
-                );
+            if (context.state.strataConfig.namingConfig![stratum._id].context === stratumId) {
+                await dispatch(context, A.SET_STRATUM_NAMING_CONFIG_CONTEXT, {
+                    stratum,
+                    context: parentStratumId,
+                });
             }
         }
 
@@ -205,6 +203,29 @@ const actions = {
         }
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+    },
+
+    async [A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT](context: Context) {
+        if (context.state.strataConfig.namingConfig === undefined) {
+            commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
+        }
+    },
+
+    async [A.SET_STRATUM_NAMING_CONFIG](context: Context, { stratum, namingConfig }: { stratum: Stratum, namingConfig: StratumNamingConfig }) {
+        await dispatch(context, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
+        commit(context, M.SET_STRATUM_NAMING_CONFIG, { stratumId: stratum._id, namingConfig });
+    },
+
+    async [A.SET_STRATUM_NAMING_CONFIG_CONTEXT](stateContext: Context, { stratum, context }: { stratum: Stratum, context: StratumNamingConfigContext }) {
+        await dispatch(stateContext, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
+
+        // If naming config for this stratum does not exist, throw
+        const stratumNamingConfig = stateContext.state.strataConfig.namingConfig![stratum._id];
+        if (stratumNamingConfig === undefined) {
+            throw new Error(`Stratum ID ${stratum._id} does not exist in stratum naming config object`);
+        }
+
+        commit(stateContext, M.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratumId: stratum._id, context });
     },
 
     async [A.UPSERT_CONSTRAINT](context: Context, constraint: IConstraint) {
@@ -269,22 +290,11 @@ Delete constraints that use this column and try again.`;
         // Check if there are stratum naming contexts which used the 
         // partition naming context; if so, move to the global naming context
         for (let stratum of context.state.strataConfig.strata) {
-            if (stratum.namingConfig.context === StratumNamingConfigContextEnum.PARTITION) {
-                // We need to copy out the object and merge in the naming 
-                // context because we can't do direct object mutations as 
-                // the object sits in the state store and non-tracked 
-                // mutations are a big no-no
-
-                // TODO: Naming configuration in state store has changed; this 
-                // needs rewriting
-                await dispatch(context, "upsertStratum",
-                    // TODO: Figure out how to best handle the types for this
-                    deepMerge<any, any>({}, stratum, {
-                        namingConfig: {
-                            context: StratumNamingConfigContextEnum.GLOBAL,
-                        },
-                    })
-                );
+            if (context.state.strataConfig.namingConfig![stratum._id].context === StratumNamingConfigContextEnum.PARTITION) {
+                await dispatch(context, A.SET_STRATUM_NAMING_CONFIG_CONTEXT, {
+                    stratum,
+                    context: StratumNamingConfigContextEnum.GLOBAL,
+                });
             }
         }
     },
