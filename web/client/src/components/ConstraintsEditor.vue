@@ -24,8 +24,11 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import { Stratum, Data as IStratum } from "../data/Stratum";
-import { Partition } from "../data/Partition";
+import * as Stratum from "../data/Stratum";
+import * as StratumSize from "../data/StratumSize";
+import * as Partition from "../data/Partition";
+
+import { AnnealCreator as S } from "../store";
 
 import { concat } from "../util/Array";
 
@@ -38,41 +41,36 @@ import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 })
 export default class ConstraintsEditor extends Vue {
     get strata() {
-        return this.state.annealConfig.strata;
+        return S.state.strataConfig.strata;
     }
 
     get constraints() {
-        return this.state.annealConfig.constraints;
+        return S.state.constraintConfig.constraints;
     }
 
     /**
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return this.state.recordData.partitionColumn !== undefined;
+        return S.state.recordData.partitionColumn !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const partitionColumn = this.state.recordData.partitionColumn;
+        const partitionColumn = S.state.recordData.partitionColumn;
 
         if (partitionColumn === undefined) {
             throw new Error("No partition column set");
         }
 
         const shimLabel = `Partition (${partitionColumn.label})`;
-        const shimSize = {
-            min: 0,
-            ideal: 0,
-            max: 0,
-        };
 
-        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
+        return Stratum.init(shimLabel);
     }
 
-    getStratumConstraints(stratum: IStratum) {
+    getStratumConstraints(stratum: Stratum.Stratum) {
         const stratumId = stratum._id;
         return this.constraints.filter(constraint => constraint.stratum === stratumId);
     }
@@ -82,10 +80,10 @@ export default class ConstraintsEditor extends Vue {
      */
     get strataGroupSizes() {
         const strata = this.strata;
-        const columns = this.state.recordData.columns;
-        const partitionColumnDescriptor = this.state.recordData.partitionColumn;
+        const columns = S.state.recordData.columns;
+        const partitionColumnDescriptor = S.state.recordData.partitionColumn;
 
-        const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
         // Run group sizing in each partition, and merge the distributions at
         // the end
@@ -93,8 +91,8 @@ export default class ConstraintsEditor extends Vue {
             partitions
                 .map((partition) => {
                     // Generate group sizes for each partition
-                    const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
-                    const strataIndividualGroupSizes = Stratum.GenerateStrataGroupSizes(strata, numberOfRecordsInPartition);
+                    const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                    const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
 
                     // Thin out the individual group sizes into just the unique
                     // group sizes
