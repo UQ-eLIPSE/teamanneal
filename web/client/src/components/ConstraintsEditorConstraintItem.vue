@@ -4,39 +4,39 @@
             <DynamicWidthSelect class="select"
                                 v-model="constraintCostWeight"
                                 :list="costWeightList"></DynamicWidthSelect>
-    
+
             <span v-if="!personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
-    
+
             <DynamicWidthSelect class="select"
                                 v-model="constraintConditionFunction"
                                 :list="conditionFunctionList"></DynamicWidthSelect>
-    
+
             <DynamicWidthInputField class="input"
                                     v-if="showConditionCount"
                                     v-model="constraintConditionCount"></DynamicWidthInputField>
-    
+
             <span v-if="personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
-    
+
             <DynamicWidthSelect class="select"
                                 v-model="constraintFilterColumnData"
                                 :list="columnDataList"></DynamicWidthSelect>
-    
+
             <DynamicWidthSelect class="select"
                                 v-if="showFilterFunction"
                                 v-model="constraintFilterFunction"
                                 :list="filterFunctionList"></DynamicWidthSelect>
-    
+
             <DynamicWidthInputField class="input"
                                     v-if="showFilterValueAsInput"
                                     v-model="constraintFilterValues"></DynamicWidthInputField>
-    
+
             <DynamicWidthSelect class="select"
                                 v-if="showFilterValueAsSelect"
                                 v-model="constraintFilterValues"
                                 :list="filterValueAsSelectList"></DynamicWidthSelect>
-    
+
             <span>when {{ stratum.label }} has
                 <DynamicWidthSelect class="select"
                                     v-model="groupSizeApplicabilityConditionValue"
@@ -57,19 +57,28 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 import { parse, parseUint32 } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
-import { Data as IStratum } from "../data/Stratum";
-import { Data as IConstraint, ApplicabilityGroupSizeCondition as IConstraint_ApplicabilityGroupSizeCondition } from "../data/Constraint";
+import { Stratum } from "../data/Stratum";
+import {
+    Data as IConstraint,
+    ApplicabilityGroupSizeCondition as IConstraint_ApplicabilityGroupSizeCondition,
+    Count as IConstraint_Count,
+    Limit as IConstraint_Limit,
+    ConstraintPhraseMaps
+} from "../data/Constraint";
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
+import { DeepPartial } from "../data/DeepPartial";
+
+import { AnnealCreator as S } from "../store";
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
-import { ConstraintPhraseMaps } from "../data/Constraint";
+
 /*
  * Example sentence structures
  * 
@@ -80,18 +89,15 @@ import { ConstraintPhraseMaps } from "../data/Constraint";
  * similarity | [may have]    people with [similar values of]   [column]                        when <group> has [2 people]
  */
 
-
-
-
 @Component({
     components: {
         DynamicWidthSelect,
         DynamicWidthInputField,
     },
 })
-export default class ConstraintsEditorConstraintItem {
+export default class ConstraintsEditorConstraintItem extends Vue {
     // Props
-    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop stratum = p<Stratum>({ required: true, });
     @Prop constraint = p<IConstraint>({ required: true, });
     @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: true, });
 
@@ -133,7 +139,7 @@ export default class ConstraintsEditorConstraintItem {
     }
 
     get columnData() {
-        return this.state.recordData.columns;
+        return S.state.recordData.columns;
     }
 
     get columnDataList() {
@@ -310,14 +316,14 @@ export default class ConstraintsEditorConstraintItem {
     }
 
     async deleteConstraint() {
-        await this.$store.dispatch("deleteConstraint", this.constraint);
+        await S.dispatch(S.action.DELETE_CONSTRAINT, this.constraint);
     }
 
-    async updateConstraint(diff: any) {
+    async updateConstraint<T extends IConstraint>(diff: DeepPartial<T>) {
         // Deep copy and merge in diff
-        const newConstraint = deepMerge(deepCopy(this.constraint), diff);
+        const newConstraint = deepMerge<IConstraint>(deepCopy(this.constraint), diff as any);
 
-        await this.$store.dispatch("upsertConstraint", newConstraint);
+        await S.dispatch(S.action.UPSERT_CONSTRAINT, newConstraint);
     }
 
     get constraintCostWeight() {
@@ -336,9 +342,10 @@ export default class ConstraintsEditorConstraintItem {
 
     set constraintConditionFunction(newValue: string) {
         this.updateConstraint({
-            type: this.getConstraintType(newValue),
+            // Type and condition functions for different constraints vary
+            type: this.getConstraintType(newValue) as any,
             condition: {
-                function: newValue,
+                function: newValue as any,
             },
         });
     }
@@ -348,7 +355,7 @@ export default class ConstraintsEditorConstraintItem {
     }
 
     set constraintConditionCount(newValue: any) {
-        this.updateConstraint({
+        this.updateConstraint<IConstraint_Count>({
             condition: {
                 value: parseUint32(newValue, this.constraintConditionCount),
             },
@@ -356,7 +363,7 @@ export default class ConstraintsEditorConstraintItem {
     }
 
     get constraintFilterColumnData() {
-        return ColumnData.ConvertToDataObject(this.state.recordData.columns, this.constraint.filter.column)!;
+        return ColumnData.ConvertToDataObject(S.state.recordData.columns, this.constraint.filter.column)!;
     }
 
     set constraintFilterColumnData(newColumnData: IColumnData) {
@@ -411,9 +418,10 @@ export default class ConstraintsEditorConstraintItem {
     }
 
     set constraintFilterFunction(newValue: string) {
-        this.updateConstraint({
+        this.updateConstraint<IConstraint_Count | IConstraint_Limit>({
             filter: {
-                function: newValue,
+                // Filter functions for different constraints vary
+                function: newValue as any,
             },
         });
     }

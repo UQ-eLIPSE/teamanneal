@@ -1,3 +1,5 @@
+import { DeepPartial } from "../data/DeepPartial";
+
 export function deepCopy<T extends Object>(object: T): T {
     return JSON.parse(JSON.stringify(object));
 }
@@ -7,14 +9,14 @@ export function deepCopy<T extends Object>(object: T): T {
 /**
  * Simple object check.
  */
-export function isObject(item: any): item is Object {
+export function isObject<T extends object>(item: any): item is T {
     return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
 /**
  * Deep merge objects.
  */
-export function deepMerge<T extends Object, U extends Partial<T>>(target: T, ...sources: U[]): T {
+export function deepMerge<T extends object>(target: T, ...sources: DeepPartial<T>[]): T {
     if (!sources.length) return target;
     const source = sources.shift();
 

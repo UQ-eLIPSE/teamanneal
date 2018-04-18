@@ -51,7 +51,7 @@ export default class WizardNavigation extends Vue {
         }
 
         // Execute the next function to get the next entry to move to
-        this.goTo(activeEntry.next(this.$store.state));
+        this.goTo(activeEntry.next());
     }
 
 
@@ -67,7 +67,7 @@ export default class WizardNavigation extends Vue {
 
         // If the function does not exist we assume that it is always not
         // disabled
-        return isDisabled === undefined ? false : isDisabled(this.$store.state);
+        return isDisabled === undefined ? false : isDisabled();
     }
 
     getEntryLabel(entry: WNE) {
@@ -78,9 +78,9 @@ export default class WizardNavigation extends Vue {
             return label;
         }
 
-        // If `label` is a function, then execute with the current state
+        // If `label` is a function, then execute
         if (typeof label === "function") {
-            return label(this.$store.state);
+            return label();
         }
 
         throw new Error("Unknown entry label type");

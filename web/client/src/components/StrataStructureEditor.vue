@@ -29,9 +29,11 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component } from "av-ts";
+import { Vue, Component } from "av-ts";
 
-import { Stratum } from "../data/Stratum";
+import * as Stratum from "../data/Stratum";
+
+import { AnnealCreator as S } from "../store";
 
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
@@ -40,9 +42,9 @@ import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem
         StrataStructureEditorStratumItem,
     },
 })
-export default class StrataStructureEditor {
+export default class StrataStructureEditor extends Vue {
     get strata() {
-        return this.state.annealConfig.strata;
+        return S.state.strataConfig.strata;
     }
 
     get subgroupButtonEnabled() {
@@ -72,9 +74,9 @@ export default class StrataStructureEditor {
         const parentStratum = this.strata[this.strata.length - 1];
         const parentStratumId = parentStratum !== undefined ? parentStratum._id : "_GLOBAL";
 
-        const newStratum = Stratum.Init(stratumLabel, stratumSize, parentStratumId);
+        const newStratum = Stratum.init(stratumLabel, stratumSize, parentStratumId);
 
-        await this.$store.dispatch("upsertStratum", newStratum);
+        await S.dispatch("upsertStratum", newStratum);
     }
 
     isStratumDeletable(i: number) {
@@ -86,27 +88,22 @@ export default class StrataStructureEditor {
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return this.state.recordData.partitionColumn !== undefined;
+        return S.state.recordData.partitionColumn !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const partitionColumn = this.state.recordData.partitionColumn;
+        const partitionColumn = S.state.recordData.partitionColumn;
 
         if (partitionColumn === undefined) {
             throw new Error("No partition column set");
         }
 
         const shimLabel = `Partition (${partitionColumn.label})`;
-        const shimSize = {
-            min: 0,
-            ideal: 0,
-            max: 0,
-        };
 
-        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
+        return Stratum.init(shimLabel);
     }
 }
 </script>

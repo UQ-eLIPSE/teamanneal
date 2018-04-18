@@ -22,7 +22,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import { Stratum, Data as IStratum } from "../data/Stratum";
 import { Partition } from "../data/Partition";
@@ -36,7 +36,7 @@ import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
         ConstraintsEditorStratum,
     },
 })
-export default class ConstraintsEditor {
+export default class ConstraintsEditor extends Vue {
     get strata() {
         return this.state.annealConfig.strata;
     }

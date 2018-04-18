@@ -38,8 +38,9 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 import { FlattenedTreeItem } from "../data/SpreadsheetTreeView";
-import { Data as IState } from "../data/State";
 import { Data as IConstraint } from "../data/Constraint";
+
+import { AnnealCreator as S } from "../store";
 
 @Component
 export default class SpreadsheetTreeViewItem extends Vue {
@@ -49,10 +50,6 @@ export default class SpreadsheetTreeViewItem extends Vue {
 
     get itemDepth() {
         return this.item.depth;
-    }
-
-    get state() {
-        return this.$store.state as IState;
     }
 
     get itemContent() {
@@ -92,7 +89,7 @@ export default class SpreadsheetTreeViewItem extends Vue {
         const constraintIdToConstraintObjectMap: { [key: string]: IConstraint } = {};
 
         // Create a map from constraintId:{constraint object from state} to avoid iterations for every constraint for current SpreadsheetTreeViewItem
-        this.state.annealConfig.constraints.forEach((constraint) => {
+        S.state.constraintConfig.constraints.forEach((constraint) => {
             constraintIdToConstraintObjectMap[constraint._id] = constraint;
         });
 

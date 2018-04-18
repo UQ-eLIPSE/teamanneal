@@ -470,7 +470,7 @@ XMLHttpRequest {
     }
 
     get combinedNameFormat() {
-        let combinedNameFormat = this.state.annealConfig.namingConfig.combined.format;
+        let combinedNameFormat = S.state.nodeNamingConfig.combined.format;
 
         if (combinedNameFormat === undefined) {
             return undefined;

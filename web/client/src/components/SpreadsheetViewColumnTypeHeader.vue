@@ -2,7 +2,7 @@
     <th :class="tableHeaderClasses">
         <span class="cell-content">{{ column.label }}</span>
         <br>
-        <select class="column-type"
+        <select ref="column-type"
                 title="Select a column type"
                 v-model="columnType">
             <option value="string">text</option>
@@ -20,6 +20,8 @@ import { deepCopy, deepMerge } from "../util/Object";
 
 import { Data as IColumnData } from "../data/ColumnData";
 
+import { AnnealCreator as S } from "../store";
+
 @Component
 export default class SpreadsheetViewColumnTypeHeader extends Vue {
     // Props
@@ -31,13 +33,13 @@ export default class SpreadsheetViewColumnTypeHeader extends Vue {
     }
 
     set columnType(newColumnType: "number" | "string") {
-        const selectElement = this.$el.getElementsByClassName("column-type")[0] as HTMLSelectElement;
+        const selectElement = this.$refs["column-type"] as HTMLSelectElement;
 
         const newColumnData = deepMerge(deepCopy(this.column), {
             type: newColumnType,
         });
 
-        this.$store.dispatch("updateColumnData", newColumnData)
+        S.dispatch(S.action.UPDATE_RECORD_COLUMN_DATA, newColumnData)
             .then(() => {
                 // There is an issue with keeping the <select> element in sync
                 // with the store value when the updates don't go through

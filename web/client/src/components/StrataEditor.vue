@@ -53,9 +53,13 @@ import { Component } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
-import { Stratum, Data as IStratum } from "../data/Stratum";
 import { ColumnData } from "../data/ColumnData";
-import { Partition } from "../data/Partition";
+import * as Stratum from "../data/Stratum";
+import * as StratumSize from "../data/StratumSize";
+import * as StratumNamingConfig from "../data/StratumNamingConfig";
+import * as Partition from "../data/Partition";
+
+import { AnnealCreator as S } from "../store";
 
 import { concat } from "../util/Array";
 import { replaceAll } from "../util/String";
@@ -67,15 +71,15 @@ import { replaceAll } from "../util/String";
 })
 export default class StrataEditor {
     get columns() {
-        return this.state.recordData.columns;
+        return S.state.recordData.columns;
     }
 
     get strata() {
-        return this.state.annealConfig.strata;
+        return S.state.strataConfig.strata;
     }
 
     get partitionColumn() {
-        const partitionColumnDesc = this.state.recordData.partitionColumn;
+        const partitionColumnDesc = S.state.recordData.partitionColumn;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -88,27 +92,22 @@ export default class StrataEditor {
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return this.state.recordData.partitionColumn !== undefined;
+        return S.state.recordData.partitionColumn !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const partitionColumn = this.state.recordData.partitionColumn;
+        const partitionColumn = S.state.recordData.partitionColumn;
 
         if (partitionColumn === undefined) {
             throw new Error("No partition column set");
         }
 
         const shimLabel = `Partition (${partitionColumn.label})`;
-        const shimSize = {
-            min: 0,
-            ideal: 0,
-            max: 0,
-        };
 
-        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
+        return Stratum.init(shimLabel);
     }
 
     /**
@@ -117,10 +116,10 @@ export default class StrataEditor {
      */
     get strataGroupDistribution() {
         const strata = this.strata;
-        const columns = this.state.recordData.columns;
-        const partitionColumnDescriptor = this.state.recordData.partitionColumn;
+        const columns = S.state.recordData.columns;
+        const partitionColumnDescriptor = S.state.recordData.partitionColumn;
 
-        const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
         // Run group sizing in each partition, and merge the distributions at
         // the end
@@ -129,8 +128,8 @@ export default class StrataEditor {
                 partitions
                     .map((partition) => {
                         // Generate group sizes for each partition
-                        const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
-                        return Stratum.GenerateStrataGroupSizes(strata, numberOfRecordsInPartition);
+                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                        return StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
                     })
                     .reduce((carry, incomingDistribution) => {
                         // Merge strata group size distribution arrays
@@ -169,8 +168,8 @@ export default class StrataEditor {
     get strataNamingContexts() {
         const strata = this.strata;
 
-        const accumulatedStrata: IStratum[] = [];
-        const outputList: IStratum[][] = [];
+        const accumulatedStrata: Stratum.Stratum[] = [];
+        const outputList: Stratum.Stratum[][] = [];
 
         strata.forEach((stratum) => {
             // Copy the accumulated strata array into the output list
@@ -205,7 +204,7 @@ export default class StrataEditor {
     }
 
     get groupCombinedNameExample() {
-        let combinedName = this.state.annealConfig.namingConfig.combined.format;
+        let combinedName = S.state.nodeNamingConfig.combined.format;
 
         if (combinedName === undefined) {
             return undefined;
@@ -222,7 +221,7 @@ export default class StrataEditor {
 
         // Set stratum names
         this.strata.forEach((stratum) => {
-            const randomStratumName = Stratum.GenerateRandomExampleName(stratum);
+            const randomStratumName = StratumNamingConfig.generateRandomExampleName(stratum);
 
             combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
         });
@@ -231,7 +230,7 @@ export default class StrataEditor {
     }
 
     get groupCombinedNameFormat() {
-        let format = this.state.annealConfig.namingConfig.combined.format;
+        let format = S.state.nodeNamingConfig.combined.format;
 
         if (format === undefined) {
             return undefined;
@@ -250,7 +249,7 @@ export default class StrataEditor {
 
     set groupCombinedNameFormat(newValue: string | undefined) {
         if (newValue === undefined || newValue.trim().length === 0) {
-            this.$store.dispatch("setCombinedNameFormatByUser", undefined);
+            S.dispatch(S.action.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, undefined);
             return;
         }
 
@@ -262,7 +261,7 @@ export default class StrataEditor {
         // Internally we use _PARTITION to represent the partition column
         newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
 
-        this.$store.dispatch("setCombinedNameFormatByUser", newValue);
+        S.dispatch(S.action.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, newValue);
     }
 }
 </script>
