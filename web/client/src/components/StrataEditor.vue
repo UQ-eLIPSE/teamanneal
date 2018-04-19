@@ -20,7 +20,9 @@
                 </li>
             </ul>
         </div>
-        <div class="combined-name-container">
+        <!-- NOTE: Combined names disabled due to new GroupNodes not being compatible with it -->
+        <!-- TODO: Re-enable combined names once this issue is fixed -->
+        <!-- <div class="combined-name-container">
             <h2>Combined group name format</h2>
             <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
             <p>Use the following placeholders to insert each group level's name values:</p>
@@ -44,7 +46,7 @@
                 For example:
                 <i>{{ groupCombinedNameExample }}</i>
             </p>
-        </div>
+        </div> -->
     </div>
 </template>
 
