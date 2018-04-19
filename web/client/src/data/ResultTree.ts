@@ -1,7 +1,6 @@
 import * as Record from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
-import { Stratum } from "./Stratum";
 import { Data as IColumnData } from "./ColumnData";
 import { getStratumNamingConfig } from "./StratumNamingConfig";
 import { StrataConfig } from "./StrataConfig";

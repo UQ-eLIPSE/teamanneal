@@ -34,7 +34,8 @@ export enum AnnealCreatorMutation {
     CLEAR_STRATA = "Clearing strata",
 
     INIT_STRATA_NAMING_CONFIG = "Initialising strata naming config",
-
+    SET_STRATA_NAMING_CONFIG = "Setting strata naming config",
+    
     SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
     SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
     SET_STRATUM_NAMING_CONFIG_COUNTER = "Setting stratum's naming config counter",
@@ -110,6 +111,10 @@ const mutations = {
 
     [M.INIT_STRATA_NAMING_CONFIG](state: State) {
         set(state.strataConfig, "namingConfig", {});
+    },
+
+    [M.SET_STRATA_NAMING_CONFIG](state: State, stratumNamingConfig: Record<string, StratumNamingConfig>) {
+        set(state.strataConfig, "namingConfig", stratumNamingConfig);
     },
 
     [M.SET_STRATUM_NAMING_CONFIG](state: State, { stratumId, namingConfig }: { stratumId: string, namingConfig: StratumNamingConfig }) {

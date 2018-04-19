@@ -1,6 +1,6 @@
 import { DeepPartial } from "../data/DeepPartial";
 
-export function deepCopy<T extends Object>(object: T): T {
+export function deepCopy<T extends object>(object: T): T {
     return JSON.parse(JSON.stringify(object));
 }
 
@@ -53,4 +53,30 @@ export function deepClean<T extends Object>(target: T, definition: Object) {
             deepClean(v, (definition as any)[key]);
         }
     }
+}
+
+function replacerWithUndefined(_key: string, value: any) {
+    if (value === undefined) {
+        // Placeholder object that indicates `undefined`
+        return { __undefined__: true };
+    }
+
+    return value;
+}
+
+function reviverWithUndefined(_key: any, value: any) {
+    // `undefined` placeholder is an object with `__undefined__` property = true
+    if (typeof value === "object" && value !== null && value.__undefined__ === true) {
+        return undefined;
+    }
+
+    return value;
+}
+
+export function serialiseWithUndefined<T extends object>(object: T) {
+    return JSON.stringify(object, replacerWithUndefined);
+}
+
+export function deserialiseWithUndefined<T extends object>(serialisedObject: string): T {
+    return JSON.parse(serialisedObject, reviverWithUndefined)
 }

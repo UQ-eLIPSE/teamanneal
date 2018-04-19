@@ -3,6 +3,8 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 import { ResultsEditorState as State } from "./state";
 import { ResultsEditorMutation as M, commit } from "./mutation";
 
+import { State as AnnealCreatorState } from "../AnnealCreator";
+
 import { RecordData } from "../../data/RecordData";
 import { GroupNode } from "../../data/GroupNode";
 import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
@@ -14,6 +16,9 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { RecordElement } from "../../../../common/Record";
 
+import { deserialiseWithUndefined, serialiseWithUndefined } from "../../util/Object";
+import { generateGroupNodeCompatibleData } from "../AnnealCreator/state";
+
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
 type Context = ActionContext<State, State>;
@@ -21,6 +26,8 @@ type Context = ActionContext<State, State>;
 export enum ResultsEditorAction {
     HYDRATE = "Hydrating module",
     DEHYDRATE = "Dehydrating module",
+
+    HYDRATE_FROM_ANNEAL_CREATOR_STATE = "Hydrating from dehydrated AnnealCreator state",
 
     RESET_STATE = "Resetting state",
 
@@ -63,11 +70,18 @@ function dispatch<A extends ResultsEditorAction, F extends ActionFunction<A>>(co
 /** Store action functions */
 const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
-        const state = JSON.parse(dehydratedState) as State;
+        const state = deserialiseWithUndefined<State>(dehydratedState);
+
+        await dispatch(context, A.RESET_STATE, undefined);
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
-        // TODO: Constraint config hydration
+
+        for (let constraint of state.constraintConfig.constraints) {
+            commit(context, M.INSERT_CONSTRAINT, constraint);
+        }
+
         await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
+
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
@@ -80,7 +94,28 @@ const actions = {
     },
 
     async [A.DEHYDRATE](context: Context) {
-        return JSON.stringify(context.state);
+        return serialiseWithUndefined(context.state);
+    },
+
+    async [A.HYDRATE_FROM_ANNEAL_CREATOR_STATE](context: Context, dehydratedState: string) {
+        const annealCreatorState = deserialiseWithUndefined<AnnealCreatorState>(dehydratedState);
+
+        // Generate names from the data in the AnnealCreator state
+        const { roots, nameMap, nodeRecordArrayMap } = generateGroupNodeCompatibleData(annealCreatorState);
+
+        await dispatch(context, A.RESET_STATE, undefined);
+
+        await dispatch(context, A.SET_RECORD_DATA, annealCreatorState.recordData);
+
+        for (let constraint of annealCreatorState.constraintConfig.constraints) {
+            commit(context, M.INSERT_CONSTRAINT, constraint);
+        }
+
+        await dispatch(context, A.SET_STRATA, annealCreatorState.strataConfig.strata);
+
+        await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
+        await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
+        await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
     },
 
     async [A.RESET_STATE](context: Context) {
@@ -90,6 +125,7 @@ const actions = {
         commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
         commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
         commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
+        await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {

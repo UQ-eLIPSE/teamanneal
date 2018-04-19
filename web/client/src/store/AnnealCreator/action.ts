@@ -18,6 +18,7 @@ import { AnnealResponse } from "../../data/AnnealResponse";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
 
 import { replaceAll } from "../../util/String";
+import { serialiseWithUndefined, deserialiseWithUndefined } from "../../util/Object";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
@@ -84,33 +85,54 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 
 /** Store action functions */
 const actions = {
-    async [A.HYDRATE](_context: Context, _dehydratedState: string) {
-        throw new Error("Not implemented");
+    async [A.HYDRATE](context: Context, dehydratedState: string) {
+        const state = deserialiseWithUndefined<State>(dehydratedState);
 
-        // const state = JSON.parse(dehydratedState) as AnnealCreatorState;
+        await dispatch(context, A.RESET_STATE, undefined);
 
-        // await dispatch(context, A.SET_RECORD_DATA, state.recordData);
-        // // TODO: Constraint config hydration
-        // await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
-        // await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
-        // await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
-        // await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
+        // Record data
+        await dispatch(context, A.SET_RECORD_DATA, state.recordData);
 
-        // if (state.sideToolArea.activeItem !== undefined) {
-        //     await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
-        // } else {
-        //     await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
-        // }
+        // Constraints config -> constraints
+        for (let constraint of state.constraintConfig.constraints) {
+            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
+        }
+
+        // Strata config -> strata
+        for (let stratum of state.strataConfig.strata) {
+            await dispatch(context, A.UPSERT_STRATUM, stratum);
+        }
+
+        // Strata config -> naming config
+        const stratumNamingConfig = state.strataConfig.namingConfig;
+        if (stratumNamingConfig) {
+            commit(context, M.SET_STRATA_NAMING_CONFIG, stratumNamingConfig);
+        } else {
+            commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
+        }
+
+        // Node naming config -> combined name config
+        const combinedNameConfig = state.nodeNamingConfig.combined;
+        if (combinedNameConfig.format) {
+            await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, combinedNameConfig.format);
+        } else {
+            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+        }
+        commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, combinedNameConfig.userProvided);
+
+        // Anneal request state
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
     },
 
     async [A.DEHYDRATE](context: Context) {
-        return JSON.stringify(context.state);
+        return serialiseWithUndefined(context.state);
     },
 
     async [A.RESET_STATE](context: Context) {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },

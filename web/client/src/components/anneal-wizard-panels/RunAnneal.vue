@@ -4,7 +4,7 @@
         <template v-if="annealIsNotRunning">
             <div class="wizard-panel-content">
                 <h1>Ready to anneal</h1>
-                <p>[Message]</p>
+                <p>[TODO: Message]</p>
             </div>
             <div class="wizard-panel-bottom-buttons">
                 <button class="button"
@@ -27,7 +27,7 @@
         <template v-if="annealResponseIsSuccess">
             <div class="wizard-panel-content">
                 <h1>Anneal successful</h1>
-                <p>[Message]</p>
+                <p>[TODO: Message]</p>
                 <p>If you would like to perform another anneal, click "Retry anneal".</p>
             </div>
             <div class="wizard-panel-bottom-buttons">
@@ -54,7 +54,6 @@
                     <li>Add or remove constraints so that TeamAnneal can arrange groups in a convergent manner</li>
                     <li>If the error relates to the network request, check that you have an active network connection and try again</li>
                 </ul>
-                <p>Once you have adjusted the anneal configuration, click "Retry anneal".</p>
                 <p>If you continue to encounter issues,
                     <a href="https://www.elipse.uq.edu.au/"
                        target="_blank">contact eLIPSE</a>.</p>
@@ -72,30 +71,12 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-// import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
-// import * as AnnealNode from "../../../../common/AnnealNode";
-
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-// import { ColumnData } from "../../data/ColumnData";
-// import { ResultTree } from "../../data/ResultTree";
-// import { State } from "../../data/State";
-// import { Stratum } from "../../data/Stratum";
-// import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
-// import { GroupNode } from "../../data/GroupNode";
-// import { GroupNodeRoot } from "../../data/GroupNodeRoot";
-// import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
-// import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
-// import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
-// import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
 import * as AnnealResponse from "../../data/AnnealResponse";
 import * as AnnealRequest from "../../data/AnnealRequest";
 
-import { AnnealCreator as S } from "../../store";
-
-// import { unparseFile } from "../../util/CSV";
-// import { replaceAll } from "../../util/String";
-// import { deepCopy } from "../../util/Object";
+import { AnnealCreator as S, ResultsEditor } from "../../store";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -107,97 +88,6 @@ export default class RunAnneal extends Mixin(AnnealProcessWizardPanel) {
 
     /** Holds an ongoing anneal request if running */
     p_annealRequest: AnnealRequest.AnnealRequest | undefined = undefined;
-
-    // async onEditResultButtonClick() {
-    //     // TODO: This state data copying process will need to be reviewed when
-    //     // state (de)hydration is properly implemented; currently this just does
-    //     // a straight copy which is not optimal
-
-    //     // TODO: Not everything is being copied at the moment
-
-
-    //     // Copy over record data
-    //     const recordData = S.state.recordData;
-    //     // TODO: Use a better, more structured copy than a straight JSON copy
-    //     const recordDataCopy = deepCopy(recordData);
-    //     await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
-
-    //     // Copy over strata
-    //     const strata = this.strata;
-    //     // TODO: Use a better, more structured copy than a straight JSON copy
-    //     const strataCopy = deepCopy(strata);
-    //     await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_STRATA, strataCopy);
-
-    //     // Copy over group nodes
-    //     //
-    //     // This is a lot more involved because the old state and module state
-    //     // use different representations, and names are now stored in a concrete
-    //     // object rather than generated on-the-fly
-
-    //     // Walk the tree and decompose data
-    //     const nameMap = this.nameMap;
-    //     const newRoots: GroupNodeRoot[] = [];
-    //     const newNameMap: GroupNodeNameMap = {};
-    //     const newNodeRecordArrayMap: GroupNodeRecordArrayMap = {};
-
-    //     const walkAnnealTreeAndTransform = (node: AnnealNode.Node): GroupNode => {
-    //         const nodeId = node._id;
-    //         const nameInfo = nameMap.get(node)!;
-
-    //         switch (node.type) {
-    //             case "root": {
-    //                 const newRoot: GroupNodeRoot = {
-    //                     _id: nodeId,
-    //                     type: "root",
-    //                     children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
-    //                 };
-
-    //                 // Push root, name
-    //                 newRoots.push(newRoot);
-    //                 newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
-
-    //                 return newRoot;
-    //             }
-
-    //             case "stratum-stratum": {
-    //                 const newIntStrNode: GroupNodeIntermediateStratum = {
-    //                     _id: nodeId,
-    //                     type: "intermediate-stratum",
-    //                     children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
-    //                 };
-
-    //                 // Push name
-    //                 newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
-
-    //                 return newIntStrNode;
-    //             }
-
-    //             case "stratum-records": {
-    //                 const newLeafStrNode: GroupNodeLeafStratum = {
-    //                     _id: nodeId,
-    //                     type: "leaf-stratum",
-    //                 };
-
-    //                 // Push name, records
-    //                 newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
-    //                 newNodeRecordArrayMap[nodeId] = [...node.recordIds];
-
-    //                 return newLeafStrNode;
-    //             }
-    //         }
-    //     }
-
-    //     this.annealNodeRoots.forEach(walkAnnealTreeAndTransform);
-
-    //     await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_STRUCTURE, { roots: newRoots });
-    //     await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_NAME_MAP, newNameMap);
-    //     await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_RECORD_ARRAY_MAP, newNodeRecordArrayMap);
-
-    //     // Go to results editor
-    //     this.$router.push({
-    //         name: "results-editor",
-    //     });
-    // }
 
     get annealRequestState() {
         return S.state.annealRequest;
@@ -301,34 +191,6 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    // get annealResults() {
-    //     const responseContent = this.state.annealResponse!.content as AxiosResponse;
-    //     const responseData = responseContent.data as ToClientAnnealResponse.Root;
-
-    //     // We're working on the presumption that we definitely have results
-    //     return responseData.results!;
-    // }
-
-    // get annealNodeRoots() {
-    //     return this.annealResults.map(res => res.result!.tree);
-    // }
-
-    // get annealSatisfactionMap() {
-    //     return this.annealResults
-    //         .map(res => res.result!.satisfaction)
-    //         .reduce((carry, sMap) => Object.assign(carry, sMap), {});
-    // }
-
-    // get combinedNameFormat() {
-    //     let combinedNameFormat = S.state.nodeNamingConfig.combined.format;
-
-    //     if (combinedNameFormat === undefined) {
-    //         return undefined;
-    //     }
-
-    //     return combinedNameFormat;
-    // }
-
     get annealIsNotRunning() {
         return AnnealRequestState.isNotRunning(this.annealRequestState);
     }
@@ -393,8 +255,17 @@ XMLHttpRequest {
         await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
     }
 
-    onViewResultsButtonClick() {
-        // Transfer to editor
+    async onViewResultsButtonClick() {
+        // Export first
+        const annealCreatorState = await S.dispatch(S.action.DEHYDRATE, undefined);
+
+        // Import to ResultsEditor
+        await ResultsEditor.dispatch(ResultsEditor.action.HYDRATE_FROM_ANNEAL_CREATOR_STATE, annealCreatorState);
+
+        // Move to ResultsEditor
+        this.$router.push({
+            name: "results-editor",
+        });
     }
 
     onRetryAnnealButtonClick() {

@@ -7,18 +7,18 @@ import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse"
 export type AnnealResponse =
     Readonly<AnnealResponse_ContentSuccess | AnnealResponse_ContentError | AnnealResponse_Cancelled>;
 
-interface AnnealResponse_ContentSuccess {
+export interface AnnealResponse_ContentSuccess {
     type: "success",
     status: number,
     data?: DeepReadonly<ToClientAnnealResponse.Root>,
 }
 
-interface AnnealResponse_ContentError {
+export interface AnnealResponse_ContentError {
     type: "error",
     error: AxiosError | Error,
 }
 
-interface AnnealResponse_Cancelled {
+export interface AnnealResponse_Cancelled {
     type: "cancelled",
     message?: any,
 }
