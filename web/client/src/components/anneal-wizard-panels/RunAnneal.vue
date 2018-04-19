@@ -252,9 +252,6 @@ XMLHttpRequest {
         }
 
         AnnealRequest.cancel(annealRequest);
-
-        // Update state to "not-running"
-        await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
     }
 
     async onViewResultsButtonClick() {
