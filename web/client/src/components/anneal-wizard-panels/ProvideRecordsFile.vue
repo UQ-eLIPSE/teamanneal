@@ -46,7 +46,7 @@
             </label>
             <button class="button"
                     @click="emitWizardNavNext"
-                    v-if="isFileSetInStore">Use "{{state.recordData.source.name}}"</button>
+                    v-if="isFileSetInStore">Use "{{ filename }}"</button>
             <button class="button gold"
                     @click="clearFile"
                     v-if="isFileSetInStore">Clear file</button>
@@ -72,16 +72,20 @@ export default class ProvideRecordsFile extends Mixin(AnnealProcessWizardPanel) 
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
+    get filename() {
+        return S.state.recordData.source.name;
+    }
+
+    get isFileSetInStore() {
+        return S.get(S.getter.HAS_SOURCE_FILE_DATA);
+    }
+
     async clearFile() {
         await S.dispatch(S.action.CLEAR_RECORD_DATA, undefined);
     }
 
     openFilePicker() {
         (this.$refs["load-file-input"] as HTMLInputElement).click();
-    }
-
-    get isFileSetInStore() {
-        return S.get(S.getter.HAS_SOURCE_FILE_DATA);
     }
 
     async onFileInputChanged($event: Event) {

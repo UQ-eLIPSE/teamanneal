@@ -6,8 +6,8 @@ type DeepPartialValue<V> =
     // Recursive Partial<T> for objects
     V extends object ? DeepPartial<V> :
 
-    // Otherwise we have a primitive and return just its type at the end
-    V;
+    // Otherwise
+    Partial<V>;
 
 export type DeepPartial<T> = {
     [P in keyof T]?: DeepPartialValue<T[P]>;

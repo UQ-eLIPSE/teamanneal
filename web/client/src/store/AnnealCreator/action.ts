@@ -1,6 +1,6 @@
 import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
-import { AnnealCreatorState } from "./state";
+import { AnnealCreatorState as State } from "./state";
 import { AnnealCreatorMutation as M, commit } from "./mutation";
 
 import { FunctionParam2 } from "../../data/FunctionParam2";
@@ -14,12 +14,14 @@ import { init as initStratumSize } from "../../data/StratumSize";
 import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
 import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../../data/StratumNamingConfigContext";
 import { ListCounterType } from "../../data/ListCounter";
+import { AnnealResponse } from "../../data/AnnealResponse";
+import * as AnnealRequestState from "../../data/AnnealRequestState";
 
 import { replaceAll } from "../../util/String";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
-type Context = ActionContext<AnnealCreatorState, AnnealCreatorState>;
+type Context = ActionContext<State, State>;
 
 export enum AnnealCreatorAction {
     HYDRATE = "Hydrating module",
@@ -56,6 +58,11 @@ export enum AnnealCreatorAction {
     CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER = "Clearing node naming combined name format and flagging it as being set by user",
 
     UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT = "Updating system generated node naming combined name format",
+
+    SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING = "Setting anneal request state to 'not running'",
+    SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
+    SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
+    CLEAR_ANNEAL_REQUEST_STATE = "Clearing anneal request state",
 }
 
 /** Shorthand for Action enum above */
@@ -104,6 +111,8 @@ const actions = {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {
@@ -120,12 +129,17 @@ const actions = {
         const genericStratum = initStratum(stratumLabel, stratumSize);
 
         await dispatch(context, A.UPSERT_STRATUM, genericStratum);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_RECORD_DATA](context: Context) {
+
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.UPSERT_STRATUM](context: Context, stratum: Stratum) {
@@ -146,6 +160,8 @@ const actions = {
         }
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.DELETE_STRATUM_CONFIRM_SIDE_EFFECT](context: Context, stratum: Stratum) {
@@ -205,27 +221,37 @@ const actions = {
         }
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT](context: Context) {
         if (context.state.strataConfig.namingConfig === undefined) {
             commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
         }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_STRATUM_NAMING_CONFIG](context: Context, { stratum, namingConfig }: { stratum: Stratum, namingConfig: StratumNamingConfig }) {
         await dispatch(context, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
         commit(context, M.SET_STRATUM_NAMING_CONFIG, { stratumId: stratum._id, namingConfig });
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_STRATUM_NAMING_CONFIG_CONTEXT](stateContext: Context, { stratum, context }: { stratum: Stratum, context: StratumNamingConfigContext }) {
         await dispatch(stateContext, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
         commit(stateContext, M.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratumId: stratum._id, context });
+
+        await dispatch(stateContext, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
-    async [A.SET_STRATUM_NAMING_CONFIG_COUNTER](stateContext: Context, { stratum, counter }: { stratum: Stratum, counter: ListCounterType | string[] }) {
-        await dispatch(stateContext, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
-        commit(stateContext, M.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratumId: stratum._id, counter });
+    async [A.SET_STRATUM_NAMING_CONFIG_COUNTER](context: Context, { stratum, counter }: { stratum: Stratum, counter: ListCounterType | string[] }) {
+        await dispatch(context, A.INIT_STRATA_NAMING_CONFIG_IF_NOT_PRESENT, undefined);
+        commit(context, M.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratumId: stratum._id, counter });
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.UPSERT_CONSTRAINT](context: Context, constraint: IConstraint) {
@@ -236,17 +262,21 @@ const actions = {
 
         if (index > -1) {
             // Update
-            return commit(context, M.SET_CONSTRAINT, { constraint, index });
+            commit(context, M.SET_CONSTRAINT, { constraint, index });
         } else {
             // Insert
-            return commit(context, M.INSERT_CONSTRAINT, constraint);
+            commit(context, M.INSERT_CONSTRAINT, constraint);
         }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.DELETE_CONSTRAINT](context: Context, constraint: IConstraint) {
         // Find index of constraint and delete that one
         const index = context.state.constraintConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
         commit(context, M.DELETE_CONSTRAINT, index);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.UPDATE_RECORD_COLUMN_DATA](context: Context, column: IColumnData) {
@@ -268,20 +298,28 @@ Delete constraints that use this column and try again.`;
         // Find index of column and update it
         const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
         commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_RECORD_ID_COLUMN](context: Context, idColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_ID_COLUMN, idColumn);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_RECORD_ID_COLUMN](context: Context) {
         commit(context, M.CLEAR_RECORD_ID_COLUMN, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_PARTITION_COLUMN, partitionColumn);
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_RECORD_PARTITION_COLUMN](context: Context) {
@@ -297,20 +335,25 @@ Delete constraints that use this column and try again.`;
                 });
             }
         }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context, nameFormat: string) {
         // If input is effectively blank, then set as undefined
         if (nameFormat.trim().length === 0) {
-            dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-            return;
+            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+        } else {
+            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
         }
 
-        commit(context, M.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
         commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context, nameFormat: string) {
@@ -320,6 +363,8 @@ Delete constraints that use this column and try again.`;
         if (!context.state.nodeNamingConfig.combined.userProvided) {
             commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
         }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context) {
@@ -329,6 +374,8 @@ Delete constraints that use this column and try again.`;
         if (!context.state.nodeNamingConfig.combined.userProvided) {
             commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
         }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
@@ -354,9 +401,29 @@ Delete constraints that use this column and try again.`;
         const nameFormat = `Team ${nameItems.join("-")}`;
 
         await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
+
+    async [A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING](context: Context) {
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initNotRunning());
+    },
+
+    async [A.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS](context: Context) {
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initInProgress());
+    },
+
+    async [A.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED](context: Context, response: AnnealResponse) {
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initCompleted(response));
+    },
+
+    async [A.CLEAR_ANNEAL_REQUEST_STATE](context: Context) {
+        if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
+            await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
+        }
+    }
 };
 
 export function init() {
-    return actions as ActionTree<AnnealCreatorState, AnnealCreatorState>;
+    return actions as ActionTree<State, State>;
 }

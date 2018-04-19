@@ -1,6 +1,6 @@
 import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
-import { ResultsEditorState } from "./state";
+import { ResultsEditorState as State } from "./state";
 import { ResultsEditorMutation as M, commit } from "./mutation";
 
 import { RecordData } from "../../data/RecordData";
@@ -16,7 +16,7 @@ import { RecordElement } from "../../../../common/Record";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
-type Context = ActionContext<ResultsEditorState, ResultsEditorState>;
+type Context = ActionContext<State, State>;
 
 export enum ResultsEditorAction {
     HYDRATE = "Hydrating module",
@@ -63,7 +63,7 @@ function dispatch<A extends ResultsEditorAction, F extends ActionFunction<A>>(co
 /** Store action functions */
 const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
-        const state = JSON.parse(dehydratedState) as ResultsEditorState;
+        const state = JSON.parse(dehydratedState) as State;
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
         // TODO: Constraint config hydration
@@ -146,5 +146,5 @@ const actions = {
 };
 
 export function init() {
-    return actions as ActionTree<ResultsEditorState, ResultsEditorState>;
+    return actions as ActionTree<State, State>;
 }

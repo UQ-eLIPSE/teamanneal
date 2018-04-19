@@ -1,8 +1,9 @@
-import { Store } from "vuex";
+import { Store, GetterTree } from "vuex";
 import { AnnealCreatorState as State } from "./state";
 
 import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
+import * as AnnealRequestState from "../../data/AnnealRequestState";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -14,6 +15,7 @@ export enum AnnealCreatorGetter {
     HAS_CONSTRAINTS,
     IS_STRATA_CONFIG_NAMES_VALID,
     IS_STRATA_CONFIG_SIZES_VALID,
+    IS_ANNEAL_REQUEST_IN_PROGRESS,
 }
 
 /** Shorthand for Getter enum above */
@@ -128,4 +130,12 @@ const getters = {
         // Otherwise we're good to go
         return true;
     },
+
+    [G.IS_ANNEAL_REQUEST_IN_PROGRESS](state: State) {
+        return AnnealRequestState.isInProgress(state.annealRequest);
+    }
+}
+
+export function init() {
+    return getters as GetterTree<State, State>;
 }

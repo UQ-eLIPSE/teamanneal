@@ -1,7 +1,7 @@
 import { MutationTree, ActionContext, CommitOptions } from "vuex";
 import { set, del } from "../../util/Vue";
 
-import { AnnealCreatorState } from "./state";
+import { AnnealCreatorState as State } from "./state";
 
 import { Data as Constraint } from "../../data/Constraint";
 import { Stratum } from "../../data/Stratum";
@@ -13,10 +13,11 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import { StratumNamingConfigContext } from "../../data/StratumNamingConfigContext";
 import { StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
 import { ListCounterType } from "../../data/ListCounter";
+import { AnnealRequestState } from "../../data/AnnealRequestState";
 
 type MutationFunction<M extends AnnealCreatorMutation> = typeof mutations[M];
 
-type Context = ActionContext<AnnealCreatorState, AnnealCreatorState>;
+type Context = ActionContext<State, State>;
 
 export enum AnnealCreatorMutation {
     SET_RECORD_DATA = "Setting record data",
@@ -53,6 +54,8 @@ export enum AnnealCreatorMutation {
     CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT = "Clearing node naming combined name format",
 
     SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG = "Setting node naming combined name's user provided flag",
+
+    SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
 }
 
 /** Shorthand for Mutation enum above */
@@ -65,51 +68,51 @@ export function commit<M extends AnnealCreatorMutation, F extends MutationFuncti
 
 /** Store mutation functions */
 const mutations = {
-    [M.SET_RECORD_DATA](state: AnnealCreatorState, recordData: RecordData) {
+    [M.SET_RECORD_DATA](state: State, recordData: RecordData) {
         set(state, "recordData", recordData);
     },
 
-    [M.CLEAR_RECORD_DATA](state: AnnealCreatorState) {
+    [M.CLEAR_RECORD_DATA](state: State) {
         set(state, "recordData", initRecordData());
     },
 
-    [M.INSERT_CONSTRAINT](state: AnnealCreatorState, constraint: Constraint) {
+    [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
 
-    [M.SET_CONSTRAINT](state: AnnealCreatorState, { constraint, index }: { constraint: Constraint, index: number }) {
+    [M.SET_CONSTRAINT](state: State, { constraint, index }: { constraint: Constraint, index: number }) {
         set(state.constraintConfig.constraints, index, constraint);
     },
 
-    [M.DELETE_CONSTRAINT](state: AnnealCreatorState, index: number) {
+    [M.DELETE_CONSTRAINT](state: State, index: number) {
         del(state.constraintConfig.constraints, index);
     },
 
-    [M.CLEAR_CONSTRAINTS](state: AnnealCreatorState) {
+    [M.CLEAR_CONSTRAINTS](state: State) {
         set(state, "constraintConfig", initConstraintConfig());
     },
 
-    [M.INSERT_STRATUM](state: AnnealCreatorState, stratum: Stratum) {
+    [M.INSERT_STRATUM](state: State, stratum: Stratum) {
         state.strataConfig.strata.push(stratum);
     },
 
-    [M.SET_STRATUM](state: AnnealCreatorState, { stratum, index }: { stratum: Stratum, index: number }) {
+    [M.SET_STRATUM](state: State, { stratum, index }: { stratum: Stratum, index: number }) {
         set(state.strataConfig.strata, index, stratum);
     },
 
-    [M.DELETE_STRATUM](state: AnnealCreatorState, index: number) {
+    [M.DELETE_STRATUM](state: State, index: number) {
         del(state.strataConfig.strata, index);
     },
 
-    [M.CLEAR_STRATA](state: AnnealCreatorState) {
+    [M.CLEAR_STRATA](state: State) {
         set(state, "strataConfig", initStrataConfig());
     },
 
-    [M.INIT_STRATA_NAMING_CONFIG](state: AnnealCreatorState) {
+    [M.INIT_STRATA_NAMING_CONFIG](state: State) {
         set(state.strataConfig, "namingConfig", {});
     },
 
-    [M.SET_STRATUM_NAMING_CONFIG](state: AnnealCreatorState, { stratumId, namingConfig }: { stratumId: string, namingConfig: StratumNamingConfig }) {
+    [M.SET_STRATUM_NAMING_CONFIG](state: State, { stratumId, namingConfig }: { stratumId: string, namingConfig: StratumNamingConfig }) {
         const namingConfigStore = state.strataConfig.namingConfig;
 
         if (namingConfigStore === undefined) {
@@ -119,63 +122,67 @@ const mutations = {
         set(namingConfigStore, stratumId, namingConfig);
     },
 
-    [M.SET_STRATUM_NAMING_CONFIG_CONTEXT](state: AnnealCreatorState, { stratumId, context }: { stratumId: string, context: StratumNamingConfigContext }) {
+    [M.SET_STRATUM_NAMING_CONFIG_CONTEXT](state: State, { stratumId, context }: { stratumId: string, context: StratumNamingConfigContext }) {
         const stratumNamingConfig = getStratumNamingConfig(state.strataConfig, stratumId);
         set(stratumNamingConfig, "context", context);
     },
 
-    [M.SET_STRATUM_NAMING_CONFIG_COUNTER](state: AnnealCreatorState, { stratumId, counter }: { stratumId: string, counter: ListCounterType | string[] }) {
+    [M.SET_STRATUM_NAMING_CONFIG_COUNTER](state: State, { stratumId, counter }: { stratumId: string, counter: ListCounterType | string[] }) {
         const stratumNamingConfig = getStratumNamingConfig(state.strataConfig, stratumId);
         set(stratumNamingConfig, "counter", counter);
     },
 
-    [M.INSERT_RECORD_COLUMN_DATA](state: AnnealCreatorState, column: IColumnData) {
+    [M.INSERT_RECORD_COLUMN_DATA](state: State, column: IColumnData) {
         state.recordData.columns.push(column);
     },
 
-    [M.SET_RECORD_COLUMN_DATA](state: AnnealCreatorState, { column, index }: { column: IColumnData, index: number }) {
+    [M.SET_RECORD_COLUMN_DATA](state: State, { column, index }: { column: IColumnData, index: number }) {
         set(state.recordData.columns, index, column);
     },
 
-    [M.DELETE_RECORD_COLUMN_DATA](state: AnnealCreatorState, index: number) {
+    [M.DELETE_RECORD_COLUMN_DATA](state: State, index: number) {
         del(state.recordData.columns, index);
     },
 
-    [M.CLEAR_RECORD_COLUMN_DATA](state: AnnealCreatorState) {
+    [M.CLEAR_RECORD_COLUMN_DATA](state: State) {
         set(state.recordData, "columns", []);
     },
 
-    [M.SET_RECORD_ID_COLUMN](state: AnnealCreatorState, idColumn: IColumnData_MinimalDescriptor) {
+    [M.SET_RECORD_ID_COLUMN](state: State, idColumn: IColumnData_MinimalDescriptor) {
         const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(idColumn);
         set(state.recordData, "idColumn", minimalDescriptor);
     },
 
-    [M.CLEAR_RECORD_ID_COLUMN](state: AnnealCreatorState) {
+    [M.CLEAR_RECORD_ID_COLUMN](state: State) {
         set(state.recordData, "idColumn", undefined);
     },
 
-    [M.SET_RECORD_PARTITION_COLUMN](state: AnnealCreatorState, partitionColumn: IColumnData_MinimalDescriptor) {
+    [M.SET_RECORD_PARTITION_COLUMN](state: State, partitionColumn: IColumnData_MinimalDescriptor) {
         const minimalDescriptor = ColumnData.ConvertToMinimalDescriptor(partitionColumn);
         set(state.recordData, "partitionColumn", minimalDescriptor);
     },
 
-    [M.CLEAR_RECORD_PARTITION_COLUMN](state: AnnealCreatorState) {
+    [M.CLEAR_RECORD_PARTITION_COLUMN](state: State) {
         set(state.recordData, "partitionColumn", undefined);
     },
 
-    [M.SET_NODE_NAMING_COMBINED_NAME_FORMAT](state: AnnealCreatorState, nameFormat: string) {
+    [M.SET_NODE_NAMING_COMBINED_NAME_FORMAT](state: State, nameFormat: string) {
         set(state.nodeNamingConfig.combined, "format", nameFormat);
     },
 
-    [M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](state: AnnealCreatorState) {
+    [M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](state: State) {
         set(state.nodeNamingConfig.combined, "format", undefined);
     },
 
-    [M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG](state: AnnealCreatorState, userProvided: boolean) {
+    [M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG](state: State, userProvided: boolean) {
         set(state.nodeNamingConfig.combined, "userProvided", userProvided);
     },
+
+    [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {
+        set(state, "annealRequest", annealRequestState);
+    }
 };
 
 export function init() {
-    return mutations as MutationTree<AnnealCreatorState>;
+    return mutations as MutationTree<State>;
 }

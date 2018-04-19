@@ -59,8 +59,8 @@
         </div>
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
-                    @click="onAnnealButtonClick"
-                    :disabled="isAnnealButtonDisabled">Anneal</button>
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
@@ -71,11 +71,8 @@
 import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import { AnnealRequest } from "../../data/AnnealRequest";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-
-import { AnnealCreator as S } from "../../store";
 
 import ConstraintsEditor from "../ConstraintsEditor.vue";
 
@@ -88,26 +85,6 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
-
-    get isAnnealButtonDisabled() {
-        // If no constraints, the anneal button is disabled
-        if (!S.get(S.getter.HAS_CONSTRAINTS)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    async onAnnealButtonClick() {
-        // Convert state to anneal request input 
-        const annealRequest = AnnealRequest.InitFromState(S.state);
-
-        // Fire off the anneal request
-        await S.dispatch(S.action.SET_ANNEAL_REQUEST, annealRequest);
-
-        // Go to next step regardless of what happens at this point
-        this.emitWizardNavNext();
-    }
 }
 </script>
 

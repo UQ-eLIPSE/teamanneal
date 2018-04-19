@@ -1,64 +1,56 @@
 import { AxiosResponse, AxiosError } from "axios";
 
-import { Data as IAnnealRequest } from "./AnnealRequest";
+import { DeepReadonly } from "./DeepReadonly";
 
-export type Data =
-    Data_ContentSuccess |
-    Data_ContentError |
-    Data_ContentUndefined;
+import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse";
 
-interface Data_ContentSuccess {
-    readonly request: IAnnealRequest,
-    content: AxiosResponse,
+export type AnnealResponse =
+    Readonly<AnnealResponse_ContentSuccess | AnnealResponse_ContentError>;
+
+interface AnnealResponse_ContentSuccess {
+    type: "success",
+    status: number,
+    data?: DeepReadonly<ToClientAnnealResponse.Root>,
 }
 
-interface Data_ContentError {
-    readonly request: IAnnealRequest,
-    content: AxiosError,
+interface AnnealResponse_ContentError {
+    type: "error",
+    error: AxiosError | Error,
 }
 
-interface Data_ContentUndefined {
-    readonly request: IAnnealRequest,
-    content: undefined,
-}
-
-export type AxiosResponse = AxiosResponse;
-export type AxiosError = AxiosError;
-
-export namespace AnnealResponse {
-    export function Init(
-        request: IAnnealRequest,
-    ) {
-        const annealResponseObject: Data = {
-            request,
-            content: undefined,
+export function processRawResponse(response: AxiosResponse | AxiosError | Error) {
+    // Determine type of response
+    if (rawResponseIsError(response)) {
+        const obj: AnnealResponse_ContentError = {
+            type: "error",
+            error: response,
         };
 
-        return annealResponseObject;
+        return obj;
     }
 
-    export function RequestMatchesResponse(annealRequest: IAnnealRequest, annealResponse: Data) {
-        return annealResponse.request === annealRequest;
-    }
+    // Otherwise we say it is successful
+    const obj: AnnealResponse_ContentSuccess = {
+        type: "success",
+        status: response.status,
+        data: response.data,
+    };
 
-    export function IsResponseReceived(annealResponse: Data) {
-        return annealResponse.content !== undefined;
-    }
-
-    export function IsSuccessful(annealResponse: Data): annealResponse is Data_ContentSuccess {
-        const responseContent = annealResponse.content;
-
-        // Not yet received response, or unknown request
-        if (responseContent === undefined) {
-            return false;
-        }
-
-        // If the "response" is an Error/AxiosError object
-        if (responseContent instanceof Error) {
-            return false;
-        }
-
-        // Otherwise okay
-        return true;
-    }
+    return obj;
 }
+
+function rawResponseIsError(response: object): response is AxiosError | Error {
+    // Errors are `AxiosError` or `Error`
+    // `AxiosError` is a derivative of `Error`, so we only need to check `Error`
+    return (response instanceof Error);
+}
+
+export function isError(annealResponse: AnnealResponse): annealResponse is AnnealResponse_ContentError {
+    return annealResponse.type === "error";
+}
+
+export function isSuccess(annealResponse: AnnealResponse): annealResponse is AnnealResponse_ContentSuccess {
+    return annealResponse.type === "success";
+}
+
+export { AxiosResponse, AxiosError } from "axios";

@@ -15,7 +15,7 @@
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupDistribution[i]"
                                              :isPartition="false"
-                                             :partitionColumnData="state.recordData.partitionColumn"
+                                             :partitionColumnData="partitionColumnDescriptor"
                                              :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
             </ul>
@@ -88,8 +88,12 @@ export default class StrataEditor extends Vue {
         return StratumNamingConfig.getStratumNamingConfig(this.strataConfig, stratumId);
     }
 
+    get partitionColumnDescriptor() {
+        return S.state.recordData.partitionColumn;
+    }
+
     get partitionColumn() {
-        const partitionColumnDesc = S.state.recordData.partitionColumn;
+        const partitionColumnDesc = this.partitionColumnDescriptor;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -102,14 +106,14 @@ export default class StrataEditor extends Vue {
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return S.state.recordData.partitionColumn !== undefined;
+        return this.partitionColumnDescriptor !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const partitionColumn = S.state.recordData.partitionColumn;
+        const partitionColumn = this.partitionColumnDescriptor;
 
         if (partitionColumn === undefined) {
             throw new Error("No partition column set");
@@ -127,7 +131,7 @@ export default class StrataEditor extends Vue {
     get strataGroupDistribution() {
         const strata = this.strata;
         const columns = S.state.recordData.columns;
-        const partitionColumnDescriptor = S.state.recordData.partitionColumn;
+        const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
         const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 

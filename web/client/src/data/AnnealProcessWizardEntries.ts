@@ -12,7 +12,7 @@ export let
     designGroupStructure: WNE,
     configureGroups: WNE,
     configureConstraints: WNE,
-    viewResult: WNE;
+    runAnneal: WNE;
 
 /**
  * Contains all entries for the anneal process wizard
@@ -30,7 +30,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: () => {
             return !(
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -45,7 +45,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -60,7 +60,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state) &&
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS) &&
 
                 // Disable if duplicate column names encountered
                 !S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES)
@@ -79,7 +79,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -95,7 +95,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -113,7 +113,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -132,26 +132,24 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
-        next: () => viewResult,
+        next: () => runAnneal,
     },
-    viewResult = {
-        label: "View result",
-        path: "/anneal/view-result",
+    runAnneal = {
+        label: "Run anneal",
+        path: "/anneal/run-anneal",
         disabled: () => {
-            // Disabled when there are no strata (output groups)
+            // Disabled when there are no strata (output groups) or constraints
             return !(
                 S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
                 S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
                 S.get(S.getter.HAS_STRATA) &&
                 S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
                 S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
-
-                // Enable only when the anneal request is actually created
-                State.IsAnnealRequestCreated(state)
+                S.get(S.getter.HAS_CONSTRAINTS)
             );
         },
     }
