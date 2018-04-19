@@ -16,6 +16,8 @@
         <template v-if="annealIsInProgress">
             <div class="wizard-panel-content">
                 <h1>Annealing...</h1>
+                <p>Please wait while TeamAnneal forms groups...</p>
+                <p>This may take a minute or two.</p>
             </div>
             <div class="wizard-panel-bottom-buttons">
                 <button class="button secondary"
