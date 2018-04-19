@@ -16,8 +16,6 @@
         <div id="wizard-main">
 
             <div id="wizard-sidebar">
-                <button class="button secondary exit-button"
-                        @click="exitAnnealProcess">◀ Exit</button>
                 <WizardNavigation class="wizard-navigation"
                                   :bus="wizardNavigationBus"
                                   :entries="processWizardEntries" />
@@ -48,12 +46,6 @@ import WizardNavigation from "./WizardNavigation.vue";
 export default class AnnealProcess extends Vue {
     processWizardEntries = AnnealProcessWizardEntries.entries;
     wizardNavigationBus = new Vue();
-
-    exitAnnealProcess() {
-        this.$router.push({
-            path: "/",
-        });
-    }
 
     onWizardNavigation(data: any) {
         this.wizardNavigationBus.$emit("wizardNavigation", data);
