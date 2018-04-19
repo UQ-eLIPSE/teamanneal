@@ -8,14 +8,14 @@ import * as AnnealRequestState from "../../data/AnnealRequestState";
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
 export enum AnnealCreatorGetter {
-    HAS_SOURCE_FILE_DATA,
-    HAS_VALID_ID_COLUMN_INDEX,
-    HAS_DUPLICATE_COLUMN_NAMES,
-    HAS_STRATA,
-    HAS_CONSTRAINTS,
-    IS_STRATA_CONFIG_NAMES_VALID,
-    IS_STRATA_CONFIG_SIZES_VALID,
-    IS_ANNEAL_REQUEST_IN_PROGRESS,
+    HAS_SOURCE_FILE_DATA = "Has source file data",
+    HAS_VALID_ID_COLUMN_INDEX = "Has a valid ID column index defined",
+    HAS_DUPLICATE_COLUMN_NAMES = "Has duplicate column names",
+    HAS_STRATA = "Has strata defined",
+    HAS_CONSTRAINTS = "Has constraints defined",
+    IS_STRATA_CONFIG_NAMES_VALID = "Is strata config names valid",
+    IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
+    IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
 }
 
 /** Shorthand for Getter enum above */
