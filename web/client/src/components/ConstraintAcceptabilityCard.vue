@@ -4,29 +4,36 @@
         <div class="sentence-groups">
             <div class="sentence">
                 <span>{{constraintSentence}}</span>
+
             </div>
-            <div class="number-of-groups">
-                <span>
-                    <b>{{fulfilledNumber}}/{{totalGroups}}</b>
-                </span>
-                <span>{{lowerCaseStratumLabel}}s</span>
+            <div class="number-of-groups"
+                 :class="cardClasses">
+                <span class="number">{{fulfilledNumber}}</span>
+                <span class="number number-bottom">{{totalGroups}}</span>
+                <span>pass</span>
             </div>
         </div>
 
+
         <div class="slider-wrapper"
              v-if="isLimitTypeConstraint">
-            <span>Choose an acceptable percentage of {{ lowerCaseStratumLabel }} members with </span>
+
+            <span>I'm satisfied if</span>
+            <span class="limit-constraint-description-number">{{limitConstraintDescriptionNumber}}</span>
+
+            <span> of {{lowerCaseStratumLabel}} members have </span>
             <span class="constraint-filter-text">{{constraintFilterText}}</span>
-            <!-- <span>0</span> -->
+            
+            
             <input type="range"
                    @input="constraintAcceptabilityChanged($event)"
                    :value="constraintAcceptability"
                    min="0"
                    max="100"
-                   step="0.01" />
-            <!-- <span>100</span> -->
-            <span class="acceptability-value">{{constraintAcceptability}}%</span>
+                   step="0.1" />
         </div>
+
+
     </div>
 </template>
 
@@ -50,7 +57,8 @@ export default class ConstraintAcceptabilityCard extends Vue {
     }
 
     constraintAcceptabilityChanged(e: any) {
-        this.$emit("constraintAcceptabilityChanged", this.constraint, parseFloat(e.currentTarget.value));
+        const threshold = parseFloat(e.currentTarget.value);
+        this.$emit("constraintAcceptabilityChanged", this.constraint, threshold);
     }
     get constraintSentence() {
         const sentence = ConstraintSentence.convertConstraintToSentence(this.constraint, this.lowerCaseStratumLabel);
@@ -62,6 +70,18 @@ export default class ConstraintAcceptabilityCard extends Vue {
         return phrase.toLowerCase();
     }
 
+    get limitConstraintDescriptionNumber() {
+        let phrase = "";
+        if (this.constraint.condition.function === "high") {
+            phrase += (this.constraintThreshold).toFixed(1) + "%";
+        } else {
+            phrase += (100 - this.constraintThreshold).toFixed(1) + "%";
+        }
+
+        return phrase;
+
+    }
+
     get lowerCaseStratumLabel() {
         return this.stratumLabel.toLowerCase();
     }
@@ -70,10 +90,23 @@ export default class ConstraintAcceptabilityCard extends Vue {
         return this.constraint.type === "limit";
     }
 
+    get isConstraintConditionFunctionLow() {
+        return this.constraint.condition.function === "low";
+    }
+
     get constraintItemClasses() {
         return {
             "selected": this.isSelected,
         };
+    }
+
+    get cardClasses() {
+        const passingGroupsPerc = (this.fulfilledNumber / this.totalGroups) * 100;
+        return {
+            "danger": passingGroupsPerc === 0,
+            "success": passingGroupsPerc > 60,
+            "medium": passingGroupsPerc < 60 && passingGroupsPerc > 0
+        }
     }
 }
 </script>
@@ -88,6 +121,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
     border: 0.2em solid rgba(0, 0, 0, 0.1);
     font-size: 0.8em;
     align-items: center;
+    font-size: 1em;
 
     position: relative;
 }
@@ -121,6 +155,8 @@ export default class ConstraintAcceptabilityCard extends Vue {
 
 .sentence {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
     align-items: center;
     min-width: 60%;
@@ -132,34 +168,61 @@ export default class ConstraintAcceptabilityCard extends Vue {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(40, 150, 90, 0.7);
     color: white;
-    font-size: 1.2em;
     min-width: 20%;
+    padding: 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.danger {
+    background: rgb(217, 83, 79);
+}
+
+.success {
+    background: rgba(40, 150, 90, 0.7);
+}
+
+.medium {
+    background: rgb(240, 173, 78)
+}
+
+.number-of-groups .number {
+    font-size: 1.1em;
+    font-weight: bold;
 }
 
 .slider-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 0.5rem;
+    padding: 0.5rem;
     border-top: 0.1em solid rgba(100, 100, 100, 0.1);
-    padding: 1rem 0.5rem;
     width: 90%;
-    
 }
 
 .slider-wrapper>input {
-    width: 90%;
+    width: 100%;
 }
 
-.constraint-filter-text, .acceptability-value {
+.constraint-filter-text,
+.acceptability-value {
     color: #49075E;
     font-weight: 500;
 }
 
-.acceptability-value {
-    font-size: 1.3em;
+.limit-constraint-description-number {
+    color: #49075E;
+    font-weight: 500;
+    border-bottom: 1px dotted #49075E;
 }
 
+.acceptability-value {
+    font-size: 1.2em;
+}
+
+.number-bottom {
+    border-top: 1px solid white;
+    padding-top: 0.3rem;
+    margin-top: 0.3rem;
+}
 </style>

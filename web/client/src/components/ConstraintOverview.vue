@@ -9,7 +9,7 @@
                 <h2>{{stratum.label}} Constraints</h2>
                 <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
                                              class="card"
-                                             :key="constraint._id+'ca'"
+                                             :key="constraint._id"
                                              :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
                                              :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
                                              @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
@@ -142,6 +142,6 @@ h2 {
 }
 
 .card {
-    margin: 0.1rem 0;
+    margin: 0.5rem 0;
 }
 </style>
