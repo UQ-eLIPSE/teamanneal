@@ -14,7 +14,6 @@
         </div>
 
         <div id="wizard-main">
-
             <div id="wizard-sidebar">
                 <WizardNavigation class="wizard-navigation"
                                   :bus="wizardNavigationBus"
@@ -109,6 +108,9 @@ export default class AnnealProcess extends Vue {
     box-shadow: inset -1rem 0 1rem rgba(0, 0, 0, 0.1);
 
     overflow-y: auto;
+
+    padding-top: 1em;
+    padding-bottom: 1em;
 }
 
 #wizard-content {

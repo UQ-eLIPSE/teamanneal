@@ -28,10 +28,13 @@
             <div class="wizard-panel-content">
                 <h1>Anneal successful</h1>
                 <p>[Message]</p>
+                <p>If you would like to perform another anneal, click "Retry anneal".</p>
             </div>
             <div class="wizard-panel-bottom-buttons">
                 <button class="button"
                         @click="onViewResultsButtonClick">View results</button>
+                <button class="button secondary"
+                        @click="onRetryAnnealButtonClick">Retry anneal</button>
             </div>
         </template>
 
@@ -211,6 +214,11 @@ export default class RunAnneal extends Mixin(AnnealProcessWizardPanel) {
 
         const response = annealRequestState.response;
 
+        // Cancelled anneals don't have error messages
+        if (AnnealResponse.isCancelled(response)) {
+            return undefined;
+        }
+
         // No request/response error
         // NOTE: This is not the same as "no anneal error"!
         if (AnnealResponse.isSuccess(response)) {
@@ -357,11 +365,17 @@ XMLHttpRequest {
 
         // Once request completes, we update the state with a processed response
         AnnealRequest.waitForCompletion(annealRequest)
-            .then((response) => {
-                const processedResponse = AnnealResponse.processRawResponse(response);
+            .then((rawResponse) => {
+                const response = AnnealResponse.processRawResponse(rawResponse);
+
+                if (AnnealResponse.isCancelled(response)) {
+                    // We just revert to a not running state
+                    S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
+                    return;
+                }
 
                 // Update state to "completed" with response
-                S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, processedResponse);
+                S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, response);
             });
     }
 
