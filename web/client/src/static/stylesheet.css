@@ -40,7 +40,7 @@ option {
     font-weight: inherit;
     font-size: inherit;
 
-    border: 0.05em solid rgba(0, 0, 0, 0.5);
+    border: 0.1em solid rgba(0, 0, 0, 0.5);
 }
 
 .button {
