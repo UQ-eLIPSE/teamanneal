@@ -33,7 +33,7 @@ export function init() {
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);
-    Router.initAllRoutes(app)(apiRoot);
+    Router.initAllRoutes(app, apiRoot);
 
     console.log(`Initialisation complete: http://localhost:${port}/`);
 }
