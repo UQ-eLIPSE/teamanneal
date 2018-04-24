@@ -20,11 +20,13 @@ export function deepMerge<T extends Object, U extends Partial<T>>(target: T, ...
 
     if (isObject(target) && isObject(source)) {
         for (const key in source) {
-            if (isObject(source[key])) {
+            const sourceValue = (source as any)[key];
+
+            if (isObject(sourceValue)) {
                 if (!(target as any)[key]) Object.assign(target, { [key]: {} });
-                deepMerge((target as any)[key], source[key]);
+                deepMerge((target as any)[key], sourceValue);
             } else {
-                Object.assign(target, { [key]: source[key] });
+                Object.assign(target, { [key]: sourceValue });
             }
         }
     }
@@ -44,8 +46,9 @@ export function deepClean<T extends Object>(target: T, definition: Object) {
         }
 
         // Recurse down for subobjects
-        if (isObject(target[key])) {
-            deepClean(target[key], (definition as any)[key]);
+        const v = target[key];
+        if (isObject(v)) {
+            deepClean(v, (definition as any)[key]);
         }
     }
 }

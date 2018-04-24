@@ -1,5 +1,5 @@
 <template>
-    <th>
+    <th :class="tableHeaderClasses">
         <span class="cell-content">{{ column.label }}</span>
         <br>
         <select class="column-type"
@@ -24,6 +24,7 @@ import { Data as IColumnData } from "../data/ColumnData";
 export default class SpreadsheetViewColumnTypeHeader extends Vue {
     // Props
     @Prop column = p<IColumnData>({ required: true, });
+    @Prop invalidColumn = p<boolean>({ required: false, default: () => false });
 
     get columnType() {
         return this.column.type;
@@ -47,6 +48,12 @@ export default class SpreadsheetViewColumnTypeHeader extends Vue {
                 // force the <select> to have the value that is in the store
                 selectElement.value = this.columnType;
             });
+    }
+
+    get tableHeaderClasses() {
+        return {
+            'error': this.invalidColumn
+        }
     }
 }   
 </script>
@@ -77,5 +84,10 @@ th select.column-type {
     border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 0;
     font-size: 0.7em;
+}
+
+.error {
+    background-color: darkorange;
+    color: black;
 }
 </style>

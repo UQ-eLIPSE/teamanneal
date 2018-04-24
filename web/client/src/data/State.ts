@@ -1,9 +1,9 @@
-import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
-import { Data as IConstraint } from "./Constraint";
-import { Stratum, Data as IStratum } from "./Stratum";
+import { Stratum } from "./Stratum";
+import { Partition } from "./Partition";
+import { RecordData } from "./RecordData";
+import { AnnealConfig } from "./AnnealConfig";
 import { Data as IAnnealRequest } from "./AnnealRequest";
 import { AnnealResponse, Data as IAnnealResponse } from "./AnnealResponse";
-import { Partition } from "./Partition";
 
 export interface Data {
     /** Record data */
@@ -17,52 +17,6 @@ export interface Data {
 
     /** Information about response from the annealing server */
     annealResponse: IAnnealResponse | undefined,
-}
-
-export interface RecordData {
-    /** Data source (file, etc.) */
-    source: {
-        /** Name of source (file name, etc.) */
-        name: string | undefined,
-
-        /** Number of rows in raw file */
-        length: number,
-    },
-
-    /** Data organised by column */
-    columns: IColumnData[],
-
-    /** ID column (ColumnData minimal descriptor) */
-    idColumn: IColumnData_MinimalDescriptor | undefined,
-
-    /** Partitioning column (ColumnData minimal descriptor) */
-    partitionColumn: IColumnData_MinimalDescriptor | undefined,
-}
-
-export interface AnnealConfig {
-    strata: IStratum[],
-
-    namingConfig: {
-        combined: {
-            /**
-             * Describes the format with which to generate combined group
-             * names
-             * 
-             * Formatting is done by using the stratum label in moustaches,
-             * for example:
-             * "Group {{Table}}-{{Team}}" might look like: "Group 2-C"
-             */
-            format: string | undefined,
-
-            /**
-             * Indicates if format was user provided, instead of being system 
-             * sgenerated
-             */
-            userProvided: boolean,
-        },
-    },
-
-    constraints: IConstraint[],
 }
 
 export namespace State {
@@ -113,6 +67,15 @@ export namespace State {
 
     export function HasValidIdColumnIndex({ recordData }: Data) {
         return recordData.idColumn !== undefined;
+    }
+
+    /**
+     * Returns true if a duplicate column name (case sensitive) is encountered in recordData
+     */
+    export function HasDuplicateColumnNames({ recordData }: Data) {
+        const columnNames = recordData.columns.map(column => column.label);
+        const uniqueColumnNames = new Set(columnNames);
+        return uniqueColumnNames.size !== columnNames.length;
     }
 
     export function HasStrata({ annealConfig }: Data) {

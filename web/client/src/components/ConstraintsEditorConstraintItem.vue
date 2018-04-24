@@ -70,7 +70,7 @@ import DynamicWidthSelect from "./DynamicWidthSelect.vue";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
 import { StoreState } from "./StoreState";
-
+import { ConstraintPhraseMaps } from "../data/Constraint";
 /*
  * Example sentence structures
  * 
@@ -81,105 +81,7 @@ import { StoreState } from "./StoreState";
  * similarity | [may have]    people with [similar values of]   [column]                        when <group> has [2 people]
  */
 
-const NumberFilterFunctionList = [
-    {
-        value: "eq",
-        text: "equal to",
-    },
-    {
-        value: "neq",
-        text: "not equal to",
-    },
-    {
-        value: "lt",
-        text: "less than",
-    },
-    {
-        value: "lte",
-        text: "less than or equal to",
-    },
-    {
-        value: "gt",
-        text: "greater than",
-    },
-    {
-        value: "gte",
-        text: "greater than or equal to",
-    },
-];
 
-const StringFilterFunctionList = [
-    {
-        value: "eq",
-        text: "equal to",
-    },
-    {
-        value: "neq",
-        text: "not equal to",
-    },
-];
-
-const ConditionFunctionList = [
-    {
-        value: "eq",
-        text: "exactly",
-    },
-    {
-        value: "neq",
-        text: "not exactly",
-    },
-    {
-        value: "gte",
-        text: "at least",
-    },
-    {
-        value: "lte",
-        text: "at most",
-    },
-    {
-        value: "gt",
-        text: "more than",
-    },
-    {
-        value: "lt",
-        text: "fewer than",
-    },
-    {
-        value: "low",
-        text: "as few",
-    },
-    {
-        value: "high",
-        text: "as many",
-    },
-    {
-        value: "similar",
-        text: "similar values of",
-    },
-    {
-        value: "different",
-        text: "different values of",
-    },
-];
-
-const CostWeightList = [
-    {
-        value: 2,
-        text: "may have",
-    },
-    {
-        value: 10,
-        text: "could have",
-    },
-    {
-        value: 50,
-        text: "should have",
-    },
-    {
-        value: 1000,
-        text: "must have",
-    },
-];
 
 
 @Component({
@@ -198,19 +100,19 @@ export default class ConstraintsEditorConstraintItem extends Mixin(StoreState) {
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
 
     get costWeightList() {
-        return CostWeightList;
+        return ConstraintPhraseMaps.CostWeightList;
     }
 
     get conditionFunctionList() {
-        return ConditionFunctionList;
+        return ConstraintPhraseMaps.ConditionFunctionList;
     }
 
     get filterFunctionList() {
         switch (this.constraintFilterColumnData.type) {
             case "number":
-                return NumberFilterFunctionList;
+                return ConstraintPhraseMaps.NumberFilterFunctionList;
             case "string":
-                return StringFilterFunctionList;
+                return ConstraintPhraseMaps.StringFilterFunctionList;
         }
 
         throw new Error("Unknown column type");

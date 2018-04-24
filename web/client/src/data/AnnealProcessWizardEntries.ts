@@ -1,7 +1,7 @@
 import { State, Data as IState } from "../data/State";
 import * as WizardNavigationEntry from "../data/WizardNavigationEntry";
 
-type WNE = WizardNavigationEntry.WizardNavigationEntry;
+type WNE = WizardNavigationEntry.WizardNavigationEntry<IState>;
 
 // These currently undefined variable placeholders are used in the entries
 // objects below to refer to each other at runtime
@@ -20,7 +20,7 @@ export let
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     provideRecordsFile = {
-        label: (state: IState) => {
+        label: (state) => {
             if (State.HasSourceFileData(state)) {
                 return `${state.recordData.source.name}`;
             } else {
@@ -28,7 +28,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             }
         },
         path: "/anneal/provide-records-file",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             return !(
                 // Disable when processing request
                 !State.IsAnnealRequestInProgress(state)
@@ -40,7 +40,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     reviewRecords = {
         label: "Review data",
         path: "/anneal/review-records",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there is no source file data
             return !(
                 State.HasSourceFileData(state) &&
@@ -55,13 +55,16 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectIdColumn = {
         label: "Select ID column",
         path: "/anneal/select-id-column",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there is no source file data
             return !(
                 State.HasSourceFileData(state) &&
 
                 // Disable when processing request
-                !State.IsAnnealRequestInProgress(state)
+                !State.IsAnnealRequestInProgress(state) &&
+
+                //Disable if duplicate column names encountered
+                !State.HasDuplicateColumnNames(state)
             );
         },
 
@@ -70,7 +73,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     selectPartitionColumn = {
         label: "Select partition column",
         path: "/anneal/select-partition-column",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
                 State.HasSourceFileData(state) &&
@@ -86,7 +89,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     designGroupStructure = {
         label: "Define group structure",
         path: "/anneal/define-group-structure",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
                 State.HasSourceFileData(state) &&
@@ -102,7 +105,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureGroups = {
         label: "Configure groups",
         path: "/anneal/configure-groups",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there are no strata (output groups)
             return !(
                 State.HasSourceFileData(state) &&
@@ -120,7 +123,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     configureConstraints = {
         label: "Set constraints",
         path: "/anneal/set-constraints",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there are no strata (output groups)
             return !(
                 State.HasSourceFileData(state) &&
@@ -139,7 +142,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     viewResult = {
         label: "View result",
         path: "/anneal/view-result",
-        disabled: (state: IState) => {
+        disabled: (state) => {
             // Disabled when there are no strata (output groups)
             return !(
                 State.HasSourceFileData(state) &&
@@ -152,5 +155,5 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 State.IsAnnealRequestCreated(state)
             );
         },
-    },
+    }
 ];

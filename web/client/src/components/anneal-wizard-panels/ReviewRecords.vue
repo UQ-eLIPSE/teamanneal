@@ -17,22 +17,36 @@
                     <p>Normally you do not need to worry about choosing a column type - TeamAnneal will automatically detect this and choose the most appropriate type for you.</p>
                     <p>If you believe that the type detection has incorrectly set the type of a column, you can switch between the two types by selecting the option from the dropdown menu in the header of the column in question. You will be able to see the result of the type conversion immediately in the viewer below.</p>
                     <p>Make sure that the values in the column are correct after you change the column type.</p>
-    
+
                     <h2>Bad or incorrectly parsed data</h2>
                     <p>If the content in the viewer below appears to be invalid, check that your input CSV file is correctly formatted, reload the file and try again.</p>
                     <p>If you continue to encounter issues,
                         <a href="https://www.elipse.uq.edu.au/"
                            target="_blank">contact eLIPSE</a>.</p>
                 </div>
+
+                <div v-if="hasDuplicateColumnNames"
+                     class="error-msg">
+                    <h3>Duplicate column names detected</h3>
+                    <p>Please change the below columns to ensure that you have unique column names.</p>
+                    <ul>
+                        <li v-for="x in duplicateColumnListMessage"
+                            :key="x.label">Found duplicated column name "
+                            <b>{{ x.label }}</b>" at columns: {{ x.columnIndicies.join(", ") }}.
+                        </li>
+                    </ul>
+                </div>
             </div>
             <div class="spreadsheet">
                 <SpreadsheetView class="viewer"
+                                 :invalidColumns="duplicateColumns"
                                  :rows="cookedDataWithHeader"
                                  :columnData="columns"></SpreadsheetView>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
+                    :disabled="isWizardNavNextDisabled"
                     @click="emitWizardNavNext">Continue</button>
         </div>
     </div>
@@ -45,11 +59,16 @@ import { Component, Mixin } from "av-ts";
 
 import { ColumnData } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-
+import { Data as IColumnData } from "../../data/ColumnData";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
-
+import { State } from "../../data/State";
 import SpreadsheetView from "../SpreadsheetView.vue";
+
+interface ColumnIndexInfo {
+    column: IColumnData,
+    index: number,
+}
 
 @Component({
     components: {
@@ -67,6 +86,59 @@ export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizard
 
     get cookedDataWithHeader() {
         return ColumnData.TransposeIntoCookedValueRowArray(this.columns, true);
+    }
+
+    get hasDuplicateColumnNames() {
+        return State.HasDuplicateColumnNames(this.state);
+    }
+
+    get columnIndexInfoMap() {
+        return this.columns.reduce((map, column, index) => {
+            if (!map.has(column.label)) {
+                map.set(column.label, []);
+            }
+
+            // Get the previous array of columns with the same label
+            const columnsWithSameLabel = map.get(column.label)!;
+
+            // Push this column in
+            columnsWithSameLabel.push({ column, index });
+
+            return map;
+        }, new Map<string, ColumnIndexInfo[]>());
+    }
+
+    /** 
+     * Returns columns which have duplicate labels
+     */
+    get duplicateColumns() {
+        const duplicateColumnIndexInfo: ColumnIndexInfo[] = [];
+
+        this.columnIndexInfoMap.forEach((colInfo) => {
+            if (colInfo.length > 1) {
+                duplicateColumnIndexInfo.push(...colInfo);
+            }
+        });
+
+        return duplicateColumnIndexInfo.map(x => x.column);
+    }
+
+    /** 
+     * Returns messages describing the column numbers of duplicate column names
+     */
+    get duplicateColumnListMessage() {
+        const messageObjs: { label: string, columnIndicies: number[] }[] = [];
+
+        this.columnIndexInfoMap.forEach((colInfo, label) => {
+            if (colInfo.length > 1) {
+                messageObjs.push({
+                    label,
+                    columnIndicies: colInfo.map(y => y.index + 1).sort()
+                });
+            }
+        });
+
+        return messageObjs;
     }
 }
 </script>
@@ -121,5 +193,11 @@ export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizard
 .change-column:focus,
 .change-column:active {
     background: #175ab7;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>

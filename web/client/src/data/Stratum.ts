@@ -5,12 +5,14 @@ import { reverse } from "../util/Array";
 
 import * as ListCounter from "./ListCounter";
 
-export interface Data {
+export interface DataWithoutNamingConfig {
     _id: string,
 
     label: string,
     size: Size,
+}
 
+export interface Data extends DataWithoutNamingConfig {
     namingConfig: {
         /** Definition of the list used for naming nodes in stratum */
         counter: ListCounter.ListCounterType | string[],
@@ -32,6 +34,7 @@ export interface Data {
     },
 }
 
+/** The configured desired size for groups at this stratum level */
 export interface Size {
     min: number,
     ideal: number,
@@ -132,12 +135,7 @@ export namespace Stratum {
 
         // Generate a random value for an example name
         if (Array.isArray(counter)) {
-            const counterArray = counter
-                .map(counterString => counterString.trim())
-                .filter(counterString => counterString.length !== 0);
-
-            const randomIndex = (Math.random() * counterArray.length) >>> 0;
-            return counterArray[randomIndex];
+            return GenerateRandomExampleNameStringArray(counter);
         } else {
             const listCounters = ListCounter.SupportedListCounters;
             const counterDesc = listCounters.find(x => x.type === counter);
@@ -150,5 +148,20 @@ export namespace Stratum {
             const randomIndex = ((Math.random() * 20) >>> 0);
             return counterDesc.generator(randomIndex, 20);
         }
+    }
+
+    export function GenerateRandomExampleNameStringArray(names: ReadonlyArray<string>) {
+        const counterArray = names
+            .map(name => name.trim())
+            .filter(name => name.length !== 0);
+
+        // Return empty string if there are no suitable name values to use
+        if (counterArray.length === 0) {
+            return "";
+        }
+
+        const randomIndex = (Math.random() * counterArray.length) >>> 0;
+
+        return counterArray[randomIndex];
     }
 }

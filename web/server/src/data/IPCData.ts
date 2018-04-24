@@ -1,7 +1,8 @@
+import * as Stratum from "../../../common/Stratum";
 import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
-import * as Stratum from "../../../common/Stratum";
+import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
@@ -34,7 +35,10 @@ export interface AnnealJobData {
 export interface AnnealResultMessageData {
     _meta: InternalAnnealMeta & InternalAnnealNodeMeta,
 
-    result?: AnnealNode.NodeRoot,
+    result?: {
+        tree: AnnealNode.NodeRoot,
+        satisfaction: ConstraintSatisfaction.SatisfactionMap,
+    },
     error?: string,
 }
 

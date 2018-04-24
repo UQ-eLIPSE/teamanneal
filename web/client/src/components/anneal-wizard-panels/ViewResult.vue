@@ -29,9 +29,11 @@
                                target="_blank">contact eLIPSE</a>.</p>
                     </div>
                 </div>
+
                 <div class="spreadsheet">
                     <SpreadsheetTreeView class="viewer"
                                          :annealNodeRoots="annealNodeRoots"
+                                         :annealSatisfactionMap="annealSatisfactionMap"
                                          :headerRow="headerRow"
                                          :recordRows="recordRows"
                                          :nameMap="nameMap"
@@ -42,9 +44,13 @@
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
+                <button class="button"
+                        @click="onEditResultButtonClick">Edit results</button>
                 <button class="button export-button"
                         @click="onExportButtonClick"
                         :disabled="isExportButtonDisabled">Export as CSV</button>
+                <button class="button"
+                        @click="onTAFileExportButtonClick">Export *.TEAMANNEAL (!)</button>
             </div>
         </template>
         <template v-else>
@@ -78,15 +84,26 @@
 import { Component, Mixin } from "av-ts";
 
 import * as ToClientAnnealResponse from "../../../../common/ToClientAnnealResponse";
+import * as AnnealNode from "../../../../common/AnnealNode";
 
-import { unparseFile } from "../../data/CSV";
 import { ColumnData } from "../../data/ColumnData";
 import { ResultTree } from "../../data/ResultTree";
 import { State } from "../../data/State";
+import { DataWithoutNamingConfig as Stratum } from "../../data/Stratum";
 import { AnnealResponse, AxiosResponse, AxiosError } from "../../data/AnnealResponse";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeRoot } from "../../data/GroupNodeRoot";
+import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
+import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
+import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 
+import * as Store from "../../store";
+
+import { unparseFile } from "../../util/CSV";
 import { replaceAll } from "../../util/String";
+import { deepCopy } from "../../util/Object";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 import { StoreState } from "../StoreState";
@@ -231,6 +248,107 @@ export default class ViewResult extends Mixin(StoreState, AnnealProcessWizardPan
         unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
+    onTAFileExportButtonClick() {
+        // TODO: Implement export for testing purposes so we can import in the
+        // results editor
+        throw new Error("Not yet implemented");
+    }
+
+    async onEditResultButtonClick() {
+        // TODO: This state data copying process will need to be reviewed when
+        // state (de)hydration is properly implemented; currently this just does
+        // a straight copy which is not optimal
+
+        // TODO: Not everything is being copied at the moment
+
+
+        // Copy over record data
+        const recordData = this.state.recordData;
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const recordDataCopy = deepCopy(recordData);
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_RECORD_DATA, recordDataCopy);
+
+        // Copy over strata
+        const strata = this.state.annealConfig.strata;
+        // TODO: Use a better, more structured copy than a straight JSON copy
+        const strataCopy = deepCopy(strata).map((stratum) => {
+            // Remove naming configuration information from old strata objects
+            const { namingConfig, ...strata } = stratum;
+            return { ...strata } as Stratum;
+        });
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_STRATA, strataCopy);
+
+        // Copy over group nodes
+        //
+        // This is a lot more involved because the old state and module state
+        // use different representations, and names are now stored in a concrete
+        // object rather than generated on-the-fly
+
+        // Walk the tree and decompose data
+        const nameMap = this.nameMap;
+        const newRoots: GroupNodeRoot[] = [];
+        const newNameMap: GroupNodeNameMap = {};
+        const newNodeRecordArrayMap: GroupNodeRecordArrayMap = {};
+
+        const walkAnnealTreeAndTransform = (node: AnnealNode.Node): GroupNode => {
+            const nodeId = node._id;
+            const nameInfo = nameMap.get(node)!;
+
+            switch (node.type) {
+                case "root": {
+                    const newRoot: GroupNodeRoot = {
+                        _id: nodeId,
+                        type: "root",
+                        children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
+                    };
+
+                    // Push root, name
+                    newRoots.push(newRoot);
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+
+                    return newRoot;
+                }
+
+                case "stratum-stratum": {
+                    const newIntStrNode: GroupNodeIntermediateStratum = {
+                        _id: nodeId,
+                        type: "intermediate-stratum",
+                        children: node.children.map(walkAnnealTreeAndTransform) as (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[],
+                    };
+
+                    // Push name
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+
+                    return newIntStrNode;
+                }
+
+                case "stratum-records": {
+                    const newLeafStrNode: GroupNodeLeafStratum = {
+                        _id: nodeId,
+                        type: "leaf-stratum",
+                    };
+
+                    // Push name, records
+                    newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+                    newNodeRecordArrayMap[nodeId] = [...node.recordIds];
+
+                    return newLeafStrNode;
+                }
+            }
+        }
+
+        this.annealNodeRoots.forEach(walkAnnealTreeAndTransform);
+
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_STRUCTURE, { roots: newRoots });
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_NAME_MAP, newNameMap);
+        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_GROUP_NODE_RECORD_ARRAY_MAP, newNodeRecordArrayMap);
+
+        // Go to results editor
+        this.$router.push({
+            name: "results-editor",
+        });
+    }
+
     get isExportButtonDisabled() {
         return this.isRequestInProgress;
     }
@@ -335,15 +453,22 @@ XMLHttpRequest {
         return "Error: Unknown error occurred";
     }
 
-    get annealNodeRoots() {
+    get annealResults() {
         const responseContent = this.state.annealResponse!.content as AxiosResponse;
         const responseData = responseContent.data as ToClientAnnealResponse.Root;
 
         // We're working on the presumption that we definitely have results
-        const results = responseData.results!;
-        const annealNodeRoots = results.map(res => res.result!);
+        return responseData.results!;
+    }
 
-        return annealNodeRoots;
+    get annealNodeRoots() {
+        return this.annealResults.map(res => res.result!.tree);
+    }
+
+    get annealSatisfactionMap() {
+        return this.annealResults
+            .map(res => res.result!.satisfaction)
+            .reduce((carry, sMap) => Object.assign(carry, sMap), {});
     }
 
     get combinedNameFormat() {
@@ -405,5 +530,13 @@ XMLHttpRequest {
     border: 1px dashed #a00;
     padding: 1em;
     overflow: auto;
+}
+
+.spreadsheet-dashboard {
+    display: flex;
+}
+
+.satisfaction-dashboard {
+    width: 20%;
 }
 </style>

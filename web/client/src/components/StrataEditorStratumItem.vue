@@ -61,21 +61,11 @@
                                 :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
                 </p>
-                <p v-if="isCounterCustomList"
-                   class="smaller-margins">
-                    Provide a list of names, one per line:
-                    <br>
-                    <textarea v-model="customCounterList"
-                              rows="5"></textarea>
-                </p>
-                <div v-if="isCounterCustomList && !isCounterCustomListValid"
-                     class="error-msg">
-                    <p v-if="doesCounterCustomListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
-                </div>
-                <p class="smaller-margins">
-                    For example:
-                    <i>{{ stratum.label }} {{ randomExampleName }}</i>
-                </p>
+
+                <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
+                                                       v-model="customNameList"
+                                                       :stratumLabel="stratum.label"></StrataEditorStratumItemCustomNameList>
+
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
                     <p class="smaller-margins">
@@ -110,6 +100,7 @@ import { deepCopy, deepMerge } from "../util/Object";
 import { Stratum, Data as IStratum } from "../data/Stratum";
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
+import StrataEditorStratumItemCustomNameList from "./StrataEditorStratumItemCustomNameList.vue";
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
@@ -134,6 +125,7 @@ const CounterList = ((): ReadonlyArray<{ value: string, text: string, }> => {
 @Component({
     components: {
         DynamicWidthInputField,
+        StrataEditorStratumItemCustomNameList
     },
 })
 export default class StrataEditorStratumItem extends Vue {
@@ -144,6 +136,8 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<IStratum>>({ type: Array, required: false, default: () => [], });
+
+
 
     get childUnitText() {
         return this.childUnit || "<group>";
@@ -159,10 +153,6 @@ export default class StrataEditorStratumItem extends Vue {
     get pluralChildUnitTextFirstCharCapitalised() {
         const text = this.pluralChildUnitText;
         return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    get randomExampleName() {
-        return Stratum.GenerateRandomExampleName(this.stratum);
     }
 
     get counterList() {
@@ -278,48 +268,7 @@ export default class StrataEditorStratumItem extends Vue {
         return Array.isArray(this.stratum.namingConfig.counter);
     }
 
-    get customCounterList() {
-        const counterValue = this.stratum.namingConfig.counter;
 
-        if (!Array.isArray(counterValue)) {
-            throw new Error("Not custom counter list");
-        }
-
-        return counterValue.join("\n");
-    }
-
-    set customCounterList(newValue: string) {
-        const customCounterList = newValue.split("\n");
-
-        this.updateStratum({
-            namingConfig: {
-                counter: customCounterList,
-            }
-        });
-    }
-
-    get isCounterCustomListValid() {
-        return !(
-            this.doesCounterCustomListContainDuplicates
-        );
-    }
-
-    get doesCounterCustomListContainDuplicates() {
-        const counterValue = this.stratum.namingConfig.counter;
-
-        if (!Array.isArray(counterValue)) {
-            throw new Error("Not custom counter list");
-        }
-
-        // Check for duplicates in the custom list
-        const trimmedCounterStrings = counterValue
-            .map(counterString => counterString.trim())
-            .filter(counterString => counterString.length !== 0);
-
-        const counterValueSet = new Set(trimmedCounterStrings);
-
-        return counterValueSet.size !== trimmedCounterStrings.length;
-    }
 
     get namingContext() {
         return this.stratum.namingConfig.context;
@@ -408,12 +357,13 @@ export default class StrataEditorStratumItem extends Vue {
     get stratumGroupSizes() {
         // Convert all group size keys into numbers
         const groupSizes = this.groupSizes;
-        const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
 
         if (groupSizes === undefined) {
             throw new Error("Group sizes do not exist");
         }
 
+        const groupSizeKeys = Object.keys(groupSizes).map(x => +x);
+        
         // Produce group size ordered array with the count for each group size
         return groupSizeKeys.sort().map((size) => {
             const count = groupSizes[size];
@@ -421,6 +371,20 @@ export default class StrataEditorStratumItem extends Vue {
             return {
                 size,
                 count,
+            }
+        });
+    }
+
+    get customNameList() {
+        // We assume that this is only used when the custom name functionality
+        // is enabled, and so assert that we're delivering a string array
+        return this.stratum.namingConfig.counter as string[];
+    }
+
+    set customNameList(names: string[]) {
+        this.updateStratum({
+            namingConfig: {
+                counter: names,
             }
         });
     }
@@ -547,11 +511,5 @@ ul.stratum-size-errors {
 ul.distribution {
     padding: 0;
     padding-left: 1.5em;
-}
-
-.error-msg {
-    font-size: 0.9em;
-    background: darkorange;
-    padding: 1px 1em;
 }
 </style>

@@ -1,9 +1,11 @@
 <template>
     <select v-model="activeItemValue"
+            @input="onInputChange"
+            @change="onInputChange"
             :disabled="disabled"
             :style="{ width: elWidth }">
-        <option v-for="item in list"
-                :key="item.value"
+        <option v-for="(item, i) in list"
+                :key="item.text + i"
                 :value="item.value"
                 :selected="item.value === activeItemValue">{{ item.text }}</option>
     </select>
@@ -13,6 +15,11 @@
 
 <script lang="ts">
 import { Vue, Component, Lifecycle, Watch, Prop, p } from "av-ts";
+
+interface ListItem {
+    value: any,
+    text: string,
+}
 
 // The "test elements" below are used to determine the width of the select menu
 // during resize
@@ -30,7 +37,7 @@ selectTestElement.appendChild(widthTestElement);
 })
 export default class DynamicWidthSelect extends Vue {
     // Props
-    @Prop list = p<any[]>({ type: Array, required: true, });
+    @Prop list = p<ReadonlyArray<ListItem>>({ type: Array, required: true, });
     @Prop selectedValue = p<any>({ required: true, });
     @Prop minWidth = p({ type: Number, required: false, default: 20 });
     @Prop disabled = p({ type: Boolean, required: false, default: false, });
@@ -58,12 +65,19 @@ export default class DynamicWidthSelect extends Vue {
             return;
         }
 
+        const width = this.calculateRenderWidth(activeItem.text);
+
+        // Update element width
+        this.elWidth = `${width}px`;
+    }
+
+    calculateRenderWidth(text: string) {
         // Extract element
         const el = this.$el as HTMLSelectElement;
 
         // Set up width test element
         const parentNode = el.parentNode!;
-        widthTestElement.textContent = activeItem.text;
+        widthTestElement.textContent = text;
         parentNode.insertBefore(selectTestElement, el);
 
         // Test width
@@ -73,12 +87,24 @@ export default class DynamicWidthSelect extends Vue {
         // Remove test element
         parentNode.removeChild(selectTestElement);
 
-        // Update element width
-        this.elWidth = `${width}px`;
+        return width;
+    }
+
+    onInputChange() {
+        // Force update of size immediately on select field changes
+        const el = this.$el as HTMLSelectElement;
+        const selectedItem = this.list[el.selectedIndex];
+
+        if (selectedItem === undefined) {
+            return;
+        }
+
+        const width = this.calculateRenderWidth(selectedItem.text);
+        el.style.width = `${width}px`;
     }
 
     @Watch("selectedValue")
-    onSelectedValueChange() {
+    onSelectedValueChange(_value: any, _oldValue: any) {
         this.updateRenderWidth();
     }
 

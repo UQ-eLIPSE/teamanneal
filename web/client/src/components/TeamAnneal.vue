@@ -1,13 +1,8 @@
 <template>
     <div id="teamanneal">
-        <div id="header">
-            <h1>
-                <a id="uq-logo" href="#">The University of Queensland</a>
-            </h1>
-            <h2>
-                TeamAnneal
-            </h2>
-        </div>
+        <Header :minimal="headerOptions.minimal"
+                :headerText="headerOptions.headerText"
+                :enableMenu="headerOptions.enableMenu"></Header>
         <div id="content">
             <router-view />
         </div>
@@ -18,9 +13,34 @@
 
 <script lang="ts">
 import { Vue, Component } from "av-ts";
+import Header from "./Header.vue";
+import { HEADER_CONFIG } from "../data/Header";
 
-@Component
+@Component({
+    components: {
+        Header
+    }
+})
 export default class TeamAnneal extends Vue {
+
+    /** 
+     * Matches the current route and returns appropriate header options
+     */
+    get headerOptions() {
+        // Check if a match was found for the current route
+        if (this.$route.matched[0]) {
+            // $route.matched contains route records for all nested path segments of the current route.
+            // Route records are stored in parent to child order.
+            // Match the first record i.e. the top-level parent route
+            switch (this.$route.matched[0].path) {
+                case HEADER_CONFIG.anneal.path: return HEADER_CONFIG.anneal.headerOptions;
+                case HEADER_CONFIG.editor.path: return HEADER_CONFIG.editor.headerOptions;
+                case HEADER_CONFIG.home.path: return HEADER_CONFIG.home.headerOptions;
+                default: return HEADER_CONFIG.default.headerOptions;
+            }
+        }
+        return HEADER_CONFIG.default.headerOptions;
+    }
 }
 </script>
 

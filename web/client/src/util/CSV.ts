@@ -4,7 +4,7 @@ import * as FileSaver from "file-saver";
 import { transpose as arrayTranspose } from "../util/Array";
 
 export async function parseFile(file: File) {
-    const parseResult = await new Promise<PapaParse.ParseResult>((resolve, reject) => {
+    const parseResult = await new Promise<Papa.ParseResult>((resolve, reject) => {
         Papa.parse(file, {
             dynamicTyping: false,   // Do not auto convert things like numbers
             header: false,          // Don't try to convert into objects, read entire file as string[][]
