@@ -9,7 +9,7 @@ import { Constraint, Data as IConstraint } from "../data/Constraint";
 import { RecordData as IState_RecordData } from "../data/RecordData";
 import { AnnealConfig as IState_AnnealConfig } from "../data/AnnealConfig";
 import { AnnealRequest, Data as IAnnealRequest } from "../data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "../data/AnnealResponse";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse } from "../data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 
 import { deepMerge } from "../util/Object";
@@ -104,7 +104,7 @@ export const store = new Vuex.Store({
         updateAnnealResponseOnServerResponse(state, content: AxiosResponse) {
             const annealResponse = state.annealResponse;
 
-            if(annealResponse === undefined) {
+            if (annealResponse === undefined) {
                 return;
             }
 
@@ -381,9 +381,12 @@ Delete constraints that use this column and try again.`;
 
             // Once the request completes, send status queries to server to check the status of the anneal job
             AnnealRequest.WaitForCompletion(annealRequest)
-                .then((responseContent: AxiosResponse) => {
-                    if(responseContent.data) {
-                        AnnealRequest.QueryAndUpdateAnnealStatus(responseContent, handleAnnealCompletion);
+                .then((responseContent) => {
+                    // TODO: Fix type assertion
+                    const content = responseContent as AxiosResponse;
+
+                    if (content.data) {
+                        AnnealRequest.QueryAndUpdateAnnealStatus(content, handleAnnealCompletion);
                     }
 
                     function handleAnnealCompletion(resultResponse: AxiosResponse) {
