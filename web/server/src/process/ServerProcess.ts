@@ -1,8 +1,6 @@
 import * as Application from "../core/Application";
 import * as Router from "../core/Router";
 
-import * as AnnealResponseHandler from "../queue/AnnealResponse";
-
 // TODO: Move configuration into config file
 
 // Port config
@@ -26,10 +24,6 @@ export function init() {
     // Set up static file delivery
     console.log(`Initialising static file delivery`);
     Application.enableStaticFileServing(app, `${__dirname}/../../../client`);
-
-    // Set up anneal response delivery handler
-    console.log(`Initialising anneal response handler`);
-    AnnealResponseHandler.init();
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);
