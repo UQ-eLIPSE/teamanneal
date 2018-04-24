@@ -7,7 +7,7 @@ interface OutputResult {
 }
 
 export interface Root {
-    status: AnnealStatus,
+    readonly status: AnnealStatus,
     readonly results?: ReadonlyArray<OutputResult>,
     readonly error?: string,
 }
