@@ -11,7 +11,7 @@ import * as RecordData from "../../../common/RecordData";
 import * as RecordDataColumn from "../../../common/RecordDataColumn";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
-import AnnealStatus from "../../../common/AnnealStatus";
+import { AnnealStatus } from "../../../common/AnnealStatus";
 import { AnnealStatusResponseState, StatusMap } from "../../../common/AnnealState";
 
 import { Data as IState } from "./State";

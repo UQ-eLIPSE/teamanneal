@@ -1,4 +1,4 @@
-import AnnealStatus from "./AnnealStatus";
+import { AnnealStatus } from "./AnnealStatus";
 import * as AnnealNode from "./AnnealNode";
 
 export interface AnnealStatusState {

@@ -1,5 +1,5 @@
 import * as AnnealNode from "./AnnealNode";
-import AnnealStatus from "../common/AnnealStatus";
+import { AnnealStatus } from "../common/AnnealStatus";
 
 interface OutputResult {
     readonly result?: AnnealNode.NodeRoot,

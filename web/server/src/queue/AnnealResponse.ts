@@ -3,7 +3,7 @@ import * as ToClientAnnealResponse from "../../../common/ToClientAnnealResponse"
 import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 import * as RedisService from "../utils/RedisService";
-import AnnealStatus from "../../../common/AnnealStatus";
+import { AnnealStatus } from "../../../common/AnnealStatus";
 
 // This must be run within the same process as the one that sets the response
 // objects into the store (generally main server process.)
@@ -38,7 +38,7 @@ export function init() {
                 };
                 await RedisService.pushAnnealState(redisResponseId, clientReponseObject);
             }
-       
+
             if (error !== undefined) {
                 console.log('error occured during anneal');
 
@@ -51,6 +51,6 @@ export function init() {
 
             done();
 
-            
+
         });
 }

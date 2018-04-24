@@ -4,7 +4,7 @@ import * as IPCQueue from "../data/IPCQueue";
 import * as Anneal from "../anneal/Anneal";
 
 import * as RedisService from "../utils/RedisService";
-import AnnealStatus from "../../../common/AnnealStatus";
+import { AnnealStatus } from "../../../common/AnnealStatus";
 import { AnnealStatusState } from "../../../common/AnnealState";
 
 export function init(workerId: string) {
