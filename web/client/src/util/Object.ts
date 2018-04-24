@@ -20,7 +20,7 @@ export function deepMerge<T extends Object, U extends Partial<T>>(target: T, ...
 
     if (isObject(target) && isObject(source)) {
         for (const key in source) {
-            const sourceValue = source[key];
+            const sourceValue = (source as any)[key];
 
             if (isObject(sourceValue)) {
                 if (!(target as any)[key]) Object.assign(target, { [key]: {} });

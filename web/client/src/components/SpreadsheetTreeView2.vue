@@ -2,7 +2,7 @@
     <div class="spreadsheet-tree-view">
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
-                                        :headerRow="headerRow"
+                                        :headerRow="filteredHeaderRow"
                                         :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
         </table>
         <table class="contents">
@@ -22,18 +22,22 @@
                 <SpreadsheetTreeView2Header ref="sizingPhaseHeader"
                                             class="sizing-phase-header"
                                             :padCells="treeMaxDepth"
-                                            :headerRow="headerRow"></SpreadsheetTreeView2Header>
+                                            :headerRow="filteredHeaderRow"></SpreadsheetTreeView2Header>
             </tbody>
 
             <!-- Render node roots (partitions or highest stratum) -->
-            <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in annealNodeRoots"
+            <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in nodeRoots"
+                                                :isDataPartitioned="nodeRoots.length > 1"
                                                 :key="nodeRoot._id"
                                                 :node="nodeRoot"
                                                 @itemClick="onItemClickHandler"
                                                 :totalNumberOfColumns="totalNumberOfColumns"
                                                 :recordLookupMap="recordLookupMap"
                                                 :nodeNameMap="nodeNameMap"
+                                                :nodeRecordMap="nodeRecordMap"
                                                 :nodeStyles="nodeStyles"
+                                                :hiddenNodes="hiddenNodes"
+                                                :onToggleNodeVisibility="onToggleNodeVisibility"
                                                 :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
         </table>
     </div>
@@ -42,25 +46,28 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
 
-import * as AnnealNode from "../../../common/AnnealNode";
+// import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
-import { NodeNameMapNameGenerated } from "../data/ResultTree";
+import { GroupNode } from "../data/GroupNode";
+import { GroupNodeRoot } from "../data/GroupNodeRoot";
+import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
 
-function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
+function getMaxChildrenDepth(node: GroupNode, depth = 0): number {
     switch (node.type) {
         case "root":
-        case "stratum-stratum":
+        case "intermediate-stratum":
             return node.children.reduce((carry, child) => {
                 return Math.max(carry, getMaxChildrenDepth(child, depth + 1));
             }, depth + 1);
 
-        case "stratum-records":
+        case "leaf-stratum":
             return depth + 1;
     }
 
@@ -70,38 +77,45 @@ function getMaxChildrenDepth(node: AnnealNode.Node, depth = 0): number {
 @Component({
     components: {
         SpreadsheetTreeView2Header,
-        SpreadsheetTreeView2AnnealNodeRoot,
+        SpreadsheetTreeView2AnnealNodeRoot
     },
 })
 export default class SpreadsheetTreeView2 extends Vue {
     // Props
-    @Prop annealNodeRoots = p<ReadonlyArray<AnnealNode.NodeRoot>>({ type: Array, required: true, });
+    @Prop nodeRoots = p<ReadonlyArray<GroupNodeRoot>>({ type: Array, required: true, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
-    @Prop recordRows = p<ReadonlyArray<ReadonlyArray<number | string | null>>>({ type: Array, required: true, });
-    @Prop nodeNameMap = p<NodeNameMapNameGenerated>({ required: false, });
-    @Prop nodeStyles = p<Map<AnnealNode.Node | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
+    @Prop recordRows = p<ReadonlyArray<Record>>({ type: Array, required: true, });
+    @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
+    @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
+    @Prop nodeStyles = p<Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
-
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
+    @Prop columnsDisplayIndices = p<number[]>({ required: true });
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true });
+    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true });
 
     // Private
     columnWidths: number[] | undefined = undefined;
 
     /** Handles item clicks that were delivered from children component */
-    onItemClickHandler(data: ({ node: AnnealNode.Node } | { recordId: RecordElement })[]) {
+    onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", data);
     }
 
     get treeMaxDepth() {
         // Get the maximum depth of all children
-        return this.annealNodeRoots.reduce((carry, node) => {
+        return this.nodeRoots.reduce((carry, node) => {
             return Math.max(carry, getMaxChildrenDepth(node));
         }, 0);
     }
 
     get numberOfDataColumns() {
-        return this.headerRow.length;
+        return this.filteredHeaderRow.length;
+    }
+
+    get filteredHeaderRow() {
+        return this.headerRow.filter((_columnLabel, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
     }
 
     get totalNumberOfColumns() {
@@ -113,7 +127,8 @@ export default class SpreadsheetTreeView2 extends Vue {
 
         return this.recordRows.reduce((map, record) => {
             const id = record[idColumnIndex];
-            map.set(id, record);
+            const filteredRecord = record.filter((_r, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
+            map.set(id, filteredRecord);
             return map;
         }, new Map<RecordElement, Record>());
     }
@@ -149,7 +164,6 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     sizeColumnWidths() {
         const headerEl = (this.$refs["sizingPhaseHeader"] as Vue).$el as HTMLTableRowElement;
-
         // "Show" the element for measurements
         headerEl.classList.add("show");
 
@@ -167,12 +181,33 @@ export default class SpreadsheetTreeView2 extends Vue {
         return widths;
     }
 
-    updateColumnWidths() {
-        this.columnWidths = this.sizeColumnWidths();
+    waitAndUpdateColumnWidths() {
+        this.columnWidths = undefined;
+        Vue.nextTick(() => {
+            this.columnWidths = this.sizeColumnWidths();
+        });
+    }
+
+    /** Recalculates width when columns are changed from the column display filter checkboxes */
+    @Watch('columnsDisplayIndices')
+    columnChangeWidthHandler(_n: any, _o: any) {
+        this.waitAndUpdateColumnWidths();
+    }
+
+    // Watcher added  to avoid the following error situation: 
+    // Error reproduction (before this watcher was implemented):
+    // 1. Collapse all partitions
+    // 2. Change selected columns from the column checkbox filter
+    // 3. Re-open the partition
+    // Error: Column widths do not align with the table rows until the checkbox filter is modified again.
+    // (Header loses reference to the widths because no table row was rendered)
+    @Watch('hiddenNodes')
+    strataChangeWidthHandler(_n: any, _o: any) {
+        this.waitAndUpdateColumnWidths();
     }
 
     @Lifecycle mounted() {
-        this.updateColumnWidths();
+        this.waitAndUpdateColumnWidths();
     }
 }   
 </script>

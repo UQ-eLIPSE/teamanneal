@@ -21,6 +21,8 @@ export default class Help extends Vue {
 
 <!-- ####################################################################### -->
 
+<style scoped src="../../static/results-editor-side-panel.css"></style>
+
 <style scoped>
 
 </style>

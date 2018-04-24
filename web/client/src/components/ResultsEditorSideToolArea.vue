@@ -3,9 +3,10 @@
         <div v-if="sidePanelEnabled"
              class="side-panel">
             <component class="side-panel-component"
-                       :is="sidePanelComponent"></component>
+                       :is="sidePanelComponent"
+                       :data="sidePanelData"></component>
         </div>
-        <ResultsEditorMenuBar :items="menuBarItems"
+        <ResultsEditorMenuBar :items="menuItems"
                               :selectedItem="selectedItem"
                               @itemSelected="onItemSelected"></ResultsEditorMenuBar>
     </div>
@@ -14,51 +15,13 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 import { MenuItem } from "../data/ResultsEditorMenuBar";
 
+import * as Store from "../store";
+
 import ResultsEditorMenuBar from "./ResultsEditorMenuBar.vue";
-
-import ImportFile from "./results-editor-side-panels/ImportFile.vue";
-import ExportFile from "./results-editor-side-panels/ExportFile.vue";
-import Print from "./results-editor-side-panels/Print.vue";
-import Help from "./results-editor-side-panels/Help.vue";
-
-const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
-    {
-        label: "Import",
-        region: "start",
-        component: ImportFile,
-    },
-    {
-        label: "Export",
-        region: "start",
-        component: ExportFile,
-    },
-    {
-        label: "Print",
-        region: "start",
-        component: Print,
-    },
-    {
-        label: "Move a person",
-    },
-    {
-        label: "Swap people",
-    },
-    {
-        label: "Add a person or group",
-    },
-    {
-        label: "Remove a person or group",
-    },
-    {
-        label: "Help",
-        region: "end",
-        component: Help,
-    },
-]
 
 @Component({
     components: {
@@ -66,12 +29,8 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     },
 })
 export default class ResultsEditorSideToolArea extends Vue {
-    /** Which menu item is currently selected */
-    selectedItem: MenuItem | undefined = undefined;
-
-    get menuBarItems() {
-        return MENU_BAR_ITEMS;
-    }
+    /** Array of menu items to render */
+    @Prop menuItems = p<ReadonlyArray<MenuItem>>({ type: Array, required: true, });
 
     get sidePanelComponent() {
         if (this.selectedItem === undefined) {
@@ -85,13 +44,34 @@ export default class ResultsEditorSideToolArea extends Vue {
         return this.selectedItem !== undefined && this.selectedItem.component !== undefined;
     }
 
-    onItemSelected(item: MenuItem) {
-        if (this.selectedItem === item) {
-            this.selectedItem = undefined;
-            return;
+    get sidePanelData() {
+        return Store.ResultsEditor.state.sideToolArea.activeItem!.data;
+    }
+
+    get selectedItem() {
+        const itemInfo = Store.ResultsEditor.state.sideToolArea.activeItem;
+
+        if (itemInfo === undefined) {
+            return undefined;
         }
 
-        this.selectedItem = item;
+        return this.menuItems.find(item => item.name === itemInfo.name);
+    }
+
+    onItemSelected(item: MenuItem) {
+        if (this.selectedItem === item) {
+            return this.setActiveTool(undefined);
+        }
+
+        return this.setActiveTool(item.name);
+    }
+
+    setActiveTool(name: string | undefined) {
+        if (name === undefined) {
+            return Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+        }
+        
+        return Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, name);
     }
 }
 </script>
@@ -121,5 +101,9 @@ export default class ResultsEditorSideToolArea extends Vue {
     left: 0;
     right: 0;
     bottom: 0;
+
+    padding: 1em;
+
+    overflow-y: auto;
 }
 </style>

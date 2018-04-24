@@ -17,6 +17,7 @@
     "build_client": "cd ./client && webpack --config webpack.config.js && npm run build_client_copy_index",
     "build_client_prod": "cd ./client && webpack -p --config webpack.config.js && npm run build_client_copy_index",
     "build_client_copy_index": "node ./scripts/CopyClientToBuild.js",
+    "build_client_watch": "cd ./client && npm run build_client_copy_index && webpack --watch --config webpack.config.js",
     "build_server": "tsc --project ./server"
   },
   "engines": {
@@ -41,7 +42,7 @@
     "style-loader": "0.20.2",
     "ts-jest": "22.4.1",
     "ts-loader": "4.0.1",
-    "typescript": "2.7.2",
+    "typescript": "2.8.1",
     "vue-loader": "14.2.1",
     "vue-template-compiler": "2.5.13",
     "webpack": "4.1.1",
