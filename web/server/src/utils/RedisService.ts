@@ -6,7 +6,7 @@ import * as uuidv4 from "uuid/v4";
  * Instance of redis client
  */
 const client = (function InitRedis() {
-    const redisClient = redis.createClient({ prefix: 'annealStateStatusList:' });
+    const redisClient = redis.createClient({ prefix: "TeamAnneal:" });
     return redisClient;
 })();
 

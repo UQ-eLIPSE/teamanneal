@@ -80,14 +80,15 @@ const anneal: express.RequestHandler =
 const annealStatus: express.RequestHandler =
     async (req, res) => {
         try {
-
-            if (req.query.id === undefined) throw new Error("Anneal job ID is invalid.");
+            if (req.query.id === undefined) {
+                throw new Error("Anneal job ID is invalid");
+            }
 
             const annealID = req.query.id;
             const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
 
             const annealStateObjects = annealMapList.map((jsonString: string) => JSON.parse(jsonString));
-            let partitionStateStatusMap: StatusMap = {};
+            const partitionStateStatusMap: StatusMap = {};
 
             // Filter status type states (i.e. exclude anneal result states)
             const statusStateObjects: AnnealStatusState[] = annealStateObjects.filter((o: any) => o.results === undefined);
@@ -115,14 +116,17 @@ const annealStatus: express.RequestHandler =
             });
 
             const expectedNumberOfResults = await RedisService.getExpectedNumberOfAnnealResults(annealID);
+
             res
                 .status(HTTPResponseCode.SUCCESS.OK)
-                .json({ statusMap: partitionStateStatusMap, expectedNumberOfResults: expectedNumberOfResults });
-
-
+                .json({
+                    statusMap: partitionStateStatusMap,
+                    expectedNumberOfResults,
+                });
 
         } catch (e) {
             console.error(e);
+
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
                 .json({ error: e });
@@ -138,28 +142,47 @@ const annealStatus: express.RequestHandler =
 const annealResult: express.RequestHandler =
     async (req, res) => {
         try {
+            if (req.query.id === undefined) {
+                throw new Error("Anneal job ID is invalid");
+            }
 
-            if (req.query.id === undefined) throw new Error("Anneal job ID is invalid.");
             const annealID = req.query.id;
-            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
+
+            // Go through entire list of anneal status objects to find the 
+            // final results object (the one that contains the `results` prop)
+            const annealMapList: ReadonlyArray<string> = await RedisService.getLRANGE(annealID, 0, -1);
+
             for (let annealMap of annealMapList) {
+                // If the JSON object of the string has the `results` property
+                // then we say that it is the final combined result to send to
+                // the client
                 if (JSON.parse(annealMap).results) {
+                    // Send response
+                    //
+                    // Note that we set the content type here to JSON because
+                    // the `annealMap` result is actually a string internally
+                    // and there is no need to parse and serialise the JSON 
+                    // again purely for delivery to the client
                     res
+                        .type("json")
                         .status(HTTPResponseCode.SUCCESS.OK)
                         .send(annealMap);
 
-                    // Sent data to user
-                    // Set expiry time for all anneal data pertaining to the anneal job (already returned to user)
+                    // Set expiry time for all anneal data pertaining to the 
+                    // anneal job (already returned to user) to no later than 
+                    // 60 seconds
                     RedisService.expireAnnealData(annealID, 60);
+
+                    // We're done; stop going through array
+                    return;
                 }
             }
 
         } catch (e) {
+            console.error(e);
+
             res
                 .status(HTTPResponseCode.SERVER_ERROR.INTERNAL_SERVER_ERROR)
                 .send({ error: e });
-            throw new Error(e);
-
         }
-
     }
