@@ -11,12 +11,19 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <ResultsEditorSideToolArea class="side-tool-area"></ResultsEditorSideToolArea>
+        <!-- <ConstraintOverview class="constraint-overview"
+                                    :constraints="constraintsArray"
+                                    :constraintSatisfactionMap="annealSatisfactionMap"
+                                    @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                                    :constraintThresholdMap="constraintThresholdPercMap"
+                                    :strata="strata"></ConstraintOverview> -->
         <ConstraintOverview class="constraint-overview"
                             :constraints="constraintsArray"
                             :constraintSatisfactionMap="annealSatisfactionMap"
-                            @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                            :constraintThresholdMap="constraintThresholdPercMap"
-                            :strata="strata"></ConstraintOverview>
+                            :strata="strata"
+                            :recordLookupMap="recordLookupMap"
+                            :columns="columns"
+                            :nodeRoots="modifiedAnnealNodeRoots"></ConstraintOverview>
     </div>
 </template>
 
@@ -33,7 +40,7 @@ import { AxiosResponse } from "../data/AnnealResponse";
 import { Data as IState } from "../data/State";
 import { Data as IConstraint } from "../data/Constraint";
 
-import { RecordElement } from "../../../common/Record";
+import { Record, RecordElement } from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
@@ -56,10 +63,9 @@ export default class ResultsEditor extends Vue {
 
 
     /** 
-     * TODO: Move to state store
      *  Maps constraint ids to threshold
      */
-    constraintThresholdPercMap: { [key: string]: number } = {};
+    // constraintThresholdPercMap: { [key: string]: number } = {};
 
     get state() {
         return this.$store.state as IState;
@@ -196,9 +202,9 @@ export default class ResultsEditor extends Vue {
             }, {});
     }
 
-    constraintAcceptabilityChangeHandler(constraint: IConstraint, newValue: number) {
-        Vue.set(this.constraintThresholdPercMap, constraint._id, newValue);
-    }
+    // constraintAcceptabilityChangeHandler(constraint: IConstraint, newValue: number) {
+    //     Vue.set(this.constraintThresholdPercMap, constraint._id, newValue);
+    // }
 
     /** A map of nodes or records which are to be styled in the spreadsheet */
     get nodeStyles() {
@@ -523,6 +529,16 @@ export default class ResultsEditor extends Vue {
         // this.pendingEditOperation.cursor = cursor as any;
     }
 
+    get recordLookupMap() {
+        const idColumnIndex = this.idColumnIndex;
+
+        return this.recordRows.reduce((map, record) => {
+            const id = record[idColumnIndex];
+            map.set(id, record);
+            return map;
+        }, new Map<RecordElement, Record>());
+    }
+
     @Lifecycle created() {
         // Copy out the data from the state so that modifications are separate 
         // from the anneal result which is consistent with constraints
@@ -533,13 +549,13 @@ export default class ResultsEditor extends Vue {
         // TODO: This needs some persistence of some sort but this will heavily
         // depend on how we will be managing the data
         this.modifiedAnnealNodeRoots = JSON.parse(JSON.stringify(this.annealResults.map(res => res.result!.tree)));
-        this.constraintsArray.forEach((constraint) => {
-            if (constraint.type === "limit") {
-                Vue.set(this.constraintThresholdPercMap, constraint._id, 50);
-            } else {
-                Vue.set(this.constraintThresholdPercMap, constraint._id, 100);
-            }
-        });
+        // this.constraintsArray.forEach((constraint) => {
+        //     if (constraint.type === "limit") {
+        //         Vue.set(this.constraintThresholdPercMap, constraint._id, 50);
+        //     } else {
+        //         Vue.set(this.constraintThresholdPercMap, constraint._id, 100);
+        //     }
+        // });
     }
 }
 </script>

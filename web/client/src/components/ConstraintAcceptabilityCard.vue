@@ -15,23 +15,21 @@
         </div>
 
 
-        <div class="slider-wrapper"
-             v-if="isLimitTypeConstraint">
+        <!-- <div class="slider-wrapper"
+                     v-if="isLimitTypeConstraint">
 
-            <span>I'm satisfied if</span>
-            <span class="limit-constraint-description-number">{{limitConstraintDescriptionNumber}}</span>
 
-            <span> of {{lowerCaseStratumLabel}} members have </span>
-            <span class="constraint-filter-text">{{constraintFilterText}}</span>
-            
-            
-            <input type="range"
-                   @input="constraintAcceptabilityChanged($event)"
-                   :value="constraintAcceptability"
-                   min="0"
-                   max="100"
-                   step="0.1" />
-        </div>
+                    <span> of {{lowerCaseStratumLabel}} members have </span>
+                    <span class="constraint-filter-text">{{constraintFilterText}}</span>
+                    
+                    
+                    <input type="range"
+                           @input="constraintAcceptabilityChanged($event)"
+                           :value="constraintAcceptability"
+                           min="0"
+                           max="100"
+                           step="0.1" />
+                </div> -->
 
 
     </div>
@@ -50,36 +48,19 @@ export default class ConstraintAcceptabilityCard extends Vue {
     @Prop stratumLabel = p({ type: String, required: true });
     @Prop fulfilledNumber = p({ type: Number, required: true });
     @Prop totalGroups = p({ type: Number, required: true });
-    @Prop constraintThreshold = p({ type: Number, required: true });
+    // @Prop constraintThreshold = p({ type: Number, required: true });
 
-    get constraintAcceptability() {
-        return this.constraintThreshold.toString();
-    }
+    // get constraintAcceptability() {
+    //     return this.constraintThreshold.toString();
+    // }
 
-    constraintAcceptabilityChanged(e: any) {
-        const threshold = parseFloat(e.currentTarget.value);
-        this.$emit("constraintAcceptabilityChanged", this.constraint, threshold);
-    }
+    // constraintAcceptabilityChanged(e: any) {
+    //     const threshold = parseFloat(e.currentTarget.value);
+    //     this.$emit("constraintAcceptabilityChanged", this.constraint, threshold);
+    // }
     get constraintSentence() {
         const sentence = ConstraintSentence.convertConstraintToSentence(this.constraint, this.lowerCaseStratumLabel);
         return sentence[0].toUpperCase() + sentence.slice(1);
-    }
-
-    get constraintFilterText() {
-        const phrase = ConstraintSentence.getConstraintFilterText(this.constraint);
-        return phrase.toLowerCase();
-    }
-
-    get limitConstraintDescriptionNumber() {
-        let phrase = "";
-        if (this.constraint.condition.function === "high") {
-            phrase += (this.constraintThreshold).toFixed(1) + "%";
-        } else {
-            phrase += (100 - this.constraintThreshold).toFixed(1) + "%";
-        }
-
-        return phrase;
-
     }
 
     get lowerCaseStratumLabel() {
@@ -88,10 +69,6 @@ export default class ConstraintAcceptabilityCard extends Vue {
 
     get isLimitTypeConstraint() {
         return this.constraint.type === "limit";
-    }
-
-    get isConstraintConditionFunctionLow() {
-        return this.constraint.condition.function === "low";
     }
 
     get constraintItemClasses() {
@@ -208,12 +185,6 @@ export default class ConstraintAcceptabilityCard extends Vue {
 .acceptability-value {
     color: #49075E;
     font-weight: 500;
-}
-
-.limit-constraint-description-number {
-    color: #49075E;
-    font-weight: 500;
-    border-bottom: 1px dotted #49075E;
 }
 
 .acceptability-value {
