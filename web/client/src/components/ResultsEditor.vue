@@ -20,18 +20,18 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <!-- <ConstraintOverview class="constraint-overview"
-                                    :constraints="constraintsArray"
-                                    :constraintSatisfactionMap="annealSatisfactionMap"
-                                    @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                                    :constraintThresholdMap="constraintThresholdPercMap"
-                                    :strata="strata"></ConstraintOverview> -->
-        <ConstraintOverview class="constraint-overview"
+                                        :constraints="constraintsArray"
+                                        :constraintSatisfactionMap="annealSatisfactionMap"
+                                        @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                                        :constraintThresholdMap="constraintThresholdPercMap"
+                                        :strata="strata"></ConstraintOverview> -->
+        <!-- <ConstraintOverview class="constraint-overview"
                             :constraints="constraintsArray"
                             :constraintSatisfactionMap="annealSatisfactionMap"
                             :strata="strata"
                             :recordLookupMap="recordLookupMap"
                             :columns="columns"
-                            :nodeRoots="modifiedAnnealNodeRoots"></ConstraintOverview>
+                            :nodeRoots="modifiedAnnealNodeRoots"></ConstraintOverview> -->
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
@@ -40,7 +40,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Lifecycle } from "av-ts";
 
 import * as Store from "../store";
 
@@ -399,6 +399,35 @@ export default class ResultsEditor extends Vue {
             }
         }
     }
+
+    get allNodesRecordMap() {
+        return Store.ResultsEditor.getters.getAllNodesRecordsMap(this.state);
+    }
+    @Lifecycle created() {
+    }
+    // mapNodeToRecords(node: GroupNode, nodeToRecordMap: any) {
+    //     if (node.type === "leaf-stratum") {
+    //         nodeToRecordMap[node._id] = node.recordIds;
+    //         return node.recordIds;
+    //     } else {
+            // const records = node.children.reduce((records: any[], child) => {
+            //     const nodeRecordsArray = this.mapNodeToRecords(child, nodeToRecordMap);
+            //     return records.concat(nodeRecordsArray);
+            // }, []);
+
+            // nodeToRecordMap[node._id] = records;
+    //     }
+    // }
+
+    // get nodeToRecordsMap(): any {
+    //     const nodeToRecordMap = {};
+    //     this.nodeRoots.forEach((root) => {
+    //         root.children.forEach((child) => {
+    //             this.mapNodeToRecords(child, nodeToRecordMap);
+    //         });
+    //     });
+    //     return nodeToRecordMap;
+    // }
 }
 </script>
 

@@ -78,7 +78,7 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
     },
-
+    
     // TODO: [WIP]
     async [A.__DEHYDRATE](context: Context) {
         return JSON.stringify(context.state);

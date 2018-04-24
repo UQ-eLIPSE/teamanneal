@@ -456,7 +456,7 @@ Delete constraints that use this column and try again.`;
 // Module definitions
 export const ResultsEditor = {
     prefix: ModulePrefix.ResultsEditor,
-
+    getters: _ResultsEditor.getters,
     action: _ResultsEditor.Action,
     dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
 

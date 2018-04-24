@@ -175,29 +175,7 @@ export default class ConstraintOverview extends Vue {
         return nodeIdNodeMap;
     }
 
-    mapNodeToRecords(node: AnnealNode.Node, nodeToRecordMap: any) {
-        if (node.type === "stratum-records") {
-            nodeToRecordMap[node._id] = node.recordIds;
-            return node.recordIds;
-        } else {
-            const records = node.children.reduce((records: any[], child) => {
-                const nodeRecordsArray = this.mapNodeToRecords(child, nodeToRecordMap);
-                return records.concat(nodeRecordsArray);
-            }, []);
 
-            nodeToRecordMap[node._id] = records;
-        }
-    }
-
-    get nodeToRecordsMap(): any {
-        const nodeToRecordMap = {};
-        this.nodeRoots.forEach((root) => {
-            root.children.forEach((child) => {
-                this.mapNodeToRecords(child, nodeToRecordMap);
-            });
-        });
-        return nodeToRecordMap;
-    }
     getLimitConstraintNodeRecordsMap() {
         const limitConstraints = this.constraintsArray.filter((c) => c.type === "limit");
 
@@ -248,10 +226,10 @@ export default class ConstraintOverview extends Vue {
     }
     @Lifecycle
     created() {
-        const map = this.nodeToRecordsMap;
+        // const map = this.nodeToRecordsMap;
 
-        console.log('NODE TO RECORD MAP :');
-        console.log(map);
+        // console.log('NODE TO RECORD MAP :');
+        // console.log(map);
         // const constraintNodeArray = this.getPigeonHolesForConstraints();
         // constraintNodeArray.forEach((pigeonHoleObject: any) => {
         //     const pigeons = Object.keys(pigeonHoleObject.pigeonNodeMap).map((nodeId: string) => pigeonHoleObject.pigeonNodeMap[nodeId]).reduce((totalSum: number, numPigeons: number) => totalSum + numPigeons);
