@@ -1,4 +1,4 @@
-import * as Random from "../data/Random";
+import * as Random from "./Random";
 
 import { AnnealStratumNode } from "./AnnealStratumNode";
 

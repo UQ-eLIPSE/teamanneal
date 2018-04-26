@@ -1,12 +1,14 @@
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
+import { NodeSatisfactionObject, SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
-import { AbstractConstraint } from "./AbstractConstraint";
-import { CountConstraint } from "./CountConstraint";
-import { LimitConstraint } from "./LimitConstraint";
-import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
-import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
+import { AbstractConstraint } from "../data/AbstractConstraint";
+import { CountConstraint } from "../data/CountConstraint";
+import { LimitConstraint } from "../data/LimitConstraint";
+import { SimilarityNumericConstraint } from "../data/SimilarityNumericConstraint";
+import { SimilarityStringConstraint } from "../data/SimilarityStringConstraint";
 
-import { AnnealStratumNode } from "./AnnealStratumNode";
+import { AnnealStratum } from "../data/AnnealStratum";
+import { AnnealStratumNode } from "../data/AnnealStratumNode";
 
 import * as Util from "../core/Util";
 
@@ -15,7 +17,7 @@ import * as Util from "../core/Util";
  * @param node The stratum node being checked (not root node)
  * @param allLeaves All leaves regardless of whether they're under the node
  */
-export function calculateSatisfactionValue(constraint: AbstractConstraint, node: AnnealStratumNode) {
+export function calculateValue(constraint: AbstractConstraint, node: AnnealStratumNode) {
     const recordPointers = node.getRecordPointers();
 
     // If not applicable, return undefined
@@ -32,12 +34,42 @@ export function calculateSatisfactionValue(constraint: AbstractConstraint, node:
     throw new Error("Unrecognised constraint type");
 }
 
-export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealStratumNode) {
+export function calculateSatisfactionObject(constraint: AbstractConstraint, node: AnnealStratumNode) {
     const satisfactionObject: ConstraintSatisfaction.NodeSatisfactionObject = {
-        [constraint.constraintDef._id]: calculateSatisfactionValue(constraint, node),
+        [constraint.constraintDef._id]: calculateValue(constraint, node),
     };
 
     return satisfactionObject;
+}
+
+/**
+ * Generates a satisfaction map object for one stratum.
+ */
+export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    // We only work with constraints that actually apply to this stratum
+    const applicableConstraints = constraints.filter(c => c.constraintDef.stratum === stratum.id);
+
+    // Collect up all node satisfaction objects into one large lookup map
+    return stratum.nodes.reduce<SatisfactionMap>((satisfactionMap, node) => {
+        const nodeId = node.getId();
+
+        // Collect up all constraint satisfaction for this node in an object
+        satisfactionMap[nodeId] = applicableConstraints.reduce<NodeSatisfactionObject>((nodeSatisfactionObject, constraint) => {
+            return Object.assign(nodeSatisfactionObject, calculateSatisfactionObject(constraint, node));
+        }, {});
+
+        return satisfactionMap;
+    }, {});
+}
+
+/**
+ * Generates a satisfaction map object that covers all given strata.
+ */
+export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
+    // Generate satisfaction map of all stratum nodes combined into one
+    return strata
+        .map(stratum => generateSingleStratumMap(constraints, stratum))
+        .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
 }
 
 
