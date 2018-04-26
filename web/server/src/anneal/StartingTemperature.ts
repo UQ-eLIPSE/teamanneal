@@ -39,7 +39,7 @@ export function derive(recordPointers: AnnealRecordPointerArray, strata: Readonl
         // Perform random op
         //
         // We only need to mutate the leaf nodes (swap, move, etc.)
-        // This is done via. the immediate parent - which are the lowest
+        // This is done via the immediate parent of records - the lowest/leaf
         // stratum nodes (index = 0)
         const modifiedPointerIndicies = MutationOperation.randPick()(strata[0]);
 
