@@ -23,7 +23,7 @@ import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
 export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     // Fix random seed for debugging
-    // Random.setSeed(0xDEADBEEF);
+    // Random.setGlobalSeed(0xDEADBEEF);
 
     // Check that constraints array is not empty
     if (constraintDefinitions.length === 0) {
@@ -34,23 +34,23 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
     /// Processing records
     /// ==================
 
-    const { records, columns } = recordData;
+    const { records: globalRecordSet, columns } = recordData;
 
     // Generate column information objects
     //
     // Note that this uses information from the WHOLE set of records, not just
     // filtered records
-    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(records, i, column));
+    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(globalRecordSet, i, column));
 
     // Find the ID column
     const idColumnIndex = ColumnInfo.getIdColumnIndex(columns);
 
     // Filter records so that we are only working with records for this anneal 
     // node
-    const thisNodeRecords = Data_AnnealNode.filterRecords(annealRootNode, idColumnIndex, records);
+    const records = Data_AnnealNode.filterRecords(annealRootNode, idColumnIndex, globalRecordSet);
 
     // Extract ID values from each record
-    const thisNodeRecordsIdColumn = Data_RecordData.extractDataFromColumn(thisNodeRecords, idColumnIndex);
+    const recordsIdColumn = Data_RecordData.extractDataFromColumn(records, idColumnIndex);
 
     /// =======================
     /// Configuring constraints
@@ -65,7 +65,7 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
 
     // Create set of strata objects
     const { strata, recordPointers, annealNodeToStratumNodeMap } =
-        AnnealStratum.createStrataSet(constraints, strataDefinitions, thisNodeRecordsIdColumn, annealRootNode);
+        AnnealStratum.createStrataSet(constraints, strataDefinitions, recordsIdColumn, annealRootNode);
 
     /// =======================
     /// Calculating temperature
@@ -88,7 +88,7 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
     /// ===============
 
     const output = {
-        tree: Data_AnnealNode.generateTree(thisNodeRecordsIdColumn, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
+        tree: Data_AnnealNode.generateTree(recordsIdColumn, annealNodeToStratumNodeMap, annealRootNode) as AnnealNode.NodeRoot,
         satisfaction: ConstraintSatisfaction.generateMap(constraints, strata),
     };
 
