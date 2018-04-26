@@ -11,6 +11,8 @@ import * as RecordData from "../../../common/RecordData";
 import * as RecordDataColumn from "../../../common/RecordDataColumn";
 import * as GroupDistribution from "../../../common/GroupDistribution";
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
+import { AnnealStatus } from "../../../common/AnnealStatus";
+import { AnnealStatusResponseState, StatusMap } from "../../../common/AnnealState";
 
 import { Data as IState } from "./State";
 import { Partition } from "./Partition";
@@ -381,5 +383,93 @@ export namespace AnnealRequest {
                 .then(resolve)
                 .catch(resolve);
         });
+    }
+
+    /**
+     * Handles firing of anneal status query requests
+     * @param responseContent Response from server with ID of anneal job
+     * @param annealCompleteCallbackFunction Function to be called once anneal job is finished
+     */
+    export function QueryAndUpdateAnnealStatus(responseContent: AxiosResponse, annealCompleteCallbackFunction: (resultResponse: AxiosResponse) => void) {
+
+        let requestAttemptNumber = 0;
+
+        setTimeout(GetAnnealStatusWithVariableDelay, GetRequestTimeout(requestAttemptNumber));
+
+        /** 
+         * Queries for anneal job status
+         */
+        async function GetAnnealStatusWithVariableDelay() {
+            requestAttemptNumber++;
+            const statusResponse = await GetAnnealStatus(responseContent.data.id);
+            const { isAnnealComplete } = GetCompletedPartitionsData(statusResponse.data);
+
+            // Get anneal's completed percentage by uncommenting the following line
+            // const { isAnnealComplete, percentComplete } = getCompletedPartitionsData(statusResponse.data);
+
+            // Check if completed
+            if (isAnnealComplete) {
+                // Anneal is complete
+                const resultResponse = await AnnealRequest.GetAnnealResult(responseContent.data.id);
+                annealCompleteCallbackFunction(resultResponse);
+            } else {
+                // Anneal incomplete
+                setTimeout(GetAnnealStatusWithVariableDelay, GetRequestTimeout(requestAttemptNumber));
+            }
+        }
+    }
+
+    /**
+     * Sends axios POST request with ID of anneal job to get anneal status.
+     * @param annealId ID of the anneal job
+     */
+    export async function GetAnnealStatus(annealId: string) {
+        return axios.get("/api/anneal/anneal-status", {
+            params: {
+                id: annealId
+            }
+        });
+    }
+
+    /**
+     * Sends axios POST request with ID of anneal job to retrieve anneal results.
+     * @param annealId ID of the anneal job
+     */
+    export async function GetAnnealResult(annealId: string) {
+        return axios.get("/api/anneal/anneal-result", {
+            params: {
+                id: annealId
+            }
+        });
+    }
+
+    /**
+    * Returns a variable timeout (in ms) as a function of the number of attempts made by the client to get anneal status.
+    * @param attemptNumber The number of times client has requested anneal results
+    */
+    export function GetRequestTimeout(attemptNumber: number) {
+        return attemptNumber > 10 ? 60 : (Math.pow(1.5, attemptNumber) + 1) * 1000;
+    }
+
+    /**
+     * Returns partitions data and status
+     * @param data Response data received from server
+     */
+    export function GetCompletedPartitionsData(data: any) {
+        const statusMap = data.statusMap as StatusMap;
+        let partitions: AnnealStatusResponseState[] = [];
+        const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
+
+        for (let partition in statusMap) {
+            if ((statusMap[partition] as AnnealStatusResponseState).status === AnnealStatus.PARTITION_FINISHED) {
+                partitions.push(statusMap[partition]);
+            }
+        }
+        const completedPercentage = (partitions.length / expectedNumberOfResults) * 100;
+        return {
+            isAnnealComplete: partitions.length === expectedNumberOfResults,
+            completedPartitions: partitions,
+            percentComplete: completedPercentage
+        };
     }
 }

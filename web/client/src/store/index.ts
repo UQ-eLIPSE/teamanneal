@@ -9,7 +9,7 @@ import { Constraint, Data as IConstraint } from "../data/Constraint";
 import { RecordData as IState_RecordData } from "../data/RecordData";
 import { AnnealConfig as IState_AnnealConfig } from "../data/AnnealConfig";
 import { AnnealRequest, Data as IAnnealRequest } from "../data/AnnealRequest";
-import { AnnealResponse, Data as IAnnealResponse, AxiosResponse, AxiosError } from "../data/AnnealResponse";
+import { AnnealResponse, Data as IAnnealResponse, AxiosResponse } from "../data/AnnealResponse";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 
 import { deepMerge } from "../util/Object";
@@ -101,17 +101,10 @@ export const store = new Vuex.Store({
         setAnnealResponse(state, annealResponse: IAnnealResponse) {
             Vue.set(state, "annealResponse", annealResponse);
         },
-
-        updateAnnealResponseContentIfRequestMatches(state, { request, content }: { request: IAnnealRequest, content: AxiosResponse | AxiosError }) {
+        updateAnnealResponseOnServerResponse(state, content: AxiosResponse) {
             const annealResponse = state.annealResponse;
 
             if (annealResponse === undefined) {
-                return;
-            }
-
-            // We must make sure request object does indeed match up with what 
-            // we have in the store
-            if (!AnnealResponse.RequestMatchesResponse(request, annealResponse)) {
                 return;
             }
 
@@ -128,6 +121,8 @@ export const store = new Vuex.Store({
         setCombinedNameUserProvided(state, userProvided: boolean) {
             Vue.set(state.annealConfig.namingConfig.combined, "userProvided", userProvided);
         },
+
+
     },
     actions: {
         /**
@@ -382,18 +377,21 @@ Delete constraints that use this column and try again.`;
             context.commit("setAnnealRequest", annealRequest);
             context.commit("setAnnealResponse", annealResponse);
 
-            // Once the request completes, we need to update the response object
-            // that is paired up with it
+
+
+            // Once the request completes, send status queries to server to check the status of the anneal job
             AnnealRequest.WaitForCompletion(annealRequest)
                 .then((responseContent) => {
-                    // We pass back the request object so that we can check if
-                    // request matches what's in the store now
-                    const annealResponseUpdate = {
-                        request: annealRequest,
-                        content: responseContent,   // NOTE: `responseContent` can be response or error
-                    };
+                    // TODO: Fix type assertion
+                    const content = responseContent as AxiosResponse;
 
-                    context.commit("updateAnnealResponseContentIfRequestMatches", annealResponseUpdate);
+                    if (content.data) {
+                        AnnealRequest.QueryAndUpdateAnnealStatus(content, handleAnnealCompletion);
+                    }
+
+                    function handleAnnealCompletion(resultResponse: AxiosResponse) {
+                        context.commit("updateAnnealResponseOnServerResponse", resultResponse);
+                    }
                 });
         },
 

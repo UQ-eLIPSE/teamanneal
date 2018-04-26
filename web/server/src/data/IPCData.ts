@@ -7,7 +7,7 @@ import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction"
 import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 
 interface InternalAnnealMeta {
-    serverResponseId: number,
+    redisResponseId: string,
 }
 
 interface InternalAnnealNodeMeta {

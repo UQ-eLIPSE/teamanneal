@@ -9,7 +9,7 @@ import * as AnnealProcess from "./process/AnnealProcess";
 // -------------------------------------------------------------------------
 // Worker ID | Description
 // -------------------------------------------------------------------------
-//    Master | Web server process (also listens to "anneal-response" queue)
+//    Master | Web server process
 //           | * Responsible for direct communication to client
 //           | * Server forwards request to the anneal request queue to 
 //           |   reduce processing impact on main server thread
