@@ -98,3 +98,57 @@ export function generateNodeSizeMap(rootNode: AnnealNode.NodeRoot) {
 
     return nodeSizeMap;
 }
+
+/**
+ * Extracts records which actually sit under the given root node, from a larger 
+ * set of records.
+ * 
+ * @param rootNode Root node
+ * @param idColumnIndex Index of the ID column in each record row
+ * @param records Set of records
+ */
+export function filterRecords(rootNode: AnnealNode.NodeRoot, idColumnIndex: number, records: Record.RecordSet) {
+    // Get records which have an ID that is specified in some node's set of 
+    // record children
+    const idValues = extractRecordIds(rootNode);
+
+    // Retrieve only records that are contained in this anneal node
+    const filteredRecords = records.filter((record) => {
+        const idValue = record[idColumnIndex];
+        return idValues.indexOf(idValue) > -1;
+    });
+
+    // Also check that record IDs have not been used twice or that records were
+    // not found
+    if (filteredRecords.length !== idValues.length) {
+        throw new Error("Duplicate or invalid record ID references under anneal node");
+    }
+
+    return filteredRecords;
+}
+
+/**
+ * Extracts all record IDs that sit under given root node.
+ * 
+ * Function does not check for non-uniqueness, and thus may contain duplicate 
+ * record IDs if the nodes don't uniquely specify IDs.
+ * 
+ * @param rootNode Root node
+ */
+export function extractRecordIds(rootNode: AnnealNode.NodeRoot) {
+    // Compile array of ID values which sit under this node
+    const thisNodeIdValues: Record.RecordElement[] = [];
+
+    const collectIdValues =
+        (node: AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren) => {
+            if (node.type === "stratum-records") {
+                thisNodeIdValues.push(...node.recordIds);
+            } else {
+                node.children.forEach(collectIdValues);
+            }
+        }
+
+    rootNode.children.forEach(collectIdValues);
+
+    return thisNodeIdValues;
+}
