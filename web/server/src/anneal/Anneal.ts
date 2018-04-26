@@ -70,10 +70,10 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
     const nodeSizeMap = Data_AnnealNode.generateNodeSizeMap(annealRootNode);
 
     // Quick sanity check to make sure that we do indeed have the correct number
-    // of records in stub tree
-    const totalNumberOfRecordsUnderRootNode = nodeSizeMap.get(annealRootNode)!;
-    if (totalNumberOfRecordsUnderRootNode !== thisNodeRecords.length) {
-        throw new Error("Number of records in stratum node stubs do not match length of filtered records");
+    // of records in tree
+    const rootNodeSize = nodeSizeMap.get(annealRootNode)!;
+    if (rootNodeSize !== thisNodeRecords.length) {
+        throw new Error("Number of records in node tree do not match length of filtered records");
     }
 
     // Maps node to respective stratum node
