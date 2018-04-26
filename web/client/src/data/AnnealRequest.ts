@@ -385,37 +385,44 @@ export namespace AnnealRequest {
         });
     }
 
+    function Sleep(ms: number) {
+        return new Promise<void>(r => setTimeout(r, ms));
+    }
+
+    // Factory for the wait function
+    // Note that `statusCheckAttempts` is a parameter in the factory with a default
+    // of 0 - this is to dispense with an additional `let` variable declaration and
+    // also has a nice side effect of allowing you to adjust the starting attempts 
+    // value if you wanted to
+    function AnnealStatusWaitFactory(attempt: number = 0) {
+        return () => Sleep(GetRequestTimeout(attempt++));
+    }
+
     /**
      * Handles firing of anneal status query requests
      * @param responseContent Response from server with ID of anneal job
      * @param annealCompleteCallbackFunction Function to be called once anneal job is finished
      */
-    export function QueryAndUpdateAnnealStatus(responseContent: AxiosResponse, annealCompleteCallbackFunction: (resultResponse: AxiosResponse) => void) {
+    export async function QueryAndUpdateAnnealStatus(responseContent: AxiosResponse) {
+        const annealId: string = responseContent.data.id;
 
-        let requestAttemptNumber = 0;
+        const waitFn = AnnealStatusWaitFactory();
 
-        setTimeout(GetAnnealStatusWithVariableDelay, GetRequestTimeout(requestAttemptNumber));
+        // We'll keep on checking until we know that the anneal is complete
+        while (true) {
+            // Wait first
+            await waitFn();
 
-        /** 
-         * Queries for anneal job status
-         */
-        async function GetAnnealStatusWithVariableDelay() {
-            requestAttemptNumber++;
-            const statusResponse = await GetAnnealStatus(responseContent.data.id);
+            // Check status
+            const statusResponse = await GetAnnealStatus(annealId);
             const { isAnnealComplete } = GetCompletedPartitionsData(statusResponse.data);
 
-            // Get anneal's completed percentage by uncommenting the following line
-            // const { isAnnealComplete, percentComplete } = getCompletedPartitionsData(statusResponse.data);
-
-            // Check if completed
+            // Return result when complete
             if (isAnnealComplete) {
-                // Anneal is complete
-                const resultResponse = await AnnealRequest.GetAnnealResult(responseContent.data.id);
-                annealCompleteCallbackFunction(resultResponse);
-            } else {
-                // Anneal incomplete
-                setTimeout(GetAnnealStatusWithVariableDelay, GetRequestTimeout(requestAttemptNumber));
+                return await GetAnnealResult(annealId);
             }
+
+            // Otherwise the loop goes on to the next cycle
         }
     }
 
@@ -447,8 +454,8 @@ export namespace AnnealRequest {
     * Returns a variable timeout (in ms) as a function of the number of attempts made by the client to get anneal status.
     * @param attemptNumber The number of times client has requested anneal results
     */
-    export function GetRequestTimeout(attemptNumber: number) {
-        return attemptNumber > 10 ? 60 : (Math.pow(1.5, attemptNumber) + 1) * 1000;
+    export function GetRequestTimeout(attempt: number) {
+        return 1000 * (attempt > 10 ? 60 : 1.5 ** attempt);
     }
 
     /**
