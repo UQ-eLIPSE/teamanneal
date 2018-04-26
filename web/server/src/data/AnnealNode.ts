@@ -74,8 +74,7 @@ export function fillSizeMap(sizeMap: WeakMap<AnnealNode.Node, number>, node: Ann
         if (node.type === "stratum-records") {
             const size = node.recordIds.length;
             sizeMap.set(node, size);
-
-            // NOTE: Even though we have side effects and we normally 
+            
             return size;
         }
 
