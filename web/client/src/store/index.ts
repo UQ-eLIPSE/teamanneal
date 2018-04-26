@@ -386,11 +386,10 @@ Delete constraints that use this column and try again.`;
                     const content = responseContent as AxiosResponse;
 
                     if (content.data) {
-                        AnnealRequest.QueryAndUpdateAnnealStatus(content, handleAnnealCompletion);
-                    }
-
-                    function handleAnnealCompletion(resultResponse: AxiosResponse) {
-                        context.commit("updateAnnealResponseOnServerResponse", resultResponse);
+                        AnnealRequest.QueryAndUpdateAnnealStatus(content)
+                            .then((resultResponse) => {
+                                context.commit("updateAnnealResponseOnServerResponse", resultResponse);
+                            });
                     }
                 });
         },
