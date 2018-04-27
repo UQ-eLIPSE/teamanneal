@@ -1,6 +1,14 @@
+import * as Stratum from "../../../common/Stratum";
+import * as RecordData from "../../../common/RecordData";
+import * as Constraint from "../../../common/Constraint";
+import * as AnnealNode from "../../../common/AnnealNode";
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 import { NodeSatisfactionObject, SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
+import * as ColumnInfo from "../data/ColumnInfo";
+import * as Data_Constraint from "../data/Constraint";
+import * as Data_RecordData from "../data/RecordData";
+import * as Data_AnnealNode from "../data/AnnealNode";
 import { AbstractConstraint } from "../data/AbstractConstraint";
 import { CountConstraint } from "../data/CountConstraint";
 import { LimitConstraint } from "../data/LimitConstraint";
@@ -72,6 +80,60 @@ export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, stra
         .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
 }
 
+/**
+ * Calculates satisfaction map from data equivalent to an anneal request.
+ * 
+ * @param annealRootNode 
+ * @param recordData 
+ * @param strataDefinitions 
+ * @param constraintDefinitions 
+ */
+export function calculateSatisfactionFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+    // Most of the code here is the same as the start of an anneal, except that
+    // this code does not actually run an anneal
+    
+    /// ==================
+    /// Processing records
+    /// ==================
+
+    const { records: globalRecordSet, columns } = recordData;
+
+    // Generate column information objects
+    //
+    // Note that this uses information from the WHOLE set of records, not just
+    // filtered records
+    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(globalRecordSet, i, column));
+
+    // Find the ID column
+    const idColumnIndex = ColumnInfo.getIdColumnIndex(columns);
+
+    // Filter records so that we are only working with records for this anneal 
+    // node
+    const records = Data_AnnealNode.filterRecords(annealRootNode, idColumnIndex, globalRecordSet);
+
+    // Extract ID values from each record
+    const recordsIdColumn = Data_RecordData.extractDataFromColumn(records, idColumnIndex);
+
+    /// =======================
+    /// Configuring constraints
+    /// =======================
+
+    console.log("Creating constraint obj...");
+    const constraints = constraintDefinitions.map(c => Data_Constraint.init(records, columnInfos, c));
+
+    /// =====================================================
+    /// Processing nodes, creating record pointers and strata
+    /// =====================================================
+
+    // Create set of strata objects
+    const { strata } = AnnealStratum.createStrataSet(constraints, strataDefinitions, recordsIdColumn, annealRootNode);
+
+    /// ===============
+    /// Generate output
+    /// ===============
+
+    return generateMap(constraints, strata);
+}
 
 export namespace Count {
     export function calculateSatisfaction(constraint: CountConstraint, recordPointers: Uint32Array) {
