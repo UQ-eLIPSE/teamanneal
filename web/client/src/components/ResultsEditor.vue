@@ -20,18 +20,20 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <!-- <ConstraintOverview class="constraint-overview"
-                                        :constraints="constraintsArray"
-                                        :constraintSatisfactionMap="annealSatisfactionMap"
-                                        @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                                        :constraintThresholdMap="constraintThresholdPercMap"
-                                        :strata="strata"></ConstraintOverview> -->
+                                            :constraints="constraintsArray"
+                                            :constraintSatisfactionMap="annealSatisfactionMap"
+                                            @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                                            :constraintThresholdMap="constraintThresholdPercMap"
+                                            :nodeRoots="modifiedAnnealNodeRoots"
+                                            :strata="strata"></ConstraintOverview> -->
         <!-- <ConstraintOverview class="constraint-overview"
-                            :constraints="constraintsArray"
-                            :constraintSatisfactionMap="annealSatisfactionMap"
-                            :strata="strata"
-                            :recordLookupMap="recordLookupMap"
-                            :columns="columns"
-                            :nodeRoots="modifiedAnnealNodeRoots"></ConstraintOverview> -->
+                                :constraints="constraintsArray"
+                                :constraintSatisfactionMap="annealSatisfactionMap"
+                                :strata="strata"
+                                :recordLookupMap="recordLookupMap"
+                                :allNodesRecordMap="allNodesRecordMap"
+                                :columns="columns"
+                                ></ConstraintOverview> -->
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
@@ -40,7 +42,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import * as Store from "../store";
 
@@ -52,8 +54,7 @@ import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
 
 import { set } from "../util/Vue";
 
-import { RecordElement } from "../../../common/Record";
-// import * as AnnealNode from "../../../common/AnnealNode";
+import { Record, RecordElement } from "../../../common/Record";
 
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
@@ -400,33 +401,29 @@ export default class ResultsEditor extends Vue {
         }
     }
 
+
+    get recordLookupMap() {
+        const idColumnIndex = this.idColumnIndex;
+
+        return this.recordRows.reduce((map, record) => {
+            const id = record[idColumnIndex];
+            const filteredRecord = record.filter((_r, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
+            map.set(id, filteredRecord);
+            return map;
+        }, new Map<RecordElement, Record>());
+    }
+
     get allNodesRecordMap() {
-        return Store.ResultsEditor.getters.getAllNodesRecordsMap(this.state);
+        return Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
     }
-    @Lifecycle created() {
-    }
-    // mapNodeToRecords(node: GroupNode, nodeToRecordMap: any) {
-    //     if (node.type === "leaf-stratum") {
-    //         nodeToRecordMap[node._id] = node.recordIds;
-    //         return node.recordIds;
-    //     } else {
-            // const records = node.children.reduce((records: any[], child) => {
-            //     const nodeRecordsArray = this.mapNodeToRecords(child, nodeToRecordMap);
-            //     return records.concat(nodeRecordsArray);
-            // }, []);
 
-            // nodeToRecordMap[node._id] = records;
-    //     }
-    // }
-
-    // get nodeToRecordsMap(): any {
-    //     const nodeToRecordMap = {};
-    //     this.nodeRoots.forEach((root) => {
-    //         root.children.forEach((child) => {
-    //             this.mapNodeToRecords(child, nodeToRecordMap);
-    //         });
+    // TODO: Complete
+    // get recordsForConstraint() {
+    //     const limitConstraints = this.state.constraintConfig.constraints.filter((c) => c.type === "limit");
+    //     const recordMap = this.allNodesRecordMap;
+    //     limitConstraints.map((constraint) => {
+    //         constraint.stratum
     //     });
-    //     return nodeToRecordMap;
     // }
 }
 </script>

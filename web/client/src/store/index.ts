@@ -456,9 +456,10 @@ Delete constraints that use this column and try again.`;
 // Module definitions
 export const ResultsEditor = {
     prefix: ModulePrefix.ResultsEditor,
-    getters: _ResultsEditor.getters,
+    getter: _ResultsEditor.Getter,
     action: _ResultsEditor.Action,
     dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
+    get: _ResultsEditor.getFactory(store, ModulePrefix.ResultsEditor),
 
     get state() {
         // Using `any` type to get around state type which does not recognise
