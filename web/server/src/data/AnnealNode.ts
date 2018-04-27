@@ -57,6 +57,7 @@ export function generateTree(recordIdColumn: ReadonlyArray<Record.RecordElement>
 
     throw new Error("Unknown node type");
 }
+
 /**
  * Calculates size of anneal nodes given, inclusive of child nodes, and sets
  * this information into supplied size map WeakMap object.
@@ -74,7 +75,7 @@ export function fillSizeMap(sizeMap: WeakMap<AnnealNode.Node, number>, node: Ann
         if (node.type === "stratum-records") {
             const size = node.recordIds.length;
             sizeMap.set(node, size);
-            
+
             return size;
         }
 
@@ -150,4 +151,36 @@ export function extractRecordIds(rootNode: AnnealNode.NodeRoot) {
     rootNode.children.forEach(collectIdValues);
 
     return thisNodeIdValues;
+}
+
+/**
+ * Finds the leaf node with the given record ID where present under the given 
+ * node.
+ * 
+ * @param node 
+ * @param recordId 
+ */
+export function findLeafNodeWithRecordId(node: AnnealNode.Node, recordId: Record.RecordElement): AnnealNode.NodeStratumWithRecordChildren | undefined {
+    switch (node.type) {
+        case "root":
+        case "stratum-stratum": {
+            for (let child of node.children) {
+                const leafNode = findLeafNodeWithRecordId(child, recordId);
+
+                if (leafNode !== undefined) {
+                    return leafNode;
+                }
+            }
+
+            return undefined;
+        }
+
+        case "stratum-records": {
+            if (node.recordIds.indexOf(recordId) >= 0) {
+                return node;
+            }
+
+            return undefined;
+        }
+    }
 }

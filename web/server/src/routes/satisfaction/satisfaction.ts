@@ -3,7 +3,7 @@ import * as express from "express";
 import * as ToServerAnnealRequest from "../../../../common/ToServerAnnealRequest";
 
 import * as HTTPResponseCode from "../../core/HTTPResponseCode";
-import { calculateSatisfactionFromAnnealRequest } from "../../anneal/ConstraintSatisfaction";
+import { generateSatisfactionMapFromAnnealRequest } from "../../anneal/ConstraintSatisfaction";
 
 /**
  * Endpoint that ingests a node tree (like that of a normal anneal request) but
@@ -19,7 +19,7 @@ export const calculateSatisfaction: express.RequestHandler =
 
             // Map out the satisfaction objects per node
             const satisfactionObjects =
-                annealNodes.map(annealNode => calculateSatisfactionFromAnnealRequest(annealNode, recordData, strata, constraints));
+                annealNodes.map(annealNode => generateSatisfactionMapFromAnnealRequest(annealNode, recordData, strata, constraints));
 
             return res
                 .status(HTTPResponseCode.SUCCESS.ACCEPTED)

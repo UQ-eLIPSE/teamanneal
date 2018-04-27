@@ -88,7 +88,7 @@ export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, stra
  * @param strataDefinitions 
  * @param constraintDefinitions 
  */
-export function calculateSatisfactionFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+export function generateSatisfactionMapFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     // Most of the code here is the same as the start of an anneal, except that
     // this code does not actually run an anneal
     
