@@ -1,8 +1,6 @@
 import * as Record from "../../../common/Record";
 import * as AnnealNode from "../../../common/AnnealNode";
 
-import * as Data_AnnealNode from "../data/AnnealNode";
-
 // As part of the edit operations, we directly work on the tree; this does mean
 // that our original interfaces will need to be mutable.
 //
@@ -33,26 +31,6 @@ export function deleteRecord(node: NodeWithRecords, recordId: Record.RecordEleme
     }
 
     (node as MutableNodeWithRecords).recordIds.splice(index, 1);
-
-    // Do not return value; side effects present
-}
-
-/**
- * Searches for record ID somewhere in the tree under given node and deletes it.
- * 
- * @param node
- * @param recordId 
- */
-export function deleteRecordDeep(node: AnnealNode.Node, recordId: Record.RecordElement) {
-    // Find the node with the record
-    const targetNode = Data_AnnealNode.findLeafNodeWithRecordId(node, recordId);
-
-    if (targetNode === undefined) {
-        throw new Error("Node with given record ID not found");
-    }
-
-    // Delete the record
-    deleteRecord(targetNode, recordId);
 
     // Do not return value; side effects present
 }
