@@ -390,7 +390,7 @@ export namespace AnnealRequest {
     }
 
     // Factory for the wait function
-    // Note that `statusCheckAttempts` is a parameter in the factory with a default
+    // Note that `attempt` is a parameter in the factory with a default
     // of 0 - this is to dispense with an additional `let` variable declaration and
     // also has a nice side effect of allowing you to adjust the starting attempts 
     // value if you wanted to
