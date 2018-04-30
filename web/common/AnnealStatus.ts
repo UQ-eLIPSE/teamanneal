@@ -1,0 +1,7 @@
+export enum AnnealStatus {
+    ANNEAL_STARTED,
+    ANNEAL_COMPLETE,
+    ANNEAL_IN_PROGRESS,
+    ANNEAL_FAILED,
+    PARTITION_FINISHED
+};

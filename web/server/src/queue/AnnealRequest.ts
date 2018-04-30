@@ -2,31 +2,36 @@ import * as IPCData from "../data/IPCData";
 import * as IPCQueue from "../data/IPCQueue";
 
 import * as PendingResultCollationStore from "../data/PendingResultCollationStore";
+import * as RedisService from "../utils/RedisService";
+
+
 
 export function init() {
     IPCQueue.openQueue()
         .process("anneal-request", 1, (job, done) => {
             const data: IPCData.AnnealRequestMessageData = job.data;
-
             const { annealRequest, _meta } = data;
-            const { serverResponseId } = _meta;
+            const { redisResponseId } = _meta;
+
 
             // Start processing job
-            console.log(`Anneal request [${serverResponseId}] - Starting...`);
-
+            console.log(`Anneal request [${redisResponseId}] - Starting...`);
             try {
                 const { strata, constraints, recordData, annealNodes } = annealRequest;
 
                 // Create entry in result collation store
-                PendingResultCollationStore.add(serverResponseId, annealNodes.length);
-
+                PendingResultCollationStore.add(redisResponseId, annealNodes.length);
+                
+                // Set expected number of results for anneal in redis
+                storeExpectedNumberOfResults(redisResponseId, annealNodes.length);               
+                
                 // Split job, one per anneal node in the request
                 annealNodes.forEach((annealNode, i) => {
-                    console.log(`Anneal request [${serverResponseId}] - Splitting job: #${i}`);
+                    console.log(`Anneal request [${redisResponseId}] - Splitting job: #${i}`);
 
                     const annealJobMessage: IPCData.AnnealJobData = {
                         _meta: {
-                            serverResponseId,
+                            redisResponseId,
                             annealNode: {
                                 id: annealNode._id,
                                 index: i,
@@ -48,7 +53,7 @@ export function init() {
                 // Pass error back if this process fails
                 const resultMessage: IPCData.AnnealResponseMessageData = {
                     _meta: {
-                        serverResponseId,
+                        redisResponseId
                     },
 
                     error: "" + error,
@@ -61,4 +66,13 @@ export function init() {
                 done(error);
             }
         });
+}
+
+/**
+ * Stores the expected number of partitions in redis as a new key
+ * @param redisResponseId 
+ * @param numberOfResults Expected number of results
+ */
+function storeExpectedNumberOfResults(redisResponseId: string, numberOfResults: number): boolean {
+    return RedisService.getClient().set(RedisService.appendExpectedNumberOfAnnealResultsTag(redisResponseId), numberOfResults + ''); 
 }
