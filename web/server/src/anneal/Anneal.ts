@@ -21,15 +21,7 @@ import * as UphillTracker from "./UphillTracker";
 import * as StartingTemperature from "./StartingTemperature";
 import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 
-export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
-    // Fix random seed for debugging
-    // Random.setGlobalSeed(0xDEADBEEF);
-
-    // Check that constraints array is not empty
-    if (constraintDefinitions.length === 0) {
-        throw new Error("Constraints array is empty; aborting anneal");
-    }
-
+export function setupAnnealVariables(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     /// ==================
     /// Processing records
     /// ==================
@@ -66,6 +58,47 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
     // Create set of strata objects
     const { strata, recordPointers, annealNodeToStratumNodeMap } =
         AnnealStratum.createStrataSet(constraints, strataDefinitions, recordsIdColumn, annealRootNode);
+
+    return {
+        /** Columns in the given data */
+        columns,
+        /** Column information objects */
+        columnInfos,
+        /** Index of the ID column */
+        idColumnIndex,
+
+        /** Records for this given root node */
+        records,
+        /** Just the ID column values from records for this given root node */
+        recordsIdColumn,
+
+        /** Constraints in the given data */
+        constraints,
+
+        /** Strata array in the order: [lowest (leaf), ..., highest] */
+        strata,
+        recordPointers,
+        annealNodeToStratumNodeMap,
+    };
+}
+
+export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+    // Fix random seed for debugging
+    // Random.setGlobalSeed(0xDEADBEEF);
+
+    // Check that constraints array is not empty
+    if (constraintDefinitions.length === 0) {
+        throw new Error("Constraints array is empty; aborting anneal");
+    }
+
+    // Setup anneal variables
+    const {
+        recordsIdColumn,
+        constraints,
+        strata,
+        recordPointers,
+        annealNodeToStratumNodeMap,
+    } = setupAnnealVariables(annealRootNode, recordData, strataDefinitions, constraintDefinitions);
 
     /// =======================
     /// Calculating temperature

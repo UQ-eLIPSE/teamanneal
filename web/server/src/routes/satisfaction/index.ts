@@ -6,7 +6,7 @@ import * as RecordDataCheckValidity from "../../middleware/RecordDataCheckValidi
 import * as ConstraintCheckValidity from "../../middleware/ConstraintCheckValidity";
 
 // Handlers
-import { calculateSatisfaction } from "./satisfaction";
+import { calculateSatisfaction, testPermutationsMoveRecord } from "./satisfaction";
 
 // =============================================================================
 
@@ -22,5 +22,15 @@ router
 
         // Run
         calculateSatisfaction)
+
+    .post("/test-permutations/move-record",
+        // Validation middleware
+        // TODO: More input validation
+        RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
+        ConstraintCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).constraints),
+
+        // Run
+        testPermutationsMoveRecord)
+
 
 export default router;

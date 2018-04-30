@@ -133,24 +133,21 @@ export function filterRecords(rootNode: AnnealNode.NodeRoot, idColumnIndex: numb
  * Function does not check for non-uniqueness, and thus may contain duplicate 
  * record IDs if the nodes don't uniquely specify IDs.
  * 
- * @param rootNode Root node
+ * @param node
  */
-export function extractRecordIds(rootNode: AnnealNode.NodeRoot) {
-    // Compile array of ID values which sit under this node
-    const thisNodeIdValues: Record.RecordElement[] = [];
-
-    const collectIdValues =
-        (node: AnnealNode.NodeStratumWithRecordChildren | AnnealNode.NodeStratumWithStratumChildren) => {
-            if (node.type === "stratum-records") {
-                thisNodeIdValues.push(...node.recordIds);
-            } else {
-                node.children.forEach(collectIdValues);
-            }
+export function extractRecordIds(node: AnnealNode.Node, accumulator: Record.RecordElement[] = []) {
+    switch (node.type) {
+        case "root":
+        case "stratum-stratum": {
+            node.children.forEach(child => extractRecordIds(child, accumulator));
+            return accumulator;
         }
 
-    rootNode.children.forEach(collectIdValues);
-
-    return thisNodeIdValues;
+        case "stratum-records": {
+            accumulator.push(...node.recordIds);
+            return accumulator;
+        }
+    }
 }
 
 /**
@@ -181,6 +178,36 @@ export function findLeafNodeWithRecordId(node: AnnealNode.Node, recordId: Record
             }
 
             return undefined;
+        }
+    }
+}
+
+export function getAllLeafNodes(node: AnnealNode.Node, accumulator: AnnealNode.NodeStratumWithRecordChildren[] = []) {
+    switch (node.type) {
+        case "root":
+        case "stratum-stratum": {
+            node.children.forEach(child => getAllLeafNodes(child, accumulator));
+            return accumulator;
+        }
+
+        case "stratum-records": {
+            accumulator.push(node);
+            return accumulator;
+        }
+    }
+}
+
+export function generateAllLeafNodeMap(node: AnnealNode.Node, map: Map<string, AnnealNode.NodeStratumWithRecordChildren> = new Map()) {
+    switch (node.type) {
+        case "root":
+        case "stratum-stratum": {
+            node.children.forEach(child => generateAllLeafNodeMap(child, map));
+            return map;
+        }
+
+        case "stratum-records": {
+            map.set(node._id, node);
+            return map;
         }
     }
 }

@@ -66,7 +66,19 @@ export function setRecord(node: NodeWithRecords, index: number, recordId: Record
     // Do not return value; side effects present
 }
 
-export function moveRecord(fromNode: AnnealNode.NodeStratumWithRecordChildren, toNode: AnnealNode.NodeStratumWithRecordChildren, recordId: Record.RecordElement) {
+/**
+ * Directly sets the record ID array to the given node.
+ * 
+ * @param node 
+ * @param recordIds 
+ */
+export function setRecordIdArray(node: NodeWithRecords, recordIds: ReadonlyArray<Record.RecordElement>) {
+    (node as MutableNodeWithRecords).recordIds = recordIds as Record.RecordElement[];
+
+    // Do not return value; side effects present
+}
+
+export function moveRecord(fromNode: AnnealNode.NodeStratumWithRecordChildren, recordId: Record.RecordElement, toNode: AnnealNode.NodeStratumWithRecordChildren) {
     deleteRecord(fromNode, recordId);
 
     insertRecord(toNode, recordId);

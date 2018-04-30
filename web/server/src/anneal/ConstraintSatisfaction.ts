@@ -5,10 +5,6 @@ import * as AnnealNode from "../../../common/AnnealNode";
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 import { NodeSatisfactionObject, SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
-import * as ColumnInfo from "../data/ColumnInfo";
-import * as Data_Constraint from "../data/Constraint";
-import * as Data_RecordData from "../data/RecordData";
-import * as Data_AnnealNode from "../data/AnnealNode";
 import { AbstractConstraint } from "../data/AbstractConstraint";
 import { CountConstraint } from "../data/CountConstraint";
 import { LimitConstraint } from "../data/LimitConstraint";
@@ -19,6 +15,7 @@ import { AnnealStratum } from "../data/AnnealStratum";
 import { AnnealStratumNode } from "../data/AnnealStratumNode";
 
 import * as Util from "../core/Util";
+import { setupAnnealVariables } from "./Anneal";
 
 /**
  * @param constraint 
@@ -51,18 +48,28 @@ export function calculateSatisfactionObject(constraint: AbstractConstraint, node
 }
 
 /**
+ * Gets only constraints applicable to given stratum.
+ * 
+ * @param constraints 
+ * @param stratum 
+ */
+export function getStratumConstraints(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    return constraints.filter(c => c.constraintDef.stratum === stratum.id);
+}
+
+/**
  * Generates a satisfaction map object for one stratum.
  */
 export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
     // We only work with constraints that actually apply to this stratum
-    const applicableConstraints = constraints.filter(c => c.constraintDef.stratum === stratum.id);
+    const stratumConstraints = getStratumConstraints(constraints, stratum);
 
     // Collect up all node satisfaction objects into one large lookup map
     return stratum.nodes.reduce<SatisfactionMap>((satisfactionMap, node) => {
         const nodeId = node.getId();
 
         // Collect up all constraint satisfaction for this node in an object
-        satisfactionMap[nodeId] = applicableConstraints.reduce<NodeSatisfactionObject>((nodeSatisfactionObject, constraint) => {
+        satisfactionMap[nodeId] = stratumConstraints.reduce<NodeSatisfactionObject>((nodeSatisfactionObject, constraint) => {
             return Object.assign(nodeSatisfactionObject, calculateSatisfactionObject(constraint, node));
         }, {});
 
@@ -89,50 +96,97 @@ export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, stra
  * @param constraintDefinitions 
  */
 export function generateSatisfactionMapFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
-    // Most of the code here is the same as the start of an anneal, except that
-    // this code does not actually run an anneal
-    
-    /// ==================
-    /// Processing records
-    /// ==================
-
-    const { records: globalRecordSet, columns } = recordData;
-
-    // Generate column information objects
-    //
-    // Note that this uses information from the WHOLE set of records, not just
-    // filtered records
-    const columnInfos = columns.map((column, i) => ColumnInfo.initFromColumnIndex(globalRecordSet, i, column));
-
-    // Find the ID column
-    const idColumnIndex = ColumnInfo.getIdColumnIndex(columns);
-
-    // Filter records so that we are only working with records for this anneal 
-    // node
-    const records = Data_AnnealNode.filterRecords(annealRootNode, idColumnIndex, globalRecordSet);
-
-    // Extract ID values from each record
-    const recordsIdColumn = Data_RecordData.extractDataFromColumn(records, idColumnIndex);
-
-    /// =======================
-    /// Configuring constraints
-    /// =======================
-
-    console.log("Creating constraint obj...");
-    const constraints = constraintDefinitions.map(c => Data_Constraint.init(records, columnInfos, c));
-
-    /// =====================================================
-    /// Processing nodes, creating record pointers and strata
-    /// =====================================================
-
-    // Create set of strata objects
-    const { strata } = AnnealStratum.createStrataSet(constraints, strataDefinitions, recordsIdColumn, annealRootNode);
+    const {
+        constraints,
+        strata,
+    } = setupAnnealVariables(annealRootNode, recordData, strataDefinitions, constraintDefinitions);
 
     /// ===============
     /// Generate output
     /// ===============
 
     return generateMap(constraints, strata);
+}
+
+/**
+ * Calculates the satisfaction value for one stratum.
+ * 
+ * @param constraints 
+ * @param stratum 
+ */
+export function calculateStratumSatisfactionValue(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    // We only work with constraints that actually apply to this stratum
+    const stratumConstraints = getStratumConstraints(constraints, stratum);
+    const stratumNodes = stratum.nodes;
+
+    // We calculate the total max possible satisfaction points, so that clients
+    // are aware of what they should be expecting as a max
+    //
+    // This is necessary because some constraints depend on the size of the node
+    // and thus may switch on/off in some satisfaction checks during operations
+    // like a move, which may affect how their "satisfaction" is perceived
+    let maxSatisfaction = stratumConstraints.length * stratumNodes.length;
+
+    const stratumSatisfactionValue = stratumNodes.reduce((stratumSatisfaction, node) => {
+        // Run through all constraints and calculate satisfaction
+        const nodeSatisfactionValue = stratumConstraints.reduce((nodeSatisfaction, constraint) => {
+            // Calculate the satisfaction value for (constraint, node) pair
+            const value = calculateValue(constraint, node);
+
+            // If satisfaction is `undefined`, reduce the max satisfaction by 1
+            // because the constraint is not applicable to the given node which
+            // affects the total possible satisfaction score
+            if (value === undefined) {
+                --maxSatisfaction;
+                return nodeSatisfaction;
+            } else {
+                return nodeSatisfaction + value;
+            }
+        }, 0);
+
+        return stratumSatisfaction + nodeSatisfactionValue;
+    }, 0);
+
+    return {
+        /** Given stratum's satisfaction value */
+        value: stratumSatisfactionValue,
+        /** Maximum possible satisfaction value for this stratum */
+        max: maxSatisfaction,
+    };
+}
+
+/**
+ * Calculates the total satisfaction value for all given strata.
+ * 
+ * @param constraints 
+ * @param strata 
+ */
+export function calculateTotalSatisfactionValue(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
+    return strata
+        .map(stratum => calculateStratumSatisfactionValue(constraints, stratum))
+        .reduce((carry, stratumSatisfaction) => {
+            carry.value += stratumSatisfaction.value;
+            carry.max += stratumSatisfaction.max;
+            return carry;
+        });
+}
+
+
+/**
+ * Calculates total satisfaction value from data equivalent to an anneal request.
+ * 
+ * @param annealRootNode 
+ * @param recordData 
+ * @param strataDefinitions 
+ * @param constraintDefinitions 
+ */
+export function calculateTotalSatisfactionFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+    const {
+        constraints,
+        strata,
+    } = setupAnnealVariables(annealRootNode, recordData, strataDefinitions, constraintDefinitions);
+
+    return calculateTotalSatisfactionValue(constraints, strata);
 }
 
 export namespace Count {
