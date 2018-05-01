@@ -87,9 +87,9 @@ export const testPermutationsMoveRecord: express.RequestHandler =
             const output: { toNode: string, satisfaction: ReturnType<typeof calculateTotalSatisfactionFromAnnealRequest> }[] = [];
 
             // Move record operation permutation loop
-            leafNodes.forEach((node) => {
+            leafNodes.forEach((toNode) => {
                 // 1. Perform move operation
-                moveRecord(fromNode, fromNodeRecordId, node);
+                moveRecord(fromNode, fromNodeRecordId, toNode);
 
                 // 2. Calculate satisfaction value
                 // Note that we don't need to change the root node reference as 
@@ -98,7 +98,7 @@ export const testPermutationsMoveRecord: express.RequestHandler =
 
                 // 3. Save satisfation value to output array
                 output.push({
-                    toNode: node._id,
+                    toNode: toNode._id,
                     satisfaction,
                 })
 
@@ -108,7 +108,7 @@ export const testPermutationsMoveRecord: express.RequestHandler =
                 // the array from `leafNodeOriginalArrays` on the n+1th round
                 // of the loop
                 setRecordIdArray(fromNode, [...leafNodeOriginalArrays.get(fromNode)!]);
-                setRecordIdArray(node, [...leafNodeOriginalArrays.get(node)!]);
+                setRecordIdArray(toNode, [...leafNodeOriginalArrays.get(toNode)!]);
             });
 
             return res
@@ -173,10 +173,10 @@ export const testPermutationsSwapRecord: express.RequestHandler =
             const output: { nodeB: string, recordIdB: Record.RecordElement, satisfaction: ReturnType<typeof calculateTotalSatisfactionFromAnnealRequest> }[] = [];
 
             // Swap record operation permutation loop
-            leafNodes.forEach((node) => {
-                node.recordIds.forEach((recordId) => {
+            leafNodes.forEach((nodeB) => {
+                nodeB.recordIds.forEach((recordIdB) => {
                     // 1. Perform swap operation
-                    swapRecords(nodeA, nodeARecordId, node, recordId);
+                    swapRecords(nodeA, nodeARecordId, nodeB, recordIdB);
 
                     // 2. Calculate satisfaction value
                     // Note that we don't need to change the root node reference as 
@@ -185,8 +185,8 @@ export const testPermutationsSwapRecord: express.RequestHandler =
 
                     // 3. Save satisfation value to output array
                     output.push({
-                        nodeB: node._id,
-                        recordIdB: recordId,
+                        nodeB: nodeB._id,
+                        recordIdB,
                         satisfaction,
                     })
 
@@ -196,7 +196,7 @@ export const testPermutationsSwapRecord: express.RequestHandler =
                     // the array from `leafNodeOriginalArrays` on the n+1th round
                     // of the loop
                     setRecordIdArray(nodeA, [...leafNodeOriginalArrays.get(nodeA)!]);
-                    setRecordIdArray(node, [...leafNodeOriginalArrays.get(node)!]);
+                    setRecordIdArray(nodeB, [...leafNodeOriginalArrays.get(nodeB)!]);
                 });
             });
 
