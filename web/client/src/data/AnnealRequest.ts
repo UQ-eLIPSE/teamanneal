@@ -381,3 +381,96 @@ export async function waitForCompletion(annealRequest: AnnealRequest) {
         return e as AxiosError;
     }
 }
+
+function sleep(ms: number) {
+    return new Promise<void>(r => setTimeout(r, ms));
+}
+
+// Factory for the wait function
+// Note that `statusCheckAttempts` is a parameter in the factory with a default
+// of 0 - this is to dispense with an additional `let` variable declaration and
+// also has a nice side effect of allowing you to adjust the starting attempts 
+// value if you wanted to
+function annealStatusWaitFactory(attempt: number = 0) {
+    return () => sleep(getRequestTimeout(attempt++));
+}
+
+/**
+ * Handles firing of anneal status query requests
+ * 
+ * @param annealTicketId Ticket ID returned from when the anneal job was first initialised
+ */
+export async function queryAndUpdateAnnealStatus(annealTicketId: string) {
+    const waitFn = annealStatusWaitFactory();
+
+    // We'll keep on checking until we know that the anneal is complete
+    while (true) {
+        // Wait first
+        await waitFn();
+
+        // Check status
+        const statusResponse = await getAnnealStatus(annealTicketId);
+        const { isAnnealComplete } = getCompletedPartitionsData(statusResponse.data);
+
+        // Return result when complete
+        if (isAnnealComplete) {
+            return await getAnnealResult(annealTicketId);
+        }
+
+        // Otherwise the loop goes on to the next cycle
+    }
+}
+
+/**
+ * Sends axios POST request with ID of anneal job to get anneal status.
+ * @param annealId ID of the anneal job
+ */
+export async function getAnnealStatus(annealId: string) {
+    return axios.get("/api/anneal/anneal-status", {
+        params: {
+            id: annealId
+        }
+    });
+}
+
+/**
+ * Sends axios POST request with ID of anneal job to retrieve anneal results.
+ * @param annealId ID of the anneal job
+ */
+export async function getAnnealResult(annealId: string) {
+    return axios.get("/api/anneal/anneal-result", {
+        params: {
+            id: annealId
+        }
+    });
+}
+
+/**
+* Returns a variable timeout (in ms) as a function of the number of attempts made by the client to get anneal status.
+* @param attemptNumber The number of times client has requested anneal results
+*/
+export function getRequestTimeout(attempt: number) {
+    return 1000 * (attempt > 10 ? 60 : 1.5 ** attempt);
+}
+
+/**
+ * Returns partitions data and status
+ * @param data Response data received from server
+ */
+export function getCompletedPartitionsData(data: any) {
+    const statusMap = data.statusMap as StatusMap;
+    let partitions: AnnealStatusResponseState[] = [];
+    const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
+
+    for (let partition in statusMap) {
+        if ((statusMap[partition] as AnnealStatusResponseState).status === AnnealStatus.PARTITION_FINISHED) {
+            partitions.push(statusMap[partition]);
+        }
+    }
+    const completedPercentage = (partitions.length / expectedNumberOfResults) * 100;
+    return {
+        isAnnealComplete: partitions.length === expectedNumberOfResults,
+        completedPartitions: partitions,
+        percentComplete: completedPercentage
+    };
+}
