@@ -19,10 +19,6 @@
                 <p>Please wait while TeamAnneal forms groups...</p>
                 <p>This may take a minute or two.</p>
             </div>
-            <div class="wizard-panel-bottom-buttons">
-                <button class="button secondary"
-                        @click="onCancelAnnealButtonClick">Cancel anneal</button>
-            </div>
         </template>
 
         <!-- Anneal response is success -->
@@ -77,6 +73,7 @@ import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntri
 import * as AnnealRequestState from "../../data/AnnealRequestState";
 import * as AnnealResponse from "../../data/AnnealResponse";
 import * as AnnealRequest from "../../data/AnnealRequest";
+import { AnnealTicketResponse } from "../../data/AnnealTicketResponse";
 
 import { AnnealCreator as S, ResultsEditor } from "../../store";
 
@@ -87,9 +84,6 @@ export default class RunAnneal extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.runAnneal;
-
-    /** Holds an ongoing anneal request if running */
-    p_annealRequest: AnnealRequest.AnnealRequest | undefined = undefined;
 
     get annealRequestState() {
         return S.state.annealRequest;
@@ -222,36 +216,51 @@ XMLHttpRequest {
     async onStartAnnealButtonClick() {
         // Start request and store a copy of it internally in this component
         const annealRequest = AnnealRequest.generateRequestFromState(S.state);
-        this.p_annealRequest = annealRequest;
 
         // Update state to "in-progress" now
         await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS, undefined);
 
-        // Once request completes, we update the state with a processed response
-        AnnealRequest.waitForCompletion(annealRequest)
-            .then((rawResponse) => {
-                const response = AnnealResponse.processRawResponse(rawResponse);
+        // Get ticket that is returned from server from the job initiation 
+        // request
+        //
+        // TODO: Split ticket response processing in `AnnealResponse`
+        const ticketResponse = AnnealResponse.processRawResponse(await AnnealRequest.waitForCompletion(annealRequest));
 
-                if (AnnealResponse.isCancelled(response)) {
-                    // We just revert to a not running state
-                    S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
-                    return;
-                }
+        if (!AnnealResponse.isSuccess(ticketResponse)) {
+            // TODO: Display ticket error info
+            alert("Anneal job initialisation did not return a ticket");
+            // TODO: `any` currently overriding the anneal response type for ticket response
+            S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, ticketResponse as any);
 
-                // Update state to "completed" with response
-                S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, response);
-            });
-    }
-
-    async onCancelAnnealButtonClick() {
-        // Cancel anneal immediately
-        const annealRequest = this.p_annealRequest;
-
-        if (annealRequest === undefined) {
             return;
         }
 
-        AnnealRequest.cancel(annealRequest);
+        // TODO: `any` currently overriding the anneal response type for ticket response
+        const ticketResponseData: AnnealTicketResponse | undefined = ticketResponse.data as any;
+
+        if (ticketResponseData === undefined) {
+            throw new Error("No data in ticket response");
+        }
+
+        const ticketId = ticketResponseData.id;
+
+        // Query the server for the result of the anneal
+        const rawResponse = await AnnealRequest.queryAndUpdateAnnealStatus(ticketId);
+        const response = AnnealResponse.processRawResponse(rawResponse);
+
+        if (!AnnealResponse.isSuccess(response)) {
+            S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, response);
+            return;
+        }
+
+        // Update state to "completed" with response
+        S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, response);
+
+    }
+
+    async onCancelAnnealButtonClick() {
+        // TODO: Proper cancellation with new job ticketing system
+        throw new Error("No cancellation support implemented");
     }
 
     async onViewResultsButtonClick() {
