@@ -399,12 +399,10 @@ function annealStatusWaitFactory(attempt: number = 0) {
 
 /**
  * Handles firing of anneal status query requests
- * @param responseContent Response from server with ID of anneal job
- * @param annealCompleteCallbackFunction Function to be called once anneal job is finished
+ * 
+ * @param annealTicketId Ticket ID returned from when the anneal job was first initialised
  */
-export async function queryAndUpdateAnnealStatus(responseContent: AxiosResponse) {
-    const annealId: string = responseContent.data.id;
-
+export async function queryAndUpdateAnnealStatus(annealTicketId: string) {
     const waitFn = annealStatusWaitFactory();
 
     // We'll keep on checking until we know that the anneal is complete
@@ -413,12 +411,12 @@ export async function queryAndUpdateAnnealStatus(responseContent: AxiosResponse)
         await waitFn();
 
         // Check status
-        const statusResponse = await getAnnealStatus(annealId);
+        const statusResponse = await getAnnealStatus(annealTicketId);
         const { isAnnealComplete } = getCompletedPartitionsData(statusResponse.data);
 
         // Return result when complete
         if (isAnnealComplete) {
-            return await getAnnealResult(annealId);
+            return await getAnnealResult(annealTicketId);
         }
 
         // Otherwise the loop goes on to the next cycle
