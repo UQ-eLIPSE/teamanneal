@@ -20,20 +20,20 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <!-- <ConstraintOverview class="constraint-overview"
-                                            :constraints="constraintsArray"
-                                            :constraintSatisfactionMap="annealSatisfactionMap"
-                                            @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                                            :constraintThresholdMap="constraintThresholdPercMap"
-                                            :nodeRoots="modifiedAnnealNodeRoots"
-                                            :strata="strata"></ConstraintOverview> -->
+                                                                                    :constraints="constraintsArray"
+                                                                                    :constraintSatisfactionMap="annealSatisfactionMap"
+                                                                                    @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                                                                                    :constraintThresholdMap="constraintThresholdPercMap"
+                                                                                    :nodeRoots="modifiedAnnealNodeRoots"
+                                                                                    :strata="strata"></ConstraintOverview> -->
         <!-- <ConstraintOverview class="constraint-overview"
-                                :constraints="constraintsArray"
-                                :constraintSatisfactionMap="annealSatisfactionMap"
-                                :strata="strata"
-                                :recordLookupMap="recordLookupMap"
-                                :allNodesRecordMap="allNodesRecordMap"
-                                :columns="columns"
-                                ></ConstraintOverview> -->
+                                                                        :constraints="constraintsArray"
+                                                                        :constraintSatisfactionMap="annealSatisfactionMap"
+                                                                        :strata="strata"
+                                                                        :recordLookupMap="recordLookupMap"
+                                                                        :allNodesRecordMap="allNodesRecordMap"
+                                                                        :columns="columns"
+                                                                        ></ConstraintOverview> -->
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
@@ -42,7 +42,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Lifecycle } from "av-ts";
 
 import * as Store from "../store";
 
@@ -417,14 +417,85 @@ export default class ResultsEditor extends Vue {
         return Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
     }
 
-    // TODO: Complete
-    // get recordsForConstraint() {
-    //     const limitConstraints = this.state.constraintConfig.constraints.filter((c) => c.type === "limit");
-    //     const recordMap = this.allNodesRecordMap;
-    //     limitConstraints.map((constraint) => {
-    //         constraint.stratum
-    //     });
-    // }
+    //TODO: Assuming a map of { [nodeid]: stratum-id } will be available (as per discussion on 01/05/2018)
+    get recordsForConstraint() {
+        const nodeToStratumMap = this.generateNodeStratumMap;
+        const limitConstraints = this.state.constraintConfig.constraints.filter((c) => c.type === "limit");
+        const nodeRecordMap = this.allNodesRecordMap;
+        let scores: any = [];
+        const partitionNodeMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP);
+
+        limitConstraints.forEach((constraint) => {
+            Object.keys(partitionNodeMap).forEach((partitionId) => {
+                scores.push(this.calculateSatisfactionValueForPartition(partitionNodeMap[partitionId], constraint, nodeToStratumMap, nodeRecordMap));
+            });
+        });
+        return scores;
+    }
+
+    calculateSatisfactionValueForPartition(nodesInPartition: any, constraint: any, nodeToStratumMap: any, nodeRecordMap: any) {
+        
+        const applicableNodeIds = nodesInPartition.filter((nodeId: string) => nodeToStratumMap[nodeId] === constraint.stratum);
+        
+        const result = this.testConstraintOverApplicableNodes(applicableNodeIds, nodeRecordMap, constraint);
+        return result
+    }
+
+    testConstraintOverApplicableNodes(applicableNodeIds: any, nodeRecordMap: any, constraint: any) {
+        const constraintColumn = constraint.filter.column;
+        const colIndex = this.columns.indexOf(constraintColumn);
+        const filterValue = constraint.filter.values[0];
+        let total = 0;
+        let applicable = 0;
+        applicableNodeIds.forEach((nodeId: string) => {
+            total += nodeRecordMap[nodeId].length;
+            const records = nodeRecordMap[nodeId].map((recordId: any) => this.recordLookupMap.get(recordId)!);
+            applicable += records.filter((record: any) => record[colIndex] === filterValue).length;
+        });
+
+        return applicable / total;
+    }
+    // TODO: Temporary code, only for testing. Remove.
+    get generateNodeStratumMap() {
+        const map: any = {};
+
+        const strataArray = this.strata;
+
+        function mapGenerationIterator(node: GroupNode, depth: number) {
+            switch (node.type) {
+                case "root": {
+                    // Don't define the root node into the node-stratum map 
+                    // because it doesn't actually exist on a "stratum"
+                    node.children.forEach(child => mapGenerationIterator(child, depth));
+                    break;
+                }
+
+                case "intermediate-stratum": {
+                    map[node._id] = strataArray[strataArray.length - 1 - depth]._id;
+                    node.children.forEach(child => mapGenerationIterator(child, depth + 1));
+                    break;
+                }
+
+                case "leaf-stratum": {
+                    map[node._id] = strataArray[strataArray.length - 1 - depth]._id;
+                    break;
+                }
+            }
+        }
+
+        this.state.groupNode.structure.roots.forEach((rootNode) => {
+            mapGenerationIterator(rootNode, 0);
+        });
+
+        return map;
+    }
+
+    @Lifecycle
+    created() {
+        this.recordsForConstraint;
+    }
+
+
 }
 </script>
 
