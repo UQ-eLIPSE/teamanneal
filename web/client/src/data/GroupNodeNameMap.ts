@@ -2,6 +2,8 @@ export interface GroupNodeNameMap {
     [nodeId: string]: string,
 }
 
-export function initNew() {
-    return {} as GroupNodeNameMap;
+export function init() {
+    const obj: GroupNodeNameMap = {};
+
+    return obj;
 }

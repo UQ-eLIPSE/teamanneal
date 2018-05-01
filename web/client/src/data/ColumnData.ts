@@ -240,7 +240,7 @@ export namespace ColumnData {
         return "number";
     }
 
-    export function ConvertToMinimalDescriptor({ _id, label, type }: Data) {
+    export function ConvertToMinimalDescriptor({ _id, label, type }: MinimalDescriptor) {
         const columnDescriptor: MinimalDescriptor = {
             _id,
             label,

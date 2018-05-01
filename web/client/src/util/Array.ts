@@ -135,3 +135,13 @@ export function shuffleInPlace<T>(array: T[]) {
     }
     return array;
 }
+
+/**
+ * Sorts a number array by numeric value rather than by string representation.
+ */
+export function numberSort(array: number[]) {
+    array.sort((a, b) => a - b);
+
+    // Side effects present - do not return value
+    return;
+}

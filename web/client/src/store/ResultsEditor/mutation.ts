@@ -1,27 +1,25 @@
 import { MutationTree, ActionContext, CommitOptions } from "vuex";
-import { set, del } from "../util/Vue";
+import { set, del } from "../../util/Vue";
 
-import { ResultsEditorState } from "./ResultsEditorState";
+import { ResultsEditorState as State } from "./state";
 
-import { Data as Constraint } from "../data/Constraint";
-import { DataWithoutNamingConfig as Stratum } from "../data/Stratum";
-import { RecordData, initNew as initRecordData } from "../data/RecordData";
-import { initNew as initStrataConfig } from "../data/StrataConfig";
-import { initNew as initConstraintConfig } from "../data/ConstraintConfig";
-import { GroupNode } from "../data/GroupNode";
-import { GroupNodeNameMap, initNew as initGroupNodeNameMap } from "../data/GroupNodeNameMap";
-import { GroupNodeStructure, initNew as initGroupNodeStructure } from "../data/GroupNodeStructure";
-import { GroupNodeRecordArrayMap, initNew as initGroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { Data as Constraint } from "../../data/Constraint";
+import { Stratum } from "../../data/Stratum";
+import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { init as initStrataConfig } from "../../data/StrataConfig";
+import { init as initConstraintConfig } from "../../data/ConstraintConfig";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeNameMap, init as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
+import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/GroupNodeStructure";
+import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { FunctionParam2 } from "../../data/FunctionParam2";
 
-import { RecordElement } from "../../../common/Record";
+import { RecordElement } from "../../../../common/Record";
+import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 type MutationFunction<M extends ResultsEditorMutation> = typeof mutations[M];
 
-type FunctionParam2<T> =
-    T extends (x: any, y: undefined) => any ? undefined :
-    T extends (x: any, y: infer U) => any ? U : never;
-
-type Context = ActionContext<ResultsEditorState, ResultsEditorState>;
+type Context = ActionContext<State, State>;
 
 export enum ResultsEditorMutation {
     SET_RECORD_DATA = "Setting record data",
@@ -49,6 +47,8 @@ export enum ResultsEditorMutation {
     SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
     CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
 
+    SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA = "Setting side panel active tool internal data",
+
     INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
 }
@@ -63,88 +63,96 @@ export function commit<M extends ResultsEditorMutation, F extends MutationFuncti
 
 /** Store mutation functions */
 const mutations = {
-    [M.SET_RECORD_DATA](state: ResultsEditorState, recordData: RecordData) {
+    [M.SET_RECORD_DATA](state: State, recordData: RecordData) {
         set(state, "recordData", recordData);
     },
 
-    [M.CLEAR_RECORD_DATA](state: ResultsEditorState) {
+    [M.CLEAR_RECORD_DATA](state: State) {
         set(state, "recordData", initRecordData());
     },
 
-    [M.INSERT_CONSTRAINT](state: ResultsEditorState, constraint: Constraint) {
+    [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
 
-    [M.SET_CONSTRAINT](state: ResultsEditorState, { constraint, index }: { constraint: Constraint, index: number }) {
+    [M.SET_CONSTRAINT](state: State, { constraint, index }: { constraint: Constraint, index: number }) {
         set(state.constraintConfig.constraints, index, constraint);
     },
 
-    [M.DELETE_CONSTRAINT](state: ResultsEditorState, index: number) {
+    [M.DELETE_CONSTRAINT](state: State, index: number) {
         del(state.constraintConfig.constraints, index);
     },
 
-    [M.CLEAR_CONSTRAINTS](state: ResultsEditorState) {
+    [M.CLEAR_CONSTRAINTS](state: State) {
         set(state, "constraintConfig", initConstraintConfig());
     },
 
-    [M.INSERT_STRATUM](state: ResultsEditorState, stratum: Stratum) {
+    [M.INSERT_STRATUM](state: State, stratum: Stratum) {
         state.strataConfig.strata.push(stratum);
     },
 
-    [M.SET_STRATUM](state: ResultsEditorState, { stratum, index }: { stratum: Stratum, index: number }) {
+    [M.SET_STRATUM](state: State, { stratum, index }: { stratum: Stratum, index: number }) {
         set(state.strataConfig.strata, index, stratum);
     },
 
-    [M.DELETE_STRATUM](state: ResultsEditorState, index: number) {
+    [M.DELETE_STRATUM](state: State, index: number) {
         del(state.strataConfig.strata, index);
     },
 
-    [M.CLEAR_STRATA](state: ResultsEditorState) {
+    [M.CLEAR_STRATA](state: State) {
         set(state, "strataConfig", initStrataConfig());
     },
 
-    [M.SET_GROUP_NODE_STRUCTURE](state: ResultsEditorState, structure: GroupNodeStructure) {
+    [M.SET_GROUP_NODE_STRUCTURE](state: State, structure: GroupNodeStructure) {
         set(state.groupNode, "structure", structure);
     },
 
-    [M.CLEAR_GROUP_NODE_STRUCTURE](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_STRUCTURE](state: State) {
         set(state.groupNode, "structure", initGroupNodeStructure());
     },
 
-    [M.SET_GROUP_NODE_NAME_MAP](state: ResultsEditorState, nameMap: GroupNodeNameMap) {
+    [M.SET_GROUP_NODE_NAME_MAP](state: State, nameMap: GroupNodeNameMap) {
         set(state.groupNode, "nameMap", nameMap);
     },
 
-    [M.CLEAR_GROUP_NODE_NAME_MAP](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_NAME_MAP](state: State) {
         set(state.groupNode, "nameMap", initGroupNodeNameMap());
     },
 
-    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
+    [M.SET_GROUP_NODE_RECORD_ARRAY_MAP](state: State, nodeRecordArrayMap: GroupNodeRecordArrayMap) {
         set(state.groupNode, "nodeRecordArrayMap", nodeRecordArrayMap);
     },
 
-    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: ResultsEditorState) {
+    [M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP](state: State) {
         set(state.groupNode, "nodeRecordArrayMap", initGroupNodeRecordArrayMap());
     },
 
-    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState, { name, data }: { name: string, data?: object }) {
-        set(state.sideToolArea, "activeItem", { name, data: data || {}, });
+    [M.SET_SIDE_PANEL_ACTIVE_TOOL](state: State, data: SidePanelActiveTool) {
+        set(state.sideToolArea, "activeItem", data);
     },
 
-    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: ResultsEditorState) {
+    [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: State) {
         set(state.sideToolArea, "activeItem", undefined);
     },
 
-    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: ResultsEditorState, { node, id }: { node: GroupNode, id: RecordElement }) {
+    [M.SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA](state: State, data: object) {
+        if (state.sideToolArea.activeItem === undefined) {
+            throw new Error("No side panel active tool object");
+        }
+
+        set(state.sideToolArea.activeItem, "data", data);
+    },
+
+    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: State, { node, id }: { node: GroupNode, id: RecordElement }) {
         state.groupNode.nodeRecordArrayMap[node._id].push(id);
     },
 
-    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: ResultsEditorState, { node, id }: { node: GroupNode, id: RecordElement }) {
+    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: State, { node, id }: { node: GroupNode, id: RecordElement }) {
         const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node._id];
         del(recordsUnderNode, recordsUnderNode.indexOf(id));
     },
 };
 
 export function init() {
-    return mutations as MutationTree<ResultsEditorState>;
+    return mutations as MutationTree<State>;
 }

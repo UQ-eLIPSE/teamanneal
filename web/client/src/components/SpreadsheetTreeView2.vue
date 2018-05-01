@@ -87,7 +87,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop recordRows = p<ReadonlyArray<Record>>({ type: Array, required: true, });
     @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
-    @Prop nodeStyles = p<Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
+    @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: true, });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });

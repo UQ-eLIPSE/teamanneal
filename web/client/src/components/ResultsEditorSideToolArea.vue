@@ -3,8 +3,7 @@
         <div v-if="sidePanelEnabled"
              class="side-panel">
             <component class="side-panel-component"
-                       :is="sidePanelComponent"
-                       :data="sidePanelData"></component>
+                       :is="sidePanelComponent"></component>
         </div>
         <ResultsEditorMenuBar :items="menuItems"
                               :selectedItem="selectedItem"
@@ -44,10 +43,6 @@ export default class ResultsEditorSideToolArea extends Vue {
         return this.selectedItem !== undefined && this.selectedItem.component !== undefined;
     }
 
-    get sidePanelData() {
-        return Store.ResultsEditor.state.sideToolArea.activeItem!.data;
-    }
-
     get selectedItem() {
         const itemInfo = Store.ResultsEditor.state.sideToolArea.activeItem;
 
@@ -70,7 +65,7 @@ export default class ResultsEditorSideToolArea extends Vue {
         if (name === undefined) {
             return Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
         }
-        
+
         return Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, name);
     }
 }

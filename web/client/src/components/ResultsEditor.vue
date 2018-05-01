@@ -29,15 +29,13 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import * as Store from "../store";
+import { ResultsEditor as S } from "../store";
 
 import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
 import { MenuItem } from "../data/ResultsEditorMenuBar";
 import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
 import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
-
-import { set } from "../util/Vue";
 
 import { RecordElement } from "../../../common/Record";
 
@@ -115,7 +113,7 @@ export default class ResultsEditor extends Vue {
 
     /** New reference to module state */
     get state() {
-        return Store.ResultsEditor.state;
+        return S.state;
     }
 
     get recordData() {
@@ -186,14 +184,14 @@ export default class ResultsEditor extends Vue {
     /** A map of nodes or records which are to be styled in the spreadsheet */
     get nodeStyles() {
         // When we have an active side panel tool open
-        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
+        const activeSidePanelTool = S.state.sideToolArea.activeItem;
 
         if (activeSidePanelTool === undefined) {
             return;
         }
 
         // TODO: Proper UI design for this feature
-        const nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
+        const nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
 
         switch (activeSidePanelTool.name) {
             case "move": {
@@ -204,7 +202,7 @@ export default class ResultsEditor extends Vue {
                 }
 
                 if (moveToolData.targetGroup !== undefined) {
-                    nodeStyles.set(moveToolData.targetGroup, { color: "#fff", backgroundColor: "#000" });
+                    nodeStyles.set(moveToolData.targetGroup._id, { color: "#fff", backgroundColor: "#000" });
                 }
 
                 return nodeStyles;
@@ -261,7 +259,7 @@ export default class ResultsEditor extends Vue {
 
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         // When we have an active side panel tool open
-        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
+        const activeSidePanelTool = S.state.sideToolArea.activeItem;
 
         if (activeSidePanelTool === undefined) {
             return;
@@ -287,7 +285,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(moveToolData, "sourcePerson", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: { node: targetItemParent.node, id: targetItem.recordId } });
 
                         return;
                     }
@@ -307,7 +305,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the node like
                         // the path?
-                        set(moveToolData, "targetGroup", targetNode);
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNode });
 
                         return;
                     }
@@ -342,7 +340,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(swapToolData, "personA", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personA: { node: targetItemParent.node, id: targetItem.recordId } });
 
                         return;
                     }
@@ -368,7 +366,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(swapToolData, "personB", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: targetItemParent.node, id: targetItem.recordId } });
 
                         return;
                     }
