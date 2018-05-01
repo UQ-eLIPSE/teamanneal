@@ -59,7 +59,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop recordLookupMap = p<Map<RecordElement, Record>>({ required: true, });
     @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
-    @Prop nodeStyles = p<Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
+    @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });

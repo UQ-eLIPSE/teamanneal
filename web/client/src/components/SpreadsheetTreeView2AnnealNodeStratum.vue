@@ -21,7 +21,7 @@ interface Props_NodeStratumWithRecordChildren {
     recordLookupMap: Map<RecordElement, Record>,
     nodeNameMap: GroupNodeNameMap | undefined,
     nodeRecordMap: GroupNodeRecordArrayMap | undefined,
-    nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
+    nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
@@ -35,7 +35,7 @@ interface Props_NodeStratumWithStratumChildren {
     recordLookupMap: Map<RecordElement, Record>,
     nodeNameMap: GroupNodeNameMap | undefined,
     nodeRecordMap: GroupNodeRecordArrayMap | undefined,
-    nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
+    nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
@@ -115,7 +115,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
     }
 
     // Get style information from node style map
-    const style = p.nodeStyles && p.nodeStyles.get(p.node);
+    const style = p.nodeStyles && p.nodeStyles.get(p.node._id);
 
     return createElement("tr", [
         createElement("td",

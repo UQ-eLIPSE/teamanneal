@@ -43,17 +43,17 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component } from "av-ts";
 
-import * as Store from "../../store";
+import { ResultsEditor as S } from "../../store";
 
 import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
 
-import { set, del } from "../../util/Vue";
-
 @Component
 export default class Swap extends Vue {
-    @Prop data = p<SwapSidePanelToolData>({ required: true, });
+    get data() {
+        return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
+    }
 
     get personAFieldBlockClasses() {
         return {
@@ -75,18 +75,18 @@ export default class Swap extends Vue {
         return this.data.personB && this.data.personB.id;
     }
 
-    setCursor(target: "personA" | "personB" | undefined) {
-        set(this.data, "cursor", target);
+    async setCursor(target: "personA" | "personB" | undefined) {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { cursor: target });
     }
 
-    clearPersonA() {
-        del(this.data, "personA");
-        this.setCursor("personA");
+    async clearPersonA() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personA: undefined });
+        await this.setCursor("personA");
     }
 
-    clearPersonB() {
-        del(this.data, "personB");
-        this.setCursor("personB");
+    async clearPersonB() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: undefined });
+        await this.setCursor("personB");
     }
 
     async commitSwap() {
@@ -97,10 +97,10 @@ export default class Swap extends Vue {
             throw new Error("Underspecified swap operation");
         }
 
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.SWAP_RECORDS, { personA, personB });
+        await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
 
-        // TODO: Review whether we should close the move side panel or not
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+        // TODO: Review whether we should close the side panel or not
+        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     }
 }
 </script>

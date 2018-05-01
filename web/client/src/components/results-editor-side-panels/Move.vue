@@ -43,17 +43,17 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component } from "av-ts";
 
-import * as Store from "../../store";
+import { ResultsEditor as S } from "../../store";
 
 import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 
-import { set, del } from "../../util/Vue";
-
 @Component
 export default class Move extends Vue {
-    @Prop data = p<MoveSidePanelToolData>({ required: true, });
+    get data() {
+        return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;
+    }
 
     get sourcePersonFieldBlockClasses() {
         return {
@@ -75,18 +75,18 @@ export default class Move extends Vue {
         return this.data.targetGroup && this.data.targetGroup._id;
     }
 
-    setCursor(target: "sourcePerson" | "targetGroup" | undefined) {
-        set(this.data, "cursor", target);
+    async setCursor(target: "sourcePerson" | "targetGroup" | undefined) {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { cursor: target });
     }
 
-    clearSourcePerson() {
-        del(this.data, "sourcePerson");
-        this.setCursor("sourcePerson");
+    async clearSourcePerson() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: undefined });
+        await this.setCursor("sourcePerson");
     }
 
-    clearTargetGroup() {
-        del(this.data, "targetGroup");
-        this.setCursor("targetGroup");
+    async clearTargetGroup() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: undefined });
+        await this.setCursor("targetGroup");
     }
 
     async commitMove() {
@@ -97,10 +97,10 @@ export default class Move extends Vue {
             throw new Error("Underspecified move operation");
         }
 
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
+        await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
 
-        // TODO: Review whether we should close the move side panel or not
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+        // TODO: Review whether we should close the side panel or not
+        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     }
 }
 </script>

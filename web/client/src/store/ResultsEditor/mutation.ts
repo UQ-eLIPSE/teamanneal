@@ -47,6 +47,8 @@ export enum ResultsEditorMutation {
     SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
     CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
 
+    SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA = "Setting side panel active tool internal data",
+
     INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
 }
@@ -131,6 +133,14 @@ const mutations = {
 
     [M.CLEAR_SIDE_PANEL_ACTIVE_TOOL](state: State) {
         set(state.sideToolArea, "activeItem", undefined);
+    },
+
+    [M.SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA](state: State, data: object) {
+        if (state.sideToolArea.activeItem === undefined) {
+            throw new Error("No side panel active tool object");
+        }
+
+        set(state.sideToolArea.activeItem, "data", data);
     },
 
     [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: State, { node, id }: { node: GroupNode, id: RecordElement }) {

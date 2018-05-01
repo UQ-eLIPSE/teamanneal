@@ -16,7 +16,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { RecordElement } from "../../../../common/Record";
 
-import { deserialiseWithUndefined, serialiseWithUndefined } from "../../util/Object";
+import { deserialiseWithUndefined, serialiseWithUndefined, deepMerge } from "../../util/Object";
 import { generateGroupNodeCompatibleData } from "../AnnealCreator/state";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
@@ -44,6 +44,8 @@ export enum ResultsEditorAction {
     SET_SIDE_PANEL_ACTIVE_TOOL = "Setting side panel active tool",
     SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME = "Setting side panel active tool by name",
     CLEAR_SIDE_PANEL_ACTIVE_TOOL = "Clearing side panel active tool",
+
+    PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA = "Partially update side panel active tool internal data",
 
     MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
 
@@ -160,6 +162,24 @@ const actions = {
 
     async [A.CLEAR_SIDE_PANEL_ACTIVE_TOOL](context: Context) {
         commit(context, M.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+    },
+
+    async [A.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA](context: Context, data: object) {
+        const activeItem = context.state.sideToolArea.activeItem;
+
+        if (activeItem === undefined) {
+            throw new Error("No side panel active tool object");
+        }
+
+        // If data not previously set, just write directly
+        if (activeItem.data === undefined) {
+            commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, data);
+            return;
+        }
+
+        // Partially update data objects
+        const mergedData = deepMerge<object>({}, activeItem.data, data);
+        commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, mergedData);
     },
 
     async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: GroupNode, id: RecordElement }, targetGroup: GroupNode }) {
