@@ -46,11 +46,12 @@ import { Component, Mixin } from "av-ts";
 import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
+import { AnnealCreator as S } from "../../store";
+
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 
 @Component
-export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.selectIdColumn;
@@ -60,8 +61,9 @@ export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizar
      * from.
      */
     get possibleIdColumns() {
-        const columns = this.state.recordData.columns;
-        const recordDataRawLength = this.state.recordData.source.length;
+        const recordData = S.state.recordData;
+        const columns = recordData.columns;
+        const recordDataRawLength = recordData.source.length;
 
         // No data to even process
         if (columns.length === 0) { return []; }
@@ -83,7 +85,7 @@ export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizar
     }
 
     get idColumn(): IColumnData_MinimalDescriptor | undefined {
-        const idColumn = this.state.recordData.idColumn;
+        const idColumn = S.state.recordData.idColumn;
 
         if (idColumn === undefined) {
             return undefined;
@@ -93,7 +95,11 @@ export default class SelectIdColumn extends Mixin(StoreState, AnnealProcessWizar
     }
 
     set idColumn(val: IColumnData_MinimalDescriptor | undefined) {
-        this.$store.dispatch("setIdColumn", val);
+        if (val === undefined) {
+            S.dispatch(S.action.CLEAR_RECORD_ID_COLUMN, undefined);
+        } else {
+            S.dispatch(S.action.SET_RECORD_ID_COLUMN, val);
+        }
     }
 }
 </script>

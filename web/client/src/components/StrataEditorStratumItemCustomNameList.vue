@@ -28,7 +28,8 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
-import { Stratum } from "../data/Stratum";
+
+import * as StratumNamingConfig from "../data/StratumNamingConfig";
 
 import TextareaWithLineNumbers from "./TextareaWithLineNumbers.vue";
 
@@ -106,7 +107,7 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
     }
 
     get randomExampleName() {
-        return Stratum.GenerateRandomExampleNameStringArray(this.names);
+        return StratumNamingConfig.generateRandomExampleNameStringArray(this.names);
     }
 }
 </script>

@@ -1,11 +1,21 @@
-import { DataWithoutNamingConfig as Stratum } from "./Stratum";
+import { Stratum } from "./Stratum";
+import { StratumNamingConfig } from "./StratumNamingConfig";
 
 export interface StrataConfig {
     strata: Stratum[],
+
+    namingConfig?: StrataConfigNamingConfigMap,
 }
 
-export function initNew() {
-    return {
-        strata: [],
-    } as StrataConfig;
+interface StrataConfigNamingConfigMap {
+    [stratumId: string]: StratumNamingConfig,
+}
+
+export function init(strata: Stratum[] = [], namingConfig?: StrataConfigNamingConfigMap) {
+    const obj: StrataConfig = {
+        strata,
+        namingConfig,
+    };
+
+    return obj;
 }

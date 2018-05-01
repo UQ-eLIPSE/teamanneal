@@ -57,12 +57,13 @@
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
 
-import { ColumnData } from "../../data/ColumnData";
-import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import { Data as IColumnData } from "../../data/ColumnData";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
-import { State } from "../../data/State";
+
+import { AnnealCreator as S } from "../../store";
+
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
+
 import SpreadsheetView from "../SpreadsheetView.vue";
 
 interface ColumnIndexInfo {
@@ -75,13 +76,13 @@ interface ColumnIndexInfo {
         SpreadsheetView,
     },
 })
-export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
 
     get columns() {
-        return this.state.recordData.columns;
+        return S.state.recordData.columns;
     }
 
     get cookedDataWithHeader() {
@@ -89,7 +90,7 @@ export default class ReviewRecords extends Mixin(StoreState, AnnealProcessWizard
     }
 
     get hasDuplicateColumnNames() {
-        return State.HasDuplicateColumnNames(this.state);
+        return S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES);
     }
 
     get columnIndexInfoMap() {
