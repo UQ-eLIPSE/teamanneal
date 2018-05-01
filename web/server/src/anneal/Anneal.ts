@@ -48,7 +48,6 @@ export function setupAnnealVariables(annealRootNode: AnnealNode.NodeRoot, record
     /// Configuring constraints
     /// =======================
 
-    console.log("Creating constraint obj...");
     const constraints = constraintDefinitions.map(c => Data_Constraint.init(records, columnInfos, c));
 
     /// =====================================================

@@ -86,7 +86,6 @@ export class AnnealStratum {
         const numberOfRecordsUnderNode = recordIdColumn.length;
 
         // Create record pointer array
-        console.log("Creating record pointers...");
         const recordPointers = new AnnealRecordPointerArray(numberOfRecordsUnderNode);
 
         // Maps node to respective stratum node

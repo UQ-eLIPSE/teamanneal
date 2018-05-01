@@ -23,7 +23,7 @@ router
         // Run
         calculateSatisfaction)
 
-    .post("/test-permutations/move-record",
+    .post("/test-permutation/move-record",
         // Validation middleware
         // TODO: More input validation
         RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
