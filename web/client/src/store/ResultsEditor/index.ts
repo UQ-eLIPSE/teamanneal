@@ -2,6 +2,7 @@ import { Module } from "vuex";
 import { ResultsEditorState, init as initState } from "./state";
 import { init as initMutations } from "./mutation";
 import { init as initActions } from "./action";
+import { init as initGetters } from "./getter";
 
 export function init(namespaced: boolean = true) {
     const stateModule: Module<ResultsEditorState, ResultsEditorState> = {
@@ -14,6 +15,8 @@ export function init(namespaced: boolean = true) {
         mutations: initMutations(),
 
         actions: initActions(),
+
+        getters: initGetters(),
     };
 
     return stateModule;

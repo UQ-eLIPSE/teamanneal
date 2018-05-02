@@ -1,9 +1,9 @@
 
 import { Store, GetterTree } from "vuex";
-import { ResultsEditorState as State } from "./ResultsEditorState";
-import { GroupNode } from "../data/GroupNode";
-import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
-import { RecordElement } from "../../../common/Record";
+import { ResultsEditorState as State } from "./state";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { RecordElement } from "../../../../common/Record";
 
 type GetterFunction<G extends ResultsEditorGetter> = typeof getters[G];
 
@@ -25,7 +25,6 @@ export function getFactory<T>(store: Store<T>, modulePrefix?: string) {
 
 /** Store getter functions */
 const getters = {
-
     [G.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP](state: State) {
         const allGroupNodesRecordsMap: any = {};
         const nodeRoots = state.groupNode.structure.roots;
@@ -56,7 +55,6 @@ function getAllChildNodes(node: GroupNode, nodeArray: any[]) {
     }
 }
 function buildNodeToRecordsMap(node: GroupNode, allGroupNodesRecordsMap: GroupNodeRecordArrayMap, leafStratumRecordsMap: GroupNodeRecordArrayMap): RecordElement[] {
-
     if (node.type === "leaf-stratum") {
         allGroupNodesRecordsMap[node._id] = leafStratumRecordsMap[node._id];
         return leafStratumRecordsMap[node._id];
@@ -69,8 +67,8 @@ function buildNodeToRecordsMap(node: GroupNode, allGroupNodesRecordsMap: GroupNo
     }, []);
 
     allGroupNodesRecordsMap[node._id] = nodeRecords;
-    return nodeRecords;
 
+    return nodeRecords;
 }
 
 export function init() {
