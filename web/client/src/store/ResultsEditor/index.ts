@@ -24,3 +24,4 @@ export function init(namespaced: boolean = true) {
 
 export { ResultsEditorState as State } from "./state";
 export { ResultsEditorAction as Action, dispatchFactory } from "./action";
+export { ResultsEditorGetter as Getter, getFactory } from "./getter";
