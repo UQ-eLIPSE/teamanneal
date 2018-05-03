@@ -100,7 +100,7 @@ export const testPermutationsMoveRecord: express.RequestHandler =
                 output.push({
                     toNode: toNode._id,
                     satisfaction,
-                })
+                });
 
                 // 4. Restore mutated arrays from original copy
                 //
@@ -174,7 +174,9 @@ export const testPermutationsSwapRecord: express.RequestHandler =
 
             // Swap record operation permutation loop
             leafNodes.forEach((nodeB) => {
-                nodeB.recordIds.forEach((recordIdB) => {
+                // Copy record ID array since we will be modifying the array 
+                // during this loop
+                [...nodeB.recordIds].forEach((recordIdB) => {
                     // 1. Perform swap operation
                     swapRecords(nodeA, nodeARecordId, nodeB, recordIdB);
 
@@ -188,7 +190,7 @@ export const testPermutationsSwapRecord: express.RequestHandler =
                         nodeB: nodeB._id,
                         recordIdB,
                         satisfaction,
-                    })
+                    });
 
                     // 4. Restore mutated arrays from original copy
                     //

@@ -29,7 +29,7 @@
                         @click="clearTargetGroup">Clear</button>
             </div>
         </div>
-        <div v-if="sortedTestPermutationData !== undefined"
+        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
              class="test-permutations">
             <ul>
                 <li v-for="x in sortedTestPermutationData"
