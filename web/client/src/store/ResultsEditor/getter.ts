@@ -27,7 +27,7 @@ export enum ResultsEditorGetter {
     GET_COMMON_COLUMN_DESCRIPTOR_ARRAY = "Get common column descriptor array (type = `RecordDataColumn.ColumnDesc`)",
     GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER = "Get common strata descriptor array in server order ([lowest/leaf, ..., highest])",
     GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY = "Get common constraint descriptor array",
-    GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array"
+    GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
 }
 
 const G = ResultsEditorGetter;

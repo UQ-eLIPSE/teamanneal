@@ -32,7 +32,7 @@ router
         // Run
         testPermutationsMoveRecord)
 
-    .post("/test-permutation/swap-record",
+    .post("/test-permutation/swap-records",
         // Validation middleware
         // TODO: More input validation
         RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
