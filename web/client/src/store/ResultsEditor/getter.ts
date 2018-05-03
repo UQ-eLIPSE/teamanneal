@@ -22,6 +22,8 @@ export enum ResultsEditorGetter {
     GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP = "Get map of all nodes to records array",
     GET_PARTITION_NODE_MAP = "Get map of partitions to nodes",
 
+    GET_FLAT_NODE_ARRAY = "Get a flat array of all nodes",
+
     GET_NODE_TO_STRATUM_MAP = "Get map of node ID to stratum ID",
     GET_RECORD_COOKED_VALUE_ROW_ARRAY = "Get the record cooked value row array (generated from transposed column data)",
     GET_COMMON_COLUMN_DESCRIPTOR_ARRAY = "Get common column descriptor array (type = `RecordDataColumn.ColumnDesc`)",
@@ -67,6 +69,24 @@ const getters = {
             root.children.forEach((child) => getAllChildNodes(child, partitionToNodeMap[root._id]))
         });
         return partitionToNodeMap;
+    },
+
+    [G.GET_FLAT_NODE_ARRAY](state: State) {
+        const array: GroupNode[] = [];
+
+        state.groupNode.structure.roots.forEach(function nodeFlattener(node: GroupNode) {
+            array.push(node);
+
+            switch (node.type) {
+                case "root":
+                case "intermediate-stratum": {
+                    node.children.forEach(nodeFlattener);
+                    break;
+                }
+            }
+        });
+
+        return array;
     },
 
     [G.GET_NODE_TO_STRATUM_MAP](state: State) {

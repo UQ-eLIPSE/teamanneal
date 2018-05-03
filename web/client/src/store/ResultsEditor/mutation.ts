@@ -8,7 +8,6 @@ import { Stratum } from "../../data/Stratum";
 import { RecordData, init as initRecordData } from "../../data/RecordData";
 import { init as initStrataConfig } from "../../data/StrataConfig";
 import { init as initConstraintConfig } from "../../data/ConstraintConfig";
-import { GroupNode } from "../../data/GroupNode";
 import { GroupNodeNameMap, init as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
@@ -143,12 +142,12 @@ const mutations = {
         set(state.sideToolArea.activeItem, "data", data);
     },
 
-    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: State, { node, id }: { node: GroupNode, id: RecordElement }) {
-        state.groupNode.nodeRecordArrayMap[node._id].push(id);
+    [M.INSERT_RECORD_ID_TO_GROUP_NODE](state: State, { node, id }: { node: string, id: RecordElement }) {
+        state.groupNode.nodeRecordArrayMap[node].push(id);
     },
 
-    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: State, { node, id }: { node: GroupNode, id: RecordElement }) {
-        const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node._id];
+    [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: State, { node, id }: { node: string, id: RecordElement }) {
+        const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node];
         del(recordsUnderNode, recordsUnderNode.indexOf(id));
     },
 };

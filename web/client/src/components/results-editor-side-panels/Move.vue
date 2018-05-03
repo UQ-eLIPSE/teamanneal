@@ -33,7 +33,8 @@
              class="test-permutations">
             <ul>
                 <li v-for="x in sortedTestPermutationData"
-                    :key="x.toNode">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
+                    :key="x.toNode"
+                    @click="setTargetGroup(x.toNode)">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
             </ul>
             <button class="button secondary small"
                     @click="clearSatisfactionTestPermutationData">Close suggestions</button>
@@ -89,7 +90,7 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        return this.data.targetGroup && this.data.targetGroup._id;
+        return this.data.targetGroup && this.data.targetGroup;
     }
 
     get sortedTestPermutationData() {
@@ -143,7 +144,7 @@ export default class Move extends Vue {
             return;
         }
 
-        const { node, id: recordId } = sourcePerson;
+        const { node: nodeId, id: recordId } = sourcePerson;
 
         // Need to clip anneal nodes to just the partition containing the person
         // to be moved around
@@ -151,7 +152,7 @@ export default class Move extends Vue {
         // NOTE: If in future move test operations support multiple partitions,
         // then this should be removed and no filter applied to anneal nodes
         const rootNodeToChildNodesMap = S.get(S.getter.GET_PARTITION_NODE_MAP);
-        const rootNodeId = Object.keys(rootNodeToChildNodesMap).find(id => rootNodeToChildNodesMap[id].indexOf(node._id) > -1)
+        const rootNodeId = Object.keys(rootNodeToChildNodesMap).find(id => rootNodeToChildNodesMap[id].indexOf(nodeId) > -1)
 
         // Build up request body
 
@@ -162,7 +163,7 @@ export default class Move extends Vue {
         const records = S.get(S.getter.GET_RECORD_COOKED_VALUE_ROW_ARRAY);
         const strata = S.get(S.getter.GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER);
         const constraints = S.get(S.getter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY);
-        const operation = { fromNode: node._id, recordId, };
+        const operation = { fromNode: nodeId, recordId, };
 
         const requestBody = SatisfactionTestPermutationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes, operation);
         const { request, token } = SatisfactionTestPermutationRequest.createRequest("move-record", requestBody);
@@ -192,6 +193,10 @@ export default class Move extends Vue {
     onGetSuggestionsButtonClick() {
         this.clearSatisfactionTestPermutationData();
         this.fetchSatisfactionTestPermutationData();
+    }
+
+    setTargetGroup(targetNodeId: string) {
+        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNodeId });
     }
 }
 </script>

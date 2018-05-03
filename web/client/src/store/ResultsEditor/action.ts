@@ -6,7 +6,6 @@ import { ResultsEditorMutation as M, commit } from "./mutation";
 import { State as AnnealCreatorState } from "../AnnealCreator";
 
 import { RecordData } from "../../data/RecordData";
-import { GroupNode } from "../../data/GroupNode";
 import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeStructure } from "../../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
@@ -182,12 +181,13 @@ const actions = {
         commit(context, M.SET_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, mergedData);
     },
 
-    async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: GroupNode, id: RecordElement }, targetGroup: GroupNode }) {
+    async [A.MOVE_RECORD_TO_GROUP_NODE](context: Context, { sourcePerson, targetGroup }: { sourcePerson: { node: string, id: RecordElement }, targetGroup: string }) {
+
         commit(context, M.DELETE_RECORD_ID_FROM_GROUP_NODE, { node: sourcePerson.node, id: sourcePerson.id });
         commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: targetGroup, id: sourcePerson.id });
     },
 
-    async [A.SWAP_RECORDS](context: Context, { personA, personB }: { personA: { node: GroupNode, id: RecordElement }, personB: { node: GroupNode, id: RecordElement } }) {
+    async [A.SWAP_RECORDS](context: Context, { personA, personB }: { personA: { node: string, id: RecordElement }, personB: { node: string, id: RecordElement } }) {
         // Only permit unique IDs to be swapped
         if (personA.id === personB.id) {
             throw new Error("Only two unique records can be swapped");

@@ -202,7 +202,7 @@ export default class ResultsEditor extends Vue {
                 }
 
                 if (moveToolData.targetGroup !== undefined) {
-                    nodeStyles.set(moveToolData.targetGroup._id, { color: "#fff", backgroundColor: "#000" });
+                    nodeStyles.set(moveToolData.targetGroup, { color: "#fff", backgroundColor: "#000" });
                 }
 
                 return nodeStyles;
@@ -285,7 +285,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: { node: targetItemParent.node, id: targetItem.recordId } });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
@@ -305,7 +305,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the node like
                         // the path?
-                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNode });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNode._id });
 
                         return;
                     }
@@ -340,7 +340,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personA: { node: targetItemParent.node, id: targetItem.recordId } });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personA: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
@@ -366,7 +366,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: targetItemParent.node, id: targetItem.recordId } });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
