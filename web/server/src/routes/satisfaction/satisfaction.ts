@@ -3,6 +3,8 @@ import * as express from "express";
 import * as Record from "../../../../common/Record";
 import * as AnnealNode from "../../../../common/AnnealNode";
 import * as ToServerAnnealRequest from "../../../../common/ToServerAnnealRequest";
+import { MoveRecordSatisfactionTestPermutationRequest, SwapRecordsSatisfactionTestPermutationRequest } from "../../../../common/ToServerSatisfactionTestPermutationRequest";
+import { MoveRecordTestPermutationOperationResult, SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
 
 import * as HTTPResponseCode from "../../core/HTTPResponseCode";
 import { generateSatisfactionMapFromAnnealRequest, calculateTotalSatisfactionFromAnnealRequest } from "../../anneal/ConstraintSatisfaction";
@@ -47,8 +49,7 @@ export const testPermutationsMoveRecord: express.RequestHandler =
         // TODO: Split satisfaction calculation into a queue
 
         try {
-            // TODO: Formalise the type for the operation extension
-            const annealRequest: ToServerAnnealRequest.Root & { operation: { fromNode: string, recordId: Record.RecordElement } } = req.body;
+            const annealRequest: MoveRecordSatisfactionTestPermutationRequest = req.body;
             const { strata, constraints, recordData, annealNodes, operation } = annealRequest;
 
             // NOTE: We only support one root node for now
@@ -83,8 +84,7 @@ export const testPermutationsMoveRecord: express.RequestHandler =
             }
 
             // Output array
-            // TODO: Formalise the type of the object and share with client
-            const output: { toNode: string, satisfaction: ReturnType<typeof calculateTotalSatisfactionFromAnnealRequest> }[] = [];
+            const output: MoveRecordTestPermutationOperationResult = [];
 
             // Move record operation permutation loop
             leafNodes.forEach((toNode) => {
@@ -133,8 +133,7 @@ export const testPermutationsSwapRecord: express.RequestHandler =
         // TODO: Split satisfaction calculation into a queue
 
         try {
-            // TODO: Formalise the type for the operation extension
-            const annealRequest: ToServerAnnealRequest.Root & { operation: { nodeA: string, recordIdA: Record.RecordElement } } = req.body;
+            const annealRequest: SwapRecordsSatisfactionTestPermutationRequest = req.body;
             const { strata, constraints, recordData, annealNodes, operation } = annealRequest;
 
             // NOTE: We only support one root node for now
@@ -169,8 +168,7 @@ export const testPermutationsSwapRecord: express.RequestHandler =
             }
 
             // Output array
-            // TODO: Formalise the type of the object and share with client
-            const output: { nodeB: string, recordIdB: Record.RecordElement, satisfaction: ReturnType<typeof calculateTotalSatisfactionFromAnnealRequest> }[] = [];
+            const output: SwapRecordsTestPermutationOperationResult = [];
 
             // Swap record operation permutation loop
             leafNodes.forEach((nodeB) => {

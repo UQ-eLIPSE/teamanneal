@@ -62,12 +62,15 @@ import { ResultsEditor as S } from "../../store";
 import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
+import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+
 @Component
 export default class Move extends Vue {
+    /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
-
-    // TODO: Formalise response type
-    p_testPermutationData: { toNode: string, satisfaction: { value: number, max: number } }[] | undefined = undefined;
+    
+    /** Data returned from test permutation request */
+    p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;

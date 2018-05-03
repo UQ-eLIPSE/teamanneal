@@ -62,12 +62,15 @@ import { ResultsEditor as S } from "../../store";
 import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
+import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+
 @Component
 export default class Swap extends Vue {
+    /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
 
-    // TODO: Formalise response type
-    p_testPermutationData: { nodeB: string, recordIdB: string, satisfaction: { value: number, max: number } }[] | undefined = undefined;
+    /** Data returned from test permutation request */
+    p_testPermutationData: SwapRecordsTestPermutationOperationResult | undefined = undefined;
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
