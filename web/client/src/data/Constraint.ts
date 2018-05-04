@@ -280,7 +280,7 @@ export namespace ConstraintSentence {
     /** Constructs a phrase from the key-values in the `constraint` prop. */
     export function convertConstraintToSentence(constraint: Data, selectedStratumLabel: string) {
         let sentence = "";
-        
+
         sentence += selectedStratumLabel + ' ';
         sentence += getWeightText(constraint);
         sentence += getConstraintConditionFunctionText(constraint);
@@ -415,5 +415,115 @@ export namespace ConstraintSentence {
     function findItemInList(list: any[], property: string, value: any) {
         return list.find((listItem: any) => listItem[property] === value);
     }
+}
+
+export namespace LimitConstraintSatisfaction {
+    
+    interface PartitionConstraintSatisfaction {
+        [partitionId: string]: { [constraintId: string]: { total: number, pass: number } }
+    }
+
+    export function partitionLimitConstraintSatisfactionMap(constraintsArray: any[], nodeRecordMap: any,
+        partitionNodeArrayMap: any, nodeToStratumMap: any, recordLookupMap: any, columns: any) {
+
+        const resultPartitionConstraintSatisfaction: PartitionConstraintSatisfaction = {};
+
+        const limitConstraints = constraintsArray.filter((c) => c.type === "limit");
+
+        limitConstraints.forEach((constraint) => {
+            Object.keys(partitionNodeArrayMap).forEach((partitionId) => {
+                const res = calculateSatisfactionValueForPartition(partitionNodeArrayMap[partitionId], constraint,
+                    nodeToStratumMap, nodeRecordMap, recordLookupMap, columns);
+                if (resultPartitionConstraintSatisfaction[partitionId] === undefined) {
+                    resultPartitionConstraintSatisfaction[partitionId] = {};
+                }
+
+                resultPartitionConstraintSatisfaction[partitionId][constraint._id] = res;
+            });
+        });
+        return resultPartitionConstraintSatisfaction;
+    }
+
+    function calculateSatisfactionValueForPartition(nodesInPartition: string[], constraint: any,
+        nodeToStratumMap: { [nodeId: string]: string }, nodeRecordMap: any, recordLookupMap: any, columns: any) {
+
+        // Get all node ids where constraint applies
+        const applicableNodeIds = nodesInPartition.filter((nodeId: string) =>
+            nodeToStratumMap[nodeId] === constraint.stratum);
+
+        // Test constraint over these nodes
+        const result = testConstraintOverapplicableRecordsNodes(applicableNodeIds, nodeRecordMap, constraint,
+            recordLookupMap, columns);
+
+        return result;
+    }
+
+    function getMinMaxRecordConfig(filterSatisfiedCount: number, totalNodes: number) {
+        if (filterSatisfiedCount > totalNodes) {
+            const recordsPerNode = Math.floor(filterSatisfiedCount / totalNodes);
+            const idealConfig = {
+                idealNumberOfNodesWithMinRecords: totalNodes - (filterSatisfiedCount % totalNodes),
+                idealNumberOfNodesWithMaxRecords: filterSatisfiedCount % totalNodes
+            }
+
+            return filterSatisfiedCount % totalNodes === 0 ?
+                { min: recordsPerNode, max: recordsPerNode, idealConfig: idealConfig } :
+                { min: recordsPerNode, max: recordsPerNode + 1, idealConfig: idealConfig };
+
+        } else if (filterSatisfiedCount < totalNodes) {
+            const idealConfig = {
+                idealNumberOfNodesWithMinRecords: totalNodes - filterSatisfiedCount,
+                idealNumberOfNodesWithMaxRecords: filterSatisfiedCount
+            }
+            return { min: 0, max: 1, idealConfig: idealConfig };
+        } else {
+            const idealConfig = {
+                idealNumberOfNodesWithMinRecords: totalNodes,
+                idealNumberOfNodesWithMaxRecords: totalNodes
+            }
+            return { min: 1, max: 1, idealConfig: idealConfig };
+        }
+    }
+
+    function testConstraintOverapplicableRecordsNodes(nodeIds: any, nodeRecordMap: any, constraint: any, recordLookupMap: any, columns: any[]) {
+        const map: { [nodeId: string]: { [applicableRecords: string]: number } } = {};
+        
+        // Get constraint and filter values
+        const constraintColumn = constraint.filter.column;
+        const colIndex = columns.indexOf(columns.find((col) => col._id === constraintColumn._id)!);
+        const filterValue = constraint.filter.values[0];
+
+        // Traverse through all applicableRecords nodes
+        nodeIds.forEach((nodeId: string) => {
+            // Find records where filter value applies
+            const records = nodeRecordMap[nodeId].map((recordId: any) => recordLookupMap.get(recordId)!);
+            const applicableRecords = records.filter((record: any) => record[colIndex] === filterValue);
+            // Store number of applicable records in map
+            map[nodeId] = { applicableRecords: applicableRecords.length };
+        });
+
+
+        // Total number of nodes
+        const totalNodes = nodeIds.length;
+
+        // Number of records where filter value was found
+        const filterSatisfiedCount = nodeIds.reduce((s: number, id: string) => map[id].applicableRecords + s, 0);
+
+        // If no `applicableRecords` were found, all nodes pass this constraint
+        if (filterSatisfiedCount === 0) return { total: totalNodes, pass: totalNodes };
+
+        const { min, max, idealConfig } = getMinMaxRecordConfig(filterSatisfiedCount, totalNodes);
+
+        const actualNumberOfNodesWithMinRecords = nodeIds.filter((id: string) => map[id].applicableRecords === min).length;
+        const actualNumberOfNodesWithMaxRecords = nodeIds.filter((id: string) => map[id].applicableRecords === max).length;
+
+        const passCount = Math.min(idealConfig.idealNumberOfNodesWithMinRecords, actualNumberOfNodesWithMinRecords) +
+            Math.min(idealConfig.idealNumberOfNodesWithMaxRecords, actualNumberOfNodesWithMaxRecords);
+
+        return { total: totalNodes, pass: passCount };
+
+
+    }
+
 }
 

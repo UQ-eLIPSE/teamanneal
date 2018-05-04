@@ -27,7 +27,7 @@ export function getFactory<T>(store: Store<T>, modulePrefix?: string) {
 const getters = {
 
     [G.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP](state: State) {
-        const allGroupNodesRecordsMap: any = {};
+        const allGroupNodesRecordsMap: GroupNodeRecordArrayMap = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             root.children.forEach((child) => {
@@ -38,7 +38,7 @@ const getters = {
         return allGroupNodesRecordsMap;
     },
     [G.GET_PARTITION_NODE_MAP](state: State) {
-        const partitionToNodeMap: any = {};
+        const partitionToNodeMap: { [nodeId: string]: string[] } = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             partitionToNodeMap[root._id] = [];

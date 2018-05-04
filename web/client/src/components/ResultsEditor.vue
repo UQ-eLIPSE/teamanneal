@@ -20,20 +20,20 @@
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
         <!-- <ConstraintOverview class="constraint-overview"
-                                                                                    :constraints="constraintsArray"
-                                                                                    :constraintSatisfactionMap="annealSatisfactionMap"
-                                                                                    @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                                                                                    :constraintThresholdMap="constraintThresholdPercMap"
-                                                                                    :nodeRoots="modifiedAnnealNodeRoots"
-                                                                                    :strata="strata"></ConstraintOverview> -->
+                                                                                                                                        :constraints="constraintsArray"
+                                                                                                                                        :constraintSatisfactionMap="annealSatisfactionMap"
+                                                                                                                                        @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
+                                                                                                                                        :constraintThresholdMap="constraintThresholdPercMap"
+                                                                                                                                        :nodeRoots="modifiedAnnealNodeRoots"
+                                                                                                                                        :strata="strata"></ConstraintOverview> -->
         <!-- <ConstraintOverview class="constraint-overview"
-                                                                        :constraints="constraintsArray"
-                                                                        :constraintSatisfactionMap="annealSatisfactionMap"
-                                                                        :strata="strata"
-                                                                        :recordLookupMap="recordLookupMap"
-                                                                        :allNodesRecordMap="allNodesRecordMap"
-                                                                        :columns="columns"
-                                                                        ></ConstraintOverview> -->
+                                                                                                                            :constraints="constraintsArray"
+                                                                                                                            :constraintSatisfactionMap="annealSatisfactionMap"
+                                                                                                                            :strata="strata"
+                                                                                                                            :recordLookupMap="recordLookupMap"
+                                                                                                                            :allNodesRecordMap="allNodesRecordMap"
+                                                                                                                            :columns="columns"
+                                                                                                                            ></ConstraintOverview> -->
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
@@ -55,7 +55,7 @@ import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
 import { set } from "../util/Vue";
 
 import { Record, RecordElement } from "../../../common/Record";
-
+import { LimitConstraintSatisfaction } from "../data/Constraint";
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import ConstraintOverview from "./ConstraintOverview.vue";
@@ -136,6 +136,10 @@ export default class ResultsEditor extends Vue {
         return Store.ResultsEditor.state;
     }
 
+    get creatorState() {
+        return Store.store.state;
+    }
+
     get recordData() {
         return this.state.recordData;
     }
@@ -157,7 +161,9 @@ export default class ResultsEditor extends Vue {
     }
 
     get constraintsArray() {
-        return this.state.constraintConfig.constraints;
+        //TODO: Temporary, replace with Result Editor's own state when constraints are available
+        // return this.state.constraintConfig.constraints;
+        return this.creatorState.annealConfig.constraints;
     }
 
     get partitionColumn() {
@@ -417,49 +423,20 @@ export default class ResultsEditor extends Vue {
         return Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
     }
 
-    //TODO: Assuming a map of { [nodeid]: stratum-id } will be available (as per discussion on 01/05/2018)
-    get recordsForConstraint() {
-        const nodeToStratumMap = this.generateNodeStratumMap;
-        const limitConstraints = this.state.constraintConfig.constraints.filter((c) => c.type === "limit");
-        const nodeRecordMap = this.allNodesRecordMap;
-        let scores: any = [];
-        const partitionNodeMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP);
+    get partitionLimitConstraintSatisfactionMap() {
+        const partitionNodeArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP);
+        const nodeRecordsArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
+        return LimitConstraintSatisfaction.partitionLimitConstraintSatisfactionMap(this.constraintsArray,
+            nodeRecordsArrayMap, partitionNodeArrayMap, this.generateNodeStratumMap, this.recordLookupMap,
+            this.columns);
 
-        limitConstraints.forEach((constraint) => {
-            Object.keys(partitionNodeMap).forEach((partitionId) => {
-                scores.push(this.calculateSatisfactionValueForPartition(partitionNodeMap[partitionId], constraint, nodeToStratumMap, nodeRecordMap));
-            });
-        });
-        return scores;
     }
 
-    calculateSatisfactionValueForPartition(nodesInPartition: any, constraint: any, nodeToStratumMap: any, nodeRecordMap: any) {
-        
-        const applicableNodeIds = nodesInPartition.filter((nodeId: string) => nodeToStratumMap[nodeId] === constraint.stratum);
-        
-        const result = this.testConstraintOverApplicableNodes(applicableNodeIds, nodeRecordMap, constraint);
-        return result
-    }
-
-    testConstraintOverApplicableNodes(applicableNodeIds: any, nodeRecordMap: any, constraint: any) {
-        const constraintColumn = constraint.filter.column;
-        const colIndex = this.columns.indexOf(constraintColumn);
-        const filterValue = constraint.filter.values[0];
-        let total = 0;
-        let applicable = 0;
-        applicableNodeIds.forEach((nodeId: string) => {
-            total += nodeRecordMap[nodeId].length;
-            const records = nodeRecordMap[nodeId].map((recordId: any) => this.recordLookupMap.get(recordId)!);
-            applicable += records.filter((record: any) => record[colIndex] === filterValue).length;
-        });
-
-        return applicable / total;
-    }
-    // TODO: Temporary code, only for testing. Remove.
+    // TODO: Temporary code, only for testing.
     get generateNodeStratumMap() {
-        const map: any = {};
+        const map: { [nodeId: string]: string } = {};
 
-        const strataArray = this.strata;
+        const strataArray = [...this.strata].reverse();
 
         function mapGenerationIterator(node: GroupNode, depth: number) {
             switch (node.type) {
@@ -492,7 +469,6 @@ export default class ResultsEditor extends Vue {
 
     @Lifecycle
     created() {
-        this.recordsForConstraint;
     }
 
 
