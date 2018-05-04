@@ -95,8 +95,14 @@ const actions = {
         }
     },
 
-    async [A.DEHYDRATE](context: Context) {
-        return serialiseWithUndefined(context.state);
+    async [A.DEHYDRATE](context: Context, { deleteSideToolAreaActiveItem }: Partial<{ deleteSideToolAreaActiveItem: boolean }>) {
+        const state = { ...context.state };
+
+        if (deleteSideToolAreaActiveItem) {
+            state.sideToolArea = { activeItem: undefined };
+        }
+
+        return serialiseWithUndefined(state);
     },
 
     async [A.HYDRATE_FROM_ANNEAL_CREATOR_STATE](context: Context, dehydratedState: string) {

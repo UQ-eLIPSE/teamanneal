@@ -1,8 +1,9 @@
 <template>
     <div class="import-file">
         <h2>Import</h2>
-        <p>Select a *.teamanneal file to import into the editor:</p>
+        <p>Select a TeamAnneal package file (*.teamanneal) to import:</p>
         <input type="file"
+               accept=".teamanneal"
                @change="onFileChange($event)" />
     </div>
 </template>
@@ -11,6 +12,8 @@
 
 <script lang="ts">
 import { Vue, Component } from "av-ts";
+
+import { ResultsEditor as S } from "../../store";
 
 @Component
 export default class ImportFile extends Vue {
@@ -26,6 +29,16 @@ export default class ImportFile extends Vue {
         if (selectedFile === undefined) {
             return;
         }
+
+        // Read in TeamAnneal package
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const data: string = (e.target as FileReader).result;
+            S.dispatch(S.action.HYDRATE, data);
+        }
+
+        reader.readAsText(selectedFile);
     }
 }
 </script>
