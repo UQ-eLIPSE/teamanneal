@@ -6,7 +6,8 @@
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
-            <SpreadsheetTreeView2 class="spreadsheet"
+            <SpreadsheetTreeView2 v-if="nodeRoots.length > 0"
+                                  class="spreadsheet"
                                   :nodeRoots="nodeRoots"
                                   :headerRow="headerRow"
                                   :columnsDisplayIndices="columnsDisplayIndices"
