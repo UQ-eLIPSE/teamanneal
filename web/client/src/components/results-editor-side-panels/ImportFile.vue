@@ -1,10 +1,10 @@
 <template>
     <div class="import-file">
         <h2>Import</h2>
-        <p>Select a TeamAnneal package (*.teamanneal) to import:</p>
+        <p>Select a TeamAnneal package (*.tapackage) to import:</p>
         <label>
             <input type="file"
-                   accept=".teamanneal"
+                   accept=".tapackage"
                    class="teamanneal-package-input"
                    ref="teamanneal-package-input"
                    @change="onTeamAnnealPackageFileInputChanged($event)">
