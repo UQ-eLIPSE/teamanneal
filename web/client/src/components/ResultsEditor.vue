@@ -443,7 +443,7 @@ export default class ResultsEditor extends Vue {
     width: 100%;
     padding: 3em;
     background: #f2f2f2;
-    background: linear-gradient(to bottom right, #f2f2f2, #f2f2f2 50%, #aaa);
+    background: linear-gradient(to bottom right, transparent, transparent 70%, rgba(73, 7, 94, 0.5)), #f2f2f2;
 }
 
 .get-started h1 {
