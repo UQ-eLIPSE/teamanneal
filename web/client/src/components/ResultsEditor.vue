@@ -19,21 +19,13 @@
                                   :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
-        <!-- <ConstraintOverview class="constraint-overview"
-                                                                                                                                        :constraints="constraintsArray"
-                                                                                                                                        :constraintSatisfactionMap="annealSatisfactionMap"
-                                                                                                                                        @constraintAcceptabilityChanged="constraintAcceptabilityChangeHandler"
-                                                                                                                                        :constraintThresholdMap="constraintThresholdPercMap"
-                                                                                                                                        :nodeRoots="modifiedAnnealNodeRoots"
-                                                                                                                                        :strata="strata"></ConstraintOverview> -->
-        <!-- <ConstraintOverview class="constraint-overview"
-                                                                                                                            :constraints="constraintsArray"
-                                                                                                                            :constraintSatisfactionMap="annealSatisfactionMap"
-                                                                                                                            :strata="strata"
-                                                                                                                            :recordLookupMap="recordLookupMap"
-                                                                                                                            :allNodesRecordMap="allNodesRecordMap"
-                                                                                                                            :columns="columns"
-                                                                                                                            ></ConstraintOverview> -->
+
+        <ConstraintOverview class="constraint-overview"
+                            :constraints="constraintsArray"
+                            :constraintSatisfactionMap="annealSatisfactionMap"
+                            :strata="strata"
+                            :limitConstraintPassCount="numberOfPassingGroupsPerConstraintMap"></ConstraintOverview>
+
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     </div>
@@ -42,7 +34,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import * as Store from "../store";
 
@@ -68,6 +60,7 @@ import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
 import Print from "./results-editor-side-panels/Print.vue";
 import Help from "./results-editor-side-panels/Help.vue";
+import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
@@ -136,6 +129,7 @@ export default class ResultsEditor extends Vue {
         return Store.ResultsEditor.state;
     }
 
+    // TODO: Remove the need for getting creator state, replace with result editor's own state
     get creatorState() {
         return Store.store.state;
     }
@@ -161,9 +155,25 @@ export default class ResultsEditor extends Vue {
     }
 
     get constraintsArray() {
-        //TODO: Temporary, replace with Result Editor's own state when constraints are available
+        //TODO: Temporary, replace with Result Editor's own state when constraints are available in state store
         // return this.state.constraintConfig.constraints;
         return this.creatorState.annealConfig.constraints;
+    }
+
+    //TODO: Replace with Result editor's state when ready
+    get annealResults() {
+        const responseContent = this.creatorState.annealResponse!.content as any;
+        const responseData = responseContent.data as any;
+
+        // We're working on the presumption that we definitely have results
+        return responseData.results!;
+    }
+
+    //TODO: Replace with Result editor's state when ready
+    get annealSatisfactionMap() {
+        return this.annealResults
+            .map((res: any) => res.result!.satisfaction)
+            .reduce((carry: any, sMap: any) => Object.assign(carry, sMap), {});
     }
 
     get partitionColumn() {
@@ -419,20 +429,15 @@ export default class ResultsEditor extends Vue {
         }, new Map<RecordElement, Record>());
     }
 
-    get allNodesRecordMap() {
-        return Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
-    }
-
-    get partitionLimitConstraintSatisfactionMap() {
-        const partitionNodeArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP);
-        const nodeRecordsArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
-        return LimitConstraintSatisfaction.partitionLimitConstraintSatisfactionMap(this.constraintsArray,
+    get numberOfPassingGroupsPerConstraintMap() {
+        const partitionNodeArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP) as { [nodeId: string]: string[] };
+        const nodeRecordsArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP) as GroupNodeRecordArrayMap;
+        return LimitConstraintSatisfaction.getNumberOfPassingGroupsPerConstraint(this.constraintsArray,
             nodeRecordsArrayMap, partitionNodeArrayMap, this.generateNodeStratumMap, this.recordLookupMap,
             this.columns);
-
     }
 
-    // TODO: Temporary code, only for testing.
+    // TODO: Remove this and implement properly in its own ticket.
     get generateNodeStratumMap() {
         const map: { [nodeId: string]: string } = {};
 
@@ -465,10 +470,6 @@ export default class ResultsEditor extends Vue {
         });
 
         return map;
-    }
-
-    @Lifecycle
-    created() {
     }
 
 

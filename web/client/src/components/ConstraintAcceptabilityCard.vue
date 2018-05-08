@@ -1,6 +1,5 @@
 <template>
-    <div class="constraint-item"
-         :class="constraintItemClasses">
+    <div class="constraint-item">
         <div class="sentence-groups">
             <div class="sentence">
                 <span>{{constraintSentence}}</span>
@@ -14,24 +13,6 @@
             </div>
         </div>
 
-
-        <!-- <div class="slider-wrapper"
-                     v-if="isLimitTypeConstraint">
-
-
-                    <span> of {{lowerCaseStratumLabel}} members have </span>
-                    <span class="constraint-filter-text">{{constraintFilterText}}</span>
-                    
-                    
-                    <input type="range"
-                           @input="constraintAcceptabilityChanged($event)"
-                           :value="constraintAcceptability"
-                           min="0"
-                           max="100"
-                           step="0.1" />
-                </div> -->
-
-
     </div>
 </template>
 
@@ -42,22 +23,18 @@ import { ConstraintSentence } from "../data/Constraint";
 
 @Component
 export default class ConstraintAcceptabilityCard extends Vue {
+
     @Prop constraint = p<IConstraint>({ required: true, });
 
-    @Prop isSelected = p({ type: Boolean, required: false, default: false, });
+    /** Label of the stratum for which the constraint applies */
     @Prop stratumLabel = p({ type: String, required: true });
+
+    /** Number of nodes that passed the constraint */
     @Prop fulfilledNumber = p({ type: Number, required: true });
+
+    /** Total number of nodes to which this constraint applies */
     @Prop totalGroups = p({ type: Number, required: true });
-    // @Prop constraintThreshold = p({ type: Number, required: true });
 
-    // get constraintAcceptability() {
-    //     return this.constraintThreshold.toString();
-    // }
-
-    // constraintAcceptabilityChanged(e: any) {
-    //     const threshold = parseFloat(e.currentTarget.value);
-    //     this.$emit("constraintAcceptabilityChanged", this.constraint, threshold);
-    // }
     get constraintSentence() {
         const sentence = ConstraintSentence.convertConstraintToSentence(this.constraint, this.lowerCaseStratumLabel);
         return sentence[0].toUpperCase() + sentence.slice(1);
@@ -71,14 +48,10 @@ export default class ConstraintAcceptabilityCard extends Vue {
         return this.constraint.type === "limit";
     }
 
-    get constraintItemClasses() {
-        return {
-            "selected": this.isSelected,
-        };
-    }
-
     get cardClasses() {
         const passingGroupsPerc = (this.fulfilledNumber / this.totalGroups) * 100;
+
+        // TODO: Discuss the percentage for styling 
         return {
             "danger": passingGroupsPerc === 0,
             "success": passingGroupsPerc > 60,
@@ -99,30 +72,8 @@ export default class ConstraintAcceptabilityCard extends Vue {
     font-size: 0.8em;
     align-items: center;
     font-size: 1em;
-
+    background: rgba(250, 250, 250, 0.9);
     position: relative;
-}
-
-.constraint-item.selected {
-    border-color: #49075E;
-    background: rgba(73, 7, 94, 0.2);
-}
-
-.constraint-item.selected::after {
-    content: "✓";
-    display: inline-block;
-
-    color: #fff;
-    background: linear-gradient(to right top, transparent, transparent 50%, #49075E 50%, #49075E);
-    font-weight: bold;
-    text-align: right;
-
-    position: absolute;
-    top: 0;
-    right: 0;
-
-    width: 2em;
-    height: 2em;
 }
 
 .sentence-groups {

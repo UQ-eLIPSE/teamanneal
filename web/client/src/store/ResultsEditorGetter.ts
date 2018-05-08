@@ -37,7 +37,7 @@ const getters = {
 
         return allGroupNodesRecordsMap;
     },
-    [G.GET_PARTITION_NODE_MAP](state: State) {
+    [G.GET_PARTITION_NODE_MAP](state: State): { [nodeId: string]: string[] } {
         const partitionToNodeMap: { [nodeId: string]: string[] } = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
@@ -48,13 +48,14 @@ const getters = {
     }
 }
 
-function getAllChildNodes(node: GroupNode, nodeArray: any[]) {
+function getAllChildNodes(node: GroupNode, nodeArray: string[]) {
     nodeArray.push(node._id);
 
     if (node.type === "intermediate-stratum") {
         node.children.forEach((child) => getAllChildNodes(child, nodeArray));
     }
 }
+
 function buildNodeToRecordsMap(node: GroupNode, allGroupNodesRecordsMap: GroupNodeRecordArrayMap, leafStratumRecordsMap: GroupNodeRecordArrayMap): RecordElement[] {
 
     if (node.type === "leaf-stratum") {
@@ -69,8 +70,8 @@ function buildNodeToRecordsMap(node: GroupNode, allGroupNodesRecordsMap: GroupNo
     }, []);
 
     allGroupNodesRecordsMap[node._id] = nodeRecords;
+    
     return nodeRecords;
-
 }
 
 export function init() {
