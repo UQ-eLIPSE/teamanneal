@@ -1,15 +1,15 @@
 <template>
     <div class="import-file">
         <h2>Import</h2>
-        <p>Select a TeamAnneal package (*.tapackage) to import:</p>
+        <p>Select a TeamAnneal results package (*.taresults) to import:</p>
         <label>
             <input type="file"
-                   accept=".tapackage"
-                   class="teamanneal-package-input"
-                   ref="teamanneal-package-input"
+                   accept=".taresults"
+                   class="taresults-import-file"
+                   ref="taresults-import-file"
                    @change="onTeamAnnealPackageFileInputChanged($event)">
             <button class="button small"
-                    @click.stop.prevent="openFilePicker">Select TeamAnneal package...</button>
+                    @click.stop.prevent="openFilePicker">Select results package...</button>
         </label>
     </div>
 </template>
@@ -24,7 +24,7 @@ import { ResultsEditor as S } from "../../store";
 @Component
 export default class ImportFile extends Vue {
     openFilePicker() {
-        (this.$refs["teamanneal-package-input"] as HTMLInputElement).click();
+        (this.$refs["taresults-import-file"] as HTMLInputElement).click();
     }
 
     onTeamAnnealPackageFileInputChanged(e: Event) {
@@ -40,7 +40,7 @@ export default class ImportFile extends Vue {
             return;
         }
 
-        // Read in TeamAnneal package
+        // Read in TeamAnneal results package
         const reader = new FileReader();
 
         reader.onload = (e) => {
@@ -58,7 +58,7 @@ export default class ImportFile extends Vue {
 <style scoped src="../../static/results-editor-side-panel.css"></style>
 
 <style scoped>
-.teamanneal-package-input {
+.taresults-import-file {
     display: none;
 }
 </style>

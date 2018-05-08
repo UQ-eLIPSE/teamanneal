@@ -30,11 +30,11 @@ export default () => {
                 component: Welcome,
             },
             {
-                name: "anneal-process",
                 path: "/anneal",
                 component: AnnealProcess,
                 children: [
                     {
+                        name: "anneal-process",
                         path: "",
                         redirect: "provide-records-file",
                     },

@@ -2,11 +2,11 @@
     <div class="export-file">
         <h2>Export</h2>
         <div class="export-option-block">
-            <h3>Export TeamAnneal package</h3>
-            <p>Select this option to get a file that contains all data, teams, constraints and other settings, allowing you to return to review teams and make changes in future.</p>
+            <h3>Export TeamAnneal results package</h3>
+            <p>Select this option to get a file that contains all data, including teams, needed for you to review teams and make changes in future.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small"
-                    @click="onExportPackageButtonClick">Export package</button>
+                    @click="onExportResultsPackageButtonClick">Export results package</button>
         </div>
         <div class="export-option-block">
             <h3>Export only teams (CSV)</h3>
@@ -29,14 +29,14 @@ import * as FileSaver from "file-saver";
 
 @Component
 export default class ExportFile extends Vue {
-    async onExportPackageButtonClick() {
-        // Get state serialised and save as TeamAnneal package 
+    async onExportResultsPackageButtonClick() {
+        // Get state serialised and save as TeamAnneal results package 
         // (just a JSON file internally)
         const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteSideToolAreaActiveItem: true });
 
         const fileBlob = new Blob([serialisedContent], { type: "application/json" });
 
-        FileSaver.saveAs(fileBlob, `export-${Date.now()}.tapackage`, true);
+        FileSaver.saveAs(fileBlob, `export-${Date.now()}.taresults`, true);
     }
 
     onExportCsvButtonClick() {

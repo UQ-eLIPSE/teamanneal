@@ -87,6 +87,8 @@ export default class ResultsEditorSideToolArea extends Vue {
     max-width: 40em;
 
     position: relative;
+
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .side-panel-component {

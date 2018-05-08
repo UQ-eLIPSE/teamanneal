@@ -1,13 +1,12 @@
 <template>
     <div class="results-editor">
-
-        <div class="workspace">
+        <div class="workspace"
+             v-if="displayWorkspace">
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
-            <SpreadsheetTreeView2 v-if="nodeRoots.length > 0"
-                                  class="spreadsheet"
+            <SpreadsheetTreeView2 class="spreadsheet"
                                   :nodeRoots="nodeRoots"
                                   :headerRow="headerRow"
                                   :columnsDisplayIndices="columnsDisplayIndices"
@@ -19,6 +18,15 @@
                                   :hiddenNodes="hiddenNodes"
                                   :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+        </div>
+        <div class="get-started"
+             v-else>
+            <h1>Welcome</h1>
+            <p>The TeamAnneal Editor allows you to view and modify teams generated from the anneal process.</p>
+            <p>Get started by obtaining team data from
+                <router-link :to="{name: 'anneal-process'}">running an anneal</router-link>, or
+                <a href="#import-results-package-file"
+                   @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
         </div>
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
@@ -236,6 +244,14 @@ export default class ResultsEditor extends Vue {
         this.p_columnsDisplayIndices = indices;
     }
 
+    /** 
+     * Determines when to display the main workspace for the results editor,
+     * containing the spreadsheet and other parts
+     */
+    get displayWorkspace() {
+        return this.nodeRoots.length > 0;
+    }
+
     visibleColumnListUpdateHandler(columnList: ReadonlyArray<number>) {
         this.columnsDisplayIndices = columnList;
     }
@@ -377,6 +393,10 @@ export default class ResultsEditor extends Vue {
             }
         }
     }
+
+    openImportSidePanel() {
+        S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
+    }
 }
 </script>
 
@@ -400,7 +420,7 @@ export default class ResultsEditor extends Vue {
     flex-direction: column;
     background: #fff;
     position: relative;
-    overflow: scroll;
+    overflow: none;
 }
 
 .side-tool-area {
@@ -417,5 +437,18 @@ export default class ResultsEditor extends Vue {
         right: 0;
         bottom: 0; 
     */
+}
+
+.get-started {
+    width: 100%;
+    padding: 3em;
+    background: #f2f2f2;
+    background: linear-gradient(to bottom right, #f2f2f2, #f2f2f2 50%, #aaa);
+}
+
+.get-started h1 {
+    color: #49075E;
+    font-weight: 400;
+    font-size: 3em;
 }
 </style>
