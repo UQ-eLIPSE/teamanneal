@@ -56,7 +56,7 @@ import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
 import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
-import Print from "./results-editor-side-panels/Print.vue";
+// import Print from "./results-editor-side-panels/Print.vue";
 import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
@@ -72,12 +72,12 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         region: "start",
         component: ExportFile,
     },
-    {
-        name: "print",
-        label: "Print",
-        region: "start",
-        component: Print,
-    },
+    // {
+    //     name: "print",
+    //     label: "Print",
+    //     region: "start",
+    //     component: Print,
+    // },
     {
         name: "move",
         label: "Move a person",
@@ -88,14 +88,14 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         label: "Swap people",
         component: Swap,
     },
-    {
-        name: "add",
-        label: "Add a person or group",
-    },
-    {
-        name: "remove",
-        label: "Remove a person or group",
-    },
+    // {
+    //     name: "add",
+    //     label: "Add a person or group",
+    // },
+    // {
+    //     name: "remove",
+    //     label: "Remove a person or group",
+    // },
     {
         name: "help",
         label: "Help",
