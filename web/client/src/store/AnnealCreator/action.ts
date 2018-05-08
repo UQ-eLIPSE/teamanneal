@@ -64,6 +64,8 @@ export enum AnnealCreatorAction {
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
     SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
     CLEAR_ANNEAL_REQUEST_STATE = "Clearing anneal request state",
+
+    SET_DATA_IMPORT_MODE = "Setting data import mode",
 }
 
 /** Shorthand for Action enum above */
@@ -443,7 +445,11 @@ Delete constraints that use this column and try again.`;
         if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
             await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
         }
-    }
+    },
+
+    async [A.SET_DATA_IMPORT_MODE](context: Context, dataImportMode: "new-records-file" | "import-config-file-with-separate-records-file") {
+        commit(context, M.SET_DATA_IMPORT_MODE, dataImportMode);
+    },
 };
 
 export function init() {

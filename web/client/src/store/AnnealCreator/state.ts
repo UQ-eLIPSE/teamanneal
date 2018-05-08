@@ -18,6 +18,9 @@ import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateSt
 import * as AnnealNode from "../../../../common/AnnealNode";
 
 export interface AnnealCreatorState {
+    /** How the data was originally imported into TeamAnneal */
+    dataImportMode: "new-records-file" | "import-config-file-with-separate-records-file",
+
     /** Data for each leaf node in the group tree (individual records) */
     recordData: RecordData,
 
@@ -36,6 +39,8 @@ export interface AnnealCreatorState {
 
 export function init() {
     const state: AnnealCreatorState = {
+        dataImportMode: "new-records-file",
+
         recordData: initRecordData(),
 
         constraintConfig: initConstraintConfig(),

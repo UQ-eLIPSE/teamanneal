@@ -70,7 +70,7 @@ import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 export default class ProvideRecordsFile extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
-    readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
+    // readonly thisWizardStep = AnnealProcessWizardEntries.provideRecordsFile;
 
     get filename() {
         return S.state.recordData.source.name;

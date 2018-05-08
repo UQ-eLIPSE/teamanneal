@@ -1,0 +1,47 @@
+<template>
+    <div class="wizard-panel">
+        <div class="wizard-panel-content">
+            <h1>Export configuration</h1>
+            <p>
+                You can export your TeamAnneal configuration by clicking on the button below. This saves all group parameters and constraints you've entered so far into one file that you can keep or share with others.
+            </p>
+            <p>
+                To use this exported configuration file in future, simply return to the TeamAnneal Creator, and choose to import the configuration file.
+            </p>
+        </div>
+        <div class="wizard-panel-bottom-buttons">
+            <button class="button"
+                    @click="exportConfig">Export configuration</button>
+        </div>
+    </div>
+</template>
+
+<!-- ####################################################################### -->
+
+<script lang="ts">
+import { Component, Mixin } from "av-ts";
+
+import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
+import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
+
+@Component
+export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
+    // Required by AnnealProcessWizardPanel
+    // Defines the wizard step
+    readonly thisWizardStep = AnnealProcessWizardEntries.exportData;
+
+    exportConfig() {
+        // TODO: 
+        throw new Error("Not implemented");
+    }
+}
+</script>
+
+<!-- ####################################################################### -->
+
+<style scoped src="../../static/anneal-process-wizard-panel.css"></style>
+
+<style scoped>
+
+</style>

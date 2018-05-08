@@ -450,5 +450,6 @@ export default class ResultsEditor extends Vue {
     color: #49075E;
     font-weight: 400;
     font-size: 3em;
+    margin-top: 0;
 }
 </style>

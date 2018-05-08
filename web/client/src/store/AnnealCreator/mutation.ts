@@ -35,7 +35,7 @@ export enum AnnealCreatorMutation {
 
     INIT_STRATA_NAMING_CONFIG = "Initialising strata naming config",
     SET_STRATA_NAMING_CONFIG = "Setting strata naming config",
-    
+
     SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
     SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
     SET_STRATUM_NAMING_CONFIG_COUNTER = "Setting stratum's naming config counter",
@@ -57,6 +57,8 @@ export enum AnnealCreatorMutation {
     SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG = "Setting node naming combined name's user provided flag",
 
     SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
+
+    SET_DATA_IMPORT_MODE = "Setting data import mode",
 }
 
 /** Shorthand for Mutation enum above */
@@ -185,7 +187,11 @@ const mutations = {
 
     [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {
         set(state, "annealRequest", annealRequestState);
-    }
+    },
+
+    [M.SET_DATA_IMPORT_MODE](state: State, dataImportMode: "new-records-file" | "import-config-file-with-separate-records-file") {
+        set(state, "dataImportMode", dataImportMode);
+    },
 };
 
 export function init() {

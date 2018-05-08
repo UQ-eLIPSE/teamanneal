@@ -10,7 +10,8 @@ import Welcome from "./components/Welcome.vue";
 import AnnealProcess from "./components/AnnealProcess.vue";
 import ResultsEditor from "./components/ResultsEditor.vue";
 
-import Anneal_ProvideRecordsFile from "./components/anneal-wizard-panels/ProvideRecordsFile.vue";
+import Anneal_Welcome from "./components/anneal-wizard-panels/Welcome.vue";
+import Anneal_ImportData from "./components/anneal-wizard-panels/ImportData.vue";
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
 import Anneal_SelectIdColumn from "./components/anneal-wizard-panels/SelectIdColumn.vue";
 import Anneal_SelectPartitionColumn from "./components/anneal-wizard-panels/SelectPartitionColumn.vue";
@@ -18,6 +19,7 @@ import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/Desig
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
 import Anneal_RunAnneal from "./components/anneal-wizard-panels/RunAnneal.vue";
+import Anneal_ExportData from "./components/anneal-wizard-panels/ExportData.vue";
 
 Vue.use(VueRouter);
 
@@ -36,13 +38,21 @@ export default () => {
                     {
                         name: "anneal-process",
                         path: "",
-                        redirect: "provide-records-file",
+                        redirect: "welcome",
                     },
                     {
-                        path: "provide-records-file",
-                        component: Anneal_ProvideRecordsFile,
+                        path: "welcome",
+                        component: Anneal_Welcome,
                         meta: {
-                            wizardEntry: AnnealProcessWizardEntries.provideRecordsFile,
+                            wizardEntry: AnnealProcessWizardEntries.welcome,
+                        },
+                    },
+                    {
+                        path: "import-data",
+                        name: "anneal-import-data",
+                        component: Anneal_ImportData,
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.importData,
                         },
                     },
                     {
@@ -92,6 +102,14 @@ export default () => {
                         component: Anneal_RunAnneal,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.runAnneal,
+                        },
+                    },
+                    {
+                        path: "export-data",
+                        name: "anneal-export-data",
+                        component: Anneal_ExportData,
+                        meta: {
+                            wizardEntry: AnnealProcessWizardEntries.exportData,
                         },
                     },
                 ]

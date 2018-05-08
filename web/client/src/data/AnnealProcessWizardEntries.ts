@@ -5,36 +5,46 @@ import { AnnealCreator as S } from "../store";
 // These currently undefined variable placeholders are used in the entries
 // objects below to refer to each other at runtime
 export let
-    provideRecordsFile: WNE,
+    welcome: WNE,
+    importData: WNE,
     reviewRecords: WNE,
     selectIdColumn: WNE,
     selectPartitionColumn: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
     configureConstraints: WNE,
-    runAnneal: WNE;
+    runAnneal: WNE,
+    exportData: WNE;
 
 /**
  * Contains all entries for the anneal process wizard
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
-    provideRecordsFile = {
+    welcome = {
         label: () => {
             if (S.get(S.getter.HAS_SOURCE_FILE_DATA)) {
                 return `${S.state.recordData.source.name}`;
             } else {
-                return "Select records file";
+                return "Welcome";
             }
         },
-        path: "/anneal/provide-records-file",
+        path: "/anneal/welcome",
         disabled: () => {
             return !(
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
-        next: () => reviewRecords,
+    },
+    importData = {
+        label: "Import",
+        path: "/anneal/import-data",
+        disabled: () => {
+            return !(
+                // Disable when processing request
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
+            );
+        },
     },
     reviewRecords = {
         label: "Review data",
@@ -152,5 +162,15 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 S.get(S.getter.HAS_CONSTRAINTS)
             );
         },
-    }
+    },
+    exportData = {
+        label: "Export",
+        path: "/anneal/export-data",
+        disabled: () => {
+            return !(
+                // Disable when processing request
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
+            );
+        },
+    },
 ];
