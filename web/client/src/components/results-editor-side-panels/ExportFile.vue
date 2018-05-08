@@ -4,16 +4,26 @@
         <div class="export-option-block">
             <h3>Export TeamAnneal results package</h3>
             <p>Select this option to get a file that contains all data, including teams, needed for you to review teams and make changes in future.</p>
+            <p>This
+                <em>does not</em> contain your complete original anneal configuration.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small"
                     @click="onExportResultsPackageButtonClick">Export results package</button>
         </div>
         <div class="export-option-block">
             <h3>Export only teams (CSV)</h3>
-            <p>Select this option to get a file that contains only annealed team information.</p>
+            <p>Select this option to get a CSV file that contains only annealed team information.</p>
             <p>This file can be opened in any spreadsheet application.</p>
             <button class="button small gold"
                     @click="onExportCsvButtonClick">Export CSV</button>
+        </div>
+        <!-- TODO: Only show this block when anneal config detected -->
+        <div class="export-option-block">
+            <h3>Export TeamAnneal configuration</h3>
+            <p>Select this option to export your anneal configuration as set in the TeamAnneal Creator. You can use this file to store and share your original set of parameters.</p>
+            <p>This file can only be opened within the TeamAnneal application.</p>
+            <button class="button small secondary"
+                    @click="onExportConfigButtonClick">Export configuration</button>
         </div>
     </div>
 </template>
@@ -40,6 +50,11 @@ export default class ExportFile extends Vue {
     }
 
     onExportCsvButtonClick() {
+        // TODO: Implement exporting
+        throw new Error("Not implemented");
+    }
+
+    onExportConfigButtonClick() {
         // TODO: Implement exporting
         throw new Error("Not implemented");
     }

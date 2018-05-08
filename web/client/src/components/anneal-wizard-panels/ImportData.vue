@@ -86,7 +86,7 @@
                         @click="clearFile"
                         v-if="isFileSetInStore">Clear file</button>
                 <button class="button secondary"
-                        @click="setImportModeToNewRecordsFile">Import a new data file instead</button>
+                        @click="setImportModeToNewRecordsFile">Import new data file instead</button>
             </div>
         </template>
     </div>
