@@ -136,7 +136,10 @@ const actions = {
     async [A.SET_STRATA](context: Context, strata: Stratum[]) {
         // Clear all strata, then iterate through array and insert
         commit(context, M.CLEAR_STRATA, undefined);
-        strata.forEach(s => commit(context, M.INSERT_STRATUM, s));
+
+        // Strata insertions must be done atomically due to certain checks and
+        // getters requiring all strata to be present at once
+        commit(context, M.INSERT_STRATA, strata);
     },
 
     async [A.SET_GROUP_NODE_STRUCTURE](context: Context, structure: GroupNodeStructure) {

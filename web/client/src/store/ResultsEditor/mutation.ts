@@ -30,6 +30,7 @@ export enum ResultsEditorMutation {
     CLEAR_CONSTRAINTS = "Clearing constraints",
 
     INSERT_STRATUM = "Inserting stratum",
+    INSERT_STRATA = "Inserting strata",
     SET_STRATUM = "Setting stratum",
     DELETE_STRATUM = "Deleting stratum",
     CLEAR_STRATA = "Clearing strata",
@@ -88,6 +89,10 @@ const mutations = {
 
     [M.INSERT_STRATUM](state: State, stratum: Stratum) {
         state.strataConfig.strata.push(stratum);
+    },
+
+    [M.INSERT_STRATA](state: State, strata: ReadonlyArray<Stratum>) {
+        strata.forEach(s => state.strataConfig.strata.push(s));
     },
 
     [M.SET_STRATUM](state: State, { stratum, index }: { stratum: Stratum, index: number }) {
