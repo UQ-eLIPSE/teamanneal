@@ -37,10 +37,19 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         },
     },
     importData = {
-        label: "Import",
+        label: () => {
+            switch (S.state.dataImportMode) {
+                case "new-records-file": return "Import new data file";
+                case "import-config-file-with-separate-records-file": return "Import existing configuration";
+            }
+
+            return "Import";
+        },
         path: "/anneal/import-data",
         disabled: () => {
             return !(
+                S.get(S.getter.HAS_DATA_IMPORT_MODE_SET) &&
+
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
@@ -164,7 +173,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         },
     },
     exportData = {
-        label: "Export",
+        label: "Export configuration",
         path: "/anneal/export-data",
         disabled: () => {
             return !(

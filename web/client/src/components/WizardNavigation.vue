@@ -128,6 +128,7 @@ li {
     padding: 0.4em 1.2em 0.4em 0.7em;
 
     font-size: 1.5em;
+    line-height: 1.1;
 }
 
 li a {

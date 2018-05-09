@@ -12,7 +12,7 @@
         </div>
         <div class="export-option-block">
             <h3>Export only teams (CSV)</h3>
-            <p>Select this option to get a CSV file that contains only annealed team information.</p>
+            <p>Select this option to get a CSV file that contains only annealed team information. This is formatted as all your existing record data with columns appended with team names.</p>
             <p>This file can be opened in any spreadsheet application.</p>
             <button class="button small gold"
                     @click="onExportCsvButtonClick">Export CSV</button>
