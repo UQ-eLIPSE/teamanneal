@@ -54,3 +54,7 @@ export function checkRecordsHaveExpectedNumberOfColumns(expectedNumberOfColumns:
 
     return true;
 }
+
+export function extractDataFromColumn(records: Record.RecordSet, columnIndex: number): ReadonlyArray<Record.RecordElement> {
+    return records.map(record => record[columnIndex]);
+}

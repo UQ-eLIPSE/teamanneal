@@ -94,3 +94,13 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
 
     throw new Error("Unrecognised column type");
 }
+
+export function getIdColumnIndex(columns: ReadonlyArray<RecordDataColumn.ColumnDesc>) {
+    const idColumnIndex = columns.findIndex(x => x.isId);
+
+    if (idColumnIndex < 0) {
+        throw new Error("No ID column found");
+    }
+
+    return idColumnIndex;
+}

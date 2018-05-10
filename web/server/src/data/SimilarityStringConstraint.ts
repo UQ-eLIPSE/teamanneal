@@ -1,8 +1,7 @@
-import { AbstractConstraint } from "./AbstractConstraint";
-
 import * as Record from "../../../common/Record";
 
-import { StringPointer, StringMap } from "../data/StringMap";
+import { AbstractConstraint } from "./AbstractConstraint";
+import { StringPointer, StringMap } from "./StringMap";
 
 export class SimilarityStringConstraint extends AbstractConstraint {
     /** 

@@ -29,7 +29,19 @@
                         @click="clearPersonB">Clear</button>
             </div>
         </div>
+        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'"
+             class="test-permutations">
+            <ul>
+                <li v-for="x in sortedTestPermutationData"
+                    :key="x.nodeB + x.recordIdB"
+                    @click="setPersonB(x.nodeB, x.recordIdB)">{{ nodeToNameMap[x.nodeB] }}#{{ x.recordIdB }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
+            </ul>
+            <button class="button secondary small"
+                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
+        </div>
         <div class="form-block">
+            <button class="button secondary small"
+                    @click="onGetSuggestionsButtonClick">Get suggestions</button>
             <button class="button secondary small">Advanced...</button>
         </div>
         <div class="form-block"
@@ -48,9 +60,18 @@ import { Vue, Component } from "av-ts";
 import { ResultsEditor as S } from "../../store";
 
 import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
+import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
+
+import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
 
 @Component
 export default class Swap extends Vue {
+    /** Token for each run of the test permutation request */
+    p_testPermutationRequestToken: string | undefined = undefined;
+
+    /** Data returned from test permutation request */
+    p_testPermutationData: SwapRecordsTestPermutationOperationResult | undefined = undefined;
+
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
     }
@@ -73,6 +94,22 @@ export default class Swap extends Vue {
 
     get personBFieldBlockText() {
         return this.data.personB && this.data.personB.id;
+    }
+
+    get sortedTestPermutationData() {
+        const data = this.p_testPermutationData;
+
+        if (data === undefined) {
+            return undefined;
+        }
+
+        // This sorts in reverse order: higher satisfactions are located at the 
+        // start index
+        return [...data].sort((a, b) => (b.satisfaction.value / b.satisfaction.max) - (a.satisfaction.value / a.satisfaction.max));
+    }
+
+    get nodeToNameMap() {
+        return S.state.groupNode.nameMap;
     }
 
     async setCursor(target: "personA" | "personB" | undefined) {
@@ -101,6 +138,68 @@ export default class Swap extends Vue {
 
         // TODO: Review whether we should close the side panel or not
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+    }
+
+    async fetchSatisfactionTestPermutationData() {
+        const personA = this.data.personA;
+
+        if (personA === undefined) {
+            return;
+        }
+
+        const { node: nodeId, id: recordId } = personA;
+
+        // Need to clip anneal nodes to just the partition containing the person
+        // to be swapped around
+        //
+        // NOTE: If in future move test operations support multiple partitions,
+        // then this should be removed and no filter applied to anneal nodes
+        const rootNodeToChildNodesMap = S.get(S.getter.GET_PARTITION_NODE_MAP);
+        const rootNodeId = Object.keys(rootNodeToChildNodesMap).find(id => rootNodeToChildNodesMap[id].indexOf(nodeId) > -1)
+
+        // Build up request body
+
+        // Only get the partition/root node that this node is sitting under
+        const annealNodes = S.get(S.getter.GET_COMMON_ANNEALNODE_ARRAY).filter(node => node._id === rootNodeId);
+
+        const columns = S.get(S.getter.GET_COMMON_COLUMN_DESCRIPTOR_ARRAY);
+        const records = S.get(S.getter.GET_RECORD_COOKED_VALUE_ROW_ARRAY);
+        const strata = S.get(S.getter.GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER);
+        const constraints = S.get(S.getter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY);
+        const operation = { nodeA: nodeId, recordIdA: recordId, };
+
+        const requestBody = SatisfactionTestPermutationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes, operation);
+        const { request, token } = SatisfactionTestPermutationRequest.createRequest("swap-records", requestBody);
+
+        // Set this component's token reference so that we can identify if 
+        // there's been further requests down the line
+        this.p_testPermutationRequestToken = token;
+
+        // Wait for response
+        const response = await request;
+
+        // Check that the token is the same as before
+        if (this.p_testPermutationRequestToken !== token) {
+            // Ignore if there has been a further test permutation request that
+            // was fired after
+            return;
+        }
+
+        // Set response data
+        this.p_testPermutationData = response.data;
+    }
+
+    clearSatisfactionTestPermutationData() {
+        this.p_testPermutationData = undefined;
+    }
+
+    onGetSuggestionsButtonClick() {
+        this.clearSatisfactionTestPermutationData();
+        this.fetchSatisfactionTestPermutationData();
+    }
+
+    setPersonB(nodeB: string, recordIdB: string) {
+        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: nodeB, id: recordIdB } });
     }
 }
 </script>

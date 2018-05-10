@@ -1,5 +1,33 @@
+import * as Record from "../../../common/Record";
 import * as Constraint from "../../../common/Constraint";
 import { ValueMessageReturn } from "../../../common/ValueMessageReturn";
+
+import * as ColumnInfo from "./ColumnInfo";
+import { CountConstraint } from "./CountConstraint";
+import { LimitConstraint } from "./LimitConstraint";
+import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
+import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
+
+export function init(records: Record.RecordSet, columnInfos: ReadonlyArray<ColumnInfo.ColumnInfo>, constraintDef: Constraint.Desc) {
+    const colIndex = constraintDef.filter.column;
+    const columnInfo = columnInfos[colIndex];
+
+    switch (constraintDef.type) {
+        case "count": return new CountConstraint(records, columnInfo, constraintDef);
+        case "limit": return new LimitConstraint(records, columnInfo, constraintDef);
+        case "similarity": {
+            // Check what the column type is
+            switch (columnInfo.type) {
+                case "number": return new SimilarityNumericConstraint(records, columnInfo, constraintDef);
+                case "string": return new SimilarityStringConstraint(records, columnInfo, constraintDef);
+            }
+
+            throw new Error("Unknown column type");
+        }
+    }
+
+    throw new Error("Unknown constraint type");
+}
 
 /**
  * Checks constraint data is valid.

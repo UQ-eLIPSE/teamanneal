@@ -30,7 +30,7 @@ export const AnnealCreator = {
 
     dispatch: _AnnealCreator.dispatchFactory(store, ModulePrefix.AnnealCreator),
     get: _AnnealCreator.getFactory(store, ModulePrefix.AnnealCreator),
-    
+
     get state() {
         return store.state[ModulePrefix.AnnealCreator] as _AnnealCreator.State;
     },
@@ -40,7 +40,10 @@ export const ResultsEditor = {
     prefix: ModulePrefix.ResultsEditor,
 
     action: _ResultsEditor.Action,
+    getter: _ResultsEditor.Getter,
+
     dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
+    get: _ResultsEditor.getFactory(store, ModulePrefix.ResultsEditor),
 
     get state() {
         return store.state[ModulePrefix.ResultsEditor] as _ResultsEditor.State;

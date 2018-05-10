@@ -1,21 +1,28 @@
+import * as Stratum from "../../../common/Stratum";
+import * as RecordData from "../../../common/RecordData";
+import * as Constraint from "../../../common/Constraint";
+import * as AnnealNode from "../../../common/AnnealNode";
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
+import { NodeSatisfactionObject, SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
-import { AbstractConstraint } from "./AbstractConstraint";
-import { CountConstraint } from "./CountConstraint";
-import { LimitConstraint } from "./LimitConstraint";
-import { SimilarityNumericConstraint } from "./SimilarityNumericConstraint";
-import { SimilarityStringConstraint } from "./SimilarityStringConstraint";
+import { AbstractConstraint } from "../data/AbstractConstraint";
+import { CountConstraint } from "../data/CountConstraint";
+import { LimitConstraint } from "../data/LimitConstraint";
+import { SimilarityNumericConstraint } from "../data/SimilarityNumericConstraint";
+import { SimilarityStringConstraint } from "../data/SimilarityStringConstraint";
 
-import { AnnealStratumNode } from "./AnnealStratumNode";
+import { AnnealStratum } from "../data/AnnealStratum";
+import { AnnealStratumNode } from "../data/AnnealStratumNode";
 
 import * as Util from "../core/Util";
+import { setupAnnealVariables } from "./Anneal";
 
 /**
  * @param constraint 
  * @param node The stratum node being checked (not root node)
  * @param allLeaves All leaves regardless of whether they're under the node
  */
-export function calculateSatisfactionValue(constraint: AbstractConstraint, node: AnnealStratumNode) {
+export function calculateValue(constraint: AbstractConstraint, node: AnnealStratumNode) {
     const recordPointers = node.getRecordPointers();
 
     // If not applicable, return undefined
@@ -32,14 +39,155 @@ export function calculateSatisfactionValue(constraint: AbstractConstraint, node:
     throw new Error("Unrecognised constraint type");
 }
 
-export function calculateSatisfaction(constraint: AbstractConstraint, node: AnnealStratumNode) {
+export function calculateSatisfactionObject(constraint: AbstractConstraint, node: AnnealStratumNode) {
     const satisfactionObject: ConstraintSatisfaction.NodeSatisfactionObject = {
-        [constraint.constraintDef._id]: calculateSatisfactionValue(constraint, node),
+        [constraint.constraintDef._id]: calculateValue(constraint, node),
     };
 
     return satisfactionObject;
 }
 
+/**
+ * Gets only constraints applicable to given stratum.
+ * 
+ * @param constraints 
+ * @param stratum 
+ */
+export function getStratumConstraints(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    return constraints.filter(c => c.constraintDef.stratum === stratum.id);
+}
+
+/**
+ * Generates a satisfaction map object for one stratum.
+ */
+export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    // We only work with constraints that actually apply to this stratum
+    const stratumConstraints = getStratumConstraints(constraints, stratum);
+
+    // Collect up all node satisfaction objects into one large lookup map
+    return stratum.nodes.reduce<SatisfactionMap>((satisfactionMap, node) => {
+        const nodeId = node.getId();
+
+        // Collect up all constraint satisfaction for this node in an object
+        satisfactionMap[nodeId] = stratumConstraints.reduce<NodeSatisfactionObject>((nodeSatisfactionObject, constraint) => {
+            return Object.assign(nodeSatisfactionObject, calculateSatisfactionObject(constraint, node));
+        }, {});
+
+        return satisfactionMap;
+    }, {});
+}
+
+/**
+ * Generates a satisfaction map object that covers all given strata.
+ */
+export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
+    // Generate satisfaction map of all stratum nodes combined into one
+    return strata
+        .map(stratum => generateSingleStratumMap(constraints, stratum))
+        .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
+}
+
+/**
+ * Calculates satisfaction map from data equivalent to an anneal request.
+ * 
+ * @param annealRootNode 
+ * @param recordData 
+ * @param strataDefinitions 
+ * @param constraintDefinitions 
+ */
+export function generateSatisfactionMapFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+    const {
+        constraints,
+        strata,
+    } = setupAnnealVariables(annealRootNode, recordData, strataDefinitions, constraintDefinitions);
+
+    /// ===============
+    /// Generate output
+    /// ===============
+
+    return generateMap(constraints, strata);
+}
+
+/**
+ * Calculates the satisfaction value for one stratum.
+ * 
+ * @param constraints 
+ * @param stratum 
+ */
+export function calculateStratumSatisfactionValue(constraints: ReadonlyArray<AbstractConstraint>, stratum: AnnealStratum) {
+    // We only work with constraints that actually apply to this stratum
+    const stratumConstraints = getStratumConstraints(constraints, stratum);
+    const stratumNodes = stratum.nodes;
+
+    // We calculate the total max possible satisfaction points, so that clients
+    // are aware of what they should be expecting as a max
+    //
+    // This is necessary because some constraints depend on the size of the node
+    // and thus may switch on/off in some satisfaction checks during operations
+    // like a move, which may affect how their "satisfaction" is perceived
+    let maxSatisfaction = stratumConstraints.length * stratumNodes.length;
+
+    const stratumSatisfactionValue = stratumNodes.reduce((stratumSatisfaction, node) => {
+        // Run through all constraints and calculate satisfaction
+        const nodeSatisfactionValue = stratumConstraints.reduce((nodeSatisfaction, constraint) => {
+            // Calculate the satisfaction value for (constraint, node) pair
+            const value = calculateValue(constraint, node);
+
+            // If satisfaction is `undefined`, reduce the max satisfaction by 1
+            // because the constraint is not applicable to the given node which
+            // affects the total possible satisfaction score
+            if (value === undefined) {
+                --maxSatisfaction;
+                return nodeSatisfaction;
+            } else {
+                return nodeSatisfaction + value;
+            }
+        }, 0);
+
+        return stratumSatisfaction + nodeSatisfactionValue;
+    }, 0);
+
+    return {
+        /** Given stratum's satisfaction value */
+        value: stratumSatisfactionValue,
+        /** Maximum possible satisfaction value for this stratum */
+        max: maxSatisfaction,
+    };
+}
+
+/**
+ * Calculates the total satisfaction value for all given strata.
+ * 
+ * @param constraints 
+ * @param strata 
+ */
+export function calculateTotalSatisfactionValue(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
+    return strata
+        .map(stratum => calculateStratumSatisfactionValue(constraints, stratum))
+        .reduce((carry, stratumSatisfaction) => {
+            carry.value += stratumSatisfaction.value;
+            carry.max += stratumSatisfaction.max;
+            return carry;
+        });
+}
+
+
+/**
+ * Calculates total satisfaction value from data equivalent to an anneal request.
+ * 
+ * @param annealRootNode 
+ * @param recordData 
+ * @param strataDefinitions 
+ * @param constraintDefinitions 
+ */
+export function calculateTotalSatisfactionFromAnnealRequest(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
+    const {
+        constraints,
+        strata,
+    } = setupAnnealVariables(annealRootNode, recordData, strataDefinitions, constraintDefinitions);
+
+    return calculateTotalSatisfactionValue(constraints, strata);
+}
 
 export namespace Count {
     export function calculateSatisfaction(constraint: CountConstraint, recordPointers: Uint32Array) {

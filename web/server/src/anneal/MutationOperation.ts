@@ -1,6 +1,6 @@
 import * as Util from "../core/Util";
 
-import { AnnealStratum } from "./AnnealStratum";
+import { AnnealStratum } from "../data/AnnealStratum";
 
 // Returns pointers to indices which were modified and will require cost
 // recalculation

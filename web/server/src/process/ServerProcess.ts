@@ -27,7 +27,7 @@ export function init() {
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);
-    Router.initAllRoutes(app, apiRoot);
+    Router.init(app, apiRoot);
 
     console.log(`Initialisation complete: http://localhost:${port}/`);
 }

@@ -1,51 +1,20 @@
 import * as express from "express";
 
-import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
-import * as IPCData from "../data/IPCData";
-import * as IPCQueue from "../data/IPCQueue";
-import * as HTTPResponseCode from "../core/HTTPResponseCode";
-import * as RecordDataCheckValidity from "../middleware/RecordDataCheckValidity";
-import * as ConstraintCheckValidity from "../middleware/ConstraintCheckValidity";
-import * as RedisService from "../utils/RedisService";
-import { AnnealStatusState, StatusMap } from "../../../common/AnnealState";
+import * as ToServerAnnealRequest from "../../../../common/ToServerAnnealRequest";
+import { AnnealStatusState, StatusMap } from "../../../../common/AnnealState";
 
-// Signature of exported function must not be altered for all routers
-module.exports = () => {
-    const router = express.Router();
+import * as IPCData from "../../data/IPCData";
+import * as IPCQueue from "../../data/IPCQueue";
 
-    router.route("/")
-        .post(
-            // Validation middleware
-            // TODO: More input validation
-            RecordDataCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).recordData),
-            ConstraintCheckValidity.generate(req => (req.body as ToServerAnnealRequest.Root).constraints),
+import * as HTTPResponseCode from "../../core/HTTPResponseCode";
 
-            // Run anneal
-            anneal,
-    );
-
-    router.route("/anneal-status")
-        .get(
-            // Get anneal's status
-            annealStatus
-        );
-
-    router.route("/anneal-result")
-        .get(
-            // Retrieve anneal result
-            annealResult
-        );
-
-    return router;
-};
+import * as RedisService from "../../utils/RedisService";
 
 /**
  * Endpoint for user to initialise an anneal job
- * @param req Request
- * @param res Response - Returns an id (stored on redis) which identifies the anneal job
  */
-const anneal: express.RequestHandler =
-    (req, res) => {
+export const runAnneal: express.RequestHandler =
+    async (req, res, _next) => {
         const annealRequest: ToServerAnnealRequest.Root = req.body;
 
         // Generate UUID associated with anneal request
@@ -69,16 +38,14 @@ const anneal: express.RequestHandler =
         res
             .status(HTTPResponseCode.SUCCESS.ACCEPTED)
             .json({ id: redisResponseId });
-    };
 
+    };
 
 /**
  * Endpoint for client to query for anneal status
- * @param req Request
- * @param res Response
  */
-const annealStatus: express.RequestHandler =
-    async (req, res) => {
+export const getAnnealStatus: express.RequestHandler =
+    async (req, res, _next) => {
         try {
             if (req.query.id === undefined) {
                 throw new Error("Anneal job ID is invalid");
@@ -136,11 +103,9 @@ const annealStatus: express.RequestHandler =
 
 /**
  * Endpoint for client to retrieve results once the anneal is complete
- * @param req Request
- * @param res Response
  */
-const annealResult: express.RequestHandler =
-    async (req, res) => {
+export const getAnnealResult: express.RequestHandler =
+    async (req, res, _next) => {
         try {
             if (req.query.id === undefined) {
                 throw new Error("Anneal job ID is invalid");

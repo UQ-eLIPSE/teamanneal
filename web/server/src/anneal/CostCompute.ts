@@ -1,5 +1,6 @@
-import { AbstractConstraint } from "./AbstractConstraint";
-import { AnnealStratum } from "./AnnealStratum";
+import { AbstractConstraint } from "../data/AbstractConstraint";
+
+import { AnnealStratum } from "../data/AnnealStratum";
 
 export function computeCost(strata: ReadonlyArray<AnnealStratum>) {
     let cost: number = 0;
