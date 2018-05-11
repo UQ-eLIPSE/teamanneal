@@ -452,4 +452,9 @@ export default class ResultsEditor extends Vue {
     font-size: 3em;
     margin-top: 0;
 }
+
+.get-started a,
+.get-started a:visited {
+    color: #00d;
+}
 </style>
