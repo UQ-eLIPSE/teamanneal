@@ -27,6 +27,8 @@ import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 import { Data as IStratum } from "../data/Stratum";
 import ConstraintAcceptabilityCard from "./ConstraintAcceptabilityCard.vue";
 
+type LimitConstraintPassCountMap = { [constraintId: string]: { pass: number, total: number } };
+
 @Component({
     components: {
         ConstraintAcceptabilityCard
@@ -41,13 +43,13 @@ export default class ConstraintOverview extends Vue {
     @Prop strata = p<IStratum[]>({ required: true });
 
     /** Map of constraint to number of groups passing that constraint */
-    @Prop limitConstraintPassCount = p<any>({ required: false, default: () => { } });
+    @Prop limitConstraintPassCount = p<LimitConstraintPassCountMap>({ required: false });
 
     getFulfilledNumberOfGroups(constraint: IConstraint) {
         const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
         if (constraint.type === "limit") {
             // If limit constraint, get value from limit constraint pass count prop
-            const passed = this.limitConstraintPassCount[constraint._id].pass;
+            const passed = this.limitConstraintPassCount![constraint._id].pass;
             return passed === undefined ? 0 : passed;
         }
 

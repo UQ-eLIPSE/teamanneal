@@ -295,11 +295,13 @@ export namespace ConstraintSentence {
     }
 
     function getWeightText(constraint: Data) {
-        return findItemInList(ConstraintPhraseMaps.CostWeightList, "value", constraint.weight).text + ' ';
+        const weightItem = findItemInList(ConstraintPhraseMaps.CostWeightList, "value", constraint.weight);
+        return ((weightItem === undefined) ? "" : weightItem.text) + ' ';
     }
 
     function getConstraintConditionFunctionText(constraint: Data) {
-        let phrase = findItemInList(ConstraintPhraseMaps.ConditionFunctionList, "value", constraint.condition.function).text + ' ';
+        const item = findItemInList(ConstraintPhraseMaps.ConditionFunctionList, "value", constraint.condition.function);
+        let phrase = ((item === undefined) ? "" : item.text) + ' ';
         if (showConditionCount(constraint)) {
             phrase += (constraint.condition as any).value + ' ';
         }
@@ -372,7 +374,8 @@ export namespace ConstraintSentence {
     function constraintFilterFunction(constraint: Data) {
         const filterType = constraint.filter.column.type;
         const list = filterType === "number" ? ConstraintPhraseMaps.NumberFilterFunctionList : ConstraintPhraseMaps.StringFilterFunctionList;
-        return findItemInList(list, "value", (constraint.filter as any).function).text;
+        const item = findItemInList(list, "value", (constraint.filter as any).function);
+        return (item === undefined) ? "" : item.text;
     }
 
     /**
@@ -414,7 +417,7 @@ export namespace ConstraintSentence {
     /**
      * A generic function used for finding array items for `value-text` maps in `ConstraintPhraseMaps` (see import)
      */
-    function findItemInList(list: any[], property: string, value: any) {
+    function findItemInList<T extends object, U extends keyof T>(list: T[], property: U, value: T[U]) {
         return list.find((listItem: any) => listItem[property] === value);
     }
 }
@@ -430,7 +433,7 @@ export namespace LimitConstraintSatisfaction {
      */
     export function getNumberOfPassingGroupsPerConstraint(constraintsArray: Data[], nodeRecordMap: GroupNodeRecordArrayMap,
         partitionNodeArrayMap: { [nodeId: string]: string[] }, nodeToStratumMap: { [nodeId: string]: string },
-        recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) : { [constraintId: string]: { pass: number, total: number } } {
+        recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]): { [constraintId: string]: { pass: number, total: number } } {
 
         const constraintPassMap: { [constraintId: string]: { pass: number, total: number } } = {};
         const map = partitionLimitConstraintSatisfactionMap(constraintsArray, nodeRecordMap,

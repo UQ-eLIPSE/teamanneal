@@ -27,15 +27,14 @@ export function getFactory<T>(store: Store<T>, modulePrefix?: string) {
 const getters = {
 
     [G.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP](state: State) {
-        const allGroupNodesRecordsMap: GroupNodeRecordArrayMap = {};
+        const groupNodesToRecordsMap: GroupNodeRecordArrayMap = {};
+        const intermediateStratumNodesToRecordsMap: GroupNodeRecordArrayMap = state.groupNode.nodeRecordArrayMap;
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
-            root.children.forEach((child) => {
-                buildNodeToRecordsMap(child, allGroupNodesRecordsMap, state.groupNode.nodeRecordArrayMap);
-            });
+                buildNodeToRecordsMap(root, groupNodesToRecordsMap, intermediateStratumNodesToRecordsMap);
         });
 
-        return allGroupNodesRecordsMap;
+        return groupNodesToRecordsMap;
     },
     [G.GET_PARTITION_NODE_MAP](state: State): { [nodeId: string]: string[] } {
         const partitionToNodeMap: { [nodeId: string]: string[] } = {};
@@ -56,22 +55,26 @@ function getAllChildNodes(node: GroupNode, nodeArray: string[]) {
     }
 }
 
-function buildNodeToRecordsMap(node: GroupNode, allGroupNodesRecordsMap: GroupNodeRecordArrayMap, leafStratumRecordsMap: GroupNodeRecordArrayMap): RecordElement[] {
+function buildNodeToRecordsMap(node: GroupNode, groupNodesToRecordsMap: GroupNodeRecordArrayMap, intermediateStratumNodesToRecordsMap: GroupNodeRecordArrayMap): RecordElement[] {
+    switch(node.type) {
+        case "leaf-stratum": {
+            return groupNodesToRecordsMap[node._id] = intermediateStratumNodesToRecordsMap[node._id];
+        }
 
-    if (node.type === "leaf-stratum") {
-        allGroupNodesRecordsMap[node._id] = leafStratumRecordsMap[node._id];
-        return leafStratumRecordsMap[node._id];
+        case "root":
+        case "intermediate-stratum": {
+            groupNodesToRecordsMap[node._id] = node.children.reduce<RecordElement[]>((accumulatedRecords, child) => {
+                return accumulatedRecords.concat(buildNodeToRecordsMap(child, groupNodesToRecordsMap, intermediateStratumNodesToRecordsMap));
+            }, []);
+
+            return groupNodesToRecordsMap[node._id];
+        }
+
+        default: {
+            throw new Error("Invalid node type");
+        }
+
     }
-
-    // intermediate stratum
-    const nodeRecords = node.children.reduce((records: RecordElement[], child) => {
-        const nodeRecordsArray = buildNodeToRecordsMap(child, allGroupNodesRecordsMap, leafStratumRecordsMap);
-        return records.concat(nodeRecordsArray);
-    }, []);
-
-    allGroupNodesRecordsMap[node._id] = nodeRecords;
-    
-    return nodeRecords;
 }
 
 export function init() {

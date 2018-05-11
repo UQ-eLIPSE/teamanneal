@@ -6,7 +6,7 @@
 
             </div>
             <div class="number-of-groups"
-                 :class="cardClasses">
+                 :style="cardStyles">
                 <span class="number">{{fulfilledNumber}}</span>
                 <span class="number number-bottom">{{totalGroups}}</span>
                 <span>pass</span>
@@ -36,26 +36,17 @@ export default class ConstraintAcceptabilityCard extends Vue {
     @Prop totalGroups = p({ type: Number, required: true });
 
     get constraintSentence() {
-        const sentence = ConstraintSentence.convertConstraintToSentence(this.constraint, this.lowerCaseStratumLabel);
-        return sentence[0].toUpperCase() + sentence.slice(1);
-    }
-
-    get lowerCaseStratumLabel() {
-        return this.stratumLabel.toLowerCase();
+        return ConstraintSentence.convertConstraintToSentence(this.constraint, this.stratumLabel);
     }
 
     get isLimitTypeConstraint() {
         return this.constraint.type === "limit";
     }
 
-    get cardClasses() {
-        const passingGroupsPerc = (this.fulfilledNumber / this.totalGroups) * 100;
-
-        // TODO: Discuss the percentage for styling 
+    get cardStyles() {
+        const passingGroupsProportion = (this.fulfilledNumber / this.totalGroups);
         return {
-            "danger": passingGroupsPerc === 0,
-            "success": passingGroupsPerc > 60,
-            "medium": passingGroupsPerc < 60 && passingGroupsPerc > 0
+            background: `hsl(${passingGroupsProportion * 120}, 100%, 40%)`
         }
     }
 }
@@ -102,44 +93,9 @@ export default class ConstraintAcceptabilityCard extends Vue {
     flex-shrink: 0;
 }
 
-.danger {
-    background: rgb(217, 83, 79);
-}
-
-.success {
-    background: rgba(40, 150, 90, 0.7);
-}
-
-.medium {
-    background: rgb(240, 173, 78)
-}
-
 .number-of-groups .number {
     font-size: 1.1em;
     font-weight: bold;
-}
-
-.slider-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem;
-    border-top: 0.1em solid rgba(100, 100, 100, 0.1);
-    width: 90%;
-}
-
-.slider-wrapper>input {
-    width: 100%;
-}
-
-.constraint-filter-text,
-.acceptability-value {
-    color: #49075E;
-    font-weight: 500;
-}
-
-.acceptability-value {
-    font-size: 1.2em;
 }
 
 .number-bottom {
