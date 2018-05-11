@@ -31,10 +31,20 @@
         </div>
         <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
              class="test-permutations">
-            <ul>
+            <h3 v-if="sortedTestPermutationData.length > 0">Suggestions</h3>
+            <ul class="suggestions">
+
                 <li v-for="x in sortedTestPermutationData"
+                    class="suggestion"
                     :key="x.toNode"
-                    @click="setTargetGroup(x.toNode)">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
+                    @click="setTargetGroup(x.toNode)">
+                    <span :title="getAncestors(x.toNode).join(' > ')"
+                          class="ancestors">{{ getAncestors(x.toNode).join(" > ") }}</span>
+                    <!-- <span>{{ nodeToNameMap[x.toNode] }}</span> -->
+                    <span class="content improvement"
+                          :class="getSatisfactionChangeClass(x.satisfaction.value)">Satisfaction: {{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                    <!-- <span class="content">{{ x.satisfaction.value }}/{{ x.satisfaction.max }}</span> -->
+                </li>
             </ul>
             <button class="button secondary small"
                     @click="clearSatisfactionTestPermutationData">Close suggestions</button>
@@ -63,12 +73,13 @@ import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+import { GroupNode } from "../../data/GroupNode";
 
 @Component
 export default class Move extends Vue {
     /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
-    
+
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
 
@@ -93,7 +104,9 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        return this.data.targetGroup && this.data.targetGroup;
+        const target = this.data.targetGroup && this.data.targetGroup;
+        if(target === undefined) return target;
+        return this.getAncestors(target).join(" > ");
     }
 
     get sortedTestPermutationData() {
@@ -201,6 +214,93 @@ export default class Move extends Vue {
     setTargetGroup(targetNodeId: string) {
         S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNodeId });
     }
+
+    getAncestors(nodeId: string) {
+        const childToParentNodeMap = this.childToParentNodeMap;
+        const parentageArray = [];
+        let childId: string | null = nodeId;
+        do {
+            parentageArray.push(childId);
+            childId = childToParentNodeMap[childId];
+        } while (childId !== null);
+
+        const nodeNameMap = S.state.groupNode.nameMap;
+        const names = parentageArray.map((nodeId: string) => nodeNameMap[nodeId]);
+        return names.reverse();
+    }
+
+    getParentage(childToParentNodeMap: { [nodeId: string]: string | null }, node: GroupNode) {
+        if (node.type === "root") {
+            childToParentNodeMap[node._id] = null;
+        }
+
+        if (node.type === "intermediate-stratum" || node.type === "root") {
+            node.children.forEach((child) => {
+                childToParentNodeMap[child._id] = node._id;
+                this.getParentage(childToParentNodeMap, child);
+            });
+        }
+    }
+
+    get childToParentNodeMap() {
+        const nodeRoots = S.state.groupNode.structure.roots;
+        const childToParentNodeMap: { [nodeId: string]: string | null } = {};
+        nodeRoots.forEach((root) => this.getParentage(childToParentNodeMap, root))
+        return childToParentNodeMap;
+    }
+
+    get currentConfigurationSatisfactionValue() {
+        const sourcePerson = this.data.sourcePerson;
+        if (sourcePerson === undefined) return undefined;
+
+        const selectedNodeId = sourcePerson.node;
+        const sortedTestPermutationData = this.sortedTestPermutationData;
+
+        if (sortedTestPermutationData === undefined) {
+            return undefined;
+        }
+
+        const satisfactionObject = sortedTestPermutationData.find((p) => p.toNode === selectedNodeId);
+
+        return satisfactionObject === undefined ? undefined : { value: satisfactionObject.satisfaction.value, max: satisfactionObject.satisfaction.max };
+    }
+
+    getSatisfactionPercentChange(satisfactionValue: number) {
+        const satisfactionObject = this.currentConfigurationSatisfactionValue;
+        if (satisfactionObject === undefined) {
+            return;
+        }
+
+        const percentChange = ((satisfactionValue - satisfactionObject.value) / satisfactionObject.max) * 100;
+
+        return percentChange;
+    }
+
+    getSatisfactionPercentChangeFormatted(satisfactionValue: number) {
+        const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
+        if (percentChange === undefined) return;
+
+        if (percentChange >= 0) {
+            return "+" + percentChange + "%";
+        }
+
+        return percentChange + "%";
+    }
+
+    getSatisfactionChangeClass(satisfactionValue: number) {
+        const classes = [];
+        const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
+
+        if (percentChange === undefined) return;
+
+        if (percentChange >= 0) {
+            classes.push("positive");
+        } else if (percentChange < 0) {
+            classes.push("negative");
+        }
+
+        return classes;
+    }
 }
 </script>
 
@@ -209,5 +309,53 @@ export default class Move extends Vue {
 <style scoped src="../../static/results-editor-side-panel.css"></style>
 
 <style scoped>
+.test-permutations {
+    background: rgba(220, 220, 220, 1);
+    padding: 0.5rem;
+}
 
+.test-permutations > h3 {
+    color: #49075E;
+    font-style: italic;
+}
+
+.suggestions {
+    display: flex;
+    flex-flow: column;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    overflow: auto;
+    height: 12rem;
+}
+
+.suggestion {
+    display: flex;
+    flex-direction: column;
+    background: #fefefe;
+    border: 0.1em solid rgba(1, 0, 0, 0.1);
+    overflow: auto;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0.5rem 0;
+}
+
+.suggestion .ancestors {
+    background: #49075e;
+    color: #fff;
+    text-overflow: ellipsis;
+    padding: 0.5rem;
+}
+
+.suggestion .content {
+    padding: 0.5rem;
+}
+
+.positive {
+    background: rgba(53, 146, 56, 0.2);
+}
+
+.negative {
+    background: rgba(171, 39, 45, 0.2);
+}
 </style>
