@@ -8,17 +8,18 @@
                 <em>does not</em> contain your complete original anneal configuration.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small"
-                    @click="onExportResultsPackageButtonClick">Export results package</button>
+                    @click="exportResultsPackage">Export results package</button>
         </div>
         <div class="export-option-block">
             <h3>Export only teams (CSV)</h3>
-            <p>Select this option to get a CSV file that contains only annealed team information. This is formatted as all your existing record data with columns appended with team names.</p>
+            <p>Select this option to get a CSV file that contains only annealed team information. This is formatted as all your existing record data with columns containing team names appended.</p>
             <p>This file can be opened in any spreadsheet application.</p>
             <button class="button small gold"
-                    @click="onExportCsvButtonClick">Export CSV</button>
-            <button class="button small secondary">Advanced export options</button>
-
-            <div class="export-option-block">
+                    @click="exportCsv">Export CSV</button>
+            <button class="button small secondary"
+                    @click="toggleCsvAdvancedOptions">Advanced options</button>
+            <div v-if="p_showCsvAdvancedOptions"
+                 class="export-option-block advanced-options">
                 <h4>Combined name column</h4>
                 <p>You can choose to include a column in the output CSV that combines the individual names from each level into one.</p>
                 <p>
@@ -67,19 +68,23 @@ import * as FileSaver from "file-saver";
 
 import { ResultsEditor as S } from "../../store";
 
+import * as Record from "../../../../common/Record";
+
 import { ColumnData } from "../../data/ColumnData";
 import { GroupNode } from "../../data/GroupNode";
 import * as Stratum from "../../data/Stratum";
 
-import { pickRandom, reverse } from "../../util/Array";
+import { pickRandom } from "../../util/Array";
 import { replaceAll } from "../../util/String";
+import { unparseFile } from "../../util/CSV";
 
 @Component
 export default class ExportFile extends Vue {
     p_enableGroupCombinedName: boolean = true;
     p_groupCombinedNameFormat: string = "";
+    p_showCsvAdvancedOptions: boolean = false;
 
-    async onExportResultsPackageButtonClick() {
+    async exportResultsPackage() {
         // Get state serialised and save as TeamAnneal results package 
         // (just a JSON file internally)
         const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteSideToolAreaActiveItem: true });
@@ -89,9 +94,107 @@ export default class ExportFile extends Vue {
         FileSaver.saveAs(fileBlob, `export-${Date.now()}.taresults`, true);
     }
 
-    onExportCsvButtonClick() {
-        // TODO: Implement exporting
-        throw new Error("Not implemented");
+    toggleCsvAdvancedOptions() {
+        this.p_showCsvAdvancedOptions = !this.p_showCsvAdvancedOptions;
+    }
+
+    exportCsv() {
+        // Get node name map
+        const strata = this.strata;
+        const nameMap = this.nameMap;
+
+        // Get the columns and transform them back into 2D string array for
+        // exporting, and include the headers in the output while we're at it
+        const rows = ColumnData.TransposeIntoRawValueRowArray(this.columns, true);
+
+        // We use cooked values for the record ID columns for referencing
+        const idColumnMinimalDescriptor = S.state.recordData.idColumn;
+
+        if (idColumnMinimalDescriptor === undefined) {
+            throw new Error("No ID column defined");
+        }
+
+        const idColumn = ColumnData.ConvertToDataObject(this.columns, idColumnMinimalDescriptor);
+
+        if (idColumn === undefined) {
+            throw new Error("ID column does not exist or data could not be retrieved");
+        }
+
+        const idColumnValues = ColumnData.GenerateCookedColumnValues(idColumn);
+
+
+
+        // Convert tree into paths
+        const recordIdToNodePathMap = new Map<Record.RecordElement, ReadonlyArray<string>>();
+        const nodeRecordArrayMap = S.state.groupNode.nodeRecordArrayMap;
+
+        function walkAndIndexPaths(node: GroupNode, path: string[]): void {
+            const pathInclThisNode = [...path, node._id];
+
+            switch (node.type) {
+                case "root":
+                case "intermediate-stratum": {
+                    return node.children.forEach(child => walkAndIndexPaths(child, pathInclThisNode));
+                }
+
+                case "leaf-stratum": {
+                    const recordIds = nodeRecordArrayMap[node._id];
+                    return recordIds.forEach(recordId => recordIdToNodePathMap.set(recordId, pathInclThisNode));
+                }
+            }
+        }
+
+        this.groupNodeRoots.forEach(root => walkAndIndexPaths(root, []));
+
+
+
+        rows.forEach((row, i) => {
+            // Add stratum labels to the header row
+            if (i === 0) {
+                const headerRow = row;
+                strata.forEach((stratum) => {
+                    headerRow.push(stratum.label);
+                });
+
+                // Add one more column header for combined group names if 
+                // requested
+                if (this.p_enableGroupCombinedName) {
+                    headerRow.push("Combined name");
+                }
+
+                return;
+            }
+
+            // Append name values to end of ordinary row
+
+            // Note that this is not the same as row[idColumnIndex] as the row
+            // is always the raw value (string[]), while the record ID values in
+            // the name map are cooked values
+            const recordId = idColumnValues[i - 1]; // Remember that `i = 0` is the header row
+
+
+            // Get path for this record ID
+            const path = recordIdToNodePathMap.get(recordId)!;
+
+            // Append name for each stratum
+            path.forEach((nodeId, i) => {
+                // Ignore the root node name because it is never used
+                if (i === 0) { return; }
+
+                row.push(nameMap[nodeId]);
+            });
+
+            // Push combined name if requested
+            if (this.p_enableGroupCombinedName) {
+                const combinedName = this.formatNodePathToCombinedName(path);
+                row.push(combinedName);
+            }
+        });
+
+        // Export as CSV
+        const sourceFileName = S.state.recordData.source.name;
+
+        unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
     onExportConfigButtonClick() {
@@ -128,35 +231,45 @@ export default class ExportFile extends Vue {
             }
         }
 
-        walkRandomPath(S.state.groupNode.structure.roots);
+        walkRandomPath(this.groupNodeRoots);
 
         return path;
     }
 
     get randomNodePathFormattedCombinedName() {
-        const nameMap = S.state.groupNode.nameMap;
-        const randomNodePath = this.randomNodePath;
+        return this.formatNodePathToCombinedName(this.randomNodePath);
+    }
+
+    formatNodePathToCombinedName(path: ReadonlyArray<string>) {
+        const nameMap = this.nameMap;
 
         let combinedName = this.p_groupCombinedNameFormat;
 
         // Set partition name
-        combinedName = replaceAll(combinedName, "{{_PARTITION}}", nameMap[randomNodePath[0]]);
+        combinedName = replaceAll(combinedName, "{{_PARTITION}}", nameMap[path[0]]);
 
         // Set stratum names
-        //
-        // Strata are ordered [lowest/leaf, ..., highest] whereas the random
-        // path is [highest, ..., lowest/leaf]
-        reverse(this.strata).forEach((stratum, i) => {
-            combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, nameMap[randomNodePath[i + 1]]);
+        this.strata.forEach((stratum, i) => {
+            combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, nameMap[path[i + 1]]);
         });
 
         return combinedName;
     }
+
     get columns() {
         return S.state.recordData.columns;
     }
+
     get strata() {
         return S.state.strataConfig.strata;
+    }
+
+    get nameMap() {
+        return S.state.groupNode.nameMap;
+    }
+
+    get groupNodeRoots() {
+        return S.state.groupNode.structure.roots;
     }
 
     get partitionColumnDescriptor() {
@@ -263,5 +376,9 @@ export default class ExportFile extends Vue {
 .export-option-block>h4 {
     color: #49075E;
     margin-top: 0;
+}
+
+.advanced-options {
+    margin-top: 1em;
 }
 </style>
