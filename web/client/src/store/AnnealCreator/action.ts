@@ -8,7 +8,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 import { Constraint, Data as IConstraint } from "../../data/Constraint";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
-import { RecordData } from "../../data/RecordData";
+import { RecordData, init as initRecordData } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
 import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
@@ -126,8 +126,24 @@ const actions = {
         commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
     },
 
-    async [A.DEHYDRATE](context: Context) {
-        return serialiseWithUndefined(context.state);
+    async [A.DEHYDRATE](context: Context, { deleteDataImportMode, deleteRecordData, deleteAnnealRequest }: Partial<{ deleteDataImportMode: boolean, deleteRecordData: boolean, deleteAnnealRequest: boolean }>) {
+        const state = { ...context.state };
+
+        // Clear parts of state object, where requested
+
+        if (deleteDataImportMode) {
+            state.dataImportMode = undefined;
+        }
+
+        if (deleteRecordData) {
+            state.recordData = initRecordData();
+        }
+
+        if (deleteAnnealRequest) {
+            state.annealRequest = AnnealRequestState.initNotRunning();
+        }
+
+        return serialiseWithUndefined(state);
     },
 
     async [A.RESET_STATE](context: Context) {

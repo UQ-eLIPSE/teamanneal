@@ -20,8 +20,11 @@
 
 <script lang="ts">
 import { Component, Mixin } from "av-ts";
+import * as FileSaver from "file-saver";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+
+import { AnnealCreator as S } from "../../store";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -31,9 +34,14 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.exportData;
 
-    exportConfig() {
-        // TODO: 
-        throw new Error("Not implemented");
+    async exportConfig() {
+        // Get state serialised and save as TeamAnneal anneal config file 
+        // (just a JSON file internally)
+        const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteDataImportMode: true, deleteRecordData: true, deleteAnnealRequest: true });
+
+        const fileBlob = new Blob([serialisedContent], { type: "application/json" });
+
+        FileSaver.saveAs(fileBlob, `export-${Date.now()}.taconfig`, true);
     }
 }
 </script>

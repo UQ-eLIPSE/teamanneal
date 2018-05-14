@@ -265,7 +265,7 @@ XMLHttpRequest {
 
     async onViewResultsButtonClick() {
         // Export first
-        const annealCreatorState = await S.dispatch(S.action.DEHYDRATE, undefined);
+        const annealCreatorState = await S.dispatch(S.action.DEHYDRATE, {});
 
         // Import to ResultsEditor
         await ResultsEditor.dispatch(ResultsEditor.action.HYDRATE_FROM_ANNEAL_CREATOR_STATE, annealCreatorState);
@@ -277,7 +277,7 @@ XMLHttpRequest {
     }
 
     onRetryAnnealButtonClick() {
-        // Just start again
+        // Start the anneal again
         this.onStartAnnealButtonClick();
     }
 }
