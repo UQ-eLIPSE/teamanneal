@@ -26,27 +26,29 @@
                     <label><input type="checkbox"
                                v-model="p_enableGroupCombinedName">Include combined name column</label>
                 </p>
-                <p>
-                    <table class="example-table">
-                        <tr>
-                            <th>Group level</th>
-                            <th>Placeholder to use</th>
-                        </tr>
-                        <tr v-for="item in groupCombinedNameFormatPlaceholderList"
-                            :key="item.label">
-                            <td>{{ item.label }}</td>
-                            <td>{{ item.placeholder }}</td>
-                        </tr>
-                    </table>
-                </p>
-                <p>
-                    <input class="combined-name-format"
-                           v-model="groupCombinedNameFormatUserFriendly"></input>
-                </p>
-                <p>
-                    For example:
-                    <i>{{ randomNodePathFormattedCombinedName }}</i>
-                </p>
+                <template v-if="p_enableGroupCombinedName">
+                    <p>
+                        <table class="example-table">
+                            <tr>
+                                <th>Group level</th>
+                                <th>Placeholder to use</th>
+                            </tr>
+                            <tr v-for="item in groupCombinedNameFormatPlaceholderList"
+                                :key="item.label">
+                                <td>{{ item.label }}</td>
+                                <td>{{ item.placeholder }}</td>
+                            </tr>
+                        </table>
+                    </p>
+                    <p>
+                        <input class="combined-name-format"
+                               v-model="groupCombinedNameFormatUserFriendly"></input>
+                    </p>
+                    <p>
+                        For example:
+                        <i>{{ randomNodePathFormattedCombinedName }}</i>
+                    </p>
+                </template>
             </div>
         </div>
         <!-- TODO: Only show this block when anneal config detected -->
@@ -418,5 +420,22 @@ export default class ExportFile extends Vue {
 
 .advanced-options {
     margin-top: 1em;
+}
+
+.combined-name-format {
+    width: 100%;
+}
+
+.example-table {
+    border-collapse: collapse;
+    font-size: 0.9em;
+    width: 100%;
+}
+
+.example-table th,
+.example-table td {
+    text-align: left;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    padding: 0.1em 0.3em;
 }
 </style>
