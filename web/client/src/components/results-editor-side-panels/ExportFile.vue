@@ -41,7 +41,7 @@
                 </p>
                 <p>
                     <input class="combined-name-format"
-                           v-model="groupCombinedNameFormat"></input>
+                           v-model="groupCombinedNameFormatUserFriendly"></input>
                 </p>
                 <p>
                     For example:
@@ -80,9 +80,19 @@ import { unparseFile } from "../../util/CSV";
 
 @Component
 export default class ExportFile extends Vue {
-    p_enableGroupCombinedName: boolean = true;
-    p_groupCombinedNameFormat: string = "";
+    /** Indicates whether to show the CSV export advanced options. */
     p_showCsvAdvancedOptions: boolean = false;
+
+    /** Indicates whether group combined name export is enabled. */
+    p_enableGroupCombinedName: boolean = true;
+
+    /**
+     * Internal representation of the combined name format.
+     * 
+     * If value is `undefined`, this indicates that the user did not set a
+     * format manually, and the system is expected to deliver a default instead.
+     */
+    p_groupCombinedNameFormat: string | undefined = undefined;
 
     async exportResultsPackage() {
         // Get state serialised and save as TeamAnneal results package 
@@ -243,7 +253,7 @@ export default class ExportFile extends Vue {
     formatNodePathToCombinedName(path: ReadonlyArray<string>) {
         const nameMap = this.nameMap;
 
-        let combinedName = this.p_groupCombinedNameFormat;
+        let combinedName = this.groupCombinedNameFormatInternal;
 
         // Set partition name
         combinedName = replaceAll(combinedName, "{{_PARTITION}}", nameMap[path[0]]);
@@ -328,8 +338,36 @@ export default class ExportFile extends Vue {
         return list;
     }
 
-    get groupCombinedNameFormat() {
-        let format = this.p_groupCombinedNameFormat;
+    get defaultGroupCombinedNameFormat() {
+        const levels: string[] = [];
+
+        // Prepend partition if set
+        if (this.isPartitionColumnSet) {
+            levels.push("{{_PARTITION}}");
+        }
+
+        // Go through each stratum and add them in order
+        this.strata.forEach(({ _id }) => levels.push(`{{${_id}}}`));
+
+        return levels.join(" - ");
+    }
+
+    get groupCombinedNameFormatInternal() {
+        const format = this.p_groupCombinedNameFormat;
+
+        if (format === undefined) {
+            return this.defaultGroupCombinedNameFormat;
+        }
+
+        return format;
+    }
+
+    set groupCombinedNameFormatInternal(format: string) {
+        this.p_groupCombinedNameFormat = format;
+    }
+
+    get groupCombinedNameFormatUserFriendly() {
+        let format = this.groupCombinedNameFormatInternal;
 
         // Get stratum labels back out because internally we use IDs
         this.strata.forEach(({ _id, label, }) => {
@@ -342,7 +380,7 @@ export default class ExportFile extends Vue {
         return format;
     }
 
-    set groupCombinedNameFormat(newValue: string) {
+    set groupCombinedNameFormatUserFriendly(newValue: string) {
         // Replace stratum labels with stratum IDs because internally we use IDs
         this.strata.forEach(({ _id, label, }) => {
             newValue = replaceAll(newValue!, `{{${label}}}`, `{{${_id}}}`);
@@ -351,7 +389,7 @@ export default class ExportFile extends Vue {
         // Internally we use _PARTITION to represent the partition column
         newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
 
-        this.p_groupCombinedNameFormat = newValue;
+        this.groupCombinedNameFormatInternal = newValue;
     }
 }
 </script>
