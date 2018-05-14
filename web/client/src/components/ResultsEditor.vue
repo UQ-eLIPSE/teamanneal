@@ -421,6 +421,9 @@ export default class ResultsEditor extends Vue {
     background: #fff;
     position: relative;
     overflow: none;
+
+    /** This sets the workspace to take the minimal amount of room required */
+    width: 0;
 }
 
 .side-tool-area {
@@ -429,14 +432,7 @@ export default class ResultsEditor extends Vue {
 }
 
 .spreadsheet {
-    /* TODO: Review styles when column display checkbox location is decided */
-    /* 
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0; 
-    */
+    flex-grow: 1;
 }
 
 .get-started {
