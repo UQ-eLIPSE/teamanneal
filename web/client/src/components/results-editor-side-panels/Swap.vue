@@ -29,16 +29,15 @@
                         @click="clearPersonB">Clear</button>
             </div>
         </div>
-        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'"
-             class="test-permutations">
-            <ul>
-                <li v-for="x in sortedTestPermutationData"
-                    :key="x.nodeB + x.recordIdB"
-                    @click="setPersonB(x.nodeB, x.recordIdB)">{{ nodeToNameMap[x.nodeB] }}#{{ x.recordIdB }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
-            </ul>
-            <button class="button secondary small"
-                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
-        </div>
+
+        <SwapSuggestionsDisplay @personBSelected="setPersonB"
+                                @closeSuggestions="clearSatisfactionTestPermutationData"
+                                :data="data"
+                                :sortedTestPermutationData="sortedTestPermutationData" @clearSuggestions="clearSatisfactionTestPermutationData"></SwapSuggestionsDisplay>
+
+
+
+
         <div class="form-block">
             <button class="button secondary small"
                     @click="onGetSuggestionsButtonClick">Get suggestions</button>
@@ -63,8 +62,13 @@ import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+import SwapSuggestionsDisplay from "../SwapSuggestionsDisplay.vue";
 
-@Component
+@Component({
+    components: {
+        SwapSuggestionsDisplay
+    }
+})
 export default class Swap extends Vue {
     /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
@@ -201,6 +205,7 @@ export default class Swap extends Vue {
     setPersonB(nodeB: string, recordIdB: string) {
         S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: nodeB, id: recordIdB } });
     }
+
 }
 </script>
 
