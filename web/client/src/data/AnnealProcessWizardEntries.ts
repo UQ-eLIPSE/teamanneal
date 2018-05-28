@@ -54,6 +54,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
+
+        next: () => reviewRecords,
     },
     reviewRecords = {
         label: "Review data",

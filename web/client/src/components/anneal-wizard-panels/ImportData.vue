@@ -39,12 +39,12 @@
             <div class="wizard-panel-bottom-buttons">
                 <label v-if="!isFileSetInStore">
                     <input type="file"
-                           id="load-file"
-                           ref="load-file-input"
+                           class="hidden-file-input"
+                           ref="load-data-file-input"
                            accept=".csv"
-                           @change="onFileInputChanged($event)">
+                           @change="onLoadDataFileInputChanged($event)">
                     <button class="button"
-                            @click.stop.prevent="openFilePicker">Select CSV file...</button>
+                            @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
                 </label>
                 <button class="button"
                         @click="emitWizardNavNext"
@@ -52,7 +52,7 @@
                 <button class="button gold"
                         @click="clearFile"
                         v-if="isFileSetInStore">Clear file</button>
-                <button class="button secondary"
+                <button class="button secondary panel-bottom-button-align-left"
                         @click="setImportModeToImportConfigFileWithSeparateRecordsFile">Import existing configuration instead</button>
             </div>
         </template>
@@ -61,31 +61,46 @@
         <template v-if="importModeIsImportConfigWithSeparateRecords">
             <div class="wizard-panel-content">
                 <h1>Import existing configuration</h1>
-                <p>
-                    First, select an existing TeamAnneal configuration file (*.taconfig).
+                <p class="import-config-section-box">
+                    First, select an existing TeamAnneal configuration file (*.taconfig):
+                    <br />
+                    <br />
+                    <label>
+                        <input type="file"
+                               class="hidden-file-input"
+                               ref="import-config-file-input"
+                               accept=".taconfig"
+                               @change="onImportConfigFileInputChanged($event)">
+                        <button class="button"
+                                @click.stop.prevent="openImportConfigFilePicker">Select TACONFIG file...</button>
+                    </label>
+                    <span class="import-config-message"
+                          :class="importConfigResult.state">{{ importConfigResult.message }}</span>
                 </p>
-                <p>
+                <p class="import-config-section-box">
                     Second, select a
-                    <b>CSV</b> file containing records of people that you would like to form teams with.
+                    <b>CSV</b> file containing records of people that you would like to form teams with:
+                    <br />
+                    <br />
+                    <label v-if="!isFileSetInStore">
+                        <input type="file"
+                               class="hidden-file-input"
+                               ref="load-data-file-input"
+                               accept=".csv"
+                               @change="onLoadDataFileInputChanged($event)">
+                        <button class="button"
+                                @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
+                    </label>
+                    <button class="button"
+                            @click.prevent="null"
+                            v-if="isFileSetInStore">"{{ filename }}" in use</button>
+                    <button class="button gold"
+                            @click="clearFile"
+                            v-if="isFileSetInStore">Clear file</button>
                 </p>
             </div>
             <div class="wizard-panel-bottom-buttons">
-                <label v-if="!isFileSetInStore">
-                    <input type="file"
-                           id="load-file"
-                           ref="load-file-input"
-                           accept=".csv"
-                           @change="onFileInputChanged($event)">
-                    <button class="button"
-                            @click.stop.prevent="openFilePicker">Select CSV file...</button>
-                </label>
-                <button class="button"
-                        @click="emitWizardNavNext"
-                        v-if="isFileSetInStore">Use "{{ filename }}"</button>
-                <button class="button gold"
-                        @click="clearFile"
-                        v-if="isFileSetInStore">Clear file</button>
-                <button class="button secondary"
+                <button class="button secondary panel-bottom-button-align-left"
                         @click="setImportModeToNewRecordsFile">Load data file instead</button>
             </div>
         </template>
@@ -109,6 +124,8 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.importData;
+
+    importConfigResult: { state: "success" | "failure" | undefined, message: string } = { state: undefined, message: "" };
 
     get importModeIsNewRecordsFile() {
         return S.state.dataImportMode === "new-records-file";
@@ -145,11 +162,15 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         await S.dispatch(S.action.CLEAR_RECORD_DATA, undefined);
     }
 
-    openFilePicker() {
-        (this.$refs["load-file-input"] as HTMLInputElement).click();
+    openLoadDataFilePicker() {
+        (this.$refs["load-data-file-input"] as HTMLInputElement).click();
     }
 
-    async onFileInputChanged($event: Event) {
+    openImportConfigFilePicker() {
+        (this.$refs["import-config-file-input"] as HTMLInputElement).click();
+    }
+
+    async onLoadDataFileInputChanged($event: Event) {
         const fileElement = $event.target as HTMLInputElement;
 
         // Generate record data to store into state
@@ -162,6 +183,42 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         // Move on to the next step
         this.emitWizardNavNext();
     }
+
+    async onImportConfigFileInputChanged($event: Event) {
+        // Get file
+        const fileElement = $event.target as HTMLInputElement;
+        const file: File | undefined = fileElement.files![0];
+
+        if (file === undefined) {
+            this.importConfigResult = { state: undefined, message: `No file selected` };
+            return;
+        }
+
+        // Set import config message to "in progress" state
+        this.importConfigResult = { state: undefined, message: "Importing..." };
+
+        try {
+            // Read file contents into state
+            const fileContents = await new Promise<string>((resolve, reject) => {
+                // Set up reader
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = (e) => reject(e);
+
+                // Commence reading
+                reader.readAsText(file);
+            });
+
+            await S.dispatch(S.action.HYDRATE, fileContents);
+
+            // Deliberately set timeout for a minimum 500ms so that users can see it
+            setTimeout(() => {
+                this.importConfigResult = { state: "success", message: `"${file.name}" imported successfully` };
+            }, 500);
+        } catch {
+            this.importConfigResult = { state: "failure", message: `Configuration failed to be imported` };
+        }
+    }
 }
 </script>
 
@@ -170,7 +227,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 <style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
 <style scoped>
-#load-file {
+.hidden-file-input {
     display: none;
 }
 
@@ -183,5 +240,30 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     background: #ddd;
     border: 1px solid #aaa;
     border-radius: 0.5em;
+}
+
+.import-config-section-box {
+    border: 1px solid #49075E;
+    background: rgba(73, 7, 94, 0.1);
+    padding: 1em;
+}
+
+.panel-bottom-button-align-left {
+    margin-right: auto;
+}
+
+.import-config-message {
+    display: inline-block;
+    margin: 0.5em;
+}
+
+.import-config-message.success {
+    color: green;
+    font-weight: bold;
+}
+
+.import-config-message.failure {
+    color: darkred;
+    font-weight: bold;
 }
 </style>
