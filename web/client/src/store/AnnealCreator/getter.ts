@@ -117,9 +117,9 @@ const getters = {
         const columns = state.recordData.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             partitions.forEach((partition) => {
                 // Attempt group sizes for each partition
                 const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
