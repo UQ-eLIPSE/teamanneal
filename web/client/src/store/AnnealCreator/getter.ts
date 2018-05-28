@@ -4,6 +4,7 @@ import { AnnealCreatorState as State } from "./state";
 import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import { ColumnData } from "../../data/ColumnData";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -17,6 +18,7 @@ export enum AnnealCreatorGetter {
     IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
     HAS_DATA_IMPORT_MODE_SET = "Has data import mode set",
+    VALID_ID_COLUMNS = "Valid ID columns",
 }
 
 /** Shorthand for Getter enum above */
@@ -138,6 +140,23 @@ const getters = {
 
     [G.HAS_DATA_IMPORT_MODE_SET](state: State) {
         return state.dataImportMode !== undefined;
+    },
+
+    [G.VALID_ID_COLUMNS](state: State) {
+        const recordData = state.recordData;
+        const columns = recordData.columns;
+        const recordDataRawLength = recordData.source.length;
+
+        // The total number of records is equal to the full raw data array
+        // length minus the header (1 row)
+        const numberOfRecords = recordDataRawLength - 1;
+
+        // Filter only those with column values unique
+        return columns
+            .filter((column) => {
+                const valueSet = ColumnData.GetValueSet(column);
+                return valueSet.size === numberOfRecords;
+            });
     },
 }
 

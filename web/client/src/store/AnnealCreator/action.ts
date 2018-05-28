@@ -2,6 +2,7 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
 import { AnnealCreatorState as State } from "./state";
 import { AnnealCreatorMutation as M, commit } from "./mutation";
+import { AnnealCreatorGetter as G } from "./getter";
 
 import { FunctionParam2 } from "../../data/FunctionParam2";
 
@@ -161,6 +162,17 @@ const actions = {
 
         // Set the record data
         commit(context, M.SET_RECORD_DATA, recordData);
+
+        // Set default ID column to first available ID column if present
+        //
+        // We can't use the nice type safe getters here because they would
+        // not have been initialised at this point in time, and trying to force
+        // it in may introduce a circular dependency
+        const validIdColumns: ReadonlyArray<IColumnData> = context.getters[G.VALID_ID_COLUMNS];
+
+        if (validIdColumns.length > 0) {
+            await dispatch(context, A.SET_RECORD_ID_COLUMN, ColumnData.ConvertToMinimalDescriptor(validIdColumns[0]));
+        }
 
         // Add a generic stratum now for users to get started with
         const stratumLabel = "Team";
