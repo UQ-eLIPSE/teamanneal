@@ -21,13 +21,7 @@ export let
  */
 export const entries: ReadonlyArray<Readonly<WNE>> = [
     welcome = {
-        label: () => {
-            if (S.get(S.getter.HAS_SOURCE_FILE_DATA)) {
-                return `${S.state.recordData.source.name}`;
-            } else {
-                return "Welcome";
-            }
-        },
+        label: "Welcome",
         path: "/anneal/welcome",
         disabled: () => {
             return !(
@@ -38,8 +32,14 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     importData = {
         label: () => {
+            // If file already loaded, use that file name
+            if (S.get(S.getter.HAS_SOURCE_FILE_DATA)) {
+                return `${S.state.recordData.source.name}`;
+            }
+
+            // Else we go and label it according to the import mode
             switch (S.state.dataImportMode) {
-                case "new-records-file": return "Import new data file";
+                case "new-records-file": return "Load data file";
                 case "import-config-file-with-separate-records-file": return "Import existing configuration";
             }
 

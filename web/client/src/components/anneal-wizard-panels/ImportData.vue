@@ -3,7 +3,7 @@
         <!-- dataImportMode = "new-records-file" -->
         <template v-if="importModeIsNewRecordsFile">
             <div class="wizard-panel-content">
-                <h1>Import new data file</h1>
+                <h1>Load data file</h1>
                 <p>
                     Select a
                     <b>CSV</b> file containing records of people that you would like to form teams with.
@@ -86,7 +86,7 @@
                         @click="clearFile"
                         v-if="isFileSetInStore">Clear file</button>
                 <button class="button secondary"
-                        @click="setImportModeToNewRecordsFile">Import new data file instead</button>
+                        @click="setImportModeToNewRecordsFile">Load data file instead</button>
             </div>
         </template>
     </div>

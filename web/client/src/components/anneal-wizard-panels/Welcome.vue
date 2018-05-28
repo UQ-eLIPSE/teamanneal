@@ -3,11 +3,11 @@
         <div class="wizard-panel-content">
             <h1>Welcome</h1>
             <p>The TeamAnneal Creator steps you through configuring the anneal process to form teams using constraints you define.</p>
-            <p>To begin, choose either to load a new data file with records of people, or import an existing TeamAnneal configuration file.</p>
+            <p>To begin, choose either to load a data file with records of people, or import an existing TeamAnneal configuration file.</p>
         </div>
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
-                    @click="moveToImportLoadDataFile">Load new data file</button>
+                    @click="moveToImportLoadDataFile">Load data file</button>
             <button class="button secondary"
                     @click="moveToImportLoadConfigFile">Import existing configuration</button>
         </div>
