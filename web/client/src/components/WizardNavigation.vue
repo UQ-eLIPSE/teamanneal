@@ -4,10 +4,16 @@
             <li v-for="entry in entries"
                 :key="entry.path"
                 :class="getEntryClasses(entry)">
-                <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}</span>
+                <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}
+                    <span v-if="displayWarning(entry)"
+                          class="warning-icon">⚠</span>
+                </span>
                 <a v-else
                    href="#"
-                   @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}</a>
+                   @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}
+                    <span v-if="displayWarning(entry)"
+                          class="warning-icon">⚠</span>
+                </a>
             </li>
         </ul>
     </div>
@@ -68,6 +74,16 @@ export default class WizardNavigation extends Vue {
         // If the function does not exist we assume that it is always not
         // disabled
         return isDisabled === undefined ? false : isDisabled();
+    }
+
+    displayWarning(entry: WNE) {
+        // Do not display warning when entry is disabled
+        if (this.isEntryDisabled(entry)) { return false; }
+
+        // Get the warning display function
+        const displayWarning = entry.warning;
+
+        return displayWarning === undefined ? false : displayWarning();
     }
 
     getEntryLabel(entry: WNE) {
@@ -164,6 +180,14 @@ li.disabled {
 
 li.spacer-top {
     margin-top: 1em;
+}
+
+.warning-icon {
+    color: #fff;
+    display: inline-block;
+    background: darkred;
+    padding: 0 0.1em;
+    font-size: 0.8em;
 }
 </style>
 

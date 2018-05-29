@@ -19,5 +19,11 @@ export interface WizardNavigationEntry {
      * (expected to be delivered from the vuex store)
      */
     next?: () => WizardNavigationEntry,
+
+    /**
+     * Function that returns whether to display a warning icon next to the
+     * navigation entry
+     */
+    warning?: () => boolean,
 }
 

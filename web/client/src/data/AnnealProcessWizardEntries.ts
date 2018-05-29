@@ -70,7 +70,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when duplicate column names present
+            return S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES);
+        },
         next: () => selectIdColumn,
     },
     selectIdColumn = {
@@ -85,7 +88,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when ID column index not set
+            return !S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX);
+        },
         next: () => selectPartitionColumn,
     },
     selectPartitionColumn = {
@@ -100,7 +106,13 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when strata not valid or config names not valid
+            return (
+                !S.get(S.getter.HAS_STRATA) ||
+                !S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID)
+            );
+        },
         next: () => designGroupStructure,
     },
     designGroupStructure = {
@@ -115,7 +127,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when strata sizes invalid
+            return !S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID);
+        },
         next: () => configureGroups,
     },
     configureGroups = {
