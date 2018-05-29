@@ -61,8 +61,8 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Review data",
         path: "/anneal/review-records",
         disabled: () => {
-            // Disabled when there is no source file data
             return !(
+                // Disabled when there is no source file data
                 S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
@@ -76,15 +76,12 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Select ID column",
         path: "/anneal/select-id-column",
         disabled: () => {
-            // Disabled when there is no source file data
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
-                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS) &&
-
-                // Disable if duplicate column names encountered
-                !S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES)
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
 
@@ -94,10 +91,9 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Select partition column",
         path: "/anneal/select-partition-column",
         disabled: () => {
-            // Disabled when there is no ID column selected (a number above -1)
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
@@ -110,10 +106,9 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Define group structure",
         path: "/anneal/define-group-structure",
         disabled: () => {
-            // Disabled when there is no ID column selected (a number above -1)
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
@@ -126,12 +121,9 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Configure groups",
         path: "/anneal/configure-groups",
         disabled: () => {
-            // Disabled when there are no strata (output groups)
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
-                S.get(S.getter.HAS_STRATA) &&
-                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
@@ -144,13 +136,9 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Set constraints",
         path: "/anneal/set-constraints",
         disabled: () => {
-            // Disabled when there are no strata (output groups)
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
-                S.get(S.getter.HAS_STRATA) &&
-                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
-                S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
 
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
@@ -163,14 +151,12 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         label: "Run anneal",
         path: "/anneal/run-anneal",
         disabled: () => {
-            // Disabled when there are no strata (output groups) or constraints
             return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
-                S.get(S.getter.HAS_STRATA) &&
-                S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID) &&
-                S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID) &&
-                S.get(S.getter.HAS_CONSTRAINTS)
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
+
+                // Disable when processing request
+                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
     },
@@ -179,6 +165,9 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         path: "/anneal/export-data",
         disabled: () => {
             return !(
+                // Enable when there is config + source file data
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
+
                 // Disable when processing request
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );

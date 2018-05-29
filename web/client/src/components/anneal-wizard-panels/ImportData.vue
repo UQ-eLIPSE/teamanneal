@@ -42,7 +42,7 @@
                            class="hidden-file-input"
                            ref="load-data-file-input"
                            accept=".csv"
-                           @change="onLoadDataFileInputChanged($event)">
+                           @change="onLoadDataFileOnlyInputChanged($event)">
                     <button class="button"
                             @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
                 </label>
@@ -87,7 +87,7 @@
                                class="hidden-file-input"
                                ref="load-data-file-input"
                                accept=".csv"
-                               @change="onLoadDataFileInputChanged($event)">
+                               @change="onLoadDataFileInputInImportConfigChanged($event)">
                         <button class="button"
                                 @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
                     </label>
@@ -100,6 +100,9 @@
                 </p>
             </div>
             <div class="wizard-panel-bottom-buttons">
+                <button class="button"
+                        @click="emitWizardNavNext"
+                        :disabled="!isConfigAndDataFileLoaded">Continue</button>
                 <button class="button secondary panel-bottom-button-align-left"
                         @click="setImportModeToNewRecordsFile">Load data file instead</button>
             </div>
@@ -143,6 +146,10 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         return S.get(S.getter.HAS_SOURCE_FILE_DATA);
     }
 
+    get isConfigAndDataFileLoaded() {
+        return S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA);
+    }
+
     setImportModeToNewRecordsFile() {
         // TODO: Clear data?
         S.dispatch(S.action.SET_DATA_IMPORT_MODE, "new-records-file");
@@ -170,15 +177,25 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         (this.$refs["import-config-file-input"] as HTMLInputElement).click();
     }
 
-    async onLoadDataFileInputChanged($event: Event) {
-        const fileElement = $event.target as HTMLInputElement;
+    async extractRecordDataFromInput(inputEl: HTMLInputElement) {
+        const file = inputEl.files![0];
+        return await RecordData.parseFileToRecordData(file);
+    }
 
-        // Generate record data to store into state
-        const file = fileElement.files![0];
-        const recordData = await RecordData.parseFileToRecordData(file);
+    async onLoadDataFileInputInImportConfigChanged($event: Event) {
+        const fileElement = $event.target as HTMLInputElement;
+        const recordData = await this.extractRecordDataFromInput(fileElement);
 
         // Save to state
         await S.dispatch(S.action.SET_RECORD_DATA, recordData);
+    }
+
+    async onLoadDataFileOnlyInputChanged($event: Event) {
+        const fileElement = $event.target as HTMLInputElement;
+        const recordData = await this.extractRecordDataFromInput(fileElement);
+
+        // Save to state
+        await S.dispatch(S.action.INIT_RECORD_DATA, recordData);
 
         // Move on to the next step
         this.emitWizardNavNext();

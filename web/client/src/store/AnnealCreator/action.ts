@@ -32,6 +32,7 @@ export enum AnnealCreatorAction {
     RESET_STATE = "Resetting state",
 
     SET_RECORD_DATA = "Setting record data",
+    INIT_RECORD_DATA = "Initialise state with brand new record data",
     CLEAR_RECORD_DATA = "Clearing record data",
 
     UPSERT_STRATUM = "Upserting stratum",
@@ -157,9 +158,6 @@ const actions = {
     },
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {
-        // Wipe record data first
-        await dispatch(context, A.CLEAR_RECORD_DATA, undefined);
-
         // Set the record data
         commit(context, M.SET_RECORD_DATA, recordData);
 
@@ -174,6 +172,16 @@ const actions = {
             await dispatch(context, A.SET_RECORD_ID_COLUMN, ColumnData.ConvertToMinimalDescriptor(validIdColumns[0]));
         }
 
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
+    },
+
+    async [A.INIT_RECORD_DATA](context: Context, recordData: RecordData) {
+        // Wipe record data first
+        await dispatch(context, A.CLEAR_RECORD_DATA, undefined);
+
+        // Set record data back in
+        await dispatch(context, A.SET_RECORD_DATA, recordData);
+
         // Add a generic stratum now for users to get started with
         const stratumLabel = "Team";
         const stratumSize = initStratumSize(2, 3, 4);
@@ -181,8 +189,6 @@ const actions = {
         const genericStratum = initStratum(stratumLabel, stratumSize);
 
         await dispatch(context, A.UPSERT_STRATUM, genericStratum);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_RECORD_DATA](context: Context) {

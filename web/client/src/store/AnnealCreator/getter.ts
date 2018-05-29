@@ -19,6 +19,8 @@ export enum AnnealCreatorGetter {
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
     HAS_DATA_IMPORT_MODE_SET = "Has data import mode set",
     VALID_ID_COLUMNS = "Valid ID columns",
+    HAS_CONFIG = "Has config set",
+    HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
 }
 
 /** Shorthand for Getter enum above */
@@ -157,6 +159,18 @@ const getters = {
                 const valueSet = ColumnData.GetValueSet(column);
                 return valueSet.size === numberOfRecords;
             });
+    },
+
+    [G.HAS_CONFIG](_state: State, getters: any) {
+        // Config is assumed to be loaded when there is strata defined
+        // 
+        // TODO: Fix with type-safe accessors
+        return getters[G.HAS_STRATA];
+    },
+
+    [G.HAS_CONFIG_AND_SOURCE_FILE_DATA](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return getters[G.HAS_CONFIG] && getters[G.HAS_SOURCE_FILE_DATA];
     },
 }
 
