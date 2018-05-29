@@ -163,6 +163,8 @@ li {
 li a {
     color: inherit;
     text-decoration: none;
+    display: inline-block;
+    word-break: break-all;
     word-break: break-word;
 }
 
