@@ -160,7 +160,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when no constraints set
+            return !S.get(S.getter.HAS_CONSTRAINTS);
+        },
         next: () => runAnneal,
     },
     runAnneal = {

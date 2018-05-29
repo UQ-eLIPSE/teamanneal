@@ -28,7 +28,7 @@
                 <div v-if="hasDuplicateColumnNames"
                      class="error-msg">
                     <h3>Duplicate column names detected</h3>
-                    <p>Please change the below columns to ensure that you have unique column names.</p>
+                    <p>Please change the below columns in your data file to ensure that you have unique column names.</p>
                     <ul>
                         <li v-for="x in duplicateColumnListMessage"
                             :key="x.label">Found duplicated column name "
