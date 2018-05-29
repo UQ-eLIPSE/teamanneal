@@ -76,7 +76,8 @@ export default class ConstraintsEditor extends Vue {
     }
 
     /**
-     * Returns an array of 
+     * Returns an array where each element is the possible number of persons to
+     * choose for groups at that particular stratum
      */
     get strataGroupSizes() {
         const strata = this.strata;
