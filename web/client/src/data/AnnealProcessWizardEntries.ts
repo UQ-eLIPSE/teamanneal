@@ -106,13 +106,6 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-        warning: () => {
-            // Warn when strata not valid or config names not valid
-            return (
-                !S.get(S.getter.HAS_STRATA) ||
-                !S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID)
-            );
-        },
         next: () => designGroupStructure,
     },
     designGroupStructure = {
@@ -128,8 +121,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             );
         },
         warning: () => {
-            // Warn when strata sizes invalid
-            return !S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID);
+            // Warn when strata not valid or config names not valid
+            return (
+                !S.get(S.getter.HAS_STRATA) ||
+                !S.get(S.getter.IS_STRATA_CONFIG_NAMES_VALID)
+            );
         },
         next: () => configureGroups,
     },
@@ -145,7 +141,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
-
+        warning: () => {
+            // Warn when strata sizes invalid
+            return !S.get(S.getter.IS_STRATA_CONFIG_SIZES_VALID);
+        },
         next: () => configureConstraints,
     },
     configureConstraints = {

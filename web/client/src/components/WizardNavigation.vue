@@ -185,9 +185,9 @@ li.spacer-top {
 }
 
 .warning-icon {
-    color: #fff;
+    color: #000;
     display: inline-block;
-    background: darkred;
+    background: darkorange;
     padding: 0 0.1em;
     font-size: 0.8em;
 }
