@@ -30,7 +30,7 @@ import * as Partition from "../data/Partition";
 
 import { AnnealCreator as S } from "../store";
 
-import { concat } from "../util/Array";
+import { concat, numberSort } from "../util/Array";
 
 import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
@@ -119,7 +119,11 @@ export default class ConstraintsEditor extends Vue {
                         // Do one more uniqueness filter
                         const groupSizeSet = new Set<number>();
                         stratumGroupSizes.forEach(size => groupSizeSet.add(size));
-                        return Array.from(groupSizeSet).sort();
+
+                        // Sort array by numeric value
+                        const array = Array.from(groupSizeSet);
+                        numberSort(array);
+                        return array;
                     });
 
             return strataGroupSizes;
