@@ -46,6 +46,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             return "Import";
         },
         path: "/anneal/import-data",
+        className: "spacer-top",
         disabled: () => {
             return !(
                 S.get(S.getter.HAS_DATA_IMPORT_MODE_SET) &&
@@ -163,6 +164,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     exportData = {
         label: "Export configuration",
         path: "/anneal/export-data",
+        className: "spacer-top",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data

@@ -3,7 +3,7 @@
         <ul>
             <li v-for="entry in entries"
                 :key="entry.path"
-                :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
+                :class="getEntryClasses(entry)">
                 <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}</span>
                 <a v-else
                    href="#"
@@ -86,6 +86,19 @@ export default class WizardNavigation extends Vue {
         throw new Error("Unknown entry label type");
     }
 
+    getEntryClasses(entry: WNE) {
+        const classes: Record<string, boolean> = {
+            active: this.isEntryActive(entry),
+            disabled: this.isEntryDisabled(entry),
+        };
+
+        if (entry.className !== undefined) {
+            entry.className.split(" ").forEach(x => classes[x] = true);
+        }
+
+        return classes;
+    }
+
     get activeEntry() {
         return this.entries.find(this.isEntryActive.bind(this));
     }
@@ -147,6 +160,10 @@ li.active {
 li.disabled {
     color: rgba(0, 0, 0, 0.3);
     font-style: italic;
+}
+
+li.spacer-top {
+    margin-top: 1em;
 }
 </style>
 

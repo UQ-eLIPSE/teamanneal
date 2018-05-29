@@ -62,7 +62,8 @@
             <div class="wizard-panel-content">
                 <h1>Import existing configuration</h1>
                 <p class="import-config-section-box">
-                    First, select an existing TeamAnneal configuration file (*.taconfig):
+                    First, select an existing TeamAnneal configuration file
+                    <b>(*.taconfig)</b>:
                     <br />
                     <br />
                     <label>
