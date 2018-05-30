@@ -174,6 +174,9 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
     async resetEverything() {
         await S.dispatch(S.action.RESET_STATE, undefined);
+
+        // Also clear the import message
+        this.importConfigResult = { state: undefined, message: "" };
     }
 
     swapFile() {
