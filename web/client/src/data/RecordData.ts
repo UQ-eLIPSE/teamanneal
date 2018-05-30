@@ -66,12 +66,15 @@ export async function parseFileToRecordData(file: File, previousRecordData?: Rec
     // If previous record data is defined, we attempt to pass on the information
     // to the new RecordData object
     if (previousRecordData !== undefined) {
+        const idColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.idColumn, false);
+        const partitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, true);
+
         return init(
             file.name,
             rows.length,
             columns,
-            ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.idColumn, false),
-            ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, true),
+            idColumn && ColumnData.ConvertToMinimalDescriptor(idColumn),
+            partitionColumn && ColumnData.ConvertToMinimalDescriptor(partitionColumn),
         );
     } else {
         return init(
