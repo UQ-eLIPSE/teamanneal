@@ -54,8 +54,7 @@
                         @click="swapFile"
                         v-if="isFileSetInStore">Swap file</button>
                 <button class="button secondary"
-                        @click="clearFile"
-                        v-if="isFileSetInStore">Clear file</button>
+                        @click="resetEverything">Reset everything</button>
                 <button class="button secondary panel-bottom-button-align-left"
                         @click="setImportModeToImportConfigFileWithSeparateRecordsFile">Import existing configuration instead</button>
             </div>
@@ -103,15 +102,14 @@
                     <button class="button gold"
                             @click="swapFile"
                             v-if="isFileSetInStore">Swap file</button>
-                    <button class="button secondary"
-                            @click="clearFile"
-                            v-if="isFileSetInStore">Clear file</button>
                 </p>
             </div>
             <div class="wizard-panel-bottom-buttons">
                 <button class="button"
                         @click="emitWizardNavNext"
                         :disabled="!isConfigAndDataFileLoaded">Continue</button>
+                <button class="button secondary"
+                        @click="resetEverything">Reset everything</button>
                 <button class="button secondary panel-bottom-button-align-left"
                         @click="setImportModeToNewRecordsFile">Load data file instead</button>
             </div>
@@ -174,8 +172,8 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
 
 
-    async clearFile() {
-        await S.dispatch(S.action.CLEAR_RECORD_DATA, undefined);
+    async resetEverything() {
+        await S.dispatch(S.action.RESET_STATE, undefined);
     }
 
     swapFile() {
