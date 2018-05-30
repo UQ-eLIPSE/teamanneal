@@ -21,6 +21,7 @@ export enum AnnealCreatorGetter {
     VALID_ID_COLUMNS = "Valid ID columns",
     HAS_CONFIG = "Has config set",
     HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
+    HAS_VALID_PARTITION_COLUMN = "Has valid partition column",
 }
 
 /** Shorthand for Getter enum above */
@@ -171,6 +172,20 @@ const getters = {
     [G.HAS_CONFIG_AND_SOURCE_FILE_DATA](_state: State, getters: any) {
         // TODO: Fix with type-safe accessors
         return getters[G.HAS_CONFIG] && getters[G.HAS_SOURCE_FILE_DATA];
+    },
+
+    [G.HAS_VALID_PARTITION_COLUMN](state: State) {
+        const recordData = state.recordData;
+        const selectedPartitionColumn = recordData.partitionColumn;
+
+        if (selectedPartitionColumn === undefined) {
+            return true;
+        }
+
+        const columns = recordData.columns;
+
+        // See if there is a column defined with the partition column's ID
+        return columns.some(c => ColumnData.Equals(c, selectedPartitionColumn));
     },
 }
 

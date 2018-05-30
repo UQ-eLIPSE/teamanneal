@@ -37,19 +37,23 @@
                 </div>
             </div>
             <div class="wizard-panel-bottom-buttons">
-                <label v-if="!isFileSetInStore">
+                <label>
                     <input type="file"
                            class="hidden-file-input"
                            ref="load-data-file-input"
                            accept=".csv"
                            @change="onLoadDataFileOnlyInputChanged($event)">
-                    <button class="button"
+                    <button v-if="!isFileSetInStore"
+                            class="button"
                             @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
                 </label>
                 <button class="button"
                         @click="emitWizardNavNext"
                         v-if="isFileSetInStore">Use "{{ filename }}"</button>
                 <button class="button gold"
+                        @click="swapFile"
+                        v-if="isFileSetInStore">Swap file</button>
+                <button class="button secondary"
                         @click="clearFile"
                         v-if="isFileSetInStore">Clear file</button>
                 <button class="button secondary panel-bottom-button-align-left"
@@ -83,19 +87,23 @@
                     <b>CSV</b> file containing records of people that you would like to form teams with:
                     <br />
                     <br />
-                    <label v-if="!isFileSetInStore">
+                    <label>
                         <input type="file"
                                class="hidden-file-input"
                                ref="load-data-file-input"
                                accept=".csv"
                                @change="onLoadDataFileInputInImportConfigChanged($event)">
-                        <button class="button"
+                        <button v-if="!isFileSetInStore"
+                                class="button"
                                 @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
                     </label>
                     <button class="button"
                             @click.prevent="null"
                             v-if="isFileSetInStore">"{{ filename }}" in use</button>
                     <button class="button gold"
+                            @click="swapFile"
+                            v-if="isFileSetInStore">Swap file</button>
+                    <button class="button secondary"
                             @click="clearFile"
                             v-if="isFileSetInStore">Clear file</button>
                 </p>
@@ -170,6 +178,11 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         await S.dispatch(S.action.CLEAR_RECORD_DATA, undefined);
     }
 
+    swapFile() {
+        // To swap file, just trigger data file picker again
+        this.openLoadDataFilePicker();
+    }
+
     openLoadDataFilePicker() {
         (this.$refs["load-data-file-input"] as HTMLInputElement).click();
     }
@@ -180,7 +193,8 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
     async extractRecordDataFromInput(inputEl: HTMLInputElement) {
         const file = inputEl.files![0];
-        return await RecordData.parseFileToRecordData(file);
+        const previousRecordData = S.state.recordData;
+        return await RecordData.parseFileToRecordData(file, previousRecordData);
     }
 
     async onLoadDataFileInputInImportConfigChanged($event: Event) {

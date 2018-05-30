@@ -106,6 +106,10 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
                 !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
             );
         },
+        warning: () => {
+            // Warn when partition column is invalid
+            return !S.get(S.getter.HAS_VALID_PARTITION_COLUMN);
+        },
         next: () => designGroupStructure,
     },
     designGroupStructure = {

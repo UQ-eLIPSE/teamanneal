@@ -37,7 +37,7 @@ export function init(sourceName: string | undefined = undefined, sourceLength: n
     return obj;
 }
 
-export async function parseFileToRecordData(file: File) {
+export async function parseFileToRecordData(file: File, previousRecordData?: RecordData) {
     const parseResult = await parseFile(file);
     const data: string[][] = parseResult.data;
 
@@ -63,5 +63,21 @@ export async function parseFileToRecordData(file: File) {
                 return ColumnData.Init(columnValues, label);
             });
 
-    return init(file.name, rows.length, columns);
+    // If previous record data is defined, we attempt to pass on the information
+    // to the new RecordData object
+    if (previousRecordData !== undefined) {
+        return init(
+            file.name,
+            rows.length,
+            columns,
+            ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.idColumn, false),
+            ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, true),
+        );
+    } else {
+        return init(
+            file.name,
+            rows.length,
+            columns,
+        );
+    }
 }
