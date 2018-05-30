@@ -128,7 +128,7 @@ const actions = {
         commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
     },
 
-    async [A.DEHYDRATE](context: Context, { deleteDataImportMode, deleteRecordData, deleteAnnealRequest }: Partial<{ deleteDataImportMode: boolean, deleteRecordData: boolean, deleteAnnealRequest: boolean }>) {
+    async [A.DEHYDRATE](context: Context, { deleteDataImportMode, deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteDataImportMode: boolean, deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
         const state = { ...context.state };
 
         // Clear parts of state object, where requested
@@ -137,8 +137,15 @@ const actions = {
             state.dataImportMode = undefined;
         }
 
-        if (deleteRecordData) {
-            state.recordData = initRecordData();
+        if (deleteRecordDataSource) {
+            // Wipe out everything but partitions
+            state.recordData = initRecordData(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                state.recordData.partitionColumn,
+            );
         }
 
         if (deleteAnnealRequest) {
