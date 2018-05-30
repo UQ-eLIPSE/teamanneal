@@ -118,11 +118,6 @@ export default class DynamicWidthSelect extends Vue {
         this.updateRenderWidth();
     }
 
-    @Watch("selectedValue")
-    onSelectedValueChange(_value: any, _oldValue: any) {
-        this.updateRenderWidth();
-    }
-
     @Lifecycle mounted() {
         // Force update render width now
         this.updateRenderWidth();
