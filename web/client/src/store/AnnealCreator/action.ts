@@ -179,6 +179,26 @@ const actions = {
             await dispatch(context, A.SET_RECORD_ID_COLUMN, ColumnData.ConvertToMinimalDescriptor(validIdColumns[0]));
         }
 
+        // Attempt to match up old column references in constraints
+        const constraints = context.state.constraintConfig.constraints;
+        const columns = context.state.recordData.columns;
+
+        for (let constraint of constraints) {
+            const newColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, false);
+
+            if (newColumn !== undefined) {
+                // `any` override required due to conflicts between the three
+                // constraint types
+                await dispatch(context, A.UPSERT_CONSTRAINT, {
+                    ...constraint,
+                    filter: {
+                        ...constraint.filter,
+                        column: ColumnData.ConvertToMinimalDescriptor(newColumn),
+                    },
+                } as any);
+            }
+        }
+
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 

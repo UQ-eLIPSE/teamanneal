@@ -101,7 +101,7 @@
             <p>
                 If you do not need to set a partition or need to unset the partition column, click "Don't partition".
             </p>
-            <div v-if="isSelectedPartitionInvalid"
+            <div v-if="!isSelectedPartitionValid"
                  class="error-msg">
                 <h3>Invalid partition column detected</h3>
                 <p>Please choose an alternative partition column that corresponds to a valid column in your data file.</p>
@@ -187,7 +187,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 
         // Append the invalid option at the end of the list of options when an
         // invalid partition column has been selected
-        if (this.isSelectedPartitionInvalid) {
+        if (!this.isSelectedPartitionValid) {
             const selectedPartitionColumn = this.partitionColumn!;
 
             options.push({
@@ -239,13 +239,13 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
         }
     }
 
-    get isSelectedPartitionInvalid() {
-        return !S.get(S.getter.HAS_VALID_PARTITION_COLUMN);
+    get isSelectedPartitionValid() {
+        return S.get(S.getter.HAS_VALID_PARTITION_COLUMN);
     }
 
     get partitionColumnSelectClasses() {
         return {
-            "invalid": this.isSelectedPartitionInvalid,
+            "invalid": !this.isSelectedPartitionValid,
         }
     }
 }

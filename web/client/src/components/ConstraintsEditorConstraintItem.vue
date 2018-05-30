@@ -1,5 +1,6 @@
 <template>
-    <div class="constraint-item">
+    <div class="constraint-item"
+         :class="constraintItemClasses">
         <div class="constraint-content">
             <DynamicWidthSelect class="select"
                                 v-model="constraintCostWeight"
@@ -20,8 +21,9 @@
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
 
             <DynamicWidthSelect class="select"
-                                v-model="constraintFilterColumnData"
-                                :list="columnDataList"></DynamicWidthSelect>
+                                :class="filterColumnClasses"
+                                v-model="constraintFilterColumnDataId"
+                                :list="columnIdDataList"></DynamicWidthSelect>
 
             <DynamicWidthSelect class="select"
                                 v-if="showFilterFunction"
@@ -29,13 +31,15 @@
                                 :list="filterFunctionList"></DynamicWidthSelect>
 
             <DynamicWidthInputField class="input"
+                                    :class="filterValueClasses"
                                     v-if="showFilterValueAsInput"
                                     v-model="constraintFilterValues"></DynamicWidthInputField>
 
             <DynamicWidthSelect class="select"
+                                :class="filterValueClasses"
                                 v-if="showFilterValueAsSelect"
                                 v-model="constraintFilterValues"
-                                :list="filterValueAsSelectList"></DynamicWidthSelect>
+                                :list="allFilterValueAsSelectList"></DynamicWidthSelect>
 
             <span>when {{ stratum.label }} has
                 <DynamicWidthSelect class="select"
@@ -104,6 +108,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     // Private
     groupSizeApplicabilityConditionPopoverVisible: boolean = false;
 
+    get constraintFilterColumn() {
+        return this.constraint.filter.column;
+    }
+
     get costWeightList() {
         return ConstraintPhraseMaps.CostWeightList;
     }
@@ -113,7 +121,9 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get filterFunctionList() {
-        switch (this.constraintFilterColumnData.type) {
+        const columnData = this.constraintFilterColumn;
+
+        switch (columnData.type) {
             case "number":
                 return ConstraintPhraseMaps.NumberFilterFunctionList;
             case "string":
@@ -142,15 +152,25 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return S.state.recordData.columns;
     }
 
-    get columnDataList() {
-        return this.columnData.map(columnData => ({
-            value: columnData,
+    get columnIdDataList() {
+        const columnIdDataList = this.columnData.map(columnData => ({
+            value: columnData._id,
             text: columnData.label,
         }));
+
+        // Append the invalid option at the end of the list of options when an
+        // invalid column has been selected
+        if (!this.isConstraintFilterColumnValid) {
+            const column = this.constraintFilterColumn;
+
+            columnIdDataList.push({
+                value: column._id,
+                text: `${column.label} [invalid]`,
+            });
+        }
+
+        return columnIdDataList;
     }
-
-
-
 
     getConstraintType(conditionFunction: string) {
         switch (conditionFunction) {
@@ -174,31 +194,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown constraint type");
     }
 
-
-
-
-
     get thisConstraintType() {
         return this.getConstraintType(this.constraintConditionFunction);
-    }
-
-    get thisConstraintFilter() {
-        switch (this.thisConstraintType) {
-            case "count":
-            case "limit":
-                return {
-                    column: this.constraintFilterColumnData!,
-                    function: this.constraintFilterFunction!,
-                    values: [this.constraintFilterValues!],
-                }
-
-            case "similarity":
-                return {
-                    column: this.constraintFilterColumnData!,
-                }
-        }
-
-        throw new Error("Unknown constraint type");
     }
 
     get thisConstraintCondition() {
@@ -222,10 +219,13 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown constraint type");
     }
 
-
-
-    get filterValueAsSelectList() {
+    get validFilterValueAsSelectList() {
         const columnData = this.constraintFilterColumnData;
+
+        if (columnData === undefined) {
+            return [];
+        }
+
         return Array.from(ColumnData.GetValueSet(columnData) as Set<number | string>)
             .sort()
             .map(value => {
@@ -249,8 +249,20 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             });
     }
 
+    get allFilterValueAsSelectList() {
+        const list = [...this.validFilterValueAsSelectList];
 
+        const constraint = this.constraint;
 
+        if (!this.isConstraintFilterValueValid && constraint.type !== "similarity") {
+            list.push({
+                value: "" + constraint.filter.values[0],
+                text: `${constraint.filter.values[0]} [invalid]`,
+            });
+        }
+
+        return list;
+    }
 
     get showConditionCount() {
         switch (this.constraintConditionFunction) {
@@ -277,14 +289,14 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     get showFilterValueAsInput() {
         return (
             this.showFilterFunction &&
-            this.constraintFilterColumnData.type === "number"
+            this.constraintFilterColumn.type === "number"
         );
     }
 
     get showFilterValueAsSelect() {
         return (
             this.showFilterFunction &&
-            this.constraintFilterColumnData.type === "string"
+            this.constraintFilterColumn.type === "string"
         );
     }
 
@@ -362,19 +374,41 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         });
     }
 
-    get constraintFilterColumnData() {
-        return ColumnData.ConvertToDataObject(S.state.recordData.columns, this.constraint.filter.column)!;
+    get constraintFilterColumnDataId() {
+        const columnData = this.constraintFilterColumn;
+
+        if (columnData === undefined) {
+            return undefined;
+        }
+
+        return columnData._id;
     }
 
-    set constraintFilterColumnData(newColumnData: IColumnData) {
-        const oldColumnData = this.constraintFilterColumnData;
+    set constraintFilterColumnDataId(newId: string | undefined) {
+        this.constraintFilterColumnData = S.state.recordData.columns.find(c => c._id === newId);
+    }
+
+    get constraintFilterColumnData() {
+        return S.state.recordData.columns.find(c => c._id === this.constraintFilterColumnDataId);
+    }
+
+    set constraintFilterColumnData(newColumnData: IColumnData | undefined) {
+        const oldColumnData = this.constraintFilterColumn;
         const oldFilterValue = this.constraintFilterValues;
+
+        if (newColumnData === undefined) {
+            return;
+        }
 
         this.updateConstraint({
             filter: {
                 column: ColumnData.ConvertToMinimalDescriptor(newColumnData),
             },
         });
+
+        if (oldColumnData === undefined) {
+            return;
+        }
 
         // We need to convert the filter value if the types are different, or
         // trigger an automatic realignment of the filter value for different
@@ -386,11 +420,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             const oldColumnType = oldColumnData.type;
             const newColumnType = newColumnData.type;
 
-            if (oldColumnType !== newColumnType ||
-                !ColumnData.Equals(oldColumnData, newColumnData)) {
+            if (oldColumnType !== newColumnType) {
                 switch (newColumnType) {
                     case "number": {
-                        this.constraintFilterValues = +oldFilterValue || 0;
+                        this.constraintFilterValues = "" + (+oldFilterValue || 0);
                         break;
                     }
                     case "string": {
@@ -407,17 +440,22 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     get constraintFilterFunction() {
         const filterFunction: string = (this.constraint.filter as any).function;
+        const filterFunctionList = this.filterFunctionList;
+
+        if (filterFunctionList.length === 0) {
+            return undefined;
+        }
 
         // If the filter function value does not exist within the list, then
         // set the filter function value to the first available option
-        if (this.filterFunctionList.findIndex(item => item.value === filterFunction) < 0) {
-            this.constraintFilterFunction = this.filterFunctionList[0].value;
+        if (filterFunctionList.findIndex(item => item.value === filterFunction) < 0) {
+            this.constraintFilterFunction = filterFunctionList[0].value;
         }
 
         return filterFunction;
     }
 
-    set constraintFilterFunction(newValue: string) {
+    set constraintFilterFunction(newValue: string | undefined) {
         this.updateConstraint<IConstraint_Count | IConstraint_Limit>({
             filter: {
                 // Filter functions for different constraints vary
@@ -428,23 +466,37 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
     get constraintFilterValues() {
         // NOTE: Values is an array, but we only support single values for now
-        const filterValue: string | number = ((this.constraint.filter as any).values || [])[0];
+        //
+        // For the purposes of enabling flexible input, we must provide values
+        // as a string here - values are converted into numbers for numeric
+        // columns just before they are delivered to the client
+        const filterValue: string = ((this.constraint.filter as any).values || [])[0];
         return filterValue;
     }
 
-    set constraintFilterValues(newValue: string | number) {
+    set constraintFilterValues(newValue: string) {
         // NOTE: Values is an array, but we only support single values for now
+        //
+        // For the purposes of enabling flexible input, we must provide values
+        // as a string here - values are converted into numbers for numeric
+        // columns just before they are delivered to the client
 
-        let newFilterValue: string | number;
+        let newFilterValue: string;
 
-        switch (this.constraintFilterColumnData.type) {
+        const columnData = this.constraintFilterColumn;
+
+        if (columnData === undefined) {
+            return;
+        }
+
+        switch (columnData.type) {
             case "number": {
                 const oldValue = this.constraintFilterValues;
 
                 // Any parseable numeric string is acceptable, except for empty
                 // string
                 if (typeof newValue === "string" && newValue.trim().length === 0) {
-                    newFilterValue = oldValue;
+                    newFilterValue = "0";
                 } else {
                     const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
 
@@ -485,8 +537,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // the first available option
         if (this.showFilterValueAsSelect &&
             // You must compare the string values or they may not match
-            this.filterValueAsSelectList.findIndex(item => item.value === newFilterValue) < 0) {
-            newFilterValue = this.filterValueAsSelectList[0].value;
+            this.validFilterValueAsSelectList.findIndex(item => item.value === newFilterValue) < 0) {
+            newFilterValue = "" + this.validFilterValueAsSelectList[0].value;
         }
 
         this.updateConstraint({
@@ -554,6 +606,94 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         };
     }
 
+    get isConstraintFilterColumnValid() {
+        return this.constraintFilterColumnData !== undefined;
+    }
+
+    get isConstraintFilterValueValid() {
+        const constraint = this.constraint;
+
+        switch (constraint.type) {
+            case "count":
+            case "limit": {
+                const filterValue = this.constraintFilterValues;
+
+                switch (constraint.filter.column.type) {
+                    case "number": {
+                        // Needs to be parsable as number
+
+                        // Any parseable numeric string is acceptable, except for empty
+                        // string
+                        if (typeof filterValue === "string" && filterValue.trim().length === 0) {
+                            return false;
+                        } else {
+                            const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
+
+                            const parsedNewValue = parse(filterValue, Number.NaN);
+
+                            // * Check that the number is valid
+                            //
+                            // * Check that the numeric value is properly representable 
+                            //   as a plain fixed decimal number by checking that its
+                            //   string representation is valid as a decimal number
+                            // 
+                            //   This can happen in the case of long numbers
+                            //   (e-notation) or large numbers that JS can't handle 
+                            //   ("Infinity")
+                            if (Number.isNaN(parsedNewValue) ||
+                                !("" + parsedNewValue).match(validDecimalNumericStringRegex)) {
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        }
+                    }
+
+                    case "string": {
+                        return (
+                            // Must be a number which is also part of the
+                            // column's value set
+                            typeof filterValue === "string"
+                            && this.isConstraintFilterColumnValid
+                            && (ColumnData.GetValueSet(this.constraintFilterColumnData!) as Set<string>).has(filterValue)
+                        );
+                    }
+                }
+
+                throw new Error("Unknown column type");
+            }
+
+            // Similarity constraints don't have filter values
+            case "similarity": return true;
+        }
+
+        throw new Error("Unknown constraint type");
+    }
+
+    get isConstraintValid() {
+        return (
+            this.isConstraintFilterColumnValid
+            && this.isConstraintFilterValueValid
+        );
+    }
+
+    get constraintItemClasses() {
+        return {
+            "invalid": !this.isConstraintValid,
+        };
+    }
+
+    get filterColumnClasses() {
+        return {
+            "invalid": !this.isConstraintFilterColumnValid,
+        };
+    }
+
+    get filterValueClasses() {
+        return {
+            "invalid": !this.isConstraintFilterValueValid,
+        };
+    }
 }
 </script>
 
@@ -588,6 +728,12 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     padding: 0;
     margin: 0;
     color: #49075E;
+}
+
+.constraint-item.invalid {
+    color: #000;
+    background: #fdb;
+    outline: 0.2em solid #f80;
 }
 
 .constraint-item>div {
@@ -675,5 +821,11 @@ button.delete:active::before {
      * License: CC BY 3.0 US
      */
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRkZGRkZGIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGRhdGEtbmFtZT0iTGF5ZXIgMSIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHg9IjBweCIgeT0iMHB4Ij48dGl0bGU+MUFydGJvYXJkIDIxPC90aXRsZT48cGF0aCBkPSJNNTgsMjB2Nkg3NGEyLDIsMCwwLDEsMiwydjRhMiwyLDAsMCwxLTIsMkgyNmEyLDIsMCwwLDEtMi0yVjI4YTIsMiwwLDAsMSwyLTJINDJWMjBhMiwyLDAsMCwxLDItMkg1NkEyLDIsMCwwLDEsNTgsMjBaTTM0LDgySDY2YTYsNiwwLDAsMCw2LTZWNDBIMjhWNzZBNiw2LDAsMCwwLDM0LDgyWiIvPjwvc3ZnPg==");
+}
+
+select.invalid,
+input.invalid {
+    color: #000;
+    background: #f80;
 }
 </style>

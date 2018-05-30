@@ -167,11 +167,6 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         S.dispatch(S.action.SET_DATA_IMPORT_MODE, "import-config-file-with-separate-records-file");
     }
 
-
-
-
-
-
     async resetEverything() {
         await S.dispatch(S.action.RESET_STATE, undefined);
 
