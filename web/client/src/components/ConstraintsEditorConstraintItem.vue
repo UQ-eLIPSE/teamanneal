@@ -26,9 +26,10 @@
                                 :list="columnIdDataList"></DynamicWidthSelect>
 
             <DynamicWidthSelect class="select"
+                                :class="filterFunctionClasses"
                                 v-if="showFilterFunction"
                                 v-model="constraintFilterFunction"
-                                :list="filterFunctionList"></DynamicWidthSelect>
+                                :list="allFilterFunctionList"></DynamicWidthSelect>
 
             <DynamicWidthInputField class="input"
                                     :class="filterValueClasses"
@@ -120,7 +121,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return ConstraintPhraseMaps.ConditionFunctionList;
     }
 
-    get filterFunctionList() {
+    get validFilterFunctionList() {
         const columnData = this.constraintFilterColumn;
 
         switch (columnData.type) {
@@ -131,6 +132,21 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         }
 
         throw new Error("Unknown column type");
+    }
+
+    get allFilterFunctionList() {
+        const list = [...this.validFilterFunctionList];
+
+        if (!this.isConstraintFilterFunctionValid) {
+            // Works on the assumption that the numeric list is a superset of
+            // the string set
+            const listItem = { ...ConstraintPhraseMaps.NumberFilterFunctionList.find(f => f.value === this.constraintFilterFunction)! };
+            listItem.text += " [invalid]";
+
+            list.push(listItem);
+        }
+
+        return list;
     }
 
     get groupSizeApplicabilityConditionList() {
@@ -439,20 +455,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get constraintFilterFunction() {
-        const filterFunction: string = (this.constraint.filter as any).function;
-        const filterFunctionList = this.filterFunctionList;
-
-        if (filterFunctionList.length === 0) {
-            return undefined;
-        }
-
-        // If the filter function value does not exist within the list, then
-        // set the filter function value to the first available option
-        if (filterFunctionList.findIndex(item => item.value === filterFunction) < 0) {
-            this.constraintFilterFunction = filterFunctionList[0].value;
-        }
-
-        return filterFunction;
+        return (this.constraint.filter as any).function as string;
     }
 
     set constraintFilterFunction(newValue: string | undefined) {
@@ -670,10 +673,30 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown constraint type");
     }
 
+    get isConstraintFilterFunctionValid() {
+        const constraint = this.constraint;
+
+        switch (constraint.type) {
+            case "count":
+            case "limit": {
+                const validFilterFunctions = this.validFilterFunctionList;
+                const filterFunction = this.constraintFilterFunction;
+
+                return validFilterFunctions.some(f => f.value === filterFunction);
+            }
+
+            // Similarity constraints don't have filter functions
+            case "similarity": return true;
+        }
+
+        throw new Error("Unknown constraint type");
+    }
+
     get isConstraintValid() {
         return (
             this.isConstraintFilterColumnValid
             && this.isConstraintFilterValueValid
+            && this.isConstraintFilterFunctionValid
         );
     }
 
@@ -692,6 +715,12 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     get filterValueClasses() {
         return {
             "invalid": !this.isConstraintFilterValueValid,
+        };
+    }
+
+    get filterFunctionClasses() {
+        return {
+            "invalid": !this.isConstraintFilterFunctionValid,
         };
     }
 }
