@@ -44,8 +44,9 @@
 
             <span>when {{ stratum.label }} has
                 <DynamicWidthSelect class="select"
+                                    :class="groupSizeApplicabilityConditionClasses"
                                     v-model="groupSizeApplicabilityConditionValue"
-                                    :list="groupSizeApplicabilityConditionList"
+                                    :list="allGroupSizeApplicabilityConditionList"
                                     :minWidth="1"></DynamicWidthSelect>
                 {{ groupSizeApplicabilityConditionPersonUnitNoun }}</span>
         </div>
@@ -149,7 +150,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return list;
     }
 
-    get groupSizeApplicabilityConditionList() {
+    get validGroupSizeApplicabilityConditionList() {
         const list: { value: number | undefined, text: string }[] =
             this.groupSizes.map((size) => ({
                 value: size,
@@ -160,6 +161,21 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             value: undefined,
             text: "any number of",
         });
+
+        return list;
+    }
+
+    get allGroupSizeApplicabilityConditionList() {
+        const list = [...this.validGroupSizeApplicabilityConditionList];
+
+        if (!this.isConstraintGroupSizeApplicabilityConditionValid) {
+            const value = this.groupSizeApplicabilityConditionValue;
+
+            list.push({
+                value: value,
+                text: `${value} [invalid]`,
+            });
+        }
 
         return list;
     }
@@ -692,11 +708,23 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         throw new Error("Unknown constraint type");
     }
 
+    get isConstraintGroupSizeApplicabilityConditionValid() {
+        const validList = this.validGroupSizeApplicabilityConditionList;
+        const value = this.groupSizeApplicabilityConditionValue;
+
+        if (value === undefined) {
+            return true;
+        }
+
+        return validList.some(x => x.value === value);
+    }
+
     get isConstraintValid() {
         return (
             this.isConstraintFilterColumnValid
             && this.isConstraintFilterValueValid
             && this.isConstraintFilterFunctionValid
+            && this.isConstraintGroupSizeApplicabilityConditionValid
         );
     }
 
@@ -721,6 +749,12 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     get filterFunctionClasses() {
         return {
             "invalid": !this.isConstraintFilterFunctionValid,
+        };
+    }
+
+    get groupSizeApplicabilityConditionClasses() {
+        return {
+            "invalid": !this.isConstraintGroupSizeApplicabilityConditionValid,
         };
     }
 }
