@@ -283,8 +283,7 @@ export namespace ColumnData {
     }
 
     /**
-     * Attempts a match of given column to a new array of columns by way of a string
-     * equivalence check on their `label` properties.
+     * Attempts a match of given column to a new array of columns.
      * 
      * @param newColumns Array of columns to search in (e.g. new record data columns)
      * @param oldColumn Column to match
@@ -293,7 +292,7 @@ export namespace ColumnData {
     export function MatchOldColumnInNewColumns(newColumns: ReadonlyArray<MinimalDescriptor>, oldColumn: MinimalDescriptor | undefined, returnOldIfNotFound: boolean = false) {
         if (oldColumn === undefined) { return undefined; }
 
-        const newColumn = newColumns.find(c => c.label === oldColumn.label);
+        const newColumn = newColumns.find(c => c.label === oldColumn.label && c.type === oldColumn.type);
 
         if (newColumn === undefined && returnOldIfNotFound) {
             return oldColumn;
