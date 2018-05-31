@@ -108,9 +108,6 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     @Prop constraint = p<IConstraint>({ required: true, });
     @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: true, });
 
-    // Private
-    groupSizeApplicabilityConditionPopoverVisible: boolean = false;
-
     get constraintFilterColumn() {
         return this.constraint.filter.column;
     }
