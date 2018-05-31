@@ -10,8 +10,10 @@
                 @click="groupSelected(x.toNode)">
                 <span :title="getAncestors(x.toNode).join(' > ')"
                       class="ancestors">{{ getAncestors(x.toNode).join(" > ") }}</span>
-                <span class="content improvement"
-                      :class="getSatisfactionChangeClass(x.satisfaction.value)">Satisfaction: {{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                <div class="field" :class="getSatisfactionChangeClass(x.satisfaction.value)">
+                    <span class="label">Satisfaction</span>
+                    <span class="value">{{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                </div>
 
             </li>
         </ul>
@@ -26,12 +28,13 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import { MoveRecordTestPermutationOperationResult } from "../../../common/ToClientSatisfactionTestPermutationResponse";
 import { Suggestions } from "../data/Suggestions";
+import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
 
 @Component
 export default class MoveSuggestionsDisplay extends Vue {
 
     @Prop sortedTestPermutationData = p<MoveRecordTestPermutationOperationResult>({ required: true });
-    @Prop data = p<any>({ required: true });
+    @Prop data = p<MoveSidePanelToolData>({ required: true });
 
     get currentConfigurationSatisfactionValue() {
         const sourcePerson = this.data.sourcePerson;
@@ -52,6 +55,7 @@ export default class MoveSuggestionsDisplay extends Vue {
     getAncestors(id: string) {
         return Suggestions.getAncestors(id);
     }
+
     groupSelected(targetNodeId: string) {
         this.$emit("groupSelected", targetNodeId);
     }
@@ -75,11 +79,13 @@ export default class MoveSuggestionsDisplay extends Vue {
         const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
         if (percentChange === undefined) return;
 
+        const formatted = percentChange.toFixed(2);
+
         if (percentChange >= 0) {
-            return "+" + percentChange + "%";
+            return "+" + formatted + "%";
         }
 
-        return percentChange + "%";
+        return formatted + "%";
     }
 
     getSatisfactionChangeClass(satisfactionValue: number) {
@@ -88,10 +94,12 @@ export default class MoveSuggestionsDisplay extends Vue {
 
         if (percentChange === undefined) return;
 
-        if (percentChange >= 0) {
+        if (percentChange > 0) {
             classes.push("positive");
         } else if (percentChange < 0) {
             classes.push("negative");
+        } else if(percentChange === 0) {
+            classes.push("neutral");
         }
 
         return classes;
@@ -109,55 +117,63 @@ export default class MoveSuggestionsDisplay extends Vue {
 .test-permutations {
     background: rgba(220, 220, 220, 1);
     padding: 0.5rem;
-    height: 50%;
+    height: 65%;
     display: flex;
-    justify-content: space-evenly;
     flex-direction: column;
 }
 
 .test-permutations>h5 {
     color: #49075E;
-    font-style: italic;
-    margin: 0.5rem 0;
+    margin: 0.25rem 0.5rem;
 }
 
 .suggestions {
     display: flex;
     flex-flow: column;
     list-style-type: none;
-    padding: 0.5rem 0;
+    padding: 0;
     margin: 0;
-    height: 75%;
+    height: 100%;
     overflow: auto;
 }
 
 .suggestion {
     display: flex;
     flex-direction: column;
-    background: #fefefe;
     border: 0.1em solid rgba(1, 0, 0, 0.1);
     overflow: auto;
     cursor: pointer;
     flex-shrink: 0;
-    margin: 0.5rem;
+    margin: 0.25rem;
+    font-size: 0.9em;
 }
 
 .suggestion .ancestors {
-    background: #49075e;
+    background: rgba(0,0,0,0.6);
     color: #fff;
     text-overflow: ellipsis;
+    padding: 0.25rem;
+}
+
+.field {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap:wrap;
     padding: 0.5rem;
 }
 
-.suggestion .content {
-    padding: 0.5rem;
+.value {
+    font-weight: bold;
 }
-
 .positive {
     background: rgba(53, 146, 56, 0.2);
 }
 
 .negative {
     background: rgba(171, 39, 45, 0.2);
+}
+
+.neutral {
+    background: #eee;
 }
 </style>

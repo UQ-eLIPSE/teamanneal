@@ -11,8 +11,17 @@
                 <span class="ancestors">{{getAncestors(x.nodeB).join(' > ')}}</span>
                 <div class="content"
                      :class="getSatisfactionChangeClass(x.satisfaction.value)">
-                    <span>{{x.recordIdB}}</span>
-                    <span>Satisfaction: {{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}} </span>
+                    <div class="field">
+                        <span class="label">Satisfaction: </span>
+                        <span class="value">{{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                    </div>
+                    <div class="record">
+                        <div class="field">
+                            <span class="label">{{ idColumnName }}: </span>
+                            <span class="value">{{ getIdValue(x.recordIdB) }}</span>
+                        </div>
+                        <SwapSuggestionsDisplayRecord :recordId="x.recordIdB"></SwapSuggestionsDisplayRecord>
+                    </div>
                 </div>
             </li>
         </ul>
@@ -24,11 +33,17 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p, Lifecycle } from "av-ts";
 import { SwapRecordsTestPermutationOperationResult } from "../../../common/ToClientSatisfactionTestPermutationResponse";
 import { Suggestions } from "../data/Suggestions";
+import { ResultsEditor as S } from "../store";
+import SwapSuggestionsDisplayRecord from "./SwapSuggestionsDisplayRecord.vue";
 
-@Component
+@Component({
+    components: {
+        SwapSuggestionsDisplayRecord
+    }
+})
 export default class SwapSuggestionsDisplay extends Vue {
 
     @Prop sortedTestPermutationData = p<SwapRecordsTestPermutationOperationResult>({ required: true });
@@ -77,11 +92,13 @@ export default class SwapSuggestionsDisplay extends Vue {
         const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
         if (percentChange === undefined) return;
 
+        const formatted = percentChange.toFixed(2);
+
         if (percentChange >= 0) {
-            return "+" + percentChange + "%";
+            return "+" + formatted + "%";
         }
 
-        return percentChange + "%";
+        return formatted + "%";
     }
 
     getSatisfactionChangeClass(satisfactionValue: number) {
@@ -90,14 +107,44 @@ export default class SwapSuggestionsDisplay extends Vue {
 
         if (percentChange === undefined) return;
 
-        if (percentChange >= 0) {
+        if (percentChange > 0) {
             classes.push("positive");
         } else if (percentChange < 0) {
             classes.push("negative");
+        } else if(percentChange === 0) {
+            classes.push("neutral");
         }
 
         return classes;
     }
+
+    get idColumnIndex() {
+        const columns = S.state.recordData.columns;
+        const idColumnId = S.state.recordData.idColumn!._id;
+        const idColumnIndex = columns.findIndex((col) => col._id === idColumnId);
+        return idColumnIndex;
+    }
+    
+
+    get idColumnName() {
+        return S.state.recordData.idColumn!.label;
+    }
+
+    getIdValue(recordId: any) {
+        const idColumnIndex = this.idColumnIndex;
+        if(idColumnIndex === undefined) return "";
+        return this.recordLookupMap.get(recordId)[idColumnIndex];
+    }
+
+    get recordLookupMap() {
+        
+        return S.get(S.getter.GET_RECORD_LOOKUP_MAP) as any;
+    }
+
+    @Lifecycle 
+    created() {
+    }
+
 
 
 }
@@ -110,45 +157,46 @@ export default class SwapSuggestionsDisplay extends Vue {
 <style scoped>
 .test-permutations {
     background: rgba(220, 220, 220, 1);
-    padding: 0.5rem;
-    height: 50%;
+    padding: 0 0.5rem;
+    height: 60%;
     display: flex;
-    justify-content: space-evenly;
+    justify-content: flex-start;
     flex-direction: column;
 }
 
 .test-permutations>h5 {
     color: #49075E;
-    font-style: italic;
-    margin: 0.5rem 0;
+    /* font-style: italic; */
+    margin: 0.25rem;
 }
 
 .suggestions {
     display: flex;
     flex-flow: column;
     list-style-type: none;
-    padding: 0.5rem 0;
+    padding: 0;
     margin: 0;
-    height: 75%;
+    height: 100%;
     overflow: auto;
 }
 
 .suggestion {
+    position: relative;
     display: flex;
     flex-direction: column;
-    background: #fefefe;
     border: 0.1em solid rgba(1, 0, 0, 0.1);
     overflow: auto;
     cursor: pointer;
     flex-shrink: 0;
-    margin: 0.5rem;
+    margin: 0.25rem;
+    font-size: 0.9em;
 }
 
 .suggestion .ancestors {
-    background: #49075e;
+    background: rgba(0,0,0,0.6);
     color: #fff;
     text-overflow: ellipsis;
-    padding: 0.5rem;
+    padding: 0.25rem;
 }
 
 .suggestion .content {
@@ -162,4 +210,26 @@ export default class SwapSuggestionsDisplay extends Vue {
 .negative {
     background: rgba(171, 39, 45, 0.2);
 }
+
+.record {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.field {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap:wrap;
+    padding: 0.2rem 0;
+}
+
+.value {
+    font-weight: bold;
+}
+
+.neutral {
+    background: #eee;
+}
+
 </style>
