@@ -107,11 +107,11 @@ export default class StrataEditor extends Vue {
         const columns = S.state.recordData.columns;
         const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         // Run group sizing in each partition, and merge the distributions at
         // the end
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             const strataGroupDistribution =
                 partitions
                     .map((partition) => {
