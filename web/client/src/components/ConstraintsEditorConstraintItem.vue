@@ -74,7 +74,8 @@ import {
     ApplicabilityGroupSizeCondition as IConstraint_ApplicabilityGroupSizeCondition,
     Count as IConstraint_Count,
     Limit as IConstraint_Limit,
-    ConstraintPhraseMaps
+    ConstraintPhraseMaps,
+    Constraint
 } from "../data/Constraint";
 import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 import { DeepPartial } from "../data/DeepPartial";
@@ -123,16 +124,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get validFilterFunctionList() {
-        const columnData = this.constraintFilterColumn;
-
-        switch (columnData.type) {
-            case "number":
-                return ConstraintPhraseMaps.NumberFilterFunctionList;
-            case "string":
-                return ConstraintPhraseMaps.StringFilterFunctionList;
-        }
-
-        throw new Error("Unknown column type");
+        return Constraint.GetValidFilterFunctionList(this.constraint);
     }
 
     get allFilterFunctionList() {
@@ -151,18 +143,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get validGroupSizeApplicabilityConditionList() {
-        const list: { value: number | undefined, text: string }[] =
-            this.groupSizes.map((size) => ({
-                value: size,
-                text: "" + size,
-            }));
-
-        list.unshift({
-            value: undefined,
-            text: "any number of",
-        });
-
-        return list;
+        return Constraint.GetValidGroupSizeApplicabilityConditionList(this.groupSizes);
     }
 
     get allGroupSizeApplicabilityConditionList() {
@@ -626,97 +607,19 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get isConstraintFilterColumnValid() {
-        return this.constraintFilterColumnData !== undefined;
+        return Constraint.IsFilterColumnValid(this.constraint, S.state.recordData.columns);
     }
 
     get isConstraintFilterValueValid() {
-        const constraint = this.constraint;
-
-        switch (constraint.type) {
-            case "count":
-            case "limit": {
-                const filterValue = this.constraintFilterValues;
-
-                switch (constraint.filter.column.type) {
-                    case "number": {
-                        // Needs to be parsable as number
-
-                        // Any parseable numeric string is acceptable, except for empty
-                        // string
-                        if (typeof filterValue === "string" && filterValue.trim().length === 0) {
-                            return false;
-                        } else {
-                            const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
-
-                            const parsedNewValue = parse(filterValue, Number.NaN);
-
-                            // * Check that the number is valid
-                            //
-                            // * Check that the numeric value is properly representable 
-                            //   as a plain fixed decimal number by checking that its
-                            //   string representation is valid as a decimal number
-                            // 
-                            //   This can happen in the case of long numbers
-                            //   (e-notation) or large numbers that JS can't handle 
-                            //   ("Infinity")
-                            if (Number.isNaN(parsedNewValue) ||
-                                !("" + parsedNewValue).match(validDecimalNumericStringRegex)) {
-                                return false;
-                            } else {
-                                return true;
-                            }
-                        }
-                    }
-
-                    case "string": {
-                        return (
-                            // Must be a number which is also part of the
-                            // column's value set
-                            typeof filterValue === "string"
-                            && this.isConstraintFilterColumnValid
-                            && (ColumnData.GetValueSet(this.constraintFilterColumnData!) as Set<string>).has(filterValue)
-                        );
-                    }
-                }
-
-                throw new Error("Unknown column type");
-            }
-
-            // Similarity constraints don't have filter values
-            case "similarity": return true;
-        }
-
-        throw new Error("Unknown constraint type");
+        return Constraint.IsFilterValueValid(this.constraint, S.state.recordData.columns);
     }
 
     get isConstraintFilterFunctionValid() {
-        const constraint = this.constraint;
-
-        switch (constraint.type) {
-            case "count":
-            case "limit": {
-                const validFilterFunctions = this.validFilterFunctionList;
-                const filterFunction = this.constraintFilterFunction;
-
-                return validFilterFunctions.some(f => f.value === filterFunction);
-            }
-
-            // Similarity constraints don't have filter functions
-            case "similarity": return true;
-        }
-
-        throw new Error("Unknown constraint type");
+        return Constraint.IsFilterFunctionValid(this.constraint);
     }
 
     get isConstraintGroupSizeApplicabilityConditionValid() {
-        const validList = this.validGroupSizeApplicabilityConditionList;
-        const value = this.groupSizeApplicabilityConditionValue;
-
-        if (value === undefined) {
-            return true;
-        }
-
-        return validList.some(x => x.value === value);
+        return Constraint.IsGroupSizeApplicabilityConditionValid(this.constraint, this.groupSizes);
     }
 
     get isConstraintValid() {
