@@ -25,12 +25,8 @@
 import { Vue, Component } from "av-ts";
 
 import * as Stratum from "../data/Stratum";
-import * as StratumSize from "../data/StratumSize";
-import * as Partition from "../data/Partition";
 
 import { AnnealCreator as S } from "../store";
-
-import { concat, numberSort } from "../util/Array";
 
 import ConstraintsEditorStratum from "./ConstraintsEditorStratum.vue";
 
@@ -80,58 +76,7 @@ export default class ConstraintsEditor extends Vue {
      * choose for groups at that particular stratum
      */
     get strataGroupSizes() {
-        const strata = this.strata;
-        const columns = S.state.recordData.columns;
-        const partitionColumnDescriptor = S.state.recordData.partitionColumn;
-
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
-        // Run group sizing in each partition, and merge the distributions at
-        // the end
-        try {
-            const strataGroupSizes =
-                partitions
-                    .map((partition) => {
-                        // Generate group sizes for each partition
-                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
-                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
-
-                        // Thin out the individual group sizes into just the unique
-                        // group sizes
-                        const strataUniqueGroupSizes =
-                            strataIndividualGroupSizes.map((stratumGroupSizes) => {
-                                const groupSizeSet = new Set<number>();
-                                stratumGroupSizes.forEach(size => groupSizeSet.add(size));
-                                return Array.from(groupSizeSet);
-                            });
-
-                        return strataUniqueGroupSizes;
-                    })
-                    .reduce((carry, incomingDistribution) => {
-                        // Merge strata group size distribution arrays
-                        return carry.map((existingDistribution, stratumIndex) => {
-                            const distributionToAppend = incomingDistribution[stratumIndex];
-
-                            return concat<number>([existingDistribution, distributionToAppend]);
-                        });
-                    })
-                    .map((stratumGroupSizes) => {
-                        // Do one more uniqueness filter
-                        const groupSizeSet = new Set<number>();
-                        stratumGroupSizes.forEach(size => groupSizeSet.add(size));
-
-                        // Sort array by numeric value
-                        const array = Array.from(groupSizeSet);
-                        numberSort(array);
-                        return array;
-                    });
-
-            return strataGroupSizes;
-
-        } catch {
-            // If error occurs, return empty arrays for each stratum
-            return strata.map(_ => []);
-        }
+        return S.get(S.getter.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM);
     }
 }
 </script>

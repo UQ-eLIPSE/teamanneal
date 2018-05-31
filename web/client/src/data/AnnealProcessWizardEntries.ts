@@ -164,8 +164,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             );
         },
         warning: () => {
-            // Warn when no constraints set
-            return !S.get(S.getter.HAS_CONSTRAINTS);
+            // Warn when no constraints set or constraints invalid
+            return (
+                !S.get(S.getter.HAS_CONSTRAINTS) ||
+                !S.get(S.getter.ARE_ALL_CONSTRAINTS_VALID)
+            );
         },
         next: () => runAnneal,
     },

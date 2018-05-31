@@ -123,6 +123,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return ConstraintPhraseMaps.ConditionFunctionList;
     }
 
+    get stateColumns() {
+        return S.state.recordData.columns;
+    }
+
     get validFilterFunctionList() {
         return Constraint.GetValidFilterFunctionList(this.constraint);
     }
@@ -161,12 +165,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         return list;
     }
 
-    get columnData() {
-        return S.state.recordData.columns;
-    }
-
     get columnIdDataList() {
-        const columnIdDataList = this.columnData.map(columnData => ({
+        const columnIdDataList = this.stateColumns.map(columnData => ({
             value: columnData._id,
             text: columnData.label,
         }));
@@ -398,11 +398,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     set constraintFilterColumnDataId(newId: string | undefined) {
-        this.constraintFilterColumnData = S.state.recordData.columns.find(c => c._id === newId);
+        this.constraintFilterColumnData = this.stateColumns.find(c => c._id === newId);
     }
 
     get constraintFilterColumnData() {
-        return S.state.recordData.columns.find(c => c._id === this.constraintFilterColumnDataId);
+        return this.stateColumns.find(c => c._id === this.constraintFilterColumnDataId);
     }
 
     set constraintFilterColumnData(newColumnData: IColumnData | undefined) {
@@ -607,11 +607,11 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get isConstraintFilterColumnValid() {
-        return Constraint.IsFilterColumnValid(this.constraint, S.state.recordData.columns);
+        return Constraint.IsFilterColumnValid(this.constraint, this.stateColumns);
     }
 
     get isConstraintFilterValueValid() {
-        return Constraint.IsFilterValueValid(this.constraint, S.state.recordData.columns);
+        return Constraint.IsFilterValueValid(this.constraint, this.stateColumns);
     }
 
     get isConstraintFilterFunctionValid() {
@@ -623,12 +623,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get isConstraintValid() {
-        return (
-            this.isConstraintFilterColumnValid
-            && this.isConstraintFilterValueValid
-            && this.isConstraintFilterFunctionValid
-            && this.isConstraintGroupSizeApplicabilityConditionValid
-        );
+        return Constraint.IsValid(this.constraint, this.stateColumns, this.groupSizes);
     }
 
     get constraintItemClasses() {

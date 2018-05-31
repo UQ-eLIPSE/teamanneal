@@ -1,5 +1,6 @@
 import * as UUID from "../util/UUID";
 
+import { Stratum } from "./Stratum";
 import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor, ColumnData } from "./ColumnData";
 import * as Record from "../../../common/Record";
 
@@ -208,6 +209,10 @@ export namespace Constraint {
         return columns.find(c => ColumnData.Equals(c, constraint.filter.column));
     }
 
+    export function GetRelatedStratumIndex(constraint: Data, strata: ReadonlyArray<Stratum>) {
+        return strata.findIndex(s => s._id === constraint.stratum);
+    }
+
     export function IsFilterColumnValid(constraint: Data, columns: ReadonlyArray<IColumnData_MinimalDescriptor>) {
         return columns.some(c => ColumnData.Equals(c, constraint.filter.column));
     }
@@ -296,6 +301,15 @@ export namespace Constraint {
         }
 
         return validList.some(x => x.value === applicabilityCondition.value);
+    }
+
+    export function IsValid(constraint: Data, columns: ReadonlyArray<IColumnData>, groupSizes: ReadonlyArray<number>) {
+        return (
+            IsFilterColumnValid(constraint, columns)
+            && IsFilterValueValid(constraint, columns)
+            && IsFilterFunctionValid(constraint)
+            && IsGroupSizeApplicabilityConditionValid(constraint, groupSizes)
+        );
     }
 }
 

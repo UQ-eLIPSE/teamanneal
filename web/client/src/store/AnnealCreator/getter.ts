@@ -5,6 +5,9 @@ import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
 import { ColumnData } from "../../data/ColumnData";
+import { Constraint } from "../../data/Constraint";
+
+import { concat, numberSort } from "../../util/Array";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -22,6 +25,8 @@ export enum AnnealCreatorGetter {
     HAS_CONFIG = "Has config set",
     HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
     HAS_VALID_PARTITION_COLUMN = "Has valid partition column",
+    ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
+    POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
 }
 
 /** Shorthand for Getter enum above */
@@ -166,12 +171,15 @@ const getters = {
         // Config is assumed to be loaded when there is strata defined
         // 
         // TODO: Fix with type-safe accessors
-        return getters[G.HAS_STRATA];
+        return getters[G.HAS_STRATA] as boolean;
     },
 
     [G.HAS_CONFIG_AND_SOURCE_FILE_DATA](_state: State, getters: any) {
         // TODO: Fix with type-safe accessors
-        return getters[G.HAS_CONFIG] && getters[G.HAS_SOURCE_FILE_DATA];
+        return (
+            (getters[G.HAS_CONFIG] as boolean)
+            && (getters[G.HAS_SOURCE_FILE_DATA] as boolean)
+        );
     },
 
     [G.HAS_VALID_PARTITION_COLUMN](state: State) {
@@ -187,6 +195,76 @@ const getters = {
         // See if there is a column defined with the partition column's ID
         return columns.some(c => ColumnData.Equals(c, selectedPartitionColumn));
     },
+
+    [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
+        const columns = state.recordData.columns;
+        const strata = state.strataConfig.strata;
+
+        // TODO: Fix with type-safe accessors
+        const groupSizes = getters[G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM] as ReadonlyArray<ReadonlyArray<number>>;
+
+        return state.constraintConfig.constraints.every((constraint) => {
+            const constraintStrataIndex = Constraint.GetRelatedStratumIndex(constraint, strata);
+            const constraintStratumGroupSizes = groupSizes[constraintStrataIndex];
+
+            return Constraint.IsValid(constraint, columns, constraintStratumGroupSizes);
+        });
+    },
+
+    [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State) {
+        const strata = state.strataConfig.strata;
+        const columns = state.recordData.columns;
+        const partitionColumnDescriptor = state.recordData.partitionColumn;
+
+        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
+        // Run group sizing in each partition, and merge the distributions at
+        // the end
+        try {
+            const strataGroupSizes =
+                partitions
+                    .map((partition) => {
+                        // Generate group sizes for each partition
+                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
+
+                        // Thin out the individual group sizes into just the unique
+                        // group sizes
+                        const strataUniqueGroupSizes =
+                            strataIndividualGroupSizes.map((stratumGroupSizes) => {
+                                const groupSizeSet = new Set<number>();
+                                stratumGroupSizes.forEach(size => groupSizeSet.add(size));
+                                return Array.from(groupSizeSet);
+                            });
+
+                        return strataUniqueGroupSizes;
+                    })
+                    .reduce((carry, incomingDistribution) => {
+                        // Merge strata group size distribution arrays
+                        return carry.map((existingDistribution, stratumIndex) => {
+                            const distributionToAppend = incomingDistribution[stratumIndex];
+
+                            return concat<number>([existingDistribution, distributionToAppend]);
+                        });
+                    })
+                    .map((stratumGroupSizes) => {
+                        // Do one more uniqueness filter
+                        const groupSizeSet = new Set<number>();
+                        stratumGroupSizes.forEach(size => groupSizeSet.add(size));
+
+                        // Sort array by numeric value
+                        const array = Array.from(groupSizeSet);
+                        numberSort(array);
+                        return array;
+                    });
+
+            return strataGroupSizes;
+
+        } catch {
+            // If error occurs, return empty arrays for each stratum
+            return strata.map(_ => []);
+        }
+    }
 }
 
 export function init() {
