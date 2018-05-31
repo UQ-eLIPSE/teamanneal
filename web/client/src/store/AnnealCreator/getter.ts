@@ -27,6 +27,7 @@ export enum AnnealCreatorGetter {
     HAS_VALID_PARTITION_COLUMN = "Has valid partition column",
     ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
     POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
+    IS_ANNEAL_ABLE_TO_BE_EXECUTED = "Is anneal able to be executed",
 }
 
 /** Shorthand for Getter enum above */
@@ -264,7 +265,20 @@ const getters = {
             // If error occurs, return empty arrays for each stratum
             return strata.map(_ => []);
         }
-    }
+    },
+
+    [G.IS_ANNEAL_ABLE_TO_BE_EXECUTED](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return (
+            !getters[G.IS_ANNEAL_REQUEST_IN_PROGRESS]
+            && getters[G.HAS_CONFIG_AND_SOURCE_FILE_DATA]
+            && getters[G.HAS_VALID_PARTITION_COLUMN]
+            && getters[G.HAS_STRATA]
+            && getters[G.IS_STRATA_CONFIG_NAMES_VALID]
+            && getters[G.HAS_CONSTRAINTS]
+            && getters[G.ARE_ALL_CONSTRAINTS_VALID]
+        ) as boolean;
+    },
 }
 
 export function init() {

@@ -2,14 +2,30 @@
     <div class="wizard-panel">
         <!-- Anneal not yet started -->
         <template v-if="annealIsNotRunning">
-            <div class="wizard-panel-content">
-                <h1>Ready to anneal</h1>
-                <p>[TODO: Message]</p>
-            </div>
-            <div class="wizard-panel-bottom-buttons">
-                <button class="button"
-                        @click="onStartAnnealButtonClick">Start anneal</button>
-            </div>
+
+            <!-- Anneal can be executed -->
+            <template v-if="annealCanBeExecuted">
+                <div class="wizard-panel-content">
+                    <h1>Ready to anneal</h1>
+                    <p>[TODO: Message]</p>
+                </div>
+                <div class="wizard-panel-bottom-buttons">
+                    <button class="button"
+                            @click="onStartAnnealButtonClick">Start anneal</button>
+                </div>
+            </template>
+
+            <!-- Anneal cannot be executed (because of issues) -->
+            <template v-else>
+                <div class="wizard-panel-content">
+                    <h1>Issues detected</h1>
+                    <p>TeamAnneal has detected issues with your anneal configuration. Please correct these issues by returning to steps in the wizard where issues have been identified.</p>
+                </div>
+                <div class="wizard-panel-bottom-buttons">
+                    <button class="button"
+                            :disabled="true">Start anneal</button>
+                </div>
+            </template>
         </template>
 
         <!-- Anneal in progress -->
@@ -211,6 +227,10 @@ XMLHttpRequest {
             AnnealRequestState.isCompleted(annealRequestState) &&
             this.annealErrorMessage !== undefined
         );
+    }
+
+    get annealCanBeExecuted() {
+        return S.get(S.getter.IS_ANNEAL_ABLE_TO_BE_EXECUTED);
     }
 
     async onStartAnnealButtonClick() {
