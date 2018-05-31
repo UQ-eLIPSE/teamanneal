@@ -216,11 +216,11 @@ const getters = {
         const columns = state.recordData.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         // Run group sizing in each partition, and merge the distributions at
         // the end
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             const strataGroupSizes =
                 partitions
                     .map((partition) => {
