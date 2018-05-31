@@ -206,7 +206,12 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         const recordData = await this.extractRecordDataFromInput(fileElement);
 
         // Save to state
-        await S.dispatch(S.action.INIT_RECORD_DATA, recordData);
+        // If new, init, otherwise just set
+        if (S.state.recordData.source.name === undefined) {
+            await S.dispatch(S.action.INIT_RECORD_DATA, recordData);
+        } else {
+            await S.dispatch(S.action.SET_RECORD_DATA, recordData);
+        }
 
         // Move on to the next step
         this.emitWizardNavNext();
