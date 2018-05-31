@@ -53,6 +53,11 @@
                     <u>3 people</u>".</p>
                 <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
             </div>
+            <div v-if="!areAllConstraintsValid"
+                 class="error-msg">
+                <h3>Some constraints are invalid</h3>
+                <p>You have constraints which are not validly configured. These are highlighted below. Please correct this before continuing.</p>
+            </div>
             <p>
                 <ConstraintsEditor></ConstraintsEditor>
             </p>
@@ -71,6 +76,7 @@
 import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
+import { AnnealCreator as S } from "../../store";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -85,6 +91,10 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
+
+    get areAllConstraintsValid() {
+        return S.get(S.getter.ARE_ALL_CONSTRAINTS_VALID);
+    }
 }
 </script>
 
@@ -101,5 +111,11 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
 .example-table td {
     border: 1px solid #aaa;
     padding: 0.1em 0.3em;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>
