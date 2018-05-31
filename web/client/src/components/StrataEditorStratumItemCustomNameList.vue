@@ -11,25 +11,18 @@
                 </div>
             </div>
         </p>
-
         <div v-if="!isCustomNameListValid"
              class="error-msg">
             <p v-if="doesCustomNameListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
             <p v-if="doesCustomNameListContainEmptyLines">Warning: Empty lines detected. Please make sure there are no empty lines in the list.</p>
             <p v-if="isCustomNameListEmpty">Warning: Name list cannot be empty.</p>
         </div>
-        <p class="smaller-margins">
-            For example:
-            <i>{{ stratumLabel }} {{ randomExampleName }}</i>
-        </p>
     </div>
 </template>
 
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
-
-import * as StratumNamingConfig from "../data/StratumNamingConfig";
 
 import TextareaWithLineNumbers from "./TextareaWithLineNumbers.vue";
 
@@ -104,10 +97,6 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
                 // If the line when trimmed is length 0, it is considered empty
                 return name.trim().length === 0;
             });
-    }
-
-    get randomExampleName() {
-        return StratumNamingConfig.generateRandomExampleNameStringArray(this.names);
     }
 }
 </script>
