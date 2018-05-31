@@ -6,13 +6,13 @@
                 :class="getEntryClasses(entry)">
                 <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}
                     <span v-if="displayWarning(entry)"
-                          class="warning-icon">⚠</span>
+                          class="warning-icon"></span>
                 </span>
                 <a v-else
                    href="#"
                    @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}
                     <span v-if="displayWarning(entry)"
-                          class="warning-icon">⚠</span>
+                          class="warning-icon"></span>
                 </a>
             </li>
         </ul>
@@ -188,12 +188,15 @@ li.spacer-top {
     margin-top: 1em;
 }
 
-.warning-icon {
-    color: #000;
+.warning-icon::before {
+    content: "";
     display: inline-block;
-    background: darkorange;
-    padding: 0 0.1em;
-    font-size: 0.8em;
+    width: 0.9em;
+    height: 0.9em;
+    background-image: url(data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHZlcnNpb249IjEuMSI+DQo8ZyBpZD0ic3VyZmFjZTEiPg0KPHBhdGggc3R5bGU9ImZpbGw6I0ZGODgwMCIgZD0iTSAyMS4zOTg0MzggMTAuNjAxNTYzIEwgMTMuMzk4NDM4IDIuNjAxNTYzIEMgMTIuNjAxNTYzIDEuODAwNzgxIDExLjM5ODQzOCAxLjgwMDc4MSAxMC42MDE1NjMgMi42MDE1NjMgTCAyLjYwMTU2MyAxMC42MDE1NjMgQyAxLjgwMDc4MSAxMS4zOTg0MzggMS44MDA3ODEgMTIuNjAxNTYzIDIuNjAxNTYzIDEzLjM5ODQzOCBMIDEwLjYwMTU2MyAyMS4zOTg0MzggQyAxMS4zOTg0MzggMjIuMTk5MjE5IDEyLjYwMTU2MyAyMi4xOTkyMTkgMTMuMzk4NDM4IDIxLjM5ODQzOCBMIDIxLjM5ODQzOCAxMy4zOTg0MzggQyAyMi4xOTkyMTkgMTIuNjAxNTYzIDIyLjE5OTIxOSAxMS4zOTg0MzggMjEuMzk4NDM4IDEwLjYwMTU2MyBaIE0gMTMgMTcgTCAxMSAxNyBMIDExIDE1IEwgMTMgMTUgWiBNIDEzIDEzIEwgMTEgMTMgTCAxMSA3IEwgMTMgNyBaICI+PC9wYXRoPg0KPC9nPg0KPC9zdmc+);
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
 }
 </style>
 
