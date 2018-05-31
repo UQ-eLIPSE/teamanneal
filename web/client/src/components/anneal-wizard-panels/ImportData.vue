@@ -35,24 +35,29 @@
                         <br> ...
                     </div>
                 </div>
+                <p>
+                    <label>
+                        <input type="file"
+                               class="hidden-file-input"
+                               ref="load-data-file-input"
+                               accept=".csv"
+                               @change="onLoadDataFileOnlyInputChanged($event)">
+                        <button v-if="!isFileSetInStore"
+                                class="button"
+                                @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
+                    </label>
+                    <button class="button"
+                            @click.prevent="null"
+                            v-if="isFileSetInStore">"{{ filename }}" in use</button>
+                    <button class="button gold"
+                            @click="swapFile"
+                            v-if="isFileSetInStore">Swap file</button>
+                </p>
             </div>
             <div class="wizard-panel-bottom-buttons">
-                <label>
-                    <input type="file"
-                           class="hidden-file-input"
-                           ref="load-data-file-input"
-                           accept=".csv"
-                           @change="onLoadDataFileOnlyInputChanged($event)">
-                    <button v-if="!isFileSetInStore"
-                            class="button"
-                            @click.stop.prevent="openLoadDataFilePicker">Select CSV file...</button>
-                </label>
                 <button class="button"
                         @click="emitWizardNavNext"
-                        v-if="isFileSetInStore">Use "{{ filename }}"</button>
-                <button class="button gold"
-                        @click="swapFile"
-                        v-if="isFileSetInStore">Swap file</button>
+                        :disabled="!isConfigAndDataFileLoaded">Continue</button>
                 <button class="button secondary"
                         @click="resetEverything">Reset everything</button>
                 <button class="button secondary panel-bottom-button-align-left"
