@@ -180,6 +180,10 @@ li.disabled {
     font-style: italic;
 }
 
+li.active.disabled {
+    color: #fff;
+}
+
 li.spacer-top {
     margin-top: 1em;
 }
