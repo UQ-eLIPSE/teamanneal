@@ -81,17 +81,17 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 
 /** Store action functions */
 const actions = {
-    async [A.HYDRATE](context: Context, dehydratedState: string) {
+    async [A.HYDRATE](context: Context, { dehydratedState, keepExistingRecordData }: { dehydratedState: string, keepExistingRecordData?: boolean }) {
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
-        await dispatch(context, A.RESET_STATE, undefined);
+        // Clear constraints, strata
+        commit(context, M.CLEAR_CONSTRAINTS, undefined);
+        commit(context, M.CLEAR_STRATA, undefined);
 
         // Record data
-        await dispatch(context, A.SET_RECORD_DATA, state.recordData);
-
-        // Constraints config -> constraints
-        for (let constraint of state.constraintConfig.constraints) {
-            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
+        if (!keepExistingRecordData) {
+            commit(context, M.CLEAR_RECORD_DATA, undefined);
+            await dispatch(context, A.SET_RECORD_DATA, state.recordData);
         }
 
         // Strata config -> strata
@@ -105,6 +105,25 @@ const actions = {
             commit(context, M.SET_STRATA_NAMING_CONFIG, stratumNamingConfig);
         } else {
             commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
+        }
+
+        // Constraints config -> constraints
+        //
+        // We also attempt to match up columns here when inserting constraints
+        const columns = context.state.recordData.columns;
+
+        for (let constraint of state.constraintConfig.constraints) {
+            const matchedColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, true)!;
+
+            // `any` override required due to conflicts between the three
+            // constraint types
+            await dispatch(context, A.UPSERT_CONSTRAINT, {
+                ...constraint,
+                filter: {
+                    ...constraint.filter,
+                    column: ColumnData.ConvertToMinimalDescriptor(matchedColumn),
+                },
+            } as any);
         }
 
         // Anneal request state

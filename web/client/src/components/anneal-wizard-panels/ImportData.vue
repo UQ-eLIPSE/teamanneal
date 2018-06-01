@@ -247,7 +247,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
                 reader.readAsText(file);
             });
 
-            await S.dispatch(S.action.HYDRATE, fileContents);
+            await S.dispatch(S.action.HYDRATE, { dehydratedState: fileContents, keepExistingRecordData: true, });
 
             // Deliberately set timeout for a minimum 500ms so that users can see it
             setTimeout(() => {
