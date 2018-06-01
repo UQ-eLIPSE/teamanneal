@@ -18,7 +18,6 @@ import { ListCounterType } from "../../data/ListCounter";
 import { AnnealResponse } from "../../data/AnnealResponse";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
 
-import { replaceAll } from "../../util/String";
 import { serialiseWithUndefined, deserialiseWithUndefined } from "../../util/Object";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
@@ -54,13 +53,6 @@ export enum AnnealCreatorAction {
 
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
-
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT = "Setting node naming combined name format",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT = "Clearing node naming combined name format",
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER = "Setting node naming combined name format and flagging it as being set by user",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER = "Clearing node naming combined name format and flagging it as being set by user",
-
-    UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT = "Updating system generated node naming combined name format",
 
     SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING = "Setting anneal request state to 'not running'",
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
@@ -115,15 +107,6 @@ const actions = {
             commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
         }
 
-        // Node naming config -> combined name config
-        const combinedNameConfig = state.nodeNamingConfig.combined;
-        if (combinedNameConfig.format) {
-            await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, combinedNameConfig.format);
-        } else {
-            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-        }
-        commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, combinedNameConfig.userProvided);
-
         // Anneal request state
         commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
     },
@@ -159,7 +142,6 @@ const actions = {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -244,8 +226,6 @@ const actions = {
             await dispatch(context, A.SET_STRATUM_NAMING_CONFIG, { stratum, namingConfig: initStratumNamingConfig() });
         }
 
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
@@ -295,17 +275,6 @@ const actions = {
                 });
             }
         }
-
-        // Replace the combined name format with a new version that has the 
-        // reference to this stratum erased
-        const combinedNameFormat = $state.nodeNamingConfig.combined.format;
-
-        if (combinedNameFormat !== undefined) {
-            const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
-            await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, newCombinedNameFormat);
-        }
-
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -402,8 +371,6 @@ Delete constraints that use this column and try again.`;
     async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_PARTITION_COLUMN, partitionColumn);
 
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
@@ -420,72 +387,6 @@ Delete constraints that use this column and try again.`;
                 });
             }
         }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context, nameFormat: string) {
-        // If input is effectively blank, then set as undefined
-        if (nameFormat.trim().length === 0) {
-            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-        } else {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
-        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context, nameFormat: string) {
-        await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
-
-        // Flag as user provided name format, if not already flagged
-        if (!context.state.nodeNamingConfig.combined.userProvided) {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context) {
-        await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
-        // Flag as user provided name format, if not already flagged
-        if (!context.state.nodeNamingConfig.combined.userProvided) {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
-        const $state = context.state;
-        const combinedNameConfig = $state.nodeNamingConfig.combined;
-
-        // Only update for non-user-provided name formats
-        if (combinedNameConfig.userProvided) {
-            return;
-        }
-
-        // Map out the names of items currently in strata
-        const nameItems = $state.strataConfig.strata.map(stratum => `{{${stratum._id}}}`);
-
-        // Add partition if set
-        const partitionColumn = $state.recordData.partitionColumn;
-
-        if (partitionColumn !== undefined) {
-            nameItems.unshift("{{_PARTITION}}");
-        }
-
-        // Generate name format
-        const nameFormat = `Team ${nameItems.join("-")}`;
-
-        await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },

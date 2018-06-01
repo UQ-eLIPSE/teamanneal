@@ -4,7 +4,6 @@ import * as AnnealResponse from "../../data/AnnealResponse";
 import { RecordData, init as initRecordData } from "../../data/RecordData";
 import { StrataConfig, init as initStrataConfig } from "../../data/StrataConfig";
 import { ConstraintConfig, init as initConstraintConfig } from "../../data/ConstraintConfig";
-import { NamingConfig, init as initNamingConfig } from "../../data/NamingConfig";
 
 import { ResultTree } from "../../data/ResultTree";
 import { ColumnData } from "../../data/ColumnData";
@@ -30,9 +29,6 @@ export interface AnnealCreatorState {
     /** Configuration of strata  */
     strataConfig: StrataConfig,
 
-    /** Naming configuration for nodes */
-    nodeNamingConfig: NamingConfig,
-
     /** Anneal request/response information */
     annealRequest: AnnealRequestState.AnnealRequestState,
 }
@@ -46,8 +42,6 @@ export function init() {
         constraintConfig: initConstraintConfig(),
 
         strataConfig: initStrataConfig(),
-
-        nodeNamingConfig: initNamingConfig(),
 
         annealRequest: AnnealRequestState.initNotRunning(),
     };

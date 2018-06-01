@@ -1,7 +1,7 @@
 <template>
     <div class="import-file">
         <h2>Import</h2>
-        <p>Select a TeamAnneal results package (*.taresults) to import:</p>
+        <p>Select a TeamAnneal results package <b>(*.taresults)</b> to import:</p>
         <label>
             <input type="file"
                    accept=".taresults"

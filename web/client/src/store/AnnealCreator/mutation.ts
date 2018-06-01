@@ -51,11 +51,6 @@ export enum AnnealCreatorMutation {
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT = "Setting node naming combined name format",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT = "Clearing node naming combined name format",
-
-    SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG = "Setting node naming combined name's user provided flag",
-
     SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
 
     SET_DATA_IMPORT_MODE = "Setting data import mode",
@@ -171,18 +166,6 @@ const mutations = {
 
     [M.CLEAR_RECORD_PARTITION_COLUMN](state: State) {
         set(state.recordData, "partitionColumn", undefined);
-    },
-
-    [M.SET_NODE_NAMING_COMBINED_NAME_FORMAT](state: State, nameFormat: string) {
-        set(state.nodeNamingConfig.combined, "format", nameFormat);
-    },
-
-    [M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](state: State) {
-        set(state.nodeNamingConfig.combined, "format", undefined);
-    },
-
-    [M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG](state: State, userProvided: boolean) {
-        set(state.nodeNamingConfig.combined, "userProvided", userProvided);
     },
 
     [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {

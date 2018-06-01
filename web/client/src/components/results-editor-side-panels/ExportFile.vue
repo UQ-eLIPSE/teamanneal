@@ -4,8 +4,7 @@
         <div class="export-option-block">
             <h3>Export TeamAnneal results package</h3>
             <p>Select this option to get a file that contains all data, including teams, needed for you to review teams and make changes in future.</p>
-            <p>This
-                <em>does not</em> contain your complete original anneal configuration.</p>
+            <p>You can also use this file to perform a new anneal through the TeamAnneal Creator.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small"
                     @click="exportResultsPackage">Export results package</button>
@@ -54,7 +53,8 @@
         <!-- TODO: Only show this block when anneal config detected -->
         <div class="export-option-block">
             <h3>Export TeamAnneal configuration</h3>
-            <p>Select this option to export your anneal configuration as set in the TeamAnneal Creator. You can use this file to store and share your original set of parameters.</p>
+            <p>Select this option to export only your anneal configuration as set in the TeamAnneal Creator.</p>
+            <p>This file does not contain any record data or annealed teams, but you can use this file to store and share your original set of parameters for a future anneal.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small secondary"
                     @click="onExportConfigButtonClick">Export configuration</button>
