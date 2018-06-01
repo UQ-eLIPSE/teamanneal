@@ -29,7 +29,7 @@ import { AnnealCreator as S } from "../../store";
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
 @Component
-export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
+export default class ExportData extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.exportData;
