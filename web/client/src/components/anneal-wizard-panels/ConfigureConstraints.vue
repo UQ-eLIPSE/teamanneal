@@ -53,6 +53,11 @@
                     <u>3 people</u>".</p>
                 <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
             </div>
+            <div v-if="!hasConstraints"
+                 class="error-msg">
+                <h3>No constraints defined</h3>
+                <p>You need to add at least one constraint. Please correct this before continuing.</p>
+            </div>
             <div v-if="!areAllConstraintsValid"
                  class="error-msg">
                 <h3>Some constraints are invalid</h3>
@@ -91,6 +96,10 @@ export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
+
+    get hasConstraints() {
+        return S.get(S.getter.HAS_CONSTRAINTS);
+    }
 
     get areAllConstraintsValid() {
         return S.get(S.getter.ARE_ALL_CONSTRAINTS_VALID);
