@@ -40,7 +40,9 @@
                         <b>CSV</b> file containing records of people you would like to form teams with:
                     </p>
                     <p>
-                        <label>
+                        <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
+                        <label v-for="x in [recordFileInputElKey]"
+                               :key="x">
                             <input type="file"
                                    class="hidden-file-input"
                                    ref="record-file-input"
@@ -69,7 +71,9 @@
                         <b>(*.taresults)</b> file:
                     </p>
                     <p>
-                        <label>
+                        <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
+                        <label v-for="x in [configFileInputElKey]"
+                               :key="x">
                             <input type="file"
                                    class="hidden-file-input"
                                    ref="config-file-input"
@@ -112,6 +116,13 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.importData;
 
+    /** Key to trigger re-render of record file input element */
+    recordFileInputElKey: number = 0;
+
+    /** Key to trigger re-render of config file input element */
+    configFileInputElKey: number = 0;
+
+    /** Object representing the configuration import result message */
     importConfigResult: { state: "success" | "failure" | undefined, message: string } = { state: undefined, message: "" };
 
     get filename() {
@@ -143,11 +154,15 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     }
 
     openRecordFilePicker() {
-        (this.$refs["record-file-input"] as HTMLInputElement).click();
+        // Note that because of the `v-for` fix to re-render the element, the 
+        // ref for this is an array
+        (this.$refs["record-file-input"] as HTMLInputElement[])[0].click();
     }
 
     openConfigFilePicker() {
-        (this.$refs["config-file-input"] as HTMLInputElement).click();
+        // Note that because of the `v-for` fix to re-render the element, the 
+        // ref for this is an array
+        (this.$refs["config-file-input"] as HTMLInputElement[])[0].click();
     }
 
     async extractRecordDataFromInput(inputEl: HTMLInputElement) {
@@ -168,6 +183,9 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         } else {
             await S.dispatch(S.action.INIT_RECORD_DATA, recordData);
         }
+
+        // Toggle key to force input element re-render
+        this.recordFileInputElKey ^= 1;
     }
 
     async onConfigFileInputChanged($event: Event) {
@@ -201,6 +219,9 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         } catch {
             this.importConfigResult = { state: "failure", message: `Configuration failed to be imported` };
         }
+
+        // Toggle key to force input element re-render
+        this.configFileInputElKey ^= 1;
     }
 }
 </script>
