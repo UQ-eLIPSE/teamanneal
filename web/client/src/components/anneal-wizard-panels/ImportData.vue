@@ -31,60 +31,62 @@
                     <br> ...
                 </div>
             </div>
-            <div class="import-split-pane">
-                <div class="import-section-box"
-                     :class="{ 'imported': hasSourceFileData }">
-                    <h3>Import records</h3>
-                    <p>
-                        Select a
-                        <b>CSV</b> file containing records of people you would like to form teams with:
-                    </p>
-                    <p>
-                        <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
-                        <label v-for="x in [recordFileInputElKey]"
-                               :key="x">
-                            <input type="file"
-                                   class="hidden-file-input"
-                                   ref="record-file-input"
-                                   accept=".csv"
-                                   @change="onRecordFileInputChanged($event)">
-                            <button v-if="!hasSourceFileData"
-                                    class="button"
-                                    @click.stop.prevent="openRecordFilePicker">Select CSV file...</button>
-                        </label>
-                        <button class="button"
-                                @click.prevent="null"
-                                v-if="hasSourceFileData">"{{ filename }}" in use</button>
-                        <button class="button gold"
-                                @click="swapRecordFile"
-                                v-if="hasSourceFileData">Swap file</button>
-                    </p>
-                </div>
-                <div class="import-section-box"
-                     :class="{ 'imported': hasConfig }">
-                    <h3>Import anneal configuration
-                        <span class="font-weight-normal">(optional)</span>
-                    </h3>
-                    <p>
-                        Select a TeamAnneal configuration
-                        <b>(*.taconfig)</b> or results package
-                        <b>(*.taresults)</b> file:
-                    </p>
-                    <p>
-                        <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
-                        <label v-for="x in [configFileInputElKey]"
-                               :key="x">
-                            <input type="file"
-                                   class="hidden-file-input"
-                                   ref="config-file-input"
-                                   accept=".taconfig,.taresults"
-                                   @change="onConfigFileInputChanged($event)">
+            <div class="import-split-pane-wrapper">
+                <div class="import-split-pane">
+                    <div class="import-section-box"
+                         :class="{ 'imported': hasSourceFileData }">
+                        <h3>Import records</h3>
+                        <p>
+                            Select a
+                            <b>CSV</b> file containing records of people you would like to form teams with:
+                        </p>
+                        <p>
+                            <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
+                            <label v-for="x in [recordFileInputElKey]"
+                                   :key="x">
+                                <input type="file"
+                                       class="hidden-file-input"
+                                       ref="record-file-input"
+                                       accept=".csv"
+                                       @change="onRecordFileInputChanged($event)">
+                                <button v-if="!hasSourceFileData"
+                                        class="button"
+                                        @click.stop.prevent="openRecordFilePicker">Select CSV file...</button>
+                            </label>
                             <button class="button"
-                                    @click.stop.prevent="openConfigFilePicker">Select TeamAnneal file...</button>
-                        </label>
-                    </p>
-                    <p class="import-config-message"
-                       :class="importConfigResult.state">{{ importConfigResult.message }}</p>
+                                    @click.prevent="null"
+                                    v-if="hasSourceFileData">"{{ filename }}" in use</button>
+                            <button class="button gold"
+                                    @click="swapRecordFile"
+                                    v-if="hasSourceFileData">Swap file</button>
+                        </p>
+                    </div>
+                    <div class="import-section-box"
+                         :class="{ 'imported': hasConfig }">
+                        <h3>Import anneal configuration
+                            <span class="font-weight-normal">(optional)</span>
+                        </h3>
+                        <p>
+                            Select a TeamAnneal configuration
+                            <b>(*.taconfig)</b> or results package
+                            <b>(*.taresults)</b> file:
+                        </p>
+                        <p>
+                            <!-- The use of `v-for` is a fix to force the <input> to be re-rendered -->
+                            <label v-for="x in [configFileInputElKey]"
+                                   :key="x">
+                                <input type="file"
+                                       class="hidden-file-input"
+                                       ref="config-file-input"
+                                       accept=".taconfig,.taresults"
+                                       @change="onConfigFileInputChanged($event)">
+                                <button class="button"
+                                        @click.stop.prevent="openConfigFilePicker">Select TeamAnneal file...</button>
+                            </label>
+                        </p>
+                        <p class="import-config-message"
+                           :class="importConfigResult.state">{{ importConfigResult.message }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -244,6 +246,11 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     background: #ddd;
     border: 1px solid #aaa;
     border-radius: 0.5em;
+}
+
+.import-split-pane-wrapper {
+    display: block;
+    margin: 1rem 0;
 }
 
 .import-split-pane {
