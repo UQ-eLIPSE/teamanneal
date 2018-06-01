@@ -20,7 +20,6 @@ export enum AnnealCreatorGetter {
     IS_STRATA_CONFIG_NAMES_VALID = "Is strata config names valid",
     IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
-    HAS_DATA_IMPORT_MODE_SET = "Has data import mode set",
     VALID_ID_COLUMNS = "Valid ID columns",
     HAS_CONFIG = "Has config set",
     HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
@@ -145,10 +144,6 @@ const getters = {
 
     [G.IS_ANNEAL_REQUEST_IN_PROGRESS](state: State) {
         return AnnealRequestState.isInProgress(state.annealRequest);
-    },
-
-    [G.HAS_DATA_IMPORT_MODE_SET](state: State) {
-        return state.dataImportMode !== undefined;
     },
 
     [G.VALID_ID_COLUMNS](state: State) {

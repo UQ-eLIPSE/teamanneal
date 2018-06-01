@@ -58,8 +58,6 @@ export enum AnnealCreatorAction {
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
     SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
     CLEAR_ANNEAL_REQUEST_STATE = "Clearing anneal request state",
-
-    SET_DATA_IMPORT_MODE = "Setting data import mode",
 }
 
 /** Shorthand for Action enum above */
@@ -127,17 +125,21 @@ const actions = {
         }
 
         // Anneal request state
-        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
+        //
+        // Even though the state defines `annealRequest` to be present always, 
+        // we may be importing TARESULTS files which don't have this, in which 
+        // case we just shove in a blank anneal request object
+        if (state.annealRequest !== undefined) {
+            commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
+        } else {
+            await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
+        }
     },
 
-    async [A.DEHYDRATE](context: Context, { deleteDataImportMode, deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteDataImportMode: boolean, deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
+    async [A.DEHYDRATE](context: Context, { deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
         const state = { ...context.state };
 
         // Clear parts of state object, where requested
-
-        if (deleteDataImportMode) {
-            state.dataImportMode = undefined;
-        }
 
         if (deleteRecordDataSource) {
             // Wipe out everything but partitions
@@ -426,10 +428,6 @@ Delete constraints that use this column and try again.`;
         if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
             await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
         }
-    },
-
-    async [A.SET_DATA_IMPORT_MODE](context: Context, dataImportMode: "new-records-file" | "import-config-file-with-separate-records-file") {
-        commit(context, M.SET_DATA_IMPORT_MODE, dataImportMode);
     },
 };
 

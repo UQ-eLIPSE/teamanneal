@@ -37,7 +37,7 @@ export default class ExportData extends Mixin(AnnealProcessWizardPanel) {
     async exportConfig() {
         // Get state serialised and save as TeamAnneal anneal config file 
         // (just a JSON file internally)
-        const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteDataImportMode: true, deleteRecordDataSource: true, deleteAnnealRequest: true });
+        const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteRecordDataSource: true, deleteAnnealRequest: true });
 
         const fileBlob = new Blob([serialisedContent], { type: "application/json" });
 

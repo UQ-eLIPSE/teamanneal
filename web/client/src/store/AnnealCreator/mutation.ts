@@ -52,8 +52,6 @@ export enum AnnealCreatorMutation {
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 
     SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
-
-    SET_DATA_IMPORT_MODE = "Setting data import mode",
 }
 
 /** Shorthand for Mutation enum above */
@@ -170,10 +168,6 @@ const mutations = {
 
     [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {
         set(state, "annealRequest", annealRequestState);
-    },
-
-    [M.SET_DATA_IMPORT_MODE](state: State, dataImportMode: "new-records-file" | "import-config-file-with-separate-records-file") {
-        set(state, "dataImportMode", dataImportMode);
     },
 };
 

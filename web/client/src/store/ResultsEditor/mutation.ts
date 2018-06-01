@@ -22,6 +22,8 @@ type MutationFunction<M extends ResultsEditorMutation> = typeof mutations[M];
 type Context = ActionContext<State, State>;
 
 export enum ResultsEditorMutation {
+    SHALLOW_MERGE_STATE = "Shallow merge state",
+
     SET_RECORD_DATA = "Setting record data",
     CLEAR_RECORD_DATA = "Clearing record data",
 
@@ -63,6 +65,14 @@ export function commit<M extends ResultsEditorMutation, F extends MutationFuncti
 
 /** Store mutation functions */
 const mutations = {
+    [M.SHALLOW_MERGE_STATE](state: State, newState: Partial<State>) {
+        // TODO: Investigate types of `state` and `newState`
+        // This might be resolved in TypeScript 2.9 with improved `keyof`
+        for (let k in newState) {
+            set((state as Record<string, any>), k, (newState as Record<string, any>)[k]);
+        }
+    },
+
     [M.SET_RECORD_DATA](state: State, recordData: RecordData) {
         set(state, "recordData", recordData);
     },

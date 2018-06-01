@@ -10,7 +10,6 @@ import Welcome from "./components/Welcome.vue";
 import AnnealProcess from "./components/AnnealProcess.vue";
 import ResultsEditor from "./components/ResultsEditor.vue";
 
-import Anneal_Welcome from "./components/anneal-wizard-panels/Welcome.vue";
 import Anneal_ImportData from "./components/anneal-wizard-panels/ImportData.vue";
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
 import Anneal_SelectIdColumn from "./components/anneal-wizard-panels/SelectIdColumn.vue";
@@ -38,14 +37,7 @@ export default () => {
                     {
                         name: "anneal-process",
                         path: "",
-                        redirect: "welcome",
-                    },
-                    {
-                        path: "welcome",
-                        component: Anneal_Welcome,
-                        meta: {
-                            wizardEntry: AnnealProcessWizardEntries.welcome,
-                        },
+                        redirect: "import-data",
                     },
                     {
                         path: "import-data",

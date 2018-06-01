@@ -28,6 +28,7 @@ export enum ResultsEditorAction {
     DEHYDRATE = "Dehydrating module",
 
     HYDRATE_FROM_ANNEAL_CREATOR_STATE = "Hydrating from dehydrated AnnealCreator state",
+    SHALLOW_MERGE_STATE = "Shallow merge state",
 
     RESET_STATE = "Resetting state",
 
@@ -113,17 +114,18 @@ const actions = {
 
         await dispatch(context, A.RESET_STATE, undefined);
 
-        await dispatch(context, A.SET_RECORD_DATA, annealCreatorState.recordData);
-
-        for (let constraint of annealCreatorState.constraintConfig.constraints) {
-            commit(context, M.INSERT_CONSTRAINT, constraint);
-        }
-
-        await dispatch(context, A.SET_STRATA, annealCreatorState.strataConfig.strata);
+        // Copy the creator state wholesale
+        await dispatch(context, A.SHALLOW_MERGE_STATE, annealCreatorState);
 
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
+    },
+
+    async [A.SHALLOW_MERGE_STATE](context: Context, creatorState: AnnealCreatorState) {
+        // Drop anneal request part
+        const { annealRequest, ...state } = creatorState;
+        commit(context, M.SHALLOW_MERGE_STATE, state);
     },
 
     async [A.RESET_STATE](context: Context) {
