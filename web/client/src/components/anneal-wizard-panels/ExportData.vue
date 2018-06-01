@@ -3,10 +3,14 @@
         <div class="wizard-panel-content">
             <h1>Export configuration</h1>
             <p>
-                You can export your TeamAnneal configuration by clicking on the button below. This saves all group parameters and constraints you've entered so far into one file that you can keep or share with others.
+                You can export your TeamAnneal configuration by clicking on the button below.
             </p>
             <p>
-                To use this exported configuration file in future, simply return to the TeamAnneal Creator, and choose to import the configuration file.
+                This saves all group parameters and constraints you've entered so far into one file that you can keep or share with others. Note that this
+                <b>does not</b> include record data.
+            </p>
+            <p>
+                To use this exported configuration file in future, simply return to the TeamAnneal Creator, import both a CSV records file and this configuration file.
             </p>
         </div>
         <div class="wizard-panel-bottom-buttons">
