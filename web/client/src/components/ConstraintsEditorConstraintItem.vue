@@ -427,6 +427,15 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // This can only happen after the above column change has been
         // reconciled and hence sits within a Vue.nextTick().
         this.$nextTick(() => {
+            // Auto-fix bad state when user changes the filter column and the
+            // filter value doesn't fit
+            if (this.showFilterValueAsSelect &&
+                // You must compare the string values or they may not match
+                !this.validFilterValueAsSelectList.some(item => ("" + item.value) === oldFilterValue)) {
+                this.constraintFilterValues = "" + this.validFilterValueAsSelectList[0].value;
+                return;
+            }
+
             const oldColumnType = oldColumnData.type;
             const newColumnType = newColumnData.type;
 
@@ -534,7 +543,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         // the first available option
         if (this.showFilterValueAsSelect &&
             // You must compare the string values or they may not match
-            this.validFilterValueAsSelectList.findIndex(item => item.value === newFilterValue) < 0) {
+            !this.validFilterValueAsSelectList.some(item => ("" + item.value) === newFilterValue)) {
             newFilterValue = "" + this.validFilterValueAsSelectList[0].value;
         }
 
