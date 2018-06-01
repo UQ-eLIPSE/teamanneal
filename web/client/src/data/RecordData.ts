@@ -11,10 +11,10 @@ export interface RecordData {
 
         /** Number of rows in raw file */
         length: number,
-    },
 
-    /** Data organised by column */
-    columns: IColumnData[],
+        /** Data organised by column */
+        columns: IColumnData[],
+    },
 
     /** ID column (ColumnData minimal descriptor) */
     idColumn: IColumnData_MinimalDescriptor | undefined,
@@ -28,8 +28,8 @@ export function init(sourceName: string | undefined = undefined, sourceLength: n
         source: {
             name: sourceName,
             length: sourceLength,
+            columns,
         },
-        columns,
         idColumn,
         partitionColumn,
     };

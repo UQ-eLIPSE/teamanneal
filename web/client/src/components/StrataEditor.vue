@@ -47,7 +47,7 @@ import { concat } from "../util/Array";
 })
 export default class StrataEditor extends Vue {
     get columns() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get strataConfig() {
@@ -104,7 +104,7 @@ export default class StrataEditor extends Vue {
      */
     get strataGroupDistribution() {
         const strata = this.strata;
-        const columns = S.state.recordData.columns;
+        const columns = this.columns;
         const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
         // Run group sizing in each partition, and merge the distributions at

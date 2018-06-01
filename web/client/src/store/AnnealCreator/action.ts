@@ -108,7 +108,7 @@ const actions = {
         // Constraints config -> constraints
         //
         // We also attempt to match up columns here when inserting constraints
-        const columns = context.state.recordData.columns;
+        const columns = context.state.recordData.source.columns;
 
         for (let constraint of state.constraintConfig.constraints) {
             const matchedColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, true)!;
@@ -142,12 +142,12 @@ const actions = {
         // Clear parts of state object, where requested
 
         if (deleteRecordDataSource) {
-            // Wipe out everything but partitions
+            // Wipe out everything but ID and partition columns
             state.recordData = initRecordData(
                 undefined,
                 undefined,
                 undefined,
-                undefined,
+                state.recordData.idColumn,
                 state.recordData.partitionColumn,
             );
         }
@@ -184,7 +184,7 @@ const actions = {
 
         // Attempt to match up old column references in constraints
         const constraints = context.state.constraintConfig.constraints;
-        const columns = context.state.recordData.columns;
+        const columns = context.state.recordData.source.columns;
 
         for (let constraint of constraints) {
             const newColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, false);
@@ -371,7 +371,7 @@ Delete constraints that use this column and try again.`;
         }
 
         // Find index of column and update it
-        const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
+        const index = $state.recordData.source.columns.findIndex(c => ColumnData.Equals(column, c));
         commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);

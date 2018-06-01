@@ -121,7 +121,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get stateColumns() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get validFilterFunctionList() {

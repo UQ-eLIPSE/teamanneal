@@ -52,7 +52,7 @@ const getters = {
     },
 
     [G.HAS_DUPLICATE_COLUMN_NAMES](state: State) {
-        const columnNames = state.recordData.columns.map(column => column.label);
+        const columnNames = state.recordData.source.columns.map(column => column.label);
         const uniqueColumnNames = new Set(columnNames);
         return uniqueColumnNames.size !== columnNames.length;
     },
@@ -122,7 +122,7 @@ const getters = {
         }
 
         // Check that group size calculations are possible over all partitions
-        const columns = state.recordData.columns;
+        const columns = state.recordData.source.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
         try {
@@ -148,7 +148,7 @@ const getters = {
 
     [G.VALID_ID_COLUMNS](state: State) {
         const recordData = state.recordData;
-        const columns = recordData.columns;
+        const columns = recordData.source.columns;
         const recordDataRawLength = recordData.source.length;
 
         // The total number of records is equal to the full raw data array
@@ -186,14 +186,14 @@ const getters = {
             return true;
         }
 
-        const columns = recordData.columns;
+        const columns = recordData.source.columns;
 
         // See if there is a column defined with the partition column's ID
         return columns.some(c => ColumnData.Equals(c, selectedPartitionColumn));
     },
 
     [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
-        const columns = state.recordData.columns;
+        const columns = state.recordData.source.columns;
         const strata = state.strataConfig.strata;
 
         // TODO: Fix with type-safe accessors
@@ -209,7 +209,7 @@ const getters = {
 
     [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State) {
         const strata = state.strataConfig.strata;
-        const columns = state.recordData.columns;
+        const columns = state.recordData.source.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
         // Run group sizing in each partition, and merge the distributions at

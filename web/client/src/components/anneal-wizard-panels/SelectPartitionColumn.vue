@@ -159,7 +159,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 
     get validPartitionColumnOptions() {
         const recordData = S.state.recordData;
-        const columns = recordData.columns;
+        const columns = recordData.source.columns;
         const recordDataRawLength = recordData.source.length;
 
         // No data to even process
@@ -228,7 +228,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
     }
 
     set partitionColumnId(val: string | undefined) {
-        const columns = S.state.recordData.columns;
+        const columns = S.state.recordData.source.columns;
 
         const newPartitionColumn = columns.find(c => c._id === val);
 
