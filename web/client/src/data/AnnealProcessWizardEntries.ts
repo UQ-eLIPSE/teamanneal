@@ -178,10 +178,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
-                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA) &&
-
-                // Disable when processing request
-                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
+                S.get(S.getter.HAS_CONFIG_AND_SOURCE_FILE_DATA)
             );
         },
     },
