@@ -3,18 +3,20 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import { parseFile, trimWhollyEmptyRows } from "../util/CSV";
 import { fillGaps, transpose } from "../util/Array";
 
+export interface RecordDataSource {
+    /** Name of source (file name, etc.) */
+    name: string | undefined,
+
+    /** Number of rows in raw file */
+    length: number,
+
+    /** Data organised by column */
+    columns: IColumnData[],
+}
+
 export interface RecordData {
     /** Data source (file, etc.) */
-    source: {
-        /** Name of source (file name, etc.) */
-        name: string | undefined,
-
-        /** Number of rows in raw file */
-        length: number,
-
-        /** Data organised by column */
-        columns: IColumnData[],
-    },
+    source: RecordDataSource,
 
     /** ID column (ColumnData minimal descriptor) */
     idColumn: IColumnData_MinimalDescriptor | undefined,

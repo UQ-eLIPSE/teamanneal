@@ -215,7 +215,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
                 reader.readAsText(file);
             });
 
-            await S.dispatch(S.action.HYDRATE, { dehydratedState: fileContents, keepExistingRecordData: true, });
+            await S.dispatch(S.action.HYDRATE, { dehydratedState: fileContents, keepExistingRecordDataSource: true, });
 
             this.importConfigResult = { state: "success", message: `"${file.name}" imported successfully` };
         } catch {

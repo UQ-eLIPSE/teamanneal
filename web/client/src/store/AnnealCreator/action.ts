@@ -9,7 +9,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 import { Constraint, Data as IConstraint } from "../../data/Constraint";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
-import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { RecordData, init as initRecordData, RecordDataSource } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
 import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
@@ -54,6 +54,8 @@ export enum AnnealCreatorAction {
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 
+    SET_RECORD_DATA_SOURCE = "Setting record data source",
+
     SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING = "Setting anneal request state to 'not running'",
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
     SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
@@ -79,17 +81,39 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 
 /** Store action functions */
 const actions = {
-    async [A.HYDRATE](context: Context, { dehydratedState, keepExistingRecordData }: { dehydratedState: string, keepExistingRecordData?: boolean }) {
+    async [A.HYDRATE](context: Context, { dehydratedState, keepExistingRecordDataSource }: { dehydratedState: string, keepExistingRecordDataSource?: boolean }) {
+        // Hold reference to existing record data
+        const oldRecordData = context.state.recordData;
+
+        // Feed in the dehydrated state
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
-        // Clear constraints, strata
+        // Clear data
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         // Record data
-        if (!keepExistingRecordData) {
-            commit(context, M.CLEAR_RECORD_DATA, undefined);
-            await dispatch(context, A.SET_RECORD_DATA, state.recordData);
+        if (keepExistingRecordDataSource) {
+            await dispatch(context, A.SET_RECORD_DATA_SOURCE, oldRecordData.source);
+        } else {
+            await dispatch(context, A.SET_RECORD_DATA_SOURCE, state.recordData.source);
+        }
+
+        // Read off latest columns from the state
+        const columns = context.state.recordData.source.columns;
+
+        // Import the partition and ID columns
+        const { partitionColumn, idColumn } = state.recordData;
+
+        if (idColumn !== undefined) {
+            const newIdColumn = ColumnData.MatchOldColumnInNewColumns(columns, idColumn, true)!;
+            dispatch(context, A.SET_RECORD_ID_COLUMN, newIdColumn);
+        }
+
+        if (partitionColumn !== undefined) {
+            const newPartitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, partitionColumn, true)!;
+            dispatch(context, A.SET_RECORD_PARTITION_COLUMN, newPartitionColumn);
         }
 
         // Strata config -> strata
@@ -108,8 +132,6 @@ const actions = {
         // Constraints config -> constraints
         //
         // We also attempt to match up columns here when inserting constraints
-        const columns = context.state.recordData.source.columns;
-
         for (let constraint of state.constraintConfig.constraints) {
             const matchedColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, true)!;
 
@@ -203,6 +225,11 @@ const actions = {
         }
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
+    },
+
+    async [A.SET_RECORD_DATA_SOURCE](context: Context, recordDataSource: RecordDataSource) {
+        // Set the record data source
+        commit(context, M.SET_RECORD_DATA_SOURCE, recordDataSource);
     },
 
     async [A.INIT_RECORD_DATA](context: Context, recordData: RecordData) {
