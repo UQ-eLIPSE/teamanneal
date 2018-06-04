@@ -254,8 +254,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 }
 
 .import-split-pane {
-    display: inline-flex;
-    max-width: 100%;
+    display: flex;
     flex-direction: row;
     align-items: stretch;
     align-content: flex-start;
@@ -277,7 +276,8 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     flex-shrink: 0;
     flex-grow: 1;
 
-    width: 30em;
+    width: 35em;
+    max-width: 35em;
     overflow: hidden;
 }
 
@@ -308,6 +308,10 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
 .import-section-box>h3 {
     margin-top: 0;
+}
+
+.import-section-box .button {
+    margin-bottom: 0.2em;
 }
 
 .panel-bottom-button-align-left {
