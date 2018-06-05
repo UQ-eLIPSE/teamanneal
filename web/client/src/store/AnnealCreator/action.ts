@@ -9,7 +9,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 import { Constraint, Data as IConstraint } from "../../data/Constraint";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
-import { RecordData, init as initRecordData, RecordDataSource } from "../../data/RecordData";
+import { RecordData, RecordDataSource } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
 import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
@@ -17,8 +17,9 @@ import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum }
 import { ListCounterType } from "../../data/ListCounter";
 import { AnnealResponse } from "../../data/AnnealResponse";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import * as AnnealCreatorStoreState from "../../data/AnnealCreatorStoreState";
 
-import { serialiseWithUndefined, deserialiseWithUndefined } from "../../util/Object";
+import { deserialiseWithUndefined } from "../../util/Object";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
@@ -159,26 +160,7 @@ const actions = {
     },
 
     async [A.DEHYDRATE](context: Context, { deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
-        const state = { ...context.state };
-
-        // Clear parts of state object, where requested
-
-        if (deleteRecordDataSource) {
-            // Wipe out everything but ID and partition columns
-            state.recordData = initRecordData(
-                undefined,
-                undefined,
-                undefined,
-                state.recordData.idColumn,
-                state.recordData.partitionColumn,
-            );
-        }
-
-        if (deleteAnnealRequest) {
-            state.annealRequest = AnnealRequestState.initNotRunning();
-        }
-
-        return serialiseWithUndefined(state);
+        return AnnealCreatorStoreState.dehydrate(context.state, deleteAnnealRequest, deleteRecordDataSource);
     },
 
     async [A.RESET_STATE](context: Context) {

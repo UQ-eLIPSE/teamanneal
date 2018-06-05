@@ -16,7 +16,7 @@ import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateSt
 
 import * as AnnealNode from "../../../../common/AnnealNode";
 
-export interface AnnealCreatorState {
+export interface AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
     recordData: RecordData,
 
@@ -26,6 +26,11 @@ export interface AnnealCreatorState {
     /** Configuration of strata  */
     strataConfig: StrataConfig,
 
+    // Placeholder possible property
+    annealRequest?: AnnealRequestState.AnnealRequestState,
+}
+
+export interface AnnealCreatorState extends AnnealCreatorStateSerialisable {
     /** Anneal request/response information */
     annealRequest: AnnealRequestState.AnnealRequestState,
 }

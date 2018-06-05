@@ -53,7 +53,7 @@
         <!-- TODO: Only show this block when anneal config detected -->
         <div class="export-option-block">
             <h3>Export TeamAnneal configuration</h3>
-            <p>Select this option to export only your anneal configuration as set in the TeamAnneal Creator.</p>
+            <p>Select this option to export only the anneal configuration that was used to originally generate the results shown here.</p>
             <p>This file does not contain any record data or annealed teams, but you can use this file to store and share your original set of parameters for a future anneal.</p>
             <p>This file can only be opened within the TeamAnneal application.</p>
             <button class="button small secondary"
@@ -209,9 +209,13 @@ export default class ExportFile extends Vue {
         unparseFile(rows, `${sourceFileName}.teamanneal.csv`);
     }
 
-    onExportConfigButtonClick() {
-        // TODO: Implement exporting
-        throw new Error("Not implemented");
+    async onExportConfigButtonClick() {
+        // Export only anneal config
+        const serialisedContent = await S.dispatch(S.action.DEHYDRATE_ANNEAL_CONFIG, { deleteRecordDataSource: true, deleteAnnealRequest: true });
+
+        const fileBlob = new Blob([serialisedContent], { type: "application/json" });
+
+        FileSaver.saveAs(fileBlob, `export-${Date.now()}.taconfig`, true);
     }
 
     /** 

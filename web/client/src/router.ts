@@ -18,7 +18,7 @@ import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/Desig
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
 import Anneal_RunAnneal from "./components/anneal-wizard-panels/RunAnneal.vue";
-import Anneal_ExportData from "./components/anneal-wizard-panels/ExportData.vue";
+import Anneal_ExportConfiguration from "./components/anneal-wizard-panels/ExportConfiguration.vue";
 
 Vue.use(VueRouter);
 
@@ -99,7 +99,7 @@ export default () => {
                     {
                         path: "export-data",
                         name: "anneal-export-data",
-                        component: Anneal_ExportData,
+                        component: Anneal_ExportConfiguration,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.exportData,
                         },

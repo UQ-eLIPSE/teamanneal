@@ -13,6 +13,7 @@ import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { Stratum } from "../../data/Stratum";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 import { FunctionParam2 } from "../../data/FunctionParam2";
+import * as AnnealCreatorStoreState from "../../data/AnnealCreatorStoreState";
 
 import { RecordElement } from "../../../../common/Record";
 
@@ -27,6 +28,7 @@ export enum ResultsEditorAction {
     HYDRATE = "Hydrating module",
     DEHYDRATE = "Dehydrating module",
 
+    DEHYDRATE_ANNEAL_CONFIG = "Dehydrate only anneal config",
     HYDRATE_FROM_ANNEAL_CREATOR_STATE = "Hydrating from dehydrated AnnealCreator state",
     SHALLOW_MERGE_STATE = "Shallow merge state",
 
@@ -104,6 +106,10 @@ const actions = {
         }
 
         return serialiseWithUndefined(state);
+    },
+
+    async [A.DEHYDRATE_ANNEAL_CONFIG](context: Context, { deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
+        return AnnealCreatorStoreState.dehydrate(context.state, deleteAnnealRequest, deleteRecordDataSource);
     },
 
     async [A.HYDRATE_FROM_ANNEAL_CREATOR_STATE](context: Context, dehydratedState: string) {
