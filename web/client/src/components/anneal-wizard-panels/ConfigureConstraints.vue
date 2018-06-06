@@ -43,7 +43,7 @@
                     </tbody>
                 </table>
                 <p>This means that a "must have" constraint is considered with 500 times greater importance than a "may have" constraint.</p>
-    
+
                 <h2>Constraint applicability to groups only of a certain size</h2>
                 <p>In general, constraints will apply to all groups being formed. This is indicated in each constraint by "when
                     <i>group</i> has
@@ -59,8 +59,8 @@
         </div>
         <div class="wizard-panel-bottom-buttons">
             <button class="button"
-                    @click="onAnnealButtonClick"
-                    :disabled="isAnnealButtonDisabled">Anneal</button>
+                    @click="emitWizardNavNext"
+                    :disabled="isWizardNavNextDisabled">Continue</button>
         </div>
     </div>
 </template>
@@ -71,11 +71,8 @@
 import { Component, Mixin } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
-import { AnnealRequest } from "../../data/AnnealRequest";
-import { State } from "../../data/State";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
-import { StoreState } from "../StoreState";
 
 import ConstraintsEditor from "../ConstraintsEditor.vue";
 
@@ -84,30 +81,10 @@ import ConstraintsEditor from "../ConstraintsEditor.vue";
         ConstraintsEditor,
     },
 })
-export default class ConfigureConstraints extends Mixin(StoreState, AnnealProcessWizardPanel) {
+export default class ConfigureConstraints extends Mixin(AnnealProcessWizardPanel) {
     // Required by AnnealProcessWizardPanel
     // Defines the wizard step
     readonly thisWizardStep = AnnealProcessWizardEntries.configureConstraints;
-
-    get isAnnealButtonDisabled() {
-        // If no constraints, the anneal button is disabled
-        if (!State.HasConstraints(this.state)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    async onAnnealButtonClick() {
-        // Convert state to anneal request input 
-        const annealRequest = AnnealRequest.InitFromState(this.state);
-    
-        // Fire off the anneal request
-        await this.$store.dispatch("setAnnealRequest", annealRequest);
-
-        // Go to next step regardless of what happens at this point
-        this.emitWizardNavNext();
-    }
 }
 </script>
 

@@ -41,30 +41,30 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin, Prop, p } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
-import { Data as IStratum } from "../data/Stratum";
+import { Stratum } from "../data/Stratum";
 import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter, CountCondition as IConstraint_CountCondition } from "../data/Constraint";
 import { ColumnData } from "../data/ColumnData";
 
-import { StoreState } from "./StoreState";
+import { AnnealCreator as S } from "../store";
 
 @Component({
     components: {
         ConstraintsEditorConstraintItem,
     },
 })
-export default class ConstraintsEditorStratum extends Mixin(StoreState) {
+export default class ConstraintsEditorStratum extends Vue {
     // Props
-    @Prop stratum = p<IStratum>({ required: true, });
+    @Prop stratum = p<Stratum>({ required: true, });
     @Prop stratumConstraints = p<ReadonlyArray<IConstraint>>({ type: Array, required: true, });
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
     @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: false, default: () => [] });
 
     async addNewConstraint() {
-        const columnData = this.state.recordData.columns;
+        const columnData = S.state.recordData.columns;
 
         // Pick random column and random default value
         const defaultColumnIndex = (Math.random() * columnData.length) >>> 0;
@@ -105,7 +105,7 @@ export default class ConstraintsEditorStratum extends Mixin(StoreState) {
 
         const newConstraint = Constraint.Init(constraintType, constraintWeight, constraintStratum, constraintFilter, constraintCondition);
 
-        await this.$store.dispatch("upsertConstraint", newConstraint);
+        await S.dispatch(S.action.UPSERT_CONSTRAINT, newConstraint);
     }
 }
 </script>

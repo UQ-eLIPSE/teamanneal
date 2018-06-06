@@ -1,7 +1,7 @@
 import * as Constraint from "../../../common/Constraint";
 import * as Record from "../../../common/Record";
 
-import * as ColumnInfo from "../data/ColumnInfo";
+import * as ColumnInfo from "./ColumnInfo";
 
 export abstract class AbstractConstraint {
     public constraintDef: Readonly<Constraint.Desc>;

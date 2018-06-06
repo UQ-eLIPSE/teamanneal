@@ -24,7 +24,7 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import { Data as IConstraint } from "../data/Constraint";
 import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
-import { Data as IStratum } from "../data/Stratum";
+import { Stratum } from "../data/Stratum";
 import ConstraintAcceptabilityCard from "./ConstraintAcceptabilityCard.vue";
 
 type LimitConstraintPassCountMap = { [constraintId: string]: { pass: number, total: number } };
@@ -40,7 +40,7 @@ export default class ConstraintOverview extends Vue {
 
     @Prop constraints = p<IConstraint[]>({ required: true });
 
-    @Prop strata = p<IStratum[]>({ required: true });
+    @Prop strata = p<Stratum[]>({ required: true });
 
     /** Map of constraint to number of groups passing that constraint */
     @Prop limitConstraintPassCount = p<LimitConstraintPassCountMap>({ required: false });
@@ -86,7 +86,7 @@ export default class ConstraintOverview extends Vue {
         }, {});
     }
 
-    getConstraintsArrayByStratum(stratum: IStratum) {
+    getConstraintsArrayByStratum(stratum: Stratum) {
         return this.constraints.filter((constraint) => constraint.stratum === stratum._id);
     }
 

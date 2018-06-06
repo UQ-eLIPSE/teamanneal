@@ -1,3 +1,6 @@
+import * as Record from "../../../common/Record";
+import * as AnnealNode from "../../../common/AnnealNode";
+
 export class AnnealStratumNode {
     private readonly id: string;
 
@@ -129,5 +132,76 @@ export class AnnealStratumNode {
         if ((node.offset + node.size) > (this.offset + this.size)) { return false; }
 
         return true;
+    }
+
+    /**
+     * Function does three things:
+     * - Generate the stratum nodes,
+     * - Set stratum nodes into the node to stratum node map,
+     * - Sets record pointers into record pointer array.
+     * 
+     * You must supply an empty map for `sizeMap`, `annealNodeToStratumNodeMap`, and
+     * empty nested arrays for `nodesPerStratum`.
+     * 
+     * @param pointerArrayWorkingSet The working set Uint32Array typed array
+     * @param recordIdColumn Array with just the ID values of the records, in the order that the records appear
+     * @param sizeMap Map between node and its size (will be filled after running this function)
+     * @param annealNodeToStratumNodeMap Map between anneal node (from the request) to stratum node (used internally in the anneal) (will be filled after running this function)
+     * @param nodesPerStratum Array holding the stratum nodes per stratum (will be filled after running this function)
+     * @param node The node being operated on
+     * @param stratumNumber The stratum number of the node being operated on
+     * @param offset The pointer array offset being kept track of
+     */
+    public static generateStratumNodes(pointerArrayWorkingSet: Uint32Array, recordIdColumn: ReadonlyArray<Record.RecordElement>, sizeMap: WeakMap<AnnealNode.Node, number>, annealNodeToStratumNodeMap: WeakMap<AnnealNode.Node, AnnealStratumNode>, nodesPerStratum: ReadonlyArray<AnnealStratumNode[]>, node: AnnealNode.Node, stratumNumber: number, offset: number) {
+        // Terminal case when no children are present
+        if (node.type === "stratum-records") {
+            // Convert records to their respective pointer values
+            const recordPointers =
+                node.recordIds.map((recordId) => {
+                    // Pointer value is just the index of this particular record in
+                    // the larger set of records
+                    const pointerValue = recordIdColumn.indexOf(recordId);
+
+                    if (pointerValue < 0) {
+                        throw new Error(`Could not find node child record ID "${recordId}" in provided record ID column array`);
+                    }
+
+                    return pointerValue;
+                });
+
+            // Write the pointers for the above records into pointer array at offset
+            pointerArrayWorkingSet.set(recordPointers, offset);
+
+            return;
+        }
+
+        // Copy out working copy of offset for the children loop
+        let workingOffset = offset;
+
+        const children = node.children;
+
+        children.forEach((childNode) => {
+            // Get the precalculated sizes of each node from the given map
+            const size = sizeMap.get(childNode);
+
+            if (size === undefined) {
+                throw new Error("Node size not found in precalculated map");
+            }
+
+            // Generate stratum node, put into map, and push into array
+            const stratumNode = new AnnealStratumNode(childNode._id, pointerArrayWorkingSet.buffer, workingOffset, size);
+            annealNodeToStratumNodeMap.set(childNode, stratumNode);
+            nodesPerStratum[stratumNumber].push(stratumNode);
+
+            // Recurse down
+            //
+            // Note that stratum number value goes down because strata are arranged 
+            // [lowest, ..., highest] while we're recursing down a tree in
+            // [highest, ..., lowest] order;
+            AnnealStratumNode.generateStratumNodes(pointerArrayWorkingSet, recordIdColumn, sizeMap, annealNodeToStratumNodeMap, nodesPerStratum, childNode, stratumNumber - 1, workingOffset);
+
+            // Update offset for next child
+            workingOffset += size;
+        });
     }
 }

@@ -4,21 +4,25 @@
             <ul>
                 <li v-if="isPartitionColumnSet">
                     <StrataEditorStratumItem :stratum="partitionStratumShimObject"
+                                             :stratumNamingConfig="partitionStratumShimObject"
                                              :childUnit="strata[0].label"
                                              :isPartition="true"></StrataEditorStratumItem>
                 </li>
                 <li v-for="(stratum, i) in strata"
                     :key="stratum._id">
                     <StrataEditorStratumItem :stratum="stratum"
+                                             :stratumNamingConfig="getStratumNamingConfig(stratum._id)"
                                              :childUnit="strata[i+1] ? strata[i+1].label : 'person'"
                                              :groupSizes="strataGroupDistribution[i]"
                                              :isPartition="false"
-                                             :partitionColumnData="state.recordData.partitionColumn"
+                                             :partitionColumnData="partitionColumnDescriptor"
                                              :namingContexts="strataNamingContexts[i]"></StrataEditorStratumItem>
                 </li>
             </ul>
         </div>
-        <div class="combined-name-container">
+        <!-- NOTE: Combined names disabled due to new GroupNodes not being compatible with it -->
+        <!-- TODO: Re-enable combined names once this issue is fixed -->
+        <!-- <div class="combined-name-container">
             <h2>Combined group name format</h2>
             <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
             <p>Use the following placeholders to insert each group level's name values:</p>
@@ -42,42 +46,56 @@
                 For example:
                 <i>{{ groupCombinedNameExample }}</i>
             </p>
-        </div>
+        </div> -->
     </div>
 </template>
 
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Component, Mixin } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import StrataEditorStratumItem from "./StrataEditorStratumItem.vue";
 
-import { Stratum, Data as IStratum } from "../data/Stratum";
 import { ColumnData } from "../data/ColumnData";
-import { Partition } from "../data/Partition";
+import * as Stratum from "../data/Stratum";
+import * as StratumSize from "../data/StratumSize";
+import * as StratumNamingConfig from "../data/StratumNamingConfig";
+import * as Partition from "../data/Partition";
+
+import { AnnealCreator as S } from "../store";
 
 import { concat } from "../util/Array";
 import { replaceAll } from "../util/String";
-
-import { StoreState } from "./StoreState";
 
 @Component({
     components: {
         StrataEditorStratumItem,
     },
 })
-export default class StrataEditor extends Mixin(StoreState) {
+export default class StrataEditor extends Vue {
     get columns() {
-        return this.state.recordData.columns;
+        return S.state.recordData.columns;
+    }
+
+    get strataConfig() {
+        return S.state.strataConfig;
     }
 
     get strata() {
-        return this.state.annealConfig.strata;
+        return this.strataConfig.strata;
+    }
+
+    getStratumNamingConfig(stratumId: string) {
+        return StratumNamingConfig.getStratumNamingConfig(this.strataConfig, stratumId);
+    }
+
+    get partitionColumnDescriptor() {
+        return S.state.recordData.partitionColumn;
     }
 
     get partitionColumn() {
-        const partitionColumnDesc = this.state.recordData.partitionColumn;
+        const partitionColumnDesc = this.partitionColumnDescriptor;
 
         if (partitionColumnDesc === undefined) {
             return undefined;
@@ -90,27 +108,22 @@ export default class StrataEditor extends Mixin(StoreState) {
      * Determines if a partition column is set
      */
     get isPartitionColumnSet() {
-        return this.state.recordData.partitionColumn !== undefined;
+        return this.partitionColumnDescriptor !== undefined;
     }
 
     /**
      * Returns a shim object that projects the partition as stratum
      */
     get partitionStratumShimObject() {
-        const partitionColumn = this.state.recordData.partitionColumn;
+        const partitionColumn = this.partitionColumnDescriptor;
 
         if (partitionColumn === undefined) {
             throw new Error("No partition column set");
         }
 
         const shimLabel = `Partition (${partitionColumn.label})`;
-        const shimSize = {
-            min: 0,
-            ideal: 0,
-            max: 0,
-        };
 
-        return Stratum.Init(shimLabel, shimSize, "_GLOBAL");
+        return Stratum.init(shimLabel);
     }
 
     /**
@@ -119,10 +132,10 @@ export default class StrataEditor extends Mixin(StoreState) {
      */
     get strataGroupDistribution() {
         const strata = this.strata;
-        const columns = this.state.recordData.columns;
-        const partitionColumnDescriptor = this.state.recordData.partitionColumn;
+        const columns = S.state.recordData.columns;
+        const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
-        const partitions = Partition.InitManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
 
         // Run group sizing in each partition, and merge the distributions at
         // the end
@@ -131,8 +144,8 @@ export default class StrataEditor extends Mixin(StoreState) {
                 partitions
                     .map((partition) => {
                         // Generate group sizes for each partition
-                        const numberOfRecordsInPartition = Partition.GetNumberOfRecords(partition);
-                        return Stratum.GenerateStrataGroupSizes(strata, numberOfRecordsInPartition);
+                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                        return StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
                     })
                     .reduce((carry, incomingDistribution) => {
                         // Merge strata group size distribution arrays
@@ -171,8 +184,8 @@ export default class StrataEditor extends Mixin(StoreState) {
     get strataNamingContexts() {
         const strata = this.strata;
 
-        const accumulatedStrata: IStratum[] = [];
-        const outputList: IStratum[][] = [];
+        const accumulatedStrata: Stratum.Stratum[] = [];
+        const outputList: Stratum.Stratum[][] = [];
 
         strata.forEach((stratum) => {
             // Copy the accumulated strata array into the output list
@@ -207,7 +220,7 @@ export default class StrataEditor extends Mixin(StoreState) {
     }
 
     get groupCombinedNameExample() {
-        let combinedName = this.state.annealConfig.namingConfig.combined.format;
+        let combinedName = S.state.nodeNamingConfig.combined.format;
 
         if (combinedName === undefined) {
             return undefined;
@@ -224,7 +237,8 @@ export default class StrataEditor extends Mixin(StoreState) {
 
         // Set stratum names
         this.strata.forEach((stratum) => {
-            const randomStratumName = Stratum.GenerateRandomExampleName(stratum);
+            const stratumNamingConfig = this.getStratumNamingConfig(stratum._id);
+            const randomStratumName = StratumNamingConfig.generateRandomExampleName(stratumNamingConfig);
 
             combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
         });
@@ -233,7 +247,7 @@ export default class StrataEditor extends Mixin(StoreState) {
     }
 
     get groupCombinedNameFormat() {
-        let format = this.state.annealConfig.namingConfig.combined.format;
+        let format = S.state.nodeNamingConfig.combined.format;
 
         if (format === undefined) {
             return undefined;
@@ -252,7 +266,7 @@ export default class StrataEditor extends Mixin(StoreState) {
 
     set groupCombinedNameFormat(newValue: string | undefined) {
         if (newValue === undefined || newValue.trim().length === 0) {
-            this.$store.dispatch("setCombinedNameFormatByUser", undefined);
+            S.dispatch(S.action.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, undefined);
             return;
         }
 
@@ -264,7 +278,7 @@ export default class StrataEditor extends Mixin(StoreState) {
         // Internally we use _PARTITION to represent the partition column
         newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
 
-        this.$store.dispatch("setCombinedNameFormatByUser", newValue);
+        S.dispatch(S.action.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, newValue);
     }
 }
 </script>

@@ -36,15 +36,13 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import * as Store from "../store";
+import { ResultsEditor as S, AnnealCreator as S_AnnealCreator } from "../store";
 
 import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
 import { MenuItem } from "../data/ResultsEditorMenuBar";
 import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
 import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
-
-import { set } from "../util/Vue";
 
 import { Record, RecordElement } from "../../../common/Record";
 import { LimitConstraintSatisfaction } from "../data/Constraint";
@@ -126,12 +124,12 @@ export default class ResultsEditor extends Vue {
 
     /** New reference to module state */
     get state() {
-        return Store.ResultsEditor.state;
+        return S.state;
     }
 
     // TODO: Remove the need for getting creator state, replace with result editor's own state
     get creatorState() {
-        return Store.store.state;
+        return S_AnnealCreator.state;
     }
 
     get recordData() {
@@ -157,12 +155,12 @@ export default class ResultsEditor extends Vue {
     get constraintsArray() {
         //TODO: Temporary, replace with Result Editor's own state when constraints are available in state store
         // return this.state.constraintConfig.constraints;
-        return this.creatorState.annealConfig.constraints;
+        return this.creatorState.constraintConfig.constraints;
     }
 
     //TODO: Replace with Result editor's state when ready
     get annealResults() {
-        const responseContent = this.creatorState.annealResponse!.content as any;
+        const responseContent = (this.creatorState.annealRequest as any).response;
         const responseData = responseContent.data as any;
 
         // We're working on the presumption that we definitely have results
@@ -224,14 +222,14 @@ export default class ResultsEditor extends Vue {
     /** A map of nodes or records which are to be styled in the spreadsheet */
     get nodeStyles() {
         // When we have an active side panel tool open
-        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
+        const activeSidePanelTool = S.state.sideToolArea.activeItem;
 
         if (activeSidePanelTool === undefined) {
             return;
         }
 
         // TODO: Proper UI design for this feature
-        const nodeStyles: Map<GroupNode | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
+        const nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> = new Map();
 
         switch (activeSidePanelTool.name) {
             case "move": {
@@ -299,7 +297,7 @@ export default class ResultsEditor extends Vue {
 
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         // When we have an active side panel tool open
-        const activeSidePanelTool = Store.ResultsEditor.state.sideToolArea.activeItem;
+        const activeSidePanelTool = S.state.sideToolArea.activeItem;
 
         if (activeSidePanelTool === undefined) {
             return;
@@ -325,7 +323,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(moveToolData, "sourcePerson", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
@@ -345,7 +343,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the node like
                         // the path?
-                        set(moveToolData, "targetGroup", targetNode);
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNode._id });
 
                         return;
                     }
@@ -380,7 +378,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(swapToolData, "personA", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personA: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
@@ -406,7 +404,7 @@ export default class ResultsEditor extends Vue {
 
                         // TODO: Encode richer information about the record, and
                         // not just the ID?
-                        set(swapToolData, "personB", { node: targetItemParent.node, id: targetItem.recordId });
+                        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: targetItemParent.node._id, id: targetItem.recordId } });
 
                         return;
                     }
@@ -430,8 +428,8 @@ export default class ResultsEditor extends Vue {
     }
 
     get numberOfPassingGroupsPerConstraintMap() {
-        const partitionNodeArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_PARTITION_NODE_MAP) as { [nodeId: string]: string[] };
-        const nodeRecordsArrayMap = Store.ResultsEditor.get(Store.ResultsEditor.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP) as GroupNodeRecordArrayMap;
+        const partitionNodeArrayMap = S.get(S.getter.GET_PARTITION_NODE_MAP) as { [nodeId: string]: string[] };
+        const nodeRecordsArrayMap = S.get(S.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP) as GroupNodeRecordArrayMap;
         return LimitConstraintSatisfaction.getNumberOfPassingGroupsPerConstraint(this.constraintsArray,
             nodeRecordsArrayMap, partitionNodeArrayMap, this.generateNodeStratumMap, this.recordLookupMap,
             this.columns);

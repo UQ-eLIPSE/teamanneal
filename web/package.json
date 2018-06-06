@@ -38,9 +38,9 @@
     "css-loader": "0.28.10",
     "file-loader": "1.1.11",
     "image-webpack-loader": "4.1.0",
-    "jest": "22.4.2",
+    "jest": "19.0.2",
     "style-loader": "0.20.2",
-    "ts-jest": "22.4.1",
+    "ts-jest": "19.0.14",
     "ts-loader": "4.0.1",
     "typescript": "2.8.1",
     "vue-loader": "14.2.1",
@@ -49,6 +49,7 @@
     "webpack-cli": "2.0.10"
   },
   "dependencies": {
+    "@types/redis": "2.8.5",
     "axios": "0.16.2",
     "body-parser": "1.17.1",
     "es6-promise": "4.1.0",

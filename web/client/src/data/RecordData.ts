@@ -1,4 +1,7 @@
-import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
+import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
+
+import { parseFile, trimWhollyEmptyRows } from "../util/CSV";
+import { fillGaps, transpose } from "../util/Array";
 
 export interface RecordData {
     /** Data source (file, etc.) */
@@ -20,14 +23,45 @@ export interface RecordData {
     partitionColumn: IColumnData_MinimalDescriptor | undefined,
 }
 
-export function initNew() {
-    return {
+export function init(sourceName: string | undefined = undefined, sourceLength: number = 0, columns: IColumnData[] = [], idColumn: IColumnData_MinimalDescriptor | undefined = undefined, partitionColumn: IColumnData_MinimalDescriptor | undefined = undefined) {
+    const obj: RecordData = {
         source: {
-            name: undefined,
-            length: 0,
+            name: sourceName,
+            length: sourceLength,
         },
-        columns: [],
-        idColumn: undefined,
-        partitionColumn: undefined,
-    } as RecordData;
+        columns,
+        idColumn,
+        partitionColumn,
+    };
+
+    return obj;
+}
+
+export async function parseFileToRecordData(file: File) {
+    const parseResult = await parseFile(file);
+    const data: string[][] = parseResult.data;
+
+    // Trim wholly empty rows encountered when people use Excel or the like to
+    // generate CSVs and not realise they filled in blank information
+    const rows = trimWhollyEmptyRows(data);
+
+    // Fill gaps in file data array to make it rectangular
+    // Note that this operates in place!
+    fillGaps(rows);
+
+    // Convert rows with strings into columns
+    const columns =
+        transpose(rows)    // Transpose rows into columns
+            .map((columnValues) => {
+                // First value is always assumed to be the column label 
+                // (the header string)
+                const label = "" + columnValues.shift();
+
+                // Initialise a new ColumnData object
+                // Remember that the shift pops off the header value from 
+                // the column values
+                return ColumnData.Init(columnValues, label);
+            });
+
+    return init(file.name, rows.length, columns);
 }

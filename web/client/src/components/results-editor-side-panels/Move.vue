@@ -29,7 +29,19 @@
                         @click="clearTargetGroup">Clear</button>
             </div>
         </div>
+        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
+             class="test-permutations">
+            <ul>
+                <li v-for="x in sortedTestPermutationData"
+                    :key="x.toNode"
+                    @click="setTargetGroup(x.toNode)">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
+            </ul>
+            <button class="button secondary small"
+                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
+        </div>
         <div class="form-block">
+            <button class="button secondary small"
+                    @click="onGetSuggestionsButtonClick">Get suggestions</button>
             <button class="button secondary small">Advanced...</button>
         </div>
         <div class="form-block"
@@ -43,17 +55,26 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p } from "av-ts";
+import { Vue, Component } from "av-ts";
 
-import * as Store from "../../store";
+import { ResultsEditor as S } from "../../store";
 
 import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
+import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
-import { set, del } from "../../util/Vue";
+import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
 
 @Component
 export default class Move extends Vue {
-    @Prop data = p<MoveSidePanelToolData>({ required: true, });
+    /** Token for each run of the test permutation request */
+    p_testPermutationRequestToken: string | undefined = undefined;
+    
+    /** Data returned from test permutation request */
+    p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
+
+    get data() {
+        return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;
+    }
 
     get sourcePersonFieldBlockClasses() {
         return {
@@ -72,21 +93,37 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        return this.data.targetGroup && this.data.targetGroup._id;
+        return this.data.targetGroup && this.data.targetGroup;
     }
 
-    setCursor(target: "sourcePerson" | "targetGroup" | undefined) {
-        set(this.data, "cursor", target);
+    get sortedTestPermutationData() {
+        const data = this.p_testPermutationData;
+
+        if (data === undefined) {
+            return undefined;
+        }
+
+        // This sorts in reverse order: higher satisfactions are located at the 
+        // start index
+        return [...data].sort((a, b) => (b.satisfaction.value / b.satisfaction.max) - (a.satisfaction.value / a.satisfaction.max));
     }
 
-    clearSourcePerson() {
-        del(this.data, "sourcePerson");
-        this.setCursor("sourcePerson");
+    get nodeToNameMap() {
+        return S.state.groupNode.nameMap;
     }
 
-    clearTargetGroup() {
-        del(this.data, "targetGroup");
-        this.setCursor("targetGroup");
+    async setCursor(target: "sourcePerson" | "targetGroup" | undefined) {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { cursor: target });
+    }
+
+    async clearSourcePerson() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { sourcePerson: undefined });
+        await this.setCursor("sourcePerson");
+    }
+
+    async clearTargetGroup() {
+        await S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: undefined });
+        await this.setCursor("targetGroup");
     }
 
     async commitMove() {
@@ -97,10 +134,72 @@ export default class Move extends Vue {
             throw new Error("Underspecified move operation");
         }
 
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
+        await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
 
-        // TODO: Review whether we should close the move side panel or not
-        await Store.ResultsEditor.dispatch(Store.ResultsEditor.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+        // TODO: Review whether we should close the side panel or not
+        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+    }
+
+    async fetchSatisfactionTestPermutationData() {
+        const sourcePerson = this.data.sourcePerson;
+
+        if (sourcePerson === undefined) {
+            return;
+        }
+
+        const { node: nodeId, id: recordId } = sourcePerson;
+
+        // Need to clip anneal nodes to just the partition containing the person
+        // to be moved around
+        //
+        // NOTE: If in future move test operations support multiple partitions,
+        // then this should be removed and no filter applied to anneal nodes
+        const rootNodeToChildNodesMap = S.get(S.getter.GET_PARTITION_NODE_MAP);
+        const rootNodeId = Object.keys(rootNodeToChildNodesMap).find(id => rootNodeToChildNodesMap[id].indexOf(nodeId) > -1)
+
+        // Build up request body
+
+        // Only get the partition/root node that this node is sitting under
+        const annealNodes = S.get(S.getter.GET_COMMON_ANNEALNODE_ARRAY).filter(node => node._id === rootNodeId);
+
+        const columns = S.get(S.getter.GET_COMMON_COLUMN_DESCRIPTOR_ARRAY);
+        const records = S.get(S.getter.GET_RECORD_COOKED_VALUE_ROW_ARRAY);
+        const strata = S.get(S.getter.GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER);
+        const constraints = S.get(S.getter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY);
+        const operation = { fromNode: nodeId, recordId, };
+
+        const requestBody = SatisfactionTestPermutationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes, operation);
+        const { request, token } = SatisfactionTestPermutationRequest.createRequest("move-record", requestBody);
+
+        // Set this component's token reference so that we can identify if 
+        // there's been further requests down the line
+        this.p_testPermutationRequestToken = token;
+
+        // Wait for response
+        const response = await request;
+
+        // Check that the token is the same as before
+        if (this.p_testPermutationRequestToken !== token) {
+            // Ignore if there has been a further test permutation request that
+            // was fired after
+            return;
+        }
+
+        // Set response data
+        this.p_testPermutationData = response.data;
+    }
+
+    clearSatisfactionTestPermutationData() {
+        this.p_testPermutationData = undefined;
+    }
+
+    onGetSuggestionsButtonClick() {
+        this.clearSatisfactionTestPermutationData();
+        this.fetchSatisfactionTestPermutationData();
+    }
+
+    setTargetGroup(targetNodeId: string) {
+        S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNodeId });
     }
 }
 </script>
