@@ -152,9 +152,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get constraintsArray() {
-        //TODO: Temporary, replace with Result Editor's own state when constraints are available in state store
-        // return this.state.constraintConfig.constraints;
-        return this.creatorState.constraintConfig.constraints;
+        return this.state.constraintConfig.constraints;
     }
 
     //TODO: Replace with Result editor's state when ready
