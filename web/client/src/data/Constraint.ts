@@ -418,7 +418,7 @@ export namespace ConstraintSentence {
      * A generic function used for finding array items for `value-text` maps in `ConstraintPhraseMaps` (see import)
      */
     function findItemInList<T extends object, U extends keyof T>(list: T[], property: U, value: T[U]) {
-        return list.find((listItem: any) => listItem[property] === value);
+        return list.find(listItem => listItem[property] === value);
     }
 }
 
