@@ -23,7 +23,7 @@ export const calculateSatisfaction: express.RequestHandler =
             const annealRequest: ToServerAnnealRequest.Root = req.body;
             const { strata, constraints, recordData, annealNodes } = annealRequest;
 
-            // Map out the satisfaction objects per node
+            // Map out the satisfaction objects per root node (partition)
             const satisfactionObjects =
                 annealNodes.map(annealNode => generateSatisfactionMapFromAnnealRequest(annealNode, recordData, strata, constraints));
 
