@@ -10,7 +10,7 @@
                        href="#"
                        @click.prevent="toggleHelp">Need help?</a>
                 </p>
-                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Clear File" and try again.</p>
+                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Swap File" and try again.</p>
                 <div class="help-box"
                      v-if="showHelp">
                     <h2>Choosing column types ("text", "number")</h2>
