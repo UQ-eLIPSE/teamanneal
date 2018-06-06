@@ -58,7 +58,6 @@ import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
 import Print from "./results-editor-side-panels/Print.vue";
 import Help from "./results-editor-side-panels/Help.vue";
-import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
@@ -428,8 +427,8 @@ export default class ResultsEditor extends Vue {
     }
 
     get numberOfPassingGroupsPerConstraintMap() {
-        const partitionNodeArrayMap = S.get(S.getter.GET_PARTITION_NODE_MAP) as { [nodeId: string]: string[] };
-        const nodeRecordsArrayMap = S.get(S.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP) as GroupNodeRecordArrayMap;
+        const partitionNodeArrayMap = S.get(S.getter.GET_PARTITION_NODE_MAP);
+        const nodeRecordsArrayMap = S.get(S.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
         return LimitConstraintSatisfaction.getNumberOfPassingGroupsPerConstraint(this.constraintsArray,
             nodeRecordsArrayMap, partitionNodeArrayMap, this.generateNodeStratumMap, this.recordLookupMap,
             this.columns);

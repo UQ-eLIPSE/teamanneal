@@ -51,7 +51,7 @@ function get<G extends ResultsEditorGetter, F extends GetterFunction<G>>(getters
 /** Store getter functions */
 const getters = {
     [G.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP](state: State) {
-        const allGroupNodesRecordsMap: any = {};
+        const allGroupNodesRecordsMap: GroupNodeRecordArrayMap = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             root.children.forEach((child) => {
@@ -62,7 +62,7 @@ const getters = {
         return allGroupNodesRecordsMap;
     },
     [G.GET_PARTITION_NODE_MAP](state: State) {
-        const partitionToNodeMap: any = {};
+        const partitionToNodeMap: { [nodeId: string]: string[] } = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             partitionToNodeMap[root._id] = [];
