@@ -60,7 +60,7 @@ export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
      * An array for the <select /> menu of all the possible ID columns to choose 
      * from.
      */
-get possibleIdColumns() {
+    get possibleIdColumns() {
         return S.get(S.getter.VALID_ID_COLUMNS)
             .map((column) => ({
                 text: column.label,
