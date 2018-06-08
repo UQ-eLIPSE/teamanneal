@@ -121,7 +121,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get columns() {
-        return this.recordData.columns;
+        return this.recordData.source.columns;
     }
 
     get strata() {

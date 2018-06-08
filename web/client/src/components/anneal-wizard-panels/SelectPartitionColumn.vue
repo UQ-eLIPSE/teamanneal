@@ -153,7 +153,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 
     get possiblePartitionColumns() {
         const recordData = S.state.recordData;
-        const columns = recordData.columns;
+        const columns = recordData.source.columns;
         const recordDataRawLength = recordData.source.length;
 
         // No data to even process
