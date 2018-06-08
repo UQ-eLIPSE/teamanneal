@@ -7,8 +7,6 @@ import * as AnnealRequestState from "../../data/AnnealRequestState";
 import { ColumnData } from "../../data/ColumnData";
 import { Constraint } from "../../data/Constraint";
 
-import { concat, numberSort } from "../../util/Array";
-
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
 export enum AnnealCreatorGetter {
@@ -161,14 +159,12 @@ const getters = {
 
     [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
         const columns = state.recordData.source.columns;
-        const strata = state.strataConfig.strata;
 
         // TODO: Fix with type-safe accessors
-        const groupSizes = getters[G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM] as ReadonlyArray<ReadonlyArray<number>>;
+        const groupSizes = getters[G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM] as Record<string, ReadonlyArray<number>>;
 
         return state.constraintConfig.constraints.every((constraint) => {
-            const constraintStrataIndex = Constraint.GetRelatedStratumIndex(constraint, strata);
-            const constraintStratumGroupSizes = groupSizes[constraintStrataIndex];
+            const constraintStratumGroupSizes = groupSizes[constraint.stratum];
 
             return Constraint.IsValid(constraint, columns, constraintStratumGroupSizes);
         });
@@ -191,41 +187,54 @@ const getters = {
                         const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
                         const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
 
-                        // Thin out the individual group sizes into just the unique
-                        // group sizes
-                        const strataUniqueGroupSizes =
-                            strataIndividualGroupSizes.map((stratumGroupSizes) => {
-                                const groupSizeSet = new Set<number>();
-                                stratumGroupSizes.forEach(size => groupSizeSet.add(size));
-                                return Array.from(groupSizeSet);
-                            });
-
-                        return strataUniqueGroupSizes;
-                    })
-                    .reduce((carry, incomingDistribution) => {
-                        // Merge strata group size distribution arrays
-                        return carry.map((existingDistribution, stratumIndex) => {
-                            const distributionToAppend = incomingDistribution[stratumIndex];
-
-                            return concat<number>([existingDistribution, distributionToAppend]);
+                        // Find the min, max of each stratum
+                        const strataMinMax = strataIndividualGroupSizes.map((sizes) => {
+                            return {
+                                min: Math.min(...sizes),
+                                max: Math.max(...sizes),
+                            };
                         });
-                    })
-                    .map((stratumGroupSizes) => {
-                        // Do one more uniqueness filter
-                        const groupSizeSet = new Set<number>();
-                        stratumGroupSizes.forEach(size => groupSizeSet.add(size));
 
-                        // Sort array by numeric value
-                        const array = Array.from(groupSizeSet);
-                        numberSort(array);
-                        return array;
+                        return strataMinMax;
+                    })
+                    .reduce((carry, newStrataMinMax) => {
+                        // Merge min, max of each strata
+                        return carry.map((existingStratumMinMax, i) => {
+                            return {
+                                min: Math.min(existingStratumMinMax.min, newStrataMinMax[i].min),
+                                max: Math.max(existingStratumMinMax.max, newStrataMinMax[i].max),
+                            };
+                        });
                     });
 
-            return strataGroupSizes;
+            // Multiply through each stratum
+            //
+            // We abuse `Array#reduceRight()` by modifying the elements of
+            // `strataGroupSizes` as we go
+            strataGroupSizes.reduceRight((carry, strataMinMax) => {
+                // We multiply out the minimums and maximums as we go up strata
+                strataMinMax.min *= carry.min;
+                strataMinMax.max *= carry.max;
+
+                // Return the (now modified) object across to the next round
+                return strataMinMax;
+            });
+
+            // Finally zip up the results in an object with sane stratum ID
+            // lookup
+            return strata.reduce<Record<string, ReadonlyArray<number>>>((sizes, stratum, i) => {
+                // Get stratum group min, max information
+                const { min, max } = strataGroupSizes[i];
+
+                // Generate array that spans [min, ..., max]
+                sizes[stratum._id] = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+
+                return sizes;
+            }, {});
 
         } catch {
             // If error occurs, return empty arrays for each stratum
-            return strata.map(_ => []);
+            return strata.reduce<Record<string, ReadonlyArray<number>>>((sizes, stratum) => Object.assign(sizes, { [stratum._id]: [] }), {});
         }
     },
 }

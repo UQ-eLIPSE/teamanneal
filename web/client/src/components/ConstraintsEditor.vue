@@ -7,12 +7,12 @@
                                               :stratumConstraints="[]"
                                               :isPartition="true"></ConstraintsEditorStratum>
                 </li>
-                <li v-for="(stratum, i) in strata"
+                <li v-for="stratum in strata"
                     :key="stratum._id">
                     <ConstraintsEditorStratum :stratum="stratum"
                                               :stratumConstraints="getStratumConstraints(stratum)"
                                               :isPartition="false"
-                                              :groupSizes="strataGroupSizes[i]"></ConstraintsEditorStratum>
+                                              :groupSizes="strataGroupSizes[stratum._id]"></ConstraintsEditorStratum>
                 </li>
             </ul>
         </div>
@@ -72,8 +72,9 @@ export default class ConstraintsEditor extends Vue {
     }
 
     /**
-     * Returns an array where each element is the possible number of persons to
-     * choose for groups at that particular stratum
+     * Returns an object with strata IDs are mapped to values which are arrays 
+     * where each element is the possible number of persons to choose for groups
+     * at that particular stratum
      */
     get strataGroupSizes() {
         return S.get(S.getter.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM);
