@@ -120,7 +120,7 @@ export default class ConstraintsEditor extends Vue {
 
                     const groupSizeArray = Array.from(groupSizeSet);
                     numberSort(groupSizeArray);
-                    
+
                     return groupSizeArray;
                 });
 
