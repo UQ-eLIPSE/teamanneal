@@ -75,7 +75,7 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     // Grab full partition column data
     const _partitionColumn = state.recordData.partitionColumn;
-    const partitionColumn = _partitionColumn === undefined ? undefined : ColumnData.ConvertToDataObject(state.recordData.columns, _partitionColumn);
+    const partitionColumn = _partitionColumn === undefined ? undefined : ColumnData.ConvertToDataObject(state.recordData.source.columns, _partitionColumn);
 
     // Walk the tree and decompose data
     const nameMap = ResultTree.GenerateNodeNameMap(state.strataConfig, partitionColumn, annealNodeRoots);

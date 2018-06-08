@@ -61,23 +61,7 @@ export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
      * from.
      */
     get possibleIdColumns() {
-        const recordData = S.state.recordData;
-        const columns = recordData.columns;
-        const recordDataRawLength = recordData.source.length;
-
-        // No data to even process
-        if (columns.length === 0) { return []; }
-
-        // The total number of records is equal to the full raw data array
-        // length minus the header (1 row)
-        const numberOfRecords = recordDataRawLength - 1;
-
-        // Filter only those with column values unique
-        return columns
-            .filter((column) => {
-                const valueSet = ColumnData.GetValueSet(column);
-                return valueSet.size === numberOfRecords;
-            })
+        return S.get(S.getter.VALID_ID_COLUMNS)
             .map((column) => ({
                 text: column.label,
                 value: ColumnData.ConvertToMinimalDescriptor(column),

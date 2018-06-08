@@ -64,7 +64,7 @@ export default class ConstraintsEditorStratum extends Vue {
     @Prop groupSizes = p<ReadonlyArray<number>>({ type: Array, required: false, default: () => [] });
 
     async addNewConstraint() {
-        const columnData = S.state.recordData.columns;
+        const columnData = S.state.recordData.source.columns;
 
         // Pick random column and random default value
         const defaultColumnIndex = (Math.random() * columnData.length) >>> 0;

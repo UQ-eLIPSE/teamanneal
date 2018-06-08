@@ -75,7 +75,7 @@ import { replaceAll } from "../util/String";
 })
 export default class StrataEditor extends Vue {
     get columns() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get strataConfig() {
@@ -132,7 +132,7 @@ export default class StrataEditor extends Vue {
      */
     get strataGroupDistribution() {
         const strata = this.strata;
-        const columns = S.state.recordData.columns;
+        const columns = this.columns;
         const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
         const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
