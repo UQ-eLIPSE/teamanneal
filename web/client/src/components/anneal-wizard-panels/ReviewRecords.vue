@@ -64,6 +64,8 @@ import { AnnealCreator as S } from "../../store";
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
 
+import { numberSort } from "../../util/Array";
+
 import SpreadsheetView from "../SpreadsheetView.vue";
 
 interface ColumnIndexInfo {
@@ -132,9 +134,12 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
 
         this.columnIndexInfoMap.forEach((colInfo, label) => {
             if (colInfo.length > 1) {
+                const columnIndicies = colInfo.map(y => y.index + 1);
+                numberSort(columnIndicies);
+
                 messageObjs.push({
                     label,
-                    columnIndicies: colInfo.map(y => y.index + 1).sort()
+                    columnIndicies,
                 });
             }
         });
