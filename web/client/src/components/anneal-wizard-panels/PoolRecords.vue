@@ -18,15 +18,15 @@
                            :class="{ 'deselected': enablePartitioning === true }">
                         <h3><input type="radio"
                                    v-model="enablePartitioning"
-                                   :value="false"> Use all records across all groups</h3>
-                        <p>All records will be used to form groups.</p>
+                                   :value="false"> Form groups using any record</h3>
+                        <p>All records will be used to form groups without pooling.</p>
                     </label>
                     <label class="pool-records-section-box"
                            :class="{ 'deselected': enablePartitioning === false }">
                         <h3><input type="radio"
                                    v-model="enablePartitioning"
-                                   :value="true"> Split records into separate pools</h3>
-                        <p>Records will be split into pools according to the selected column before forming groups.</p>
+                                   :value="true"> Form groups only within pools of records</h3>
+                        <p>Records will be split into pools according to values in the selected column before forming groups.</p>
                         <p>
                             <select v-model="partitionColumn"
                                     :disabled="enablePartitioning === false">
