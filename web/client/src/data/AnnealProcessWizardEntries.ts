@@ -8,7 +8,6 @@ export let
     provideRecordsFile: WNE,
     reviewRecords: WNE,
     selectIdColumn: WNE,
-    selectPartitionColumn: WNE,
     poolRecords: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
@@ -68,23 +67,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             );
         },
 
-        next: () => selectPartitionColumn,
-    },
-    selectPartitionColumn = {
-        label: "Select partition column",
-        path: "/anneal/select-partition-column",
-        disabled: () => {
-            // Disabled when there is no ID column selected (a number above -1)
-            return !(
-                S.get(S.getter.HAS_SOURCE_FILE_DATA) &&
-                S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX) &&
-
-                // Disable when processing request
-                !S.get(S.getter.IS_ANNEAL_REQUEST_IN_PROGRESS)
-            );
-        },
-
-        next: () => designGroupStructure,
+        next: () => poolRecords,
     },
     poolRecords = {
         label: "Pool records",
