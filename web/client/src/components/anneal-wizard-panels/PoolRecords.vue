@@ -4,7 +4,7 @@
             <h1>Pool records</h1>
             <!-- TODO: Add help box back -->
             <p>
-                Choose either to use all records or split them into separate pools before forming groups.
+                Choose whether to use all records or split them into separate pools before forming groups.
             </p>
             <p>
                 For example, if you have students which are associated with certain
@@ -19,6 +19,20 @@
                         <h3><input type="radio"
                                    v-model="enablePartitioning"
                                    :value="false"> Form groups using any record</h3>
+                        <div class="pool-records-example">
+                            <div>
+                                <div class="example-label"
+                                     style="height: 8.2em;">
+                                    <span>All records</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="example-arrow"></span>
+                            </div>
+                            <div>
+                                <b>TeamAnneal</b>
+                            </div>
+                        </div>
                         <p>All records will be used to form groups without pooling.</p>
                     </label>
                     <label class="pool-records-section-box"
@@ -26,6 +40,24 @@
                         <h3><input type="radio"
                                    v-model="enablePartitioning"
                                    :value="true"> Form groups only within pools of records</h3>
+                        <div class="pool-records-example">
+                            <div>
+                                <div v-for="partitionValue in examplePartitionList"
+                                     :key="partitionValue"
+                                     :title="partitionValue"
+                                     class="example-label">
+                                    <span>{{ ("" + partitionValue) || "&nbsp;" }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span v-for="(_, i) in examplePartitionList"
+                                      :key="i"
+                                      class="example-arrow"></span>
+                            </div>
+                            <div>
+                                <b>TeamAnneal</b>
+                            </div>
+                        </div>
                         <p>Records will be split into pools according to values in the selected column before forming groups.</p>
                         <p>
                             <select v-model="partitionColumn"
@@ -140,7 +172,7 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
             // Return a placeholder column list where the value is `undefined`
             // for the last set column, or the best guess if that is not
             // available
-            const lastSetColumn = this.lastSetColumn || this.bestGuessPartitionColumn;
+            const lastSetColumn = this.partitionColumnPlaceholder;
 
             return formattedList.map((x) => {
                 if (x.value._id === lastSetColumn._id) {
@@ -155,6 +187,23 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
         }
     }
 
+    get partitionColumnPlaceholder() {
+        return this.lastSetColumn || this.bestGuessPartitionColumn;
+    }
+
+    get examplePartitionList() {
+        // Get the values in the unique set and clip to a max of 4
+        const partitionColumn = this.partitionColumn || this.partitionColumnPlaceholder;
+        const values = Array.from(ColumnData.GetValueSet(ColumnData.ConvertToDataObject(this.columns, partitionColumn)!) as Set<string | number>).sort();
+
+        if (values.length <= 4) {
+            return values.slice(0, 4);
+        } else {
+            // Return a list with "..." at the end as the 4th element
+            return [...values.slice(0, 3), "..."];
+        }
+    }
+
     get enablePartitioning() {
         return S.state.recordData.partitionColumn !== undefined;
     }
@@ -162,7 +211,7 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
     set enablePartitioning(val: boolean) {
         if (val) {
             // Set the last known column or the best guess
-            this.partitionColumn = this.lastSetColumn || this.bestGuessPartitionColumn;
+            this.partitionColumn = this.partitionColumnPlaceholder;
         } else {
             this.partitionColumn = undefined;
         }
@@ -207,6 +256,94 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
 .example-table td {
     border: 1px solid #aaa;
     padding: 0.1em 0.3em;
+}
+
+.pool-records-example {
+    height: 7em;
+    max-width: 20em;
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: row;
+}
+
+.pool-records-example>div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.pool-records-example .example-label {
+    display: inline-flex;
+    background: #49075E;
+    padding: 0.3em 1em;
+    margin-top: 0.2em;
+    border-radius: 0.3em;
+
+    font-size: 0.9em;
+    color: #fff;
+
+    width: 100%;
+    max-width: 10em;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.pool-records-example .example-label>span {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
+}
+
+.pool-records-example .example-label:first-child {
+    margin-top: 0;
+}
+
+.pool-records-example .example-arrow {
+    position: relative;
+    display: inline-block;
+    width: 3em;
+    height: 1.9em;
+    margin-top: 0.2em;
+    font-size: 0.9em;
+    line-height: 0;
+}
+
+.pool-records-example .example-arrow:first-child {
+    margin-top: 0;
+}
+
+.pool-records-example .example-arrow::before {
+    content: "";
+    display: inline-block;
+    width: 2.5em;
+    height: 0.5em;
+
+    position: absolute;
+    top: 0.65em;
+    left: 0;
+
+    background: linear-gradient(to right, transparent, #a6b 0.5em, #a6b);
+}
+
+.pool-records-example .example-arrow::after {
+    content: "";
+    display: inline-block;
+    border-left: 0.8em solid #a6b;
+    border-top: 0.6em solid transparent;
+    border-bottom: 0.6em solid transparent;
+    border-right: 0;
+
+    position: absolute;
+    top: 0.3em;
+    right: 0;
 }
 
 .pool-records-split-pane-wrapper {
@@ -260,6 +397,18 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
 .pool-records-section-box.deselected {
     border-color: rgba(50, 50, 50, 0.2);
     background: rgba(50, 50, 50, 0.1);
+}
+
+.pool-records-section-box.deselected .pool-records-example .example-label {
+    background: rgba(50, 50, 50, 0.5);
+}
+
+.pool-records-section-box.deselected .pool-records-example .example-arrow::before {
+    background: linear-gradient(to right, transparent, #bbb 0.5em, #bbb);
+}
+
+.pool-records-section-box.deselected .pool-records-example .example-arrow::after {
+    border-left-color: #bbb;
 }
 
 .pool-records-section-box>h3 {
