@@ -18,6 +18,16 @@
                 <h1>Annealing...</h1>
                 <p>Please wait while TeamAnneal forms groups...</p>
                 <p>This may take a minute or two.</p>
+                <p v-if="progressInfo === undefined || progressInfo.completedPartitions.length === 0">
+                    <!-- Indeterminate progress, or no partitions completed yet -->
+                    <progress class="anneal-progress"></progress>
+                </p>
+                <p v-else>
+                    <!-- Actually visible progress -->
+                    <progress class="anneal-progress"
+                              :value="progressInfo.completedPartitions.length"
+                              :max="progressInfo.expectedNumberOfResults">{{ progressInfo.completedPartitions.length }}/{{ progressInfo.expectedNumberOfResults }}</progress>
+                </p>
             </div>
         </template>
 
@@ -213,12 +223,26 @@ XMLHttpRequest {
         );
     }
 
+    get progressInfo() {
+        const annealRequestState = this.annealRequestState;
+
+        if (!AnnealRequestState.isInProgress(annealRequestState)) {
+            return undefined;
+        }
+
+        return annealRequestState.data.progressInfo;
+    }
+
+    get isProgressIndeterminate() {
+        return this.progressInfo === undefined;
+    }
+
     async onStartAnnealButtonClick() {
         // Start request and store a copy of it internally in this component
         const annealRequest = AnnealRequest.generateRequestFromState(S.state);
 
         // Update state to "in-progress" now
-        await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS, undefined);
+        await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS, {});
 
         // Get ticket that is returned from server from the job initiation 
         // request
@@ -227,8 +251,6 @@ XMLHttpRequest {
         const ticketResponse = AnnealResponse.processRawResponse(await AnnealRequest.waitForCompletion(annealRequest));
 
         if (!AnnealResponse.isSuccess(ticketResponse)) {
-            // TODO: Display ticket error info
-            alert("Anneal job initialisation did not return a ticket");
             // TODO: `any` currently overriding the anneal response type for ticket response
             S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, ticketResponse as any);
 
@@ -245,7 +267,16 @@ XMLHttpRequest {
         const ticketId = ticketResponseData.id;
 
         // Query the server for the result of the anneal
-        const rawResponse = await AnnealRequest.queryAndUpdateAnnealStatus(ticketId);
+        const rawResponse = await AnnealRequest.queryAndUpdateAnnealStatus(
+            ticketId,
+            async (progressInfo) => {
+                // Update state store with latest in-progress status
+                await S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS, {
+                    progressInfo,
+                });
+            }
+        );
+
         const response = AnnealResponse.processRawResponse(rawResponse);
 
         if (!AnnealResponse.isSuccess(response)) {
@@ -256,11 +287,6 @@ XMLHttpRequest {
         // Update state to "completed" with response
         S.dispatch(S.action.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED, response);
 
-    }
-
-    async onCancelAnnealButtonClick() {
-        // TODO: Proper cancellation with new job ticketing system
-        throw new Error("No cancellation support implemented");
     }
 
     async onViewResultsButtonClick() {
