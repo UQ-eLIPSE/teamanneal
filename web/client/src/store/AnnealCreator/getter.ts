@@ -4,6 +4,8 @@ import { AnnealCreatorState as State } from "./state";
 import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import { ColumnData } from "../../data/ColumnData";
+import { Constraint } from "../../data/Constraint";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -16,6 +18,9 @@ export enum AnnealCreatorGetter {
     IS_STRATA_CONFIG_NAMES_VALID = "Is strata config names valid",
     IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
+    VALID_ID_COLUMNS = "Valid ID columns",
+    ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
+    POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
 }
 
 /** Shorthand for Getter enum above */
@@ -41,7 +46,7 @@ const getters = {
     },
 
     [G.HAS_DUPLICATE_COLUMN_NAMES](state: State) {
-        const columnNames = state.recordData.columns.map(column => column.label);
+        const columnNames = state.recordData.source.columns.map(column => column.label);
         const uniqueColumnNames = new Set(columnNames);
         return uniqueColumnNames.size !== columnNames.length;
     },
@@ -111,12 +116,12 @@ const getters = {
         }
 
         // Check that group size calculations are possible over all partitions
-        const columns = state.recordData.columns;
+        const columns = state.recordData.source.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             partitions.forEach((partition) => {
                 // Attempt group sizes for each partition
                 const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
@@ -133,7 +138,105 @@ const getters = {
 
     [G.IS_ANNEAL_REQUEST_IN_PROGRESS](state: State) {
         return AnnealRequestState.isInProgress(state.annealRequest);
-    }
+    },
+
+    [G.VALID_ID_COLUMNS](state: State) {
+        const recordData = state.recordData;
+        const columns = recordData.source.columns;
+        const recordDataRawLength = recordData.source.length;
+
+        // The total number of records is equal to the full raw data array
+        // length minus the header (1 row)
+        const numberOfRecords = recordDataRawLength - 1;
+
+        // Filter only those with column values unique
+        return columns
+            .filter((column) => {
+                const valueSet = ColumnData.GetValueSet(column);
+                return valueSet.size === numberOfRecords;
+            });
+    },
+
+    [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
+        const columns = state.recordData.source.columns;
+
+        // TODO: Fix with type-safe accessors
+        const groupSizes = getters[G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM] as Record<string, ReadonlyArray<number>>;
+
+        return state.constraintConfig.constraints.every((constraint) => {
+            const constraintStratumGroupSizes = groupSizes[constraint.stratum];
+
+            return Constraint.IsValid(constraint, columns, constraintStratumGroupSizes);
+        });
+    },
+
+    [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State) {
+        const strata = state.strataConfig.strata;
+        const columns = state.recordData.source.columns;
+        const partitionColumnDescriptor = state.recordData.partitionColumn;
+
+        // Run group sizing in each partition, and merge the distributions at
+        // the end
+        try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
+            const strataGroupSizes =
+                partitions
+                    .map((partition) => {
+                        // Generate group sizes for each partition
+                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
+
+                        // Find the min, max of each stratum
+                        const strataMinMax = strataIndividualGroupSizes.map((sizes) => {
+                            return {
+                                min: Math.min(...sizes),
+                                max: Math.max(...sizes),
+                            };
+                        });
+
+                        return strataMinMax;
+                    })
+                    .reduce((carry, newStrataMinMax) => {
+                        // Merge min, max of each strata
+                        return carry.map((existingStratumMinMax, i) => {
+                            return {
+                                min: Math.min(existingStratumMinMax.min, newStrataMinMax[i].min),
+                                max: Math.max(existingStratumMinMax.max, newStrataMinMax[i].max),
+                            };
+                        });
+                    });
+
+            // Multiply through each stratum
+            //
+            // We abuse `Array#reduceRight()` by modifying the elements of
+            // `strataGroupSizes` as we go
+            strataGroupSizes.reduceRight((carry, strataMinMax) => {
+                // We multiply out the minimums and maximums as we go up strata
+                strataMinMax.min *= carry.min;
+                strataMinMax.max *= carry.max;
+
+                // Return the (now modified) object across to the next round
+                return strataMinMax;
+            });
+
+            // Finally zip up the results in an object with sane stratum ID
+            // lookup
+            return strata.reduce<Record<string, ReadonlyArray<number>>>((sizes, stratum, i) => {
+                // Get stratum group min, max information
+                const { min, max } = strataGroupSizes[i];
+
+                // Generate array that spans [min, ..., max]
+                sizes[stratum._id] = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+
+                return sizes;
+            }, {});
+
+        } catch {
+            // If error occurs, return empty arrays for each stratum
+            return strata.reduce<Record<string, ReadonlyArray<number>>>((sizes, stratum) => Object.assign(sizes, { [stratum._id]: [] }), {});
+        }
+    },
 }
 
 export function init() {
