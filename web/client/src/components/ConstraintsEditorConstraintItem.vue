@@ -139,7 +139,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get columnData() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get columnDataList() {
@@ -363,7 +363,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get constraintFilterColumnData() {
-        return ColumnData.ConvertToDataObject(S.state.recordData.columns, this.constraint.filter.column)!;
+        return ColumnData.ConvertToDataObject(S.state.recordData.source.columns, this.constraint.filter.column)!;
     }
 
     set constraintFilterColumnData(newColumnData: IColumnData) {
