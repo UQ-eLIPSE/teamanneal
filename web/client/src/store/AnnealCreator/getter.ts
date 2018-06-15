@@ -3,9 +3,18 @@ import { AnnealCreatorState as State } from "./state";
 
 import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
+import * as StratumNamingConfig from "../../data/StratumNamingConfig";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import { Stratum } from "../../data/Stratum";
 import { ColumnData } from "../../data/ColumnData";
 import { Constraint } from "../../data/Constraint";
+import { GroupNode } from "../../data/GroupNode";
+import { GroupNodeRoot } from "../../data/GroupNodeRoot";
+import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
+import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
+import * as StratumNamingConfigContext from "../../data/StratumNamingConfigContext";
+
+import { reverse } from "../../util/Array";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -20,6 +29,9 @@ export enum AnnealCreatorGetter {
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
     VALID_ID_COLUMNS = "Valid ID columns",
     ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
+    EXPECTED_PARTITIONS = "Expected partitions",
+    EXPECTED_NODE_TREE = "Expected node tree",
+    EXPECTED_NAME_LABELS_FOR_EACH_STRATUM = "Expected name labels for each stratum",
     POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
 }
 
@@ -170,8 +182,7 @@ const getters = {
         });
     },
 
-    [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State) {
-        const strata = state.strataConfig.strata;
+    [G.EXPECTED_PARTITIONS](state: State) {
         const columns = state.recordData.source.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
@@ -179,13 +190,238 @@ const getters = {
         // the end
         try {
             const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+            return partitions;
+        } catch {
+            // If error occurs, return empty array
+            return [];
+        }
+    },
 
+    [G.EXPECTED_NODE_TREE](state: State, getters: any) {
+        // Build up very basic node tree based on GroupNode
+
+        // We don't care about the node IDs for this tree because this output is
+        // only intended to represent the expected node tree shape, not actually
+        // contain any data
+
+        const strata = state.strataConfig.strata;
+        const strataSizes = strata.map(s => s.size);
+
+        // TODO: Fix with type-safe accessors
+        const partitions = getters[G.EXPECTED_PARTITIONS] as ReadonlyArray<Partition.Partition>;
+
+        try {
+            const nodeTrees = partitions.map((partition) => {
+                // Generate group sizes for each partition
+                const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+
+                // We flip it around in server order to make it easier to
+                // iterate over
+                const strataIndividualGroupSizesServerOrder = reverse(StratumSize.generateStrataGroupSizes(strataSizes, numberOfRecordsInPartition));
+
+                // Generate leaf nodes first
+                const leafNodes =
+                    strataIndividualGroupSizesServerOrder[0].map(_ => {
+                        const node: GroupNodeLeafStratum = {
+                            _id: "",
+                            type: "leaf-stratum",
+                        };
+
+                        return node;
+                    });
+
+
+                // Note we start from i = 1 because we have already dealt with leaf
+                // nodes
+                let prevNodes: (GroupNodeIntermediateStratum | GroupNodeLeafStratum)[] = leafNodes;
+
+                for (let i = 1; i < strataIndividualGroupSizesServerOrder.length; ++i) {
+                    const sizes = strataIndividualGroupSizesServerOrder[i];
+
+                    prevNodes = sizes.map((numberOfChildren) => {
+                        const intermediateNode: GroupNodeIntermediateStratum = {
+                            _id: "",
+                            type: "intermediate-stratum",
+                            children: prevNodes.splice(0, numberOfChildren),
+                        };
+
+                        return intermediateNode;
+                    });
+                }
+
+                // Cap it off with a root node for each partition
+                const rootNode: GroupNodeRoot = {
+                    _id: "",
+                    type: "root",
+                    children: prevNodes,
+                };
+
+                return rootNode;
+            });
+
+            return nodeTrees;
+        } catch {
+            return [];
+        }
+    },
+
+    [G.EXPECTED_NAME_LABELS_FOR_EACH_STRATUM](state: State, getters: any) {
+        const strataConfig = state.strataConfig;
+        const strata = strataConfig.strata;
+
+        // Build up information for each context
+        const contexts = strata.reduce<Map<StratumNamingConfigContext.StratumNamingConfigContext, { stratum: Stratum, contextDepth: number, targetDepth: number }[]>>((map, stratum, i) => {
+            const { context } = StratumNamingConfig.getStratumNamingConfig(strataConfig, stratum._id);
+
+            let strataUnderContext = map.get(context);
+
+            if (strataUnderContext === undefined) {
+                map.set(context, strataUnderContext = []);
+            }
+
+            // `contextDepth` is the number of steps down from an imaginary
+            // "global" root to reach the specific context stratum
+            //
+            // e.g. 
+            // * GLOBAL = 0
+            // * PARTITION = 1
+            // * Stratum A (top-most) = 2
+            // * Stratum B = 3
+            // * Stratum C (bottom-most/leaf) = 4
+            // 
+            // `targetDepth` is the depth of the target stratum
+            // 
+            // e.g. If Stratum B uses a PARTITION context, `targetDepth` = 3
+
+            let contextDepth: number;
+
+            switch (context) {
+                case StratumNamingConfigContext.Context.GLOBAL: {
+                    contextDepth = 0;
+                    break;
+                }
+
+                case StratumNamingConfigContext.Context.PARTITION: {
+                    contextDepth = 1;
+                    break;
+                }
+
+                default: {
+                    // Find the stratum index in the strata array
+                    contextDepth = strata.findIndex(s => s._id === context) + 2;
+                    break;
+                }
+            }
+
+            strataUnderContext.push({
+                stratum,
+                contextDepth,
+                targetDepth: i + 2,
+            });
+
+            return map;
+        }, new Map());
+
+        // TODO: Fix with type-safe accessors
+        const expectedNodeTrees = getters[G.EXPECTED_NODE_TREE] as ReadonlyArray<GroupNodeRoot>;
+
+        // Reform partitions into nodes so we have a consistent way to read 
+        // the tree
+        const tree: GroupNodeRoot = {
+            _id: "",
+            type: "root",
+            children: expectedNodeTrees.map((partitionRootNode) => {
+                const node: GroupNodeIntermediateStratum = {
+                    _id: "",
+                    type: "intermediate-stratum",
+                    children: partitionRootNode.children,
+                };
+
+                return node;
+            }),
+        };
+
+        /**
+         * Walker function that sums all target nodes under the given start node
+         * 
+         * @param node Starting "context" node
+         * @param targetDepth The depth at which you count nodes for the sum
+         * @param currentDepth The current depth you're at (should be the context node's depth)
+         */
+        function targetCountWalker(node: GroupNode, targetDepth: number, currentDepth: number): number {
+            // We've hit a node with the correct depth, return 1 for
+            // summation by parent
+            if (currentDepth === targetDepth) {
+                return 1;
+            }
+
+            // If we've now hit the end, we can't go further
+            if (node.type === "leaf-stratum") {
+                return 0;
+            }
+
+            // Recurse through children
+            return node.children.reduce<number>((sum, child) => sum + targetCountWalker(child, targetDepth, currentDepth + 1), 0);
+        }
+
+        /**
+         * Walker function that returns the maximum number of nodes at the
+         * target depth under each node at the context depth
+         * 
+         * @param node Starting node (generally the "global" node)
+         * @param contextDepth The depth at which the context nodes sit
+         * @param targetDepth The depth at which you count nodes for the sum
+         * @param currentDepth The current depth you're at (should start at 0 for the global node)
+         */
+        function contextTargetCountWalker(node: GroupNode, contextDepth: number, targetDepth: number, currentDepth: number): number {
+            // Keep going down until you hit the depth for the context, at which
+            // point you switch to the target counter
+            if (currentDepth === contextDepth) {
+                return targetCountWalker(node, targetDepth, currentDepth);
+            }
+
+            // If we've now hit the end, we can't go further
+            if (node.type === "leaf-stratum") {
+                return 0;
+            }
+
+            // Recurse through children
+            //
+            // Note that we only need to take the maximum from each context
+            // node, NOT the sum, as each context should have a new separate set
+            // of names, so it's not cumulative
+            return node.children.reduce<number>((contextCount, child) => Math.max(contextCount, contextTargetCountWalker(child, contextDepth, targetDepth, currentDepth + 1)), 0);
+        }
+
+        // Run through all contexts and strata and count
+        const nameLabelCounts: Record<string, number> = {};
+
+        contexts.forEach((strataContexts) => {
+            strataContexts.forEach(({ stratum, contextDepth, targetDepth }) => {
+                // Walk through tree and set value into name label count object
+                nameLabelCounts[stratum._id] = contextTargetCountWalker(tree, contextDepth, targetDepth, 0);
+            });
+        });
+
+        return nameLabelCounts;
+    },
+
+    [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State, getters: any) {
+        const strata = state.strataConfig.strata;
+        const strataSizes = strata.map(s => s.size);
+
+        // TODO: Fix with type-safe accessors
+        const partitions = getters[G.EXPECTED_PARTITIONS] as ReadonlyArray<Partition.Partition>;
+
+        // Run group sizing in each partition, and merge the distributions at
+        // the end
+        try {
             const strataGroupSizes =
                 partitions
                     .map((partition) => {
                         // Generate group sizes for each partition
                         const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
-                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
+                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strataSizes, numberOfRecordsInPartition);
 
                         // Find the min, max of each stratum
                         const strataMinMax = strataIndividualGroupSizes.map((sizes) => {
