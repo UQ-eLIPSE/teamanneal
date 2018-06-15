@@ -174,11 +174,11 @@ const actions = {
             // Update
             commit(context, M.SET_STRATUM, { stratum, index });
         } else {
-            // Insert
-            commit(context, M.INSERT_STRATUM, stratum);
-
             // Create new naming config by default
             await dispatch(context, A.SET_STRATUM_NAMING_CONFIG, { stratum, namingConfig: initStratumNamingConfig() });
+
+            // Insert
+            commit(context, M.INSERT_STRATUM, stratum);
         }
 
         await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
