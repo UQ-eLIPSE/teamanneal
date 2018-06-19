@@ -93,14 +93,14 @@ const actions = {
         // Record data
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
 
-        // Constraints config -> constraints
-        for (let constraint of state.constraintConfig.constraints) {
-            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
-        }
-
         // Strata config -> strata
         for (let stratum of state.strataConfig.strata) {
             await dispatch(context, A.UPSERT_STRATUM, stratum);
+        }
+
+        // Constraints config -> constraints
+        for (let constraint of state.constraintConfig.constraints) {
+            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
         }
 
         // Strata config -> naming config
@@ -129,10 +129,10 @@ const actions = {
     },
 
     async [A.RESET_STATE](context: Context) {
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -157,9 +157,9 @@ const actions = {
 
     async [A.CLEAR_RECORD_DATA](context: Context) {
 
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
