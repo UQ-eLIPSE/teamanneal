@@ -104,7 +104,7 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
     lastSetColumn: IColumnData_MinimalDescriptor | undefined = undefined;
 
     get columns() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get numberOfRecords() {
