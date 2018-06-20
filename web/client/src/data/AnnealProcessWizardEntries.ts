@@ -8,7 +8,7 @@ export let
     importData: WNE,
     reviewRecords: WNE,
     selectIdColumn: WNE,
-    selectPartitionColumn: WNE,
+    poolRecords: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
     configureConstraints: WNE,
@@ -39,7 +39,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         next: () => reviewRecords,
     },
     reviewRecords = {
-        label: "Review data",
+        label: "Review record data",
         path: "/anneal/review-records",
         disabled: () => {
             return !(
@@ -72,11 +72,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             // Warn when ID column index not set
             return !S.get(S.getter.HAS_VALID_ID_COLUMN_INDEX);
         },
-        next: () => selectPartitionColumn,
+        next: () => poolRecords,
     },
-    selectPartitionColumn = {
-        label: "Select partition column",
-        path: "/anneal/select-partition-column",
+    poolRecords = {
+        label: "Pool records",
+        path: "/anneal/pool-records",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
