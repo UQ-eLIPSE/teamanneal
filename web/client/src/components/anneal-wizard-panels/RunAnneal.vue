@@ -233,10 +233,6 @@ XMLHttpRequest {
         return annealRequestState.data.progressInfo;
     }
 
-    get isProgressIndeterminate() {
-        return this.progressInfo === undefined;
-    }
-
     async onStartAnnealButtonClick() {
         // Start request and store a copy of it internally in this component
         const annealRequest = AnnealRequest.generateRequestFromState(S.state);
