@@ -13,7 +13,7 @@ import ResultsEditor from "./components/ResultsEditor.vue";
 import Anneal_ProvideRecordsFile from "./components/anneal-wizard-panels/ProvideRecordsFile.vue";
 import Anneal_ReviewRecords from "./components/anneal-wizard-panels/ReviewRecords.vue";
 import Anneal_SelectIdColumn from "./components/anneal-wizard-panels/SelectIdColumn.vue";
-import Anneal_SelectPartitionColumn from "./components/anneal-wizard-panels/SelectPartitionColumn.vue";
+import Anneal_PoolRecords from "./components/anneal-wizard-panels/PoolRecords.vue";
 import Anneal_DesignGroupStructure from "./components/anneal-wizard-panels/DesignGroupStructure.vue";
 import Anneal_ConfigureGroups from "./components/anneal-wizard-panels/ConfigureGroups.vue";
 import Anneal_ConfigureConstraints from "./components/anneal-wizard-panels/ConfigureConstraints.vue";
@@ -60,10 +60,10 @@ export default () => {
                         },
                     },
                     {
-                        path: "select-partition-column",
-                        component: Anneal_SelectPartitionColumn,
+                        path: "pool-records",
+                        component: Anneal_PoolRecords,
                         meta: {
-                            wizardEntry: AnnealProcessWizardEntries.selectPartitionColumn,
+                            wizardEntry: AnnealProcessWizardEntries.poolRecords,
                         },
                     },
                     {

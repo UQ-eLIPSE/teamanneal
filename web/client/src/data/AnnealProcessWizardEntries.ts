@@ -8,7 +8,7 @@ export let
     provideRecordsFile: WNE,
     reviewRecords: WNE,
     selectIdColumn: WNE,
-    selectPartitionColumn: WNE,
+    poolRecords: WNE,
     designGroupStructure: WNE,
     configureGroups: WNE,
     configureConstraints: WNE,
@@ -37,7 +37,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
         next: () => reviewRecords,
     },
     reviewRecords = {
-        label: "Review data",
+        label: "Review record data",
         path: "/anneal/review-records",
         disabled: () => {
             // Disabled when there is no source file data
@@ -67,11 +67,11 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
             );
         },
 
-        next: () => selectPartitionColumn,
+        next: () => poolRecords,
     },
-    selectPartitionColumn = {
-        label: "Select partition column",
-        path: "/anneal/select-partition-column",
+    poolRecords = {
+        label: "Pool records",
+        path: "/anneal/pool-records",
         disabled: () => {
             // Disabled when there is no ID column selected (a number above -1)
             return !(
