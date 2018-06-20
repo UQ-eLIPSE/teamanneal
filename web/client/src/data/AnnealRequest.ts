@@ -29,6 +29,13 @@ export interface AnnealRequest {
     body: ToServerAnnealRequest.Root,
 }
 
+export interface ProgressInfo {
+    isAnnealComplete: boolean,
+    expectedNumberOfResults: number,
+    completedPartitions: AnnealStatusResponseState[],
+}
+
+
 function init(requestObject: AxiosPromise, cancelTokenSource: CancelTokenSource, requestBody: ToServerAnnealRequest.Root, time: number = Date.now()) {
     const obj: AnnealRequest = {
         _id: UUID.generate(),
@@ -402,7 +409,7 @@ function annealStatusWaitFactory(attempt: number = 0) {
  * 
  * @param annealTicketId Ticket ID returned from when the anneal job was first initialised
  */
-export async function queryAndUpdateAnnealStatus(annealTicketId: string) {
+export async function queryAndUpdateAnnealStatus(annealTicketId: string, onStatusCheck?: (progressInfo: ProgressInfo) => void | Promise<void>) {
     const waitFn = annealStatusWaitFactory();
 
     // We'll keep on checking until we know that the anneal is complete
@@ -412,10 +419,12 @@ export async function queryAndUpdateAnnealStatus(annealTicketId: string) {
 
         // Check status
         const statusResponse = await getAnnealStatus(annealTicketId);
-        const { isAnnealComplete } = getCompletedPartitionsData(statusResponse.data);
+        const progressInfo = extractProgressInfo(statusResponse.data);
+
+        onStatusCheck && await onStatusCheck(progressInfo);
 
         // Return result when complete
-        if (isAnnealComplete) {
+        if (progressInfo.isAnnealComplete) {
             return await getAnnealResult(annealTicketId);
         }
 
@@ -456,23 +465,30 @@ export function getRequestTimeout(attempt: number) {
 }
 
 /**
- * Returns partitions data and status
- * @param data Response data received from server
+ * Returns partitions data and status of current progress status
+ * 
+ * @param data Response data received from server from anneal status endpoint
  */
-export function getCompletedPartitionsData(data: any) {
+export function extractProgressInfo(data: any) {
     const statusMap = data.statusMap as StatusMap;
-    let partitions: AnnealStatusResponseState[] = [];
     const expectedNumberOfResults = parseInt(data.expectedNumberOfResults);
 
-    for (let partition in statusMap) {
-        if ((statusMap[partition] as AnnealStatusResponseState).status === AnnealStatus.PARTITION_FINISHED) {
-            partitions.push(statusMap[partition]);
+    const completedPartitions = Object.keys(statusMap).reduce<AnnealStatusResponseState[]>((array, partitionId) => {
+        const workerResponse = statusMap[partitionId];
+
+        if (workerResponse.status === AnnealStatus.PARTITION_FINISHED) {
+            array.push(workerResponse);
         }
-    }
-    const completedPercentage = (partitions.length / expectedNumberOfResults) * 100;
-    return {
-        isAnnealComplete: partitions.length === expectedNumberOfResults,
-        completedPartitions: partitions,
-        percentComplete: completedPercentage
+
+        return array;
+    }, []);
+
+    const output: ProgressInfo = {
+        isAnnealComplete: completedPartitions.length === expectedNumberOfResults,
+        expectedNumberOfResults,
+
+        completedPartitions,
     };
+
+    return output;
 }

@@ -431,8 +431,8 @@ Delete constraints that use this column and try again.`;
         commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initNotRunning());
     },
 
-    async [A.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS](context: Context) {
-        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initInProgress());
+    async [A.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS](context: Context, data: Record<string, any>) {
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initInProgress(data));
     },
 
     async [A.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED](context: Context, response: AnnealResponse) {
