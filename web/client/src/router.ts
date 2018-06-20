@@ -26,8 +26,8 @@ export default () => {
     const router = new VueRouter({
         routes: [
             {
-                name: "welcome",
                 path: "/",
+                name: "welcome",
                 component: Welcome,
             },
             {
@@ -35,8 +35,8 @@ export default () => {
                 component: AnnealProcess,
                 children: [
                     {
-                        name: "anneal-process",
                         path: "",
+                        name: "anneal",
                         redirect: "import-data",
                     },
                     {
@@ -49,6 +49,7 @@ export default () => {
                     },
                     {
                         path: "review-records",
+                        name: "anneal-review-records",
                         component: Anneal_ReviewRecords,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.reviewRecords,
@@ -56,6 +57,7 @@ export default () => {
                     },
                     {
                         path: "select-id-column",
+                        name: "anneal-select-id-column",
                         component: Anneal_SelectIdColumn,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.selectIdColumn,
@@ -63,6 +65,7 @@ export default () => {
                     },
                     {
                         path: "pool-records",
+                        name: "anneal-pool-records",
                         component: Anneal_PoolRecords,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.poolRecords,
@@ -70,6 +73,7 @@ export default () => {
                     },
                     {
                         path: "define-group-structure",
+                        name: "anneal-define-group-structure",
                         component: Anneal_DesignGroupStructure,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.designGroupStructure,
@@ -77,6 +81,7 @@ export default () => {
                     },
                     {
                         path: "configure-groups",
+                        name: "anneal-configure-groups",
                         component: Anneal_ConfigureGroups,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.configureGroups,
@@ -84,6 +89,7 @@ export default () => {
                     },
                     {
                         path: "set-constraints",
+                        name: "anneal-set-constraints",
                         component: Anneal_ConfigureConstraints,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.configureConstraints,
@@ -91,6 +97,7 @@ export default () => {
                     },
                     {
                         path: "run-anneal",
+                        name: "anneal-run-anneal",
                         component: Anneal_RunAnneal,
                         meta: {
                             wizardEntry: AnnealProcessWizardEntries.runAnneal,
@@ -107,8 +114,8 @@ export default () => {
                 ]
             },
             {
-                name: "results-editor",
                 path: "/editor",
+                name: "results-editor",
                 component: ResultsEditor,
             },
         ],
