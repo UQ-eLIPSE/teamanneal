@@ -318,7 +318,7 @@ Delete constraints that use this column and try again.`;
         }
 
         // Find index of column and update it
-        const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
+        const index = $state.recordData.source.columns.findIndex(c => ColumnData.Equals(column, c));
         commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);

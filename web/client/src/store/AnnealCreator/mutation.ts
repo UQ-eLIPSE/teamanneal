@@ -138,19 +138,19 @@ const mutations = {
     },
 
     [M.INSERT_RECORD_COLUMN_DATA](state: State, column: IColumnData) {
-        state.recordData.columns.push(column);
+        state.recordData.source.columns.push(column);
     },
 
     [M.SET_RECORD_COLUMN_DATA](state: State, { column, index }: { column: IColumnData, index: number }) {
-        set(state.recordData.columns, index, column);
+        set(state.recordData.source.columns, index, column);
     },
 
     [M.DELETE_RECORD_COLUMN_DATA](state: State, index: number) {
-        del(state.recordData.columns, index);
+        del(state.recordData.source.columns, index);
     },
 
     [M.CLEAR_RECORD_COLUMN_DATA](state: State) {
-        set(state.recordData, "columns", []);
+        set(state.recordData.source, "columns", []);
     },
 
     [M.SET_RECORD_ID_COLUMN](state: State, idColumn: IColumnData_MinimalDescriptor) {

@@ -84,7 +84,7 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
     readonly thisWizardStep = AnnealProcessWizardEntries.reviewRecords;
 
     get columns() {
-        return S.state.recordData.columns;
+        return S.state.recordData.source.columns;
     }
 
     get cookedDataWithHeader() {
