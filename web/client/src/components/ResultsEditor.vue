@@ -1,7 +1,7 @@
 <template>
     <div class="results-editor">
-
-        <div class="workspace">
+        <div class="workspace"
+             v-if="displayWorkspace">
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -18,6 +18,15 @@
                                   :hiddenNodes="hiddenNodes"
                                   :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+        </div>
+        <div class="get-started"
+             v-else>
+            <h1>Welcome</h1>
+            <p>The TeamAnneal Editor allows you to view and modify teams generated from the anneal process.</p>
+            <p>Get started by obtaining team data from
+                <router-link :to="{name: 'anneal-process'}">running an anneal</router-link>, or
+                <a href="#import-results-package-file"
+                   @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
         </div>
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
@@ -47,7 +56,7 @@ import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
 import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
-import Print from "./results-editor-side-panels/Print.vue";
+// import Print from "./results-editor-side-panels/Print.vue";
 import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
@@ -63,12 +72,12 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         region: "start",
         component: ExportFile,
     },
-    {
-        name: "print",
-        label: "Print",
-        region: "start",
-        component: Print,
-    },
+    // {
+    //     name: "print",
+    //     label: "Print",
+    //     region: "start",
+    //     component: Print,
+    // },
     {
         name: "move",
         label: "Move a person",
@@ -79,14 +88,14 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         label: "Swap people",
         component: Swap,
     },
-    {
-        name: "add",
-        label: "Add a person or group",
-    },
-    {
-        name: "remove",
-        label: "Remove a person or group",
-    },
+    // {
+    //     name: "add",
+    //     label: "Add a person or group",
+    // },
+    // {
+    //     name: "remove",
+    //     label: "Remove a person or group",
+    // },
     {
         name: "help",
         label: "Help",
@@ -121,7 +130,7 @@ export default class ResultsEditor extends Vue {
     }
 
     get columns() {
-        return this.recordData.columns;
+        return this.recordData.source.columns;
     }
 
     get strata() {
@@ -233,6 +242,14 @@ export default class ResultsEditor extends Vue {
 
     set columnsDisplayIndices(indices: ReadonlyArray<number>) {
         this.p_columnsDisplayIndices = indices;
+    }
+
+    /** 
+     * Determines when to display the main workspace for the results editor,
+     * containing the spreadsheet and other parts
+     */
+    get displayWorkspace() {
+        return this.nodeRoots.length > 0;
     }
 
     visibleColumnListUpdateHandler(columnList: ReadonlyArray<number>) {
@@ -376,6 +393,10 @@ export default class ResultsEditor extends Vue {
             }
         }
     }
+
+    openImportSidePanel() {
+        S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
+    }
 }
 </script>
 
@@ -399,7 +420,10 @@ export default class ResultsEditor extends Vue {
     flex-direction: column;
     background: #fff;
     position: relative;
-    overflow: scroll;
+    overflow: none;
+
+    /** This sets the workspace to take the minimal amount of room required */
+    width: 0;
 }
 
 .side-tool-area {
@@ -408,13 +432,25 @@ export default class ResultsEditor extends Vue {
 }
 
 .spreadsheet {
-    /* TODO: Review styles when column display checkbox location is decided */
-    /* 
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0; 
-    */
+    flex-grow: 1;
+}
+
+.get-started {
+    width: 100%;
+    padding: 3em;
+    background: #f2f2f2;
+    background: linear-gradient(to bottom right, transparent, transparent 70%, rgba(73, 7, 94, 0.5)), #f2f2f2;
+}
+
+.get-started h1 {
+    color: #49075E;
+    font-weight: 400;
+    font-size: 3em;
+    margin-top: 0;
+}
+
+.get-started a,
+.get-started a:visited {
+    color: #00d;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
     <input v-model="inputValue"
-           @input="onInputChange"
-           @change="onInputChange"
+           @input="restyleWidth"
+           @change="restyleWidth"
            :disabled="disabled"
            :style="{ width: elWidth }">
 </template>
@@ -82,11 +82,12 @@ export default class DynamicWidthInputField extends Vue {
             // If the values do not match, then force resync
             if (this.inputValue !== el.value) {
                 el.value = this.inputValue;
+                this.restyleWidth();
             }
         });
     }
 
-    onInputChange() {
+    restyleWidth() {
         // Force update of size immediately on input field changes
         const el = this.$el as HTMLInputElement;
         const width = this.calculateRenderWidth(el.value);

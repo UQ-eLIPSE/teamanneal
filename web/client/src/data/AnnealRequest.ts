@@ -59,7 +59,7 @@ function convertStateToAnnealRequestBody(state: typeof S.state) {
     // Record data
     // =====================================================================
 
-    const stateColumns = state.recordData.columns;
+    const stateColumns = state.recordData.source.columns;
     // Convert columns into rows
     const records = ColumnData.TransposeIntoCookedValueRowArray(stateColumns);
 

@@ -57,15 +57,25 @@ export default class DynamicWidthSelect extends Vue {
         this.$emit("valueUpdate", newValue);
     }
 
-    updateRenderWidth() {
+    get activeItemText() {
         const activeItem = this.activeItem;
 
-        // Can't do anything if we have no item selected
         if (activeItem === undefined) {
+            return undefined;
+        }
+
+        return activeItem.text;
+    }
+
+    updateRenderWidth() {
+        const activeItemText = this.activeItemText;
+
+        // Can't do anything if we have no item selected
+        if (activeItemText === undefined) {
             return;
         }
 
-        const width = this.calculateRenderWidth(activeItem.text);
+        const width = this.calculateRenderWidth(activeItemText);
 
         // Update element width
         this.elWidth = `${width}px`;
@@ -103,8 +113,8 @@ export default class DynamicWidthSelect extends Vue {
         el.style.width = `${width}px`;
     }
 
-    @Watch("selectedValue")
-    onSelectedValueChange(_value: any, _oldValue: any) {
+    @Watch("activeItemText")
+    onActiveItemTextChange(_value: any, _oldValue: any) {
         this.updateRenderWidth();
     }
 

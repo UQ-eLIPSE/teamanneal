@@ -4,6 +4,10 @@ import { AnnealCreatorState as State } from "./state";
 import * as Partition from "../../data/Partition";
 import * as StratumSize from "../../data/StratumSize";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import { ColumnData } from "../../data/ColumnData";
+import { Constraint } from "../../data/Constraint";
+
+import { concat, numberSort } from "../../util/Array";
 
 type GetterFunction<G extends AnnealCreatorGetter> = typeof getters[G];
 
@@ -16,6 +20,13 @@ export enum AnnealCreatorGetter {
     IS_STRATA_CONFIG_NAMES_VALID = "Is strata config names valid",
     IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
+    VALID_ID_COLUMNS = "Valid ID columns",
+    HAS_CONFIG = "Has config set",
+    HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
+    HAS_VALID_PARTITION_COLUMN = "Has valid partition column",
+    ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
+    POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
+    IS_ANNEAL_ABLE_TO_BE_EXECUTED = "Is anneal able to be executed",
 }
 
 /** Shorthand for Getter enum above */
@@ -41,7 +52,7 @@ const getters = {
     },
 
     [G.HAS_DUPLICATE_COLUMN_NAMES](state: State) {
-        const columnNames = state.recordData.columns.map(column => column.label);
+        const columnNames = state.recordData.source.columns.map(column => column.label);
         const uniqueColumnNames = new Set(columnNames);
         return uniqueColumnNames.size !== columnNames.length;
     },
@@ -111,12 +122,12 @@ const getters = {
         }
 
         // Check that group size calculations are possible over all partitions
-        const columns = state.recordData.columns;
+        const columns = state.recordData.source.columns;
         const partitionColumnDescriptor = state.recordData.partitionColumn;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             partitions.forEach((partition) => {
                 // Attempt group sizes for each partition
                 const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
@@ -133,7 +144,136 @@ const getters = {
 
     [G.IS_ANNEAL_REQUEST_IN_PROGRESS](state: State) {
         return AnnealRequestState.isInProgress(state.annealRequest);
-    }
+    },
+
+    [G.VALID_ID_COLUMNS](state: State) {
+        const recordData = state.recordData;
+        const columns = recordData.source.columns;
+        const recordDataRawLength = recordData.source.length;
+
+        // The total number of records is equal to the full raw data array
+        // length minus the header (1 row)
+        const numberOfRecords = recordDataRawLength - 1;
+
+        // Filter only those with column values unique
+        return columns
+            .filter((column) => {
+                const valueSet = ColumnData.GetValueSet(column);
+                return valueSet.size === numberOfRecords;
+            });
+    },
+
+    [G.HAS_CONFIG](_state: State, getters: any) {
+        // Config is assumed to be loaded when there is strata defined
+        // 
+        // TODO: Fix with type-safe accessors
+        return getters[G.HAS_STRATA] as boolean;
+    },
+
+    [G.HAS_CONFIG_AND_SOURCE_FILE_DATA](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return (
+            (getters[G.HAS_CONFIG] as boolean)
+            && (getters[G.HAS_SOURCE_FILE_DATA] as boolean)
+        );
+    },
+
+    [G.HAS_VALID_PARTITION_COLUMN](state: State) {
+        const recordData = state.recordData;
+        const selectedPartitionColumn = recordData.partitionColumn;
+
+        if (selectedPartitionColumn === undefined) {
+            return true;
+        }
+
+        const columns = recordData.source.columns;
+
+        // See if there is a column defined with the partition column's ID
+        return columns.some(c => ColumnData.Equals(c, selectedPartitionColumn));
+    },
+
+    [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
+        const columns = state.recordData.source.columns;
+        const strata = state.strataConfig.strata;
+
+        // TODO: Fix with type-safe accessors
+        const groupSizes = getters[G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM] as ReadonlyArray<ReadonlyArray<number>>;
+
+        return state.constraintConfig.constraints.every((constraint) => {
+            const constraintStrataIndex = Constraint.GetRelatedStratumIndex(constraint, strata);
+            const constraintStratumGroupSizes = groupSizes[constraintStrataIndex];
+
+            return Constraint.IsValid(constraint, columns, constraintStratumGroupSizes);
+        });
+    },
+
+    [G.POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM](state: State) {
+        const strata = state.strataConfig.strata;
+        const columns = state.recordData.source.columns;
+        const partitionColumnDescriptor = state.recordData.partitionColumn;
+
+        // Run group sizing in each partition, and merge the distributions at
+        // the end
+        try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
+            const strataGroupSizes =
+                partitions
+                    .map((partition) => {
+                        // Generate group sizes for each partition
+                        const numberOfRecordsInPartition = Partition.getNumberOfRecords(partition);
+                        const strataIndividualGroupSizes = StratumSize.generateStrataGroupSizes(strata.map(s => s.size), numberOfRecordsInPartition);
+
+                        // Thin out the individual group sizes into just the unique
+                        // group sizes
+                        const strataUniqueGroupSizes =
+                            strataIndividualGroupSizes.map((stratumGroupSizes) => {
+                                const groupSizeSet = new Set<number>();
+                                stratumGroupSizes.forEach(size => groupSizeSet.add(size));
+                                return Array.from(groupSizeSet);
+                            });
+
+                        return strataUniqueGroupSizes;
+                    })
+                    .reduce((carry, incomingDistribution) => {
+                        // Merge strata group size distribution arrays
+                        return carry.map((existingDistribution, stratumIndex) => {
+                            const distributionToAppend = incomingDistribution[stratumIndex];
+
+                            return concat<number>([existingDistribution, distributionToAppend]);
+                        });
+                    })
+                    .map((stratumGroupSizes) => {
+                        // Do one more uniqueness filter
+                        const groupSizeSet = new Set<number>();
+                        stratumGroupSizes.forEach(size => groupSizeSet.add(size));
+
+                        // Sort array by numeric value
+                        const array = Array.from(groupSizeSet);
+                        numberSort(array);
+                        return array;
+                    });
+
+            return strataGroupSizes;
+
+        } catch {
+            // If error occurs, return empty arrays for each stratum
+            return strata.map(_ => []);
+        }
+    },
+
+    [G.IS_ANNEAL_ABLE_TO_BE_EXECUTED](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return (
+            !getters[G.IS_ANNEAL_REQUEST_IN_PROGRESS]
+            && getters[G.HAS_CONFIG_AND_SOURCE_FILE_DATA]
+            && getters[G.HAS_VALID_PARTITION_COLUMN]
+            && getters[G.HAS_STRATA]
+            && getters[G.IS_STRATA_CONFIG_NAMES_VALID]
+            && getters[G.HAS_CONSTRAINTS]
+            && getters[G.ARE_ALL_CONSTRAINTS_VALID]
+        ) as boolean;
+    },
 }
 
 export function init() {
