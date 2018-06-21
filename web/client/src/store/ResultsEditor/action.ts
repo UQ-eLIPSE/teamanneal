@@ -77,11 +77,11 @@ const actions = {
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
 
+        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
+
         for (let constraint of state.constraintConfig.constraints) {
             commit(context, M.INSERT_CONSTRAINT, constraint);
         }
-
-        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
 
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
@@ -108,11 +108,11 @@ const actions = {
 
         await dispatch(context, A.SET_RECORD_DATA, annealCreatorState.recordData);
 
+        await dispatch(context, A.SET_STRATA, annealCreatorState.strataConfig.strata);
+
         for (let constraint of annealCreatorState.constraintConfig.constraints) {
             commit(context, M.INSERT_CONSTRAINT, constraint);
         }
-
-        await dispatch(context, A.SET_STRATA, annealCreatorState.strataConfig.strata);
 
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
@@ -120,12 +120,12 @@ const actions = {
     },
 
     async [A.RESET_STATE](context: Context) {
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
         await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 
