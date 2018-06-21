@@ -11,10 +11,10 @@ export class SimilarityNumericConstraint extends AbstractConstraint {
      * A `NaN` stored in this array indicates the lack of data at this element
      * in the original record.
      */
-    private recordValueArray: Float64Array;
+    private recordValueArray!: Float64Array;
 
-    private constraintConditionCostFunction: (columnRange: number, values: ReadonlyArray<number>) => number;
-    private columnRange: number;
+    private constraintConditionCostFunction!: (columnRange: number, values: ReadonlyArray<number>) => number;
+    private columnRange!: number;
 
     protected init(records: Record.RecordSet) {
         // Initialise record array

@@ -13,9 +13,9 @@ export class SimilarityStringConstraint extends AbstractConstraint {
      * 
      * See "string interning" for more on this practice: https://en.wikipedia.org/wiki/String_interning
      */
-    private recordStringPointerArray: Uint32Array;
+    private recordStringPointerArray!: Uint32Array;
 
-    private constraintConditionCostFunction: (groupSize: number, distinctSetSize: number) => number;
+    private constraintConditionCostFunction!: (groupSize: number, distinctSetSize: number) => number;
 
     protected init(records: Record.RecordSet) {
         // Initialise record array

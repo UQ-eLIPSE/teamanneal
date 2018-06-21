@@ -7,7 +7,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "start": "node ./build/server/src/index.js",
+    "start": "node ./server/build/server/src/index.js",
     "test": "npm run test_server",
     "test_server": "jest --no-cache --config=test/server.jest.config.json",
     "clean": "npm run clean_build",
@@ -42,7 +42,7 @@
     "style-loader": "0.20.2",
     "ts-jest": "19.0.14",
     "ts-loader": "4.0.1",
-    "typescript": "2.8.1",
+    "typescript": "2.9.1",
     "vue-loader": "14.2.1",
     "vue-template-compiler": "2.5.13",
     "webpack": "4.1.1",

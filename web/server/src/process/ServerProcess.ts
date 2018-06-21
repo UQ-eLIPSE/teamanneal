@@ -1,14 +1,15 @@
 import * as Application from "../core/Application";
 import * as Router from "../core/Router";
 
-// TODO: Move configuration into config file
+import { Config } from "../utils/Config";
+
+const config = Config.get();
 
 // Port config
-const port = 8080;
+const port = config.server.port;
 
 // API root URL
-const apiRoot = "/api";
-
+const apiRoot = config.server.api.root;
 
 export function init() {
     // Init the server
@@ -23,7 +24,7 @@ export function init() {
 
     // Set up static file delivery
     console.log(`Initialising static file delivery`);
-    Application.enableStaticFileServing(app, `${__dirname}/../../../client`);
+    Application.enableStaticFileServing(app, `${__dirname}/../../../../../client/build/client`);
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);

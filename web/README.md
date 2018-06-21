@@ -27,6 +27,15 @@ Currently the server runs on `http://localhost:8080`. This is set in `server/src
 
 More information about the API is below.
 
+## Configuration
+
+Server configuration is loaded from files under `server/config`. The name of the
+file is expected to be the value of `$NODE_ENV` as set in your environment, or
+it will default to look for `development`.
+
+You should use the `example.json` file included as the template for your
+configuration.
+
 ## Tests
 
 ### Jest
@@ -45,15 +54,13 @@ Files that can be used to test anneals can be found under `test-files`.
 
 ## Folder structure
 
-* build (created upon build)
-  * client
-  * common
-  * server
 * client
+  * build (once built)
   * src
 * common
 * scripts
 * server
+  * build (once built)
   * src
 * test
 * test-files

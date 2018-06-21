@@ -5,6 +5,8 @@ import * as ServerProcess from "./process/ServerProcess";
 import * as AnnealRequestProcess from "./process/AnnealRequestProcess";
 import * as AnnealProcess from "./process/AnnealProcess";
 
+import { Config } from "./utils/Config";
+
 /// Worker allocation
 // -------------------------------------------------------------------------
 // Worker ID | Description
@@ -30,12 +32,9 @@ if (cluster.isMaster) {
     ServerProcess.init();
 
     // Number of anneal workers is (CPU cores - 1), with a floor of 2 and a cap
-    // of 20 maximum (due to memory constraints on most systems)
-    //
-    // TODO: The maximum should be configurable
-
+    // of some configured maximum (due to memory constraints on most systems)
     const numberOfCpus = os.cpus().length;
-    const numberOfAnnealWorkers = Math.min(20, Math.max(2, numberOfCpus - 1));
+    const numberOfAnnealWorkers = Math.min(Config.get().server.workers.maxInstances, Math.max(2, numberOfCpus - 1));
 
     // Start up anneal workers
     console.log(`Creating ${numberOfAnnealWorkers} anneal workers...`);
