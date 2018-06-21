@@ -64,7 +64,8 @@
 
                 <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
                                                        v-model="customNameList"
-                                                       :stratumLabel="stratum.label"></StrataEditorStratumItemCustomNameList>
+                                                       :stratumLabel="stratum.label"
+                                                       :minCount="customNameListMinCounts[stratum._id]"></StrataEditorStratumItemCustomNameList>
 
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
@@ -383,6 +384,10 @@ export default class StrataEditorStratumItem extends Vue {
 
     set customNameList(names: string[]) {
         S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: names });
+    }
+
+    get customNameListMinCounts() {
+        return S.get(S.getter.EXPECTED_NAME_LABELS_FOR_EACH_STRATUM);
     }
 }
 </script>
