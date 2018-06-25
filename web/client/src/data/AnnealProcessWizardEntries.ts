@@ -28,7 +28,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
 
             return "Import";
         },
-        path: "/anneal/import-data",
+        name: "anneal-import-data",
         disabled: () => {
             return !(
                 // Disable when processing request
@@ -40,7 +40,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     reviewRecords = {
         label: "Review record data",
-        path: "/anneal/review-records",
+        name: "anneal-review-records",
         disabled: () => {
             return !(
                 // Disabled when there is no source file data
@@ -58,7 +58,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     selectIdColumn = {
         label: "Select ID column",
-        path: "/anneal/select-id-column",
+        name: "anneal-select-id-column",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -76,7 +76,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     poolRecords = {
         label: "Pool records",
-        path: "/anneal/pool-records",
+        name: "anneal-pool-records",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -94,7 +94,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     designGroupStructure = {
         label: "Define group structure",
-        path: "/anneal/define-group-structure",
+        name: "anneal-define-group-structure",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -115,7 +115,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     configureGroups = {
         label: "Configure groups",
-        path: "/anneal/configure-groups",
+        name: "anneal-configure-groups",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -133,7 +133,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     configureConstraints = {
         label: "Set constraints",
-        path: "/anneal/set-constraints",
+        name: "anneal-set-constraints",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -154,7 +154,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     runAnneal = {
         label: "Run anneal",
-        path: "/anneal/run-anneal",
+        name: "anneal-run-anneal",
         disabled: () => {
             return !(
                 // Enable when there is config + source file data
@@ -164,7 +164,7 @@ export const entries: ReadonlyArray<Readonly<WNE>> = [
     },
     exportData = {
         label: "Export configuration",
-        path: "/anneal/export-data",
+        name: "anneal-export-data",
         className: "spacer-top",
         disabled: () => {
             return !(

@@ -37,7 +37,7 @@ export default class WizardNavigation extends Vue {
      */
     goTo(entry: WNE) {
         this.$router.push({
-            path: entry.path,
+            name: entry.name,
         });
     }
 
@@ -64,7 +64,7 @@ export default class WizardNavigation extends Vue {
 
 
     isEntryActive(entry: WNE) {
-        return this.$route.fullPath === entry.path;
+        return this.$route.name === entry.name;
     }
 
     isEntryDisabled(entry: WNE) {
