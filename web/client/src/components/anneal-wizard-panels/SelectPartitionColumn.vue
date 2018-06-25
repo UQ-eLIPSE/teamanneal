@@ -101,13 +101,19 @@
             <p>
                 If you do not need to set a partition or need to unset the partition column, click "Don't partition".
             </p>
+            <div v-if="!isSelectedPartitionValid"
+                 class="error-msg">
+                <h3>Invalid partition column detected</h3>
+                <p>Please choose an alternative partition column that corresponds to a valid column in your data file.</p>
+            </div>
             <p>
-                <select v-model="partitionColumn">
+                <select v-model="partitionColumnId"
+                        :class="partitionColumnSelectClasses">
                     <option disabled
                             :value="undefined">Please select partition column</option>
-                    <option v-for="(option, i) in possiblePartitionColumns"
-                            :key="option.text + i"
-                            :value="option.value">{{ option.text }}</option>
+                    <option v-for="(option, i) in allPartitionColumnOptions"
+                            :key="option.value._id"
+                            :value="option.value._id">{{ option.text }}</option>
                 </select>
             </p>
         </div>
@@ -151,7 +157,7 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
         this.emitWizardNavNext();
     }
 
-    get possiblePartitionColumns() {
+    get validPartitionColumnOptions() {
         const recordData = S.state.recordData;
         const columns = recordData.source.columns;
         const recordDataRawLength = recordData.source.length;
@@ -176,6 +182,23 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
             }));
     }
 
+    get allPartitionColumnOptions() {
+        const options = [...this.validPartitionColumnOptions];
+
+        // Append the invalid option at the end of the list of options when an
+        // invalid partition column has been selected
+        if (!this.isSelectedPartitionValid) {
+            const selectedPartitionColumn = this.partitionColumn!;
+
+            options.push({
+                text: `${selectedPartitionColumn.label} [invalid]`,
+                value: selectedPartitionColumn,
+            });
+        }
+
+        return options;
+    }
+
     get partitionColumn(): IColumnData_MinimalDescriptor | undefined {
         const partitionColumn = S.state.recordData.partitionColumn;
 
@@ -191,6 +214,38 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
             S.dispatch(S.action.CLEAR_RECORD_PARTITION_COLUMN, undefined);
         } else {
             S.dispatch(S.action.SET_RECORD_PARTITION_COLUMN, val);
+        }
+    }
+
+    get partitionColumnId() {
+        const partitionColumn = S.state.recordData.partitionColumn;
+
+        if (partitionColumn === undefined) {
+            return undefined;
+        }
+
+        return partitionColumn._id;
+    }
+
+    set partitionColumnId(val: string | undefined) {
+        const columns = S.state.recordData.source.columns;
+
+        const newPartitionColumn = columns.find(c => c._id === val);
+
+        if (newPartitionColumn === undefined) {
+            this.partitionColumn = undefined;
+        } else {
+            this.partitionColumn = ColumnData.ConvertToMinimalDescriptor(newPartitionColumn);
+        }
+    }
+
+    get isSelectedPartitionValid() {
+        return S.get(S.getter.HAS_VALID_PARTITION_COLUMN);
+    }
+
+    get partitionColumnSelectClasses() {
+        return {
+            "invalid": !this.isSelectedPartitionValid,
         }
     }
 }
@@ -209,5 +264,17 @@ export default class SelectPartitionColumn extends Mixin(AnnealProcessWizardPane
 .example-table td {
     border: 1px solid #aaa;
     padding: 0.1em 0.3em;
+}
+
+select.invalid {
+    color: #000;
+    background: #fdb;
+    outline: 0.2em solid #f80;
+}
+
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
 }
 </style>

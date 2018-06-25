@@ -61,12 +61,14 @@
                                 :value="counterOption.value">{{ counterOption.text }}</option>
                     </select>
                 </p>
-
                 <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
                                                        v-model="customNameList"
                                                        :stratumLabel="stratum.label"
                                                        :minCount="customNameListMinCounts[stratum._id]"></StrataEditorStratumItemCustomNameList>
-
+                <p class="smaller-margins">
+                    For example:
+                    <i>{{ stratum.label }} {{ randomExampleName }}</i>
+                </p>
                 <template v-if="showNamingContextOptions">
                     <h4 class="smaller-margins">Context</h4>
                     <p class="smaller-margins">
@@ -101,7 +103,7 @@ import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum } from "../data/Stratum";
 import * as StratumSize from "../data/StratumSize";
-import { StratumNamingConfig } from "../data/StratumNamingConfig";
+import { StratumNamingConfig, generateRandomExampleName } from "../data/StratumNamingConfig";
 import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
@@ -145,6 +147,10 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<Stratum>>({ type: Array, required: false, default: () => [], });
+
+    get randomExampleName() {
+        return generateRandomExampleName(this.stratumNamingConfig);
+    }
 
     get stratumSize() {
         return this.stratum.size;

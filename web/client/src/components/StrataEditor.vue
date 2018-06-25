@@ -20,33 +20,6 @@
                 </li>
             </ul>
         </div>
-        <!-- NOTE: Combined names disabled due to new GroupNodes not being compatible with it -->
-        <!-- TODO: Re-enable combined names once this issue is fixed -->
-        <!-- <div class="combined-name-container">
-            <h2>Combined group name format</h2>
-            <p>Provide a format to generate a single combined name for each of your groups. This will be available in your results and exported CSV file.</p>
-            <p>Use the following placeholders to insert each group level's name values:</p>
-            <p>
-                <table class="example-table">
-                    <tr>
-                        <th>Group level</th>
-                        <th>Placeholder to use</th>
-                    </tr>
-                    <tr v-for="item in groupCombinedNameFormatPlaceholderList"
-                        :key="item.label">
-                        <td>{{ item.label }}</td>
-                        <td>{{ item.placeholder }}</td>
-                    </tr>
-                </table>
-            </p>
-            <p>Set this field blank if you wish to disable this feature.</p>
-            <input class="combined-name-format"
-                   v-model="groupCombinedNameFormat"></input>
-            <p v-if="groupCombinedNameExample !== undefined">
-                For example:
-                <i>{{ groupCombinedNameExample }}</i>
-            </p>
-        </div> -->
     </div>
 </template>
 
@@ -66,7 +39,6 @@ import * as Partition from "../data/Partition";
 import { AnnealCreator as S } from "../store";
 
 import { concat } from "../util/Array";
-import { replaceAll } from "../util/String";
 
 @Component({
     components: {
@@ -135,11 +107,11 @@ export default class StrataEditor extends Vue {
         const columns = this.columns;
         const partitionColumnDescriptor = this.partitionColumnDescriptor;
 
-        const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
-
         // Run group sizing in each partition, and merge the distributions at
         // the end
         try {
+            const partitions = Partition.initManyFromPartitionColumnDescriptor(columns, partitionColumnDescriptor);
+
             const strataGroupDistribution =
                 partitions
                     .map((partition) => {
@@ -198,88 +170,6 @@ export default class StrataEditor extends Vue {
 
         return outputList;
     }
-
-    get groupCombinedNameFormatPlaceholderList() {
-        const list = this.strata.map((stratum) => {
-            return {
-                label: stratum.label,
-                placeholder: `{{${stratum.label}}}`,
-            };
-        });
-
-        if (this.isPartitionColumnSet) {
-            const partitionShimObject = this.partitionStratumShimObject;
-
-            list.unshift({
-                label: partitionShimObject.label,
-                placeholder: "{{Partition}}",
-            });
-        }
-
-        return list;
-    }
-
-    get groupCombinedNameExample() {
-        let combinedName = S.state.nodeNamingConfig.combined.format;
-
-        if (combinedName === undefined) {
-            return undefined;
-        }
-
-        // Set random partition name
-        const partitionColumn = this.partitionColumn;
-        if (partitionColumn !== undefined) {
-            const partitionValues = partitionColumn.rawColumnValues;
-            const randomPartitionName = "" + partitionValues[(partitionValues.length * Math.random()) >>> 0];
-
-            combinedName = replaceAll(combinedName, "{{_PARTITION}}", randomPartitionName);
-        }
-
-        // Set stratum names
-        this.strata.forEach((stratum) => {
-            const stratumNamingConfig = this.getStratumNamingConfig(stratum._id);
-            const randomStratumName = StratumNamingConfig.generateRandomExampleName(stratumNamingConfig);
-
-            combinedName = replaceAll(combinedName!, `{{${stratum._id}}}`, randomStratumName);
-        });
-
-        return combinedName;
-    }
-
-    get groupCombinedNameFormat() {
-        let format = S.state.nodeNamingConfig.combined.format;
-
-        if (format === undefined) {
-            return undefined;
-        }
-
-        // Get stratum labels back out because internally we use IDs
-        this.strata.forEach(({ _id, label, }) => {
-            format = replaceAll(format!, `{{${_id}}}`, `{{${label}}}`);
-        });
-
-        // Internally we use _PARTITION to represent the partition column
-        format = replaceAll(format, "{{_PARTITION}}", "{{Partition}}");
-
-        return format;
-    }
-
-    set groupCombinedNameFormat(newValue: string | undefined) {
-        if (newValue === undefined || newValue.trim().length === 0) {
-            S.dispatch(S.action.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, undefined);
-            return;
-        }
-
-        // Replace stratum labels with stratum IDs because internally we use IDs
-        this.strata.forEach(({ _id, label, }) => {
-            newValue = replaceAll(newValue!, `{{${label}}}`, `{{${_id}}}`);
-        });
-
-        // Internally we use _PARTITION to represent the partition column
-        newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
-
-        S.dispatch(S.action.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER, newValue);
-    }
 }
 </script>
 
@@ -313,33 +203,5 @@ export default class StrataEditor extends Vue {
 
 .editor-container li+li {
     margin-top: 2rem;
-}
-
-.combined-name-container {
-    margin-top: 1em;
-}
-
-.combined-name-container h2 {
-    margin-top: 0;
-
-    font-weight: 500;
-    color: #49075E;
-}
-
-input.combined-name-format {
-    width: 100%;
-    max-width: 30em;
-}
-
-.example-table {
-    border-collapse: collapse;
-    font-size: 0.9em;
-}
-
-.example-table th,
-.example-table td {
-    text-align: left;
-    border: 1px solid #aaa;
-    padding: 0.1em 0.3em;
 }
 </style>

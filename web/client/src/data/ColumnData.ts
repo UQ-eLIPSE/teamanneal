@@ -281,4 +281,23 @@ export namespace ColumnData {
 
         return transpose(columnValues);
     }
+
+    /**
+     * Attempts a match of given column to a new array of columns.
+     * 
+     * @param newColumns Array of columns to search in (e.g. new record data columns)
+     * @param oldColumn Column to match
+     * @param returnOldIfNotFound Whether to return `oldColumn` if new column could not be found (default = false)
+     */
+    export function MatchOldColumnInNewColumns(newColumns: ReadonlyArray<MinimalDescriptor>, oldColumn: MinimalDescriptor | undefined, returnOldIfNotFound: boolean = false) {
+        if (oldColumn === undefined) { return undefined; }
+
+        const newColumn = newColumns.find(c => c.label === oldColumn.label && c.type === oldColumn.type);
+
+        if (newColumn === undefined && returnOldIfNotFound) {
+            return oldColumn;
+        }
+
+        return newColumn;
+    }
 }

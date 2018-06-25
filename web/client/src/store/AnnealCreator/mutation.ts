@@ -5,7 +5,7 @@ import { AnnealCreatorState as State } from "./state";
 
 import { Data as Constraint } from "../../data/Constraint";
 import { Stratum } from "../../data/Stratum";
-import { RecordData, init as initRecordData } from "../../data/RecordData";
+import { RecordData, init as initRecordData, RecordDataSource } from "../../data/RecordData";
 import { init as initStrataConfig } from "../../data/StrataConfig";
 import { init as initConstraintConfig } from "../../data/ConstraintConfig";
 import { FunctionParam2 } from "../../data/FunctionParam2";
@@ -22,39 +22,36 @@ type Context = ActionContext<State, State>;
 export enum AnnealCreatorMutation {
     SET_RECORD_DATA = "Setting record data",
     CLEAR_RECORD_DATA = "Clearing record data",
-
+    
     INSERT_CONSTRAINT = "Inserting a constraint",
     SET_CONSTRAINT = "Setting a constraint",
     DELETE_CONSTRAINT = "Deleting a constraint",
     CLEAR_CONSTRAINTS = "Clearing constraints",
-
+    
     INSERT_STRATUM = "Inserting stratum",
     SET_STRATUM = "Setting stratum",
     DELETE_STRATUM = "Deleting stratum",
     CLEAR_STRATA = "Clearing strata",
-
+    
     INIT_STRATA_NAMING_CONFIG = "Initialising strata naming config",
     SET_STRATA_NAMING_CONFIG = "Setting strata naming config",
     
     SET_STRATUM_NAMING_CONFIG = "Setting stratum's naming config",
     SET_STRATUM_NAMING_CONFIG_CONTEXT = "Setting stratum's naming config context",
     SET_STRATUM_NAMING_CONFIG_COUNTER = "Setting stratum's naming config counter",
-
+    
     INSERT_RECORD_COLUMN_DATA = "Inserting record column data",
     SET_RECORD_COLUMN_DATA = "Setting record column data",
     DELETE_RECORD_COLUMN_DATA = "Deleting record column data",
     CLEAR_RECORD_COLUMN_DATA = "Clearing record column data",
-
+    
     SET_RECORD_ID_COLUMN = "Setting record ID column",
     CLEAR_RECORD_ID_COLUMN = "Clearing record ID column",
-
+    
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
-
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT = "Setting node naming combined name format",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT = "Clearing node naming combined name format",
-
-    SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG = "Setting node naming combined name's user provided flag",
+    
+    SET_RECORD_DATA_SOURCE = "Setting record data source",
 
     SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
 }
@@ -171,21 +168,13 @@ const mutations = {
         set(state.recordData, "partitionColumn", undefined);
     },
 
-    [M.SET_NODE_NAMING_COMBINED_NAME_FORMAT](state: State, nameFormat: string) {
-        set(state.nodeNamingConfig.combined, "format", nameFormat);
-    },
-
-    [M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](state: State) {
-        set(state.nodeNamingConfig.combined, "format", undefined);
-    },
-
-    [M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG](state: State, userProvided: boolean) {
-        set(state.nodeNamingConfig.combined, "userProvided", userProvided);
+    [M.SET_RECORD_DATA_SOURCE](state: State, recordDataSource: RecordDataSource) {
+        set(state.recordData, "source", recordDataSource);
     },
 
     [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {
         set(state, "annealRequest", annealRequestState);
-    }
+    },
 };
 
 export function init() {

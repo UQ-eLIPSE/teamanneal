@@ -28,11 +28,15 @@ export enum AnnealCreatorGetter {
     IS_STRATA_CONFIG_SIZES_VALID = "Is strata config sizes valid",
     IS_ANNEAL_REQUEST_IN_PROGRESS = "Is anneal request in progress",
     VALID_ID_COLUMNS = "Valid ID columns",
+    HAS_CONFIG = "Has config set",
+    HAS_CONFIG_AND_SOURCE_FILE_DATA = "Has both config and source file data",
+    HAS_VALID_PARTITION_COLUMN = "Has valid partition column",
     ARE_ALL_CONSTRAINTS_VALID = "Are all constraints valid",
     EXPECTED_PARTITIONS = "Expected partitions",
     EXPECTED_NODE_TREE = "Expected node tree",
     EXPECTED_NAME_LABELS_FOR_EACH_STRATUM = "Expected name labels for each stratum",
     POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
+    IS_ANNEAL_ABLE_TO_BE_EXECUTED = "Is anneal able to be executed",
 }
 
 /** Shorthand for Getter enum above */
@@ -167,6 +171,35 @@ const getters = {
                 const valueSet = ColumnData.GetValueSet(column);
                 return valueSet.size === numberOfRecords;
             });
+    },
+
+    [G.HAS_CONFIG](_state: State, getters: any) {
+        // Config is assumed to be loaded when there is strata defined
+        // 
+        // TODO: Fix with type-safe accessors
+        return getters[G.HAS_STRATA] as boolean;
+    },
+
+    [G.HAS_CONFIG_AND_SOURCE_FILE_DATA](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return (
+            (getters[G.HAS_CONFIG] as boolean)
+            && (getters[G.HAS_SOURCE_FILE_DATA] as boolean)
+        );
+    },
+
+    [G.HAS_VALID_PARTITION_COLUMN](state: State) {
+        const recordData = state.recordData;
+        const selectedPartitionColumn = recordData.partitionColumn;
+
+        if (selectedPartitionColumn === undefined) {
+            return true;
+        }
+
+        const columns = recordData.source.columns;
+
+        // See if there is a column defined with the partition column's ID
+        return columns.some(c => ColumnData.Equals(c, selectedPartitionColumn));
     },
 
     [G.ARE_ALL_CONSTRAINTS_VALID](state: State, getters: any) {
@@ -472,6 +505,19 @@ const getters = {
             // If error occurs, return empty arrays for each stratum
             return strata.reduce<Record<string, ReadonlyArray<number>>>((sizes, stratum) => Object.assign(sizes, { [stratum._id]: [] }), {});
         }
+    },
+
+    [G.IS_ANNEAL_ABLE_TO_BE_EXECUTED](_state: State, getters: any) {
+        // TODO: Fix with type-safe accessors
+        return (
+            !getters[G.IS_ANNEAL_REQUEST_IN_PROGRESS]
+            && getters[G.HAS_CONFIG_AND_SOURCE_FILE_DATA]
+            && getters[G.HAS_VALID_PARTITION_COLUMN]
+            && getters[G.HAS_STRATA]
+            && getters[G.IS_STRATA_CONFIG_NAMES_VALID]
+            && getters[G.HAS_CONSTRAINTS]
+            && getters[G.ARE_ALL_CONSTRAINTS_VALID]
+        ) as boolean;
     },
 }
 

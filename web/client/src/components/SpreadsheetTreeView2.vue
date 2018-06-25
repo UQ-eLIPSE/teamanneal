@@ -207,7 +207,18 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     @Lifecycle mounted() {
+        // This is here for non-update situations, where this will temporarily
+        // block rendering and hence make it appear aligned upon first load
         this.waitAndUpdateColumnWidths();
+
+        // Widths not updating when the data changes while the view is still
+        // open so we need to instead trigger the update late
+        //
+        // This causes slight momentary unalignment, but otherwise results in
+        // the same effect as before
+        setTimeout(() => {
+            this.waitAndUpdateColumnWidths();
+        }, 0);
     }
 }   
 </script>

@@ -68,7 +68,7 @@ export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
             }));
     }
 
-    get idColumn(): IColumnData_MinimalDescriptor | undefined {
+    get idColumn() {
         const idColumn = S.state.recordData.idColumn;
 
         if (idColumn === undefined) {

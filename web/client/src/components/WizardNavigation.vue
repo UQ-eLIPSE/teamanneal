@@ -3,11 +3,17 @@
         <ul>
             <li v-for="entry in entries"
                 :key="entry.path"
-                :class="{ 'active': isEntryActive(entry), 'disabled': isEntryDisabled(entry), }">
-                <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}</span>
+                :class="getEntryClasses(entry)">
+                <span v-if="isEntryDisabled(entry)">{{ getEntryLabel(entry) }}
+                    <span v-if="displayWarning(entry)"
+                          class="warning-icon"></span>
+                </span>
                 <a v-else
                    href="#"
-                   @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}</a>
+                   @click.prevent="goTo(entry)">{{ getEntryLabel(entry) }}
+                    <span v-if="displayWarning(entry)"
+                          class="warning-icon"></span>
+                </a>
             </li>
         </ul>
     </div>
@@ -70,6 +76,16 @@ export default class WizardNavigation extends Vue {
         return isDisabled === undefined ? false : isDisabled();
     }
 
+    displayWarning(entry: WNE) {
+        // Do not display warning when entry is disabled
+        if (this.isEntryDisabled(entry)) { return false; }
+
+        // Get the warning display function
+        const displayWarning = entry.warning;
+
+        return displayWarning === undefined ? false : displayWarning();
+    }
+
     getEntryLabel(entry: WNE) {
         const label = entry.label;
 
@@ -84,6 +100,19 @@ export default class WizardNavigation extends Vue {
         }
 
         throw new Error("Unknown entry label type");
+    }
+
+    getEntryClasses(entry: WNE) {
+        const classes: Record<string, boolean> = {
+            active: this.isEntryActive(entry),
+            disabled: this.isEntryDisabled(entry),
+        };
+
+        if (entry.className !== undefined) {
+            entry.className.split(" ").forEach(x => classes[x] = true);
+        }
+
+        return classes;
     }
 
     get activeEntry() {
@@ -128,11 +157,14 @@ li {
     padding: 0.4em 1.2em 0.4em 0.7em;
 
     font-size: 1.5em;
+    line-height: 1.1;
 }
 
 li a {
     color: inherit;
     text-decoration: none;
+    display: inline-block;
+    word-break: break-all;
     word-break: break-word;
 }
 
@@ -146,6 +178,25 @@ li.active {
 li.disabled {
     color: rgba(0, 0, 0, 0.3);
     font-style: italic;
+}
+
+li.active.disabled {
+    color: #fff;
+}
+
+li.spacer-top {
+    margin-top: 1em;
+}
+
+.warning-icon::before {
+    content: "";
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    background-image: url(data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHZlcnNpb249IjEuMSI+DQo8ZyBpZD0ic3VyZmFjZTEiPg0KPHBhdGggc3R5bGU9ImZpbGw6I0ZGODgwMCIgZD0iTSAyMS4zOTg0MzggMTAuNjAxNTYzIEwgMTMuMzk4NDM4IDIuNjAxNTYzIEMgMTIuNjAxNTYzIDEuODAwNzgxIDExLjM5ODQzOCAxLjgwMDc4MSAxMC42MDE1NjMgMi42MDE1NjMgTCAyLjYwMTU2MyAxMC42MDE1NjMgQyAxLjgwMDc4MSAxMS4zOTg0MzggMS44MDA3ODEgMTIuNjAxNTYzIDIuNjAxNTYzIDEzLjM5ODQzOCBMIDEwLjYwMTU2MyAyMS4zOTg0MzggQyAxMS4zOTg0MzggMjIuMTk5MjE5IDEyLjYwMTU2MyAyMi4xOTkyMTkgMTMuMzk4NDM4IDIxLjM5ODQzOCBMIDIxLjM5ODQzOCAxMy4zOTg0MzggQyAyMi4xOTkyMTkgMTIuNjAxNTYzIDIyLjE5OTIxOSAxMS4zOTg0MzggMjEuMzk4NDM4IDEwLjYwMTU2MyBaIE0gMTMgMTcgTCAxMSAxNyBMIDExIDE1IEwgMTMgMTUgWiBNIDEzIDEzIEwgMTEgMTMgTCAxMSA3IEwgMTMgNyBaICI+PC9wYXRoPg0KPC9nPg0KPC9zdmc+);
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
 }
 </style>
 

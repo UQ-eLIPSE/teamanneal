@@ -10,7 +10,7 @@
                        href="#"
                        @click.prevent="toggleHelp">Need help?</a>
                 </p>
-                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Clear File" and try again.</p>
+                <p>If you need to reload the file, simply click on the file name in the sidebar, click "Swap File" and try again.</p>
                 <div class="help-box"
                      v-if="showHelp">
                     <h2>Choosing column types ("text", "number")</h2>
@@ -28,7 +28,7 @@
                 <div v-if="hasDuplicateColumnNames"
                      class="error-msg">
                     <h3>Duplicate column names detected</h3>
-                    <p>Please change the below columns to ensure that you have unique column names.</p>
+                    <p>Please change the below columns in your data file to ensure that you have unique column names.</p>
                     <ul>
                         <li v-for="x in duplicateColumnListMessage"
                             :key="x.label">Found duplicated column name "

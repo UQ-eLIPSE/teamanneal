@@ -6,7 +6,9 @@ import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/G
 import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
-export interface ResultsEditorState {
+import { AnnealCreatorStateSerialisable } from "../AnnealCreator/state";
+
+export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
     recordData: RecordData,
 

@@ -57,16 +57,16 @@ export function deepClean<T extends Object>(target: T, definition: Object) {
 
 function replacerWithUndefined(_key: string, value: any) {
     if (value === undefined) {
-        // Placeholder object that indicates `undefined`
-        return { __undefined__: true };
+        // Placeholder string that indicates `undefined`
+        return "__TA_undefined__";
     }
 
     return value;
 }
 
 function reviverWithUndefined(_key: any, value: any) {
-    // `undefined` placeholder is an object with `__undefined__` property = true
-    if (typeof value === "object" && value !== null && value.__undefined__ === true) {
+    // `undefined` placeholder is string "__TA_undefined__"
+    if (value === "__TA_undefined__") {
         return undefined;
     }
 
