@@ -53,9 +53,8 @@
                                         class="button"
                                         @click.stop.prevent="openRecordFilePicker">Select CSV file...</button>
                             </label>
-                            <button class="button"
-                                    @click.prevent="null"
-                                    v-if="hasSourceFileData">"{{ filename }}" in use</button>
+                            <span class="active-data-file-block"
+                                  v-if="hasSourceFileData">"{{ filename }}" in use</span>
                             <button class="button gold"
                                     @click="swapRecordFile"
                                     v-if="hasSourceFileData">Swap file</button>
@@ -335,5 +334,18 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
 .font-weight-normal {
     font-weight: normal;
+}
+
+.active-data-file-block {
+    background: #f2f2f2;
+    color: #49075e;
+    display: inline-block;
+    padding: 1rem;
+    border: 1px solid rgba(55, 5, 70, 0.3);
+    border-radius: 0.2rem;
+    font-family: inherit;
+    font-size: 0.9em;
+    font-weight: 400;
+    text-transform: uppercase;
 }
 </style>
