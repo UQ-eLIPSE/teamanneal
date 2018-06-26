@@ -40,6 +40,7 @@
             <div class="spreadsheet">
                 <SpreadsheetTreeView2 class="viewer"
                                       :headerRow="headerRow"
+                                      :headerStyles="headerStyles"
                                       :recordRows="cookedDataRows">
                 </SpreadsheetTreeView2>
             </div>
@@ -101,6 +102,23 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
         return this.cookedDataWithHeader[0].map(x => "" + x);
     }
 
+    get headerStyles() {
+        const duplicateColumnIndices = this.duplicateColumnIndices;
+
+        return this.headerRow.map((_header, i) => {
+            if (duplicateColumnIndices.indexOf(i) !== -1) {
+                // If header is for duplicate column, format as warning
+                return {
+                    color: "#000",
+                    backgroundColor: "darkorange",
+                };
+            };
+
+            // Otherwise no styles
+            return undefined;
+        });
+    }
+
     get hasDuplicateColumnNames() {
         return S.get(S.getter.HAS_DUPLICATE_COLUMN_NAMES);
     }
@@ -124,7 +142,7 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
     /** 
      * Returns columns which have duplicate labels
      */
-    get duplicateColumns() {
+    get duplicateColumnIndices() {
         const duplicateColumnIndexInfo: ColumnIndexInfo[] = [];
 
         this.columnIndexInfoMap.forEach((colInfo) => {
@@ -133,7 +151,7 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
             }
         });
 
-        return duplicateColumnIndexInfo.map(x => x.column);
+        return duplicateColumnIndexInfo.map(x => x.index);
     }
 
     /** 

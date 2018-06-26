@@ -2,6 +2,7 @@
     <div class="spreadsheet-tree-view">
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
+                                        :headerStyles="filteredHeaderStyles"
                                         :headerRow="filteredHeaderRow"
                                         :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
         </table>
@@ -91,6 +92,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     // Props
     @Prop nodeRoots = p<ReadonlyArray<GroupNodeRoot>>({ type: Array, required: false, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
+    @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop recordRows = p<ReadonlyArray<Record>>({ type: Array, required: true, });
     @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
@@ -135,6 +137,16 @@ export default class SpreadsheetTreeView2 extends Vue {
         }
 
         return this.headerRow.filter((_columnLabel, i) => columnsDisplayIndices.indexOf(i) !== -1);
+    }
+
+    get filteredHeaderStyles() {
+        const columnsDisplayIndices = this.columnsDisplayIndices;
+
+        if (columnsDisplayIndices === undefined) {
+            return this.headerStyles;
+        }
+
+        return this.headerStyles.filter((_, i) => columnsDisplayIndices.indexOf(i) !== -1);
     }
 
     get totalNumberOfColumns() {
