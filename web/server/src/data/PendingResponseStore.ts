@@ -4,7 +4,7 @@
  * Stores Express response objects, for the purposes of responding to requests
  * at a later point in time
  */
-import * as express from "express";
+import express from "express";
 
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 
