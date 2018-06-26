@@ -38,10 +38,10 @@
                 </div>
             </div>
             <div class="spreadsheet">
-                <SpreadsheetView class="viewer"
-                                 :invalidColumns="duplicateColumns"
-                                 :rows="cookedDataWithHeader"
-                                 :columnData="columns"></SpreadsheetView>
+                <SpreadsheetTreeView2 class="viewer"
+                                      :headerRow="headerRow"
+                                      :recordRows="cookedDataRows">
+                </SpreadsheetTreeView2>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
@@ -66,7 +66,7 @@ import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
 
 import { numberSort } from "../../util/Array";
 
-import SpreadsheetView from "../SpreadsheetView.vue";
+import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 
 interface ColumnIndexInfo {
     column: IColumnData,
@@ -75,7 +75,7 @@ interface ColumnIndexInfo {
 
 @Component({
     components: {
-        SpreadsheetView,
+        SpreadsheetTreeView2,
     },
 })
 export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
@@ -89,6 +89,16 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
 
     get cookedDataWithHeader() {
         return ColumnData.TransposeIntoCookedValueRowArray(this.columns, true);
+    }
+
+    get cookedDataRows() {
+        // Just return the rows, not including the header
+        return this.cookedDataWithHeader.slice(1);
+    }
+
+    get headerRow() {
+        // Return just the header
+        return this.cookedDataWithHeader[0].map(x => "" + x);
     }
 
     get hasDuplicateColumnNames() {
