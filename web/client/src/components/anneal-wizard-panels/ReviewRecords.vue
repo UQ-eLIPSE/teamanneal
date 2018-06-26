@@ -31,8 +31,8 @@
                     <p>Please change the below columns in your data file to ensure that you have unique column names.</p>
                     <ul>
                         <li v-for="x in duplicateColumnListMessage"
-                            :key="x.label">Found duplicated column name "
-                            <b>{{ x.label }}</b>" at columns: {{ x.columnIndicies.join(", ") }}.
+                            :key="x.label">Found duplicated column name
+                            <b>{{ x.label }}</b> at columns: {{ x.columnIndicies.join(", ") }}.
                         </li>
                     </ul>
                 </div>
