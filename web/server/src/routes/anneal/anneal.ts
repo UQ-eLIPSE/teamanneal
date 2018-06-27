@@ -1,4 +1,4 @@
-import * as express from "express";
+import express from "express";
 
 import * as ToServerAnnealRequest from "../../../../common/ToServerAnnealRequest";
 import { AnnealStatusState, StatusMap } from "../../../../common/AnnealState";

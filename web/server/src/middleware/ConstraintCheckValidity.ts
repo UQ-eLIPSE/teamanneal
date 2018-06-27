@@ -1,7 +1,7 @@
 import * as Constraint from "../../../common/Constraint";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 
-import * as express from "express";
+import express from "express";
 
 import * as Data_Constraint from "../data/Constraint";
 

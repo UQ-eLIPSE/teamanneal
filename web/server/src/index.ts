@@ -1,5 +1,5 @@
-import * as os from "os";
-import * as cluster from "cluster";
+import os from "os";
+import cluster from "cluster";
 
 import * as ServerProcess from "./process/ServerProcess";
 import * as AnnealRequestProcess from "./process/AnnealRequestProcess";
