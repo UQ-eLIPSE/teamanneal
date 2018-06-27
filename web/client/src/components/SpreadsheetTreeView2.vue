@@ -2,6 +2,7 @@
     <div class="spreadsheet-tree-view">
         <table class="header">
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
+                                        :headerStyles="filteredHeaderStyles"
                                         :headerRow="filteredHeaderRow"
                                         :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
         </table>
@@ -25,20 +26,26 @@
                                             :headerRow="filteredHeaderRow"></SpreadsheetTreeView2Header>
             </tbody>
 
-            <!-- Render node roots (partitions or highest stratum) -->
-            <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in nodeRoots"
-                                                :isDataPartitioned="nodeRoots.length > 1"
-                                                :key="nodeRoot._id"
-                                                :node="nodeRoot"
-                                                @itemClick="onItemClickHandler"
-                                                :totalNumberOfColumns="totalNumberOfColumns"
-                                                :recordLookupMap="recordLookupMap"
-                                                :nodeNameMap="nodeNameMap"
-                                                :nodeRecordMap="nodeRecordMap"
-                                                :nodeStyles="nodeStyles"
-                                                :hiddenNodes="hiddenNodes"
-                                                :onToggleNodeVisibility="onToggleNodeVisibility"
-                                                :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
+            <!-- Render node roots (partitions or highest stratum) when node roots defined -->
+            <template v-if="nodeRoots !== undefined">
+                <SpreadsheetTreeView2AnnealNodeRoot v-for="nodeRoot in nodeRoots"
+                                                    :isDataPartitioned="nodeRoots.length > 1"
+                                                    :key="nodeRoot._id"
+                                                    :node="nodeRoot"
+                                                    @itemClick="onItemClickHandler"
+                                                    :totalNumberOfColumns="totalNumberOfColumns"
+                                                    :recordLookupMap="recordLookupMap"
+                                                    :nodeNameMap="nodeNameMap"
+                                                    :nodeRecordMap="nodeRecordMap"
+                                                    :nodeStyles="nodeStyles"
+                                                    :hiddenNodes="hiddenNodes"
+                                                    :onToggleNodeVisibility="onToggleNodeVisibility"
+                                                    :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
+            </template>
+
+            <!-- Render plain table otherwise -->
+            <SpreadsheetTreeView2PlainTable v-else
+                                            :recordRows="recordRows"></SpreadsheetTreeView2PlainTable>
         </table>
     </div>
 </template>
@@ -48,7 +55,6 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
 
-// import * as AnnealNode from "../../../common/AnnealNode";
 import { Record, RecordElement } from "../../../common/Record";
 
 import { GroupNode } from "../data/GroupNode";
@@ -58,6 +64,7 @@ import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
+import SpreadsheetTreeView2PlainTable from "./SpreadsheetTreeView2PlainTable.vue";
 
 function getMaxChildrenDepth(node: GroupNode, depth = 0): number {
     switch (node.type) {
@@ -77,23 +84,25 @@ function getMaxChildrenDepth(node: GroupNode, depth = 0): number {
 @Component({
     components: {
         SpreadsheetTreeView2Header,
-        SpreadsheetTreeView2AnnealNodeRoot
+        SpreadsheetTreeView2AnnealNodeRoot,
+        SpreadsheetTreeView2PlainTable,
     },
 })
 export default class SpreadsheetTreeView2 extends Vue {
     // Props
-    @Prop nodeRoots = p<ReadonlyArray<GroupNodeRoot>>({ type: Array, required: true, });
+    @Prop nodeRoots = p<ReadonlyArray<GroupNodeRoot>>({ type: Array, required: false, });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
+    @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop recordRows = p<ReadonlyArray<Record>>({ type: Array, required: true, });
     @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
     @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
-    @Prop idColumnIndex = p<number>({ type: Number, required: true, });
+    @Prop idColumnIndex = p<number>({ type: Number, required: false, default: 0, });
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
-    @Prop columnsDisplayIndices = p<number[]>({ required: true });
-    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true });
-    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true });
+    @Prop columnsDisplayIndices = p<number[]>({ required: false, });
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
+    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: false, default: () => () => { }, });
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -105,7 +114,13 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     get treeMaxDepth() {
         // Get the maximum depth of all children
-        return this.nodeRoots.reduce((carry, node) => {
+        const nodeRoots = this.nodeRoots;
+
+        if (nodeRoots === undefined) {
+            return 0;
+        }
+
+        return nodeRoots.reduce((carry, node) => {
             return Math.max(carry, getMaxChildrenDepth(node));
         }, 0);
     }
@@ -115,7 +130,23 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     get filteredHeaderRow() {
-        return this.headerRow.filter((_columnLabel, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
+        const columnsDisplayIndices = this.columnsDisplayIndices;
+
+        if (columnsDisplayIndices === undefined) {
+            return this.headerRow;
+        }
+
+        return this.headerRow.filter((_columnLabel, i) => columnsDisplayIndices.indexOf(i) !== -1);
+    }
+
+    get filteredHeaderStyles() {
+        const columnsDisplayIndices = this.columnsDisplayIndices;
+
+        if (columnsDisplayIndices === undefined) {
+            return this.headerStyles;
+        }
+
+        return this.headerStyles.filter((_, i) => columnsDisplayIndices.indexOf(i) !== -1);
     }
 
     get totalNumberOfColumns() {
@@ -124,10 +155,13 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     get recordLookupMap() {
         const idColumnIndex = this.idColumnIndex;
+        const columnsDisplayIndices = this.columnsDisplayIndices;
+
+        const filterFunction = columnsDisplayIndices === undefined ? () => true : (_r: RecordElement, i: number) => columnsDisplayIndices.indexOf(i) !== -1;
 
         return this.recordRows.reduce((map, record) => {
             const id = record[idColumnIndex];
-            const filteredRecord = record.filter((_r, i) => this.columnsDisplayIndices.indexOf(i) !== -1);
+            const filteredRecord = record.filter(filterFunction);
             map.set(id, filteredRecord);
             return map;
         }, new Map<RecordElement, Record>());
