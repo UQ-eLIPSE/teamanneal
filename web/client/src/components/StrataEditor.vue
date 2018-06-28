@@ -93,7 +93,7 @@ export default class StrataEditor extends Vue {
             throw new Error("No partition column set");
         }
 
-        const shimLabel = `Partition (${partitionColumn.label})`;
+        const shimLabel = partitionColumn.label;
 
         return Stratum.init(shimLabel);
     }
