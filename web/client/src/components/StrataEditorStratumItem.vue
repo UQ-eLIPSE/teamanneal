@@ -85,9 +85,33 @@
         </div>
         <div v-else
              class="stratum-config">
-            <div>
-                <i>You cannot configure the size or names of partitions.</i>
+            <div class="exp"
+                 :style="partitionListColumnStyles">
+                <div class="partition-info"
+                     v-for="(partition, i) in limitedPartitions"
+                     :key="i">
+                    <span :title="partition.value">{{partition.value}}: </span>
+                    <span>{{expectedNodeTree[i].children.length + 1}} {{firstStratumLabel}}s</span>
+                </div>
             </div>
+            <div>
+                                <table>
+                                    <tr>
+                                        <th>Partition</th>
+                                        <th># {{firstStratumLabel}}s </th>
+                                    </tr>
+                                    <tr v-for="(partition, i) in limitedPartitions"
+                                        :key="i">
+                                        <td>{{partition.value}}: </td>
+                                        <td>{{expectedNodeTree[i].children.length + 1}}</td>
+                                    </tr>
+                                </table>
+                                
+                            </div>
+            <a href="#"
+                v-if="partitions.length > 5"
+               class="more"
+               @click.prevent="togglePartitionList">{{ moreButtonText }}</a>
         </div>
     </div>
 </template>
@@ -148,6 +172,22 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<Stratum>>({ type: Array, required: false, default: () => [], });
 
+    private limitedPartitionList: boolean = true;
+
+    togglePartitionList() {
+        this.limitedPartitionList = !this.limitedPartitionList;
+    }
+
+    get limitedPartitions() {
+        if (this.limitedPartitionList) {
+            return this.partitions.slice(0, Math.min(this.partitions.length, 4));
+        }
+        return this.partitions;
+    }
+
+    get moreButtonText() {
+        return this.limitedPartitionList ? "More ..." : "Less";
+    }
     get randomExampleName() {
         return generateRandomExampleName(this.stratumNamingConfig);
     }
@@ -395,6 +435,26 @@ export default class StrataEditorStratumItem extends Vue {
     get customNameListMinCounts() {
         return S.get(S.getter.EXPECTED_NAME_LABELS_FOR_EACH_STRATUM);
     }
+
+    get partitions() {
+        return S.get(S.getter.EXPECTED_PARTITIONS);
+    }
+
+    get expectedNodeTree() {
+        return S.get(S.getter.EXPECTED_NODE_TREE);
+    }
+
+    get firstStratumLabel() {
+        return S.state.strataConfig.strata[0].label;
+    }
+
+    get partitionListColumnStyles() {
+        const cols = 5;
+
+        return {
+            columnCount: Math.min(cols, this.limitedPartitions.length)
+        }
+    }
 }
 </script>
 
@@ -518,5 +578,23 @@ ul.stratum-size-errors {
 ul.distribution {
     padding: 0;
     padding-left: 1.5em;
+}
+
+a.more {
+    color: #49075e;
+    border-bottom: 1px dotted #49075e;
+    text-decoration: none;
+    display: inline-block;
+    padding: 0 3px;
+    align-self: flex-end;
+}
+
+.exp {
+    column-rule-style: solid;
+    column-rule-color: #49075E;
+}
+
+.exp>div.partition-info {
+    padding: 0.5rem;
 }
 </style>
