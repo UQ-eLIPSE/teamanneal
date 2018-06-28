@@ -85,33 +85,23 @@
         </div>
         <div v-else
              class="stratum-config">
-            <div class="exp"
-                 :style="partitionListColumnStyles">
-                <div class="partition-info"
-                     v-for="(partition, i) in limitedPartitions"
-                     :key="i">
-                    <span :title="partition.value">{{partition.value}}: </span>
-                    <span>{{expectedNodeTree[i].children.length + 1}} {{firstStratumLabel}}s</span>
-                </div>
-            </div>
             <div>
-                                <table>
-                                    <tr>
-                                        <th>Partition</th>
-                                        <th># {{firstStratumLabel}}s </th>
-                                    </tr>
-                                    <tr v-for="(partition, i) in limitedPartitions"
-                                        :key="i">
-                                        <td>{{partition.value}}: </td>
-                                        <td>{{expectedNodeTree[i].children.length + 1}}</td>
-                                    </tr>
-                                </table>
-                                
-                            </div>
-            <a href="#"
-                v-if="partitions.length > 5"
-               class="more"
-               @click.prevent="togglePartitionList">{{ moreButtonText }}</a>
+                <table class="partition-table">
+                    <tr>
+                        <th>Partition</th>
+                        <th># {{firstStratumLabel}}s </th>
+                    </tr>
+                    <tr v-for="(partition, i) in limitedPartitions"
+                        :key="i">
+                        <td>{{ partition.value }}</td>
+                        <td>{{ expectedNodeTree[i].children.length }}</td>
+                    </tr>
+                </table>
+                <a href="#"
+                   v-if="partitions.length > limitedPartitionsDisplayLength"
+                   class="more"
+                   @click.prevent="togglePartitionList">{{ moreButtonText }}</a>
+            </div>
         </div>
     </div>
 </template>
@@ -172,22 +162,12 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<Stratum>>({ type: Array, required: false, default: () => [], });
 
-    private limitedPartitionList: boolean = true;
+    /** 
+     * Manages whether all partitions are to be displayed or just min(#partitions, limitedPartitionsDisplayLength).
+     * Limits i.e. value is `true` by default
+     */
+    private limitPartitionList: boolean = true;
 
-    togglePartitionList() {
-        this.limitedPartitionList = !this.limitedPartitionList;
-    }
-
-    get limitedPartitions() {
-        if (this.limitedPartitionList) {
-            return this.partitions.slice(0, Math.min(this.partitions.length, 4));
-        }
-        return this.partitions;
-    }
-
-    get moreButtonText() {
-        return this.limitedPartitionList ? "More ..." : "Less";
-    }
     get randomExampleName() {
         return generateRandomExampleName(this.stratumNamingConfig);
     }
@@ -444,16 +424,35 @@ export default class StrataEditorStratumItem extends Vue {
         return S.get(S.getter.EXPECTED_NODE_TREE);
     }
 
+    /** Returns the label of the first `stratum` below a `partition`  */
     get firstStratumLabel() {
         return S.state.strataConfig.strata[0].label;
     }
 
-    get partitionListColumnStyles() {
-        const cols = 5;
-
-        return {
-            columnCount: Math.min(cols, this.limitedPartitions.length)
+    /**
+     * Returns a limited number of partitions i.e. min(#partitions, limitedPartitionsDisplayLength) when `limitPartitionsList` is set to `true`.
+     * Returns all partitions if `limitPartitionList` is set to `false`.
+     */
+    get limitedPartitions() {
+        if (this.limitPartitionList) {
+            return this.partitions.slice(0, Math.min(this.partitions.length, this.limitedPartitionsDisplayLength));
         }
+        return this.partitions;
+    }
+
+    get moreButtonText() {
+        return this.limitPartitionList ? "More ..." : "...Less";
+    }
+
+    togglePartitionList() {
+        this.limitPartitionList = !this.limitPartitionList;
+    }
+
+    /**
+     * Specifies the number of partitions displayed when list of partitions is limited. Can be changed to any positive integer if required.
+     */
+    get limitedPartitionsDisplayLength() {
+        return 3;
     }
 }
 </script>
@@ -589,12 +588,13 @@ a.more {
     align-self: flex-end;
 }
 
-.exp {
-    column-rule-style: solid;
-    column-rule-color: #49075E;
+.partition-table {
+    border-collapse: collapse;
 }
 
-.exp>div.partition-info {
-    padding: 0.5rem;
+.partition-table th,
+.partition-table td {
+    border: 1px solid #aaa;
+    padding: 0.2em 0.6em;
 }
 </style>
