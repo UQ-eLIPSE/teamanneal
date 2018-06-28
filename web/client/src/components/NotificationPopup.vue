@@ -23,7 +23,7 @@ export default class NotificationPopup extends Vue {
     close() {
         this.$emit("closeNotification", this.notification);
     }
-    
+
     get notificationClasses() {
         return {
             "success": this.notification.options.mode === "success",
@@ -84,7 +84,8 @@ export default class NotificationPopup extends Vue {
     color: #c71585;
 }
 
-.notification-card > h3, .notification-card> p {
+.notification-card>h3,
+.notification-card>p {
     padding: 0.25rem;
     margin: 0.25rem;
 }

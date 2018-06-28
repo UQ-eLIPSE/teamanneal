@@ -7,6 +7,7 @@ export interface NotificationPayload {
     title: string;
     message: string;
     options: NotificationOptions;
+    _id?: string;
 }
 
 export interface NotificationOptions {

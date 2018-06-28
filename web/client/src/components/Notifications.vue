@@ -3,7 +3,7 @@
         <NotificationPopup v-for="(n,i) in notifications"
                            :notification="n"
                            @closeNotification="closeNotification"
-                           :key="i"></NotificationPopup>
+                           :key="n._id"></NotificationPopup>
     </div>
 </template>
 
@@ -12,8 +12,9 @@
 <script lang="ts">
 import { Vue, Component, Lifecycle } from "av-ts";
 import NotificationPopup from "./NotificationPopup.vue";
-import { notificationEventBus } from "../util/notification-event-bus";
+import { onSystemNotified } from "../util/NotificationEventBus";
 import * as Notification from "../data/Notification";
+import * as UUID from "../util/UUID";
 
 @Component({
     components: {
@@ -22,26 +23,43 @@ import * as Notification from "../data/Notification";
 })
 export default class Notifications extends Vue {
     private notifications: Notification.NotificationPayload[] = [];
-
+    /** A map which keeps track of timer references */
+    private notificationTimeoutMap: WeakMap<Notification.NotificationPayload, number> = new WeakMap();
 
     closeNotification(notification: Notification.NotificationPayload) {
-        this.notifications.splice(this.notifications.indexOf(notification), 1);
+        // De-register the timer reference from the map
+        this.deregisterNotificationTimeout(notification);
+
+        // Remove the notification itself
+        this.notifications.splice(this.notifications.findIndex((n) => n._id === notification._id), 1);
+    }
+
+    deregisterNotificationTimeout(notification: Notification.NotificationPayload) {
+        const timeoutHandle = this.notificationTimeoutMap.get(notification);
+
+        if (timeoutHandle !== undefined) {
+            // If timeout still exists, clear it and remove reference from the weak map
+            clearTimeout(timeoutHandle);
+            this.notificationTimeoutMap.delete(notification);
+        }
+    }
+
+    registerNotificationTimeout(notification: Notification.NotificationPayload, timeout: number) {
+        this.notificationTimeoutMap.set(notification, setTimeout(() => this.closeNotification(notification), timeout));
     }
 
     @Lifecycle mounted() {
-        // Listen for the `notify` event
-        notificationEventBus.$on("notify", (payload: Notification.NotificationPayload) => {
+        // Set up an event listener for listening to notifications
+        onSystemNotified((payload: Notification.NotificationPayload) => {
+            payload._id = UUID.generate();
             this.notifications.push(payload);
 
-            // Tried to define this setTimeout in the `NotificationPopup` component itself, 
-            // but some peculiar issues were encountered. Some messages were not disappearing after the specified duration 
-            // when notifications were rapidly added to the queue
-            if (payload.options.hasOwnProperty("duration")) {
-                setTimeout(() => {
-                    this.closeNotification(payload);
-                }, payload.options.duration);
+            if (payload.options && payload.options.duration !== undefined) {
+                this.registerNotificationTimeout(payload, payload.options.duration);
             }
         });
+
+
     }
 }
 </script>
@@ -49,7 +67,6 @@ export default class Notifications extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-
 .notifications {
     display: flex;
     flex-direction: column;
@@ -64,5 +81,4 @@ export default class Notifications extends Vue {
     z-index: 99999999;
     margin: 1rem;
 }
-
 </style>
