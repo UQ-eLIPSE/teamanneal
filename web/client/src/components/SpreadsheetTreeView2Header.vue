@@ -20,6 +20,7 @@ export default class SpreadsheetTreeView2Header extends Vue {
     // Props
     @Prop padCells = p({ type: Number, required: false, default: 0 });
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
+    @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
 
     dataColumnStyle(i: number) {
@@ -32,7 +33,11 @@ export default class SpreadsheetTreeView2Header extends Vue {
         // offset by the number `padCells`
         const cellWidth = `${this.columnWidths[i + this.padCells]}px`;
 
+        // Fetch any other styles if present
+        const otherStyles = this.headerStyles[i] || {};
+
         return {
+            ...otherStyles,
             width: cellWidth,
             minWidth: cellWidth,
             maxWidth: cellWidth,
