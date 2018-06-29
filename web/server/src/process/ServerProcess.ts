@@ -2,6 +2,9 @@ import * as Application from "../core/Application";
 import * as Router from "../core/Router";
 
 import * as AnnealResultHandler from "../queue/AnnealResult";
+import * as SatisfactionCalculation from "../queue/SatisfactionCalculation";
+import * as TestPermutationMoveRecord from "../queue/TestPermutationMoveRecord";
+import * as TestPermutationSwapRecords from "../queue/TestPermutationSwapRecords";
 
 import { Config } from "../utils/Config";
 
@@ -28,10 +31,16 @@ export function init() {
     console.log(`Initialising static file delivery`);
     Application.enableStaticFileServing(app, `${__dirname}/../../../../../client/build/client`);
 
-    // Set up the anneal result handler queue which also runs on the master 
-    // process
+    // Set up the anneal result handler and satisfaction calculation queues
+    // which also run on the master process
     console.log(`Anneal request handler - Initialising anneal internal result and collation handler`);
     AnnealResultHandler.init();
+
+    console.log(`---SAT QUEUES---`);
+    SatisfactionCalculation.init("MASTER");
+    TestPermutationMoveRecord.init("MASTER");
+    TestPermutationSwapRecords.init("MASTER");
+    console.log(`---SAT QUEUES---`);
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);
