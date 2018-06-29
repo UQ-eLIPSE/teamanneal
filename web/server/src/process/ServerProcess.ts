@@ -1,6 +1,8 @@
 import * as Application from "../core/Application";
 import * as Router from "../core/Router";
 
+import * as AnnealResultHandler from "../queue/AnnealResult";
+
 import { Config } from "../utils/Config";
 
 const config = Config.get();
@@ -25,6 +27,11 @@ export function init() {
     // Set up static file delivery
     console.log(`Initialising static file delivery`);
     Application.enableStaticFileServing(app, `${__dirname}/../../../../../client/build/client`);
+
+    // Set up the anneal result handler queue which also runs on the master 
+    // process
+    console.log(`Anneal request handler - Initialising anneal internal result and collation handler`);
+    AnnealResultHandler.init();
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);
