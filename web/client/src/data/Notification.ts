@@ -14,6 +14,6 @@ export interface NotificationOptions {
     // Specify `duration` (in ms) to hide notifications automatically
     duration: number;
 
-    // Used to style the notifications
+    // Used for styling the notifications
     mode: "success" | "error" | "warning";
 }

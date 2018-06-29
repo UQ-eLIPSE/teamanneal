@@ -4,8 +4,8 @@
         <button type="button"
                 class="close-button"
                 @click.prevent="close">&times;</button>
-        <h3>{{notification.title}}</h3>
-        <p>{{notification.message}}</p>
+        <h3>{{title}}</h3>
+        <p>{{message}}</p>
     </div>
 </template>
 
@@ -14,21 +14,24 @@
 <script lang="ts">
 
 import { Vue, Component, Prop, p } from "av-ts";
-import * as Notification from "../data/Notification";
+import { NotificationOptions } from "../data/Notification";
 
 @Component
 export default class NotificationPopup extends Vue {
-    @Prop notification: Notification.NotificationPayload = p<any>({ required: true })
+    @Prop title: string = p<string>({ required: true })
+    @Prop message: string = p<string>({ required: true });
+    @Prop mode: NotificationOptions["mode"] = p<any>({ required: true });
+    @Prop id: string = p<string>({ required: true });
 
     close() {
-        this.$emit("closeNotification", this.notification);
+        this.$emit("closeNotification", this.id);
     }
 
     get notificationClasses() {
         return {
-            "success": this.notification.options.mode === "success",
-            "error": this.notification.options.mode === "error",
-            "warning": this.notification.options.mode === "warning",
+            "success": this.mode === "success",
+            "error": this.mode === "error",
+            "warning": this.mode === "warning",
         }
     }
 }
@@ -37,7 +40,6 @@ export default class NotificationPopup extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-
 .notification-card {
     position: relative;
     width: 100%;
