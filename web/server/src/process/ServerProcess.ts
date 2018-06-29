@@ -33,14 +33,13 @@ export function init() {
 
     // Set up the anneal result handler and satisfaction calculation queues
     // which also run on the master process
-    console.log(`Anneal request handler - Initialising anneal internal result and collation handler`);
+    console.log(`Initialising anneal internal result and collation handler`);
     AnnealResultHandler.init();
 
-    console.log(`---SAT QUEUES---`);
-    SatisfactionCalculation.init("MASTER");
-    TestPermutationMoveRecord.init("MASTER");
-    TestPermutationSwapRecords.init("MASTER");
-    console.log(`---SAT QUEUES---`);
+    console.log(`Initialising satisfaction calculation handlers`);
+    SatisfactionCalculation.init();
+    TestPermutationMoveRecord.init();
+    TestPermutationSwapRecords.init();
 
     // Set up routes
     console.log(`Initialising all routes, under "${apiRoot}"`);

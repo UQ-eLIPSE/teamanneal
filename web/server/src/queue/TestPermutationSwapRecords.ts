@@ -9,16 +9,14 @@ import { calculateTotalSatisfactionFromAnnealRequest } from "../anneal/Constrain
 import { setRecordIdArray, swapRecords } from "../anneal/AnnealNodeTreeEditOperation";
 import { generateAllLeafNodeMap } from "../data/AnnealNode";
 
-export function init(workerId: string) {
+export function init() {
     IPCQueue.openQueue()
         .process("test-permutation-swap-records", 1, async (job, done) => {
             const data: IPCData.TestPermutationSwapRecordsJobData = job.data;
-            const { _meta, strata, constraints, recordData, annealNodes, operation } = data;
+            const { strata, constraints, recordData, annealNodes, operation } = data;
 
             // Start processing job
-            const tag = `[${_meta.annealNode.index} of ID = ${_meta.redisResponseId}]`;
-
-            console.log(`Anneal worker ${workerId} - Testing permutations (swap records) for ${tag}...`);
+            console.log(`Testing permutations (swap records)...`);
 
             // NOTE: We only support one root node for now
             // TODO: Support multiple root nodes for cross-partition moves
@@ -85,5 +83,7 @@ export function init(workerId: string) {
             });
 
             done(undefined, output);
+            
+            console.log(`Finished testing permutations (swap records)`);
         });
 }

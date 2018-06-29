@@ -43,8 +43,6 @@ export interface AnnealResponseMessageData {
 }
 
 export interface SatisfactionCalculationJobData {
-    _meta: InternalAnnealMeta & InternalAnnealNodeMeta,
-
     recordData: RecordData.Desc,
     annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
     strata: ReadonlyArray<Stratum.Desc>,
@@ -52,8 +50,6 @@ export interface SatisfactionCalculationJobData {
 }
 
 export interface TestPermutationMoveRecordJobData {
-    _meta: InternalAnnealMeta & InternalAnnealNodeMeta,
-
     recordData: RecordData.Desc,
     annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
     strata: ReadonlyArray<Stratum.Desc>,
@@ -62,8 +58,6 @@ export interface TestPermutationMoveRecordJobData {
 }
 
 export interface TestPermutationSwapRecordsJobData {
-    _meta: InternalAnnealMeta & InternalAnnealNodeMeta,
-
     recordData: RecordData.Desc,
     annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
     strata: ReadonlyArray<Stratum.Desc>,
