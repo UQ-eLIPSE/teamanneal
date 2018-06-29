@@ -4,8 +4,6 @@ import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 
-import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
-
 interface InternalAnnealMeta {
     redisResponseId: string,
 }
@@ -15,12 +13,6 @@ interface InternalAnnealNodeMeta {
         id: string,
         index: number,
     }
-}
-
-export interface AnnealRequestMessageData {
-    _meta: InternalAnnealMeta,
-
-    annealRequest: ToServerAnnealRequest.Root,
 }
 
 export interface AnnealJobData {
