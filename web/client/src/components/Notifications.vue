@@ -87,13 +87,10 @@ export default class Notifications extends Vue {
 
 <style scoped>
 .notifications {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    width: 20%;
-    max-height: 90%;
-    overflow: hidden;
-    align-items: center;
+    display: block;
+    width: 30%;
+    min-width: 15em;
+    max-width: 25em;
     position: absolute;
     right: 0;
     bottom: 0;

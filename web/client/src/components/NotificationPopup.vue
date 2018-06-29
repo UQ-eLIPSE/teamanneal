@@ -20,7 +20,7 @@ import { NotificationOptions } from "../data/Notification";
 export default class NotificationPopup extends Vue {
     @Prop title = p({ type: String, required: true })
     @Prop message = p({ type: String, required: true });
-    @Prop mode: NotificationOptions["mode"] = p({ type: String, required: true });
+    @Prop mode: NotificationOptions["mode"] = p({ required: true });
     @Prop id = p({ type: String, required: true });
 
     close() {
