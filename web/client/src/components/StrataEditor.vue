@@ -4,7 +4,7 @@
             <ul>
                 <li v-if="isPartitionColumnSet">
                     <StrataEditorStratumItem :stratum="partitionStratumShimObject"
-                                             :stratumNamingConfig="partitionStratumShimObject"
+                                             :stratumNamingConfig="partitionStratumNamingShimObject"
                                              :childUnit="strata[0].label"
                                              :isPartition="true"></StrataEditorStratumItem>
                 </li>
@@ -34,6 +34,7 @@ import { ColumnData } from "../data/ColumnData";
 import * as Stratum from "../data/Stratum";
 import * as StratumSize from "../data/StratumSize";
 import * as StratumNamingConfig from "../data/StratumNamingConfig";
+import * as StratumNamingConfigContext from "../data/StratumNamingConfigContext";
 import * as Partition from "../data/Partition";
 
 import { AnnealCreator as S } from "../store";
@@ -93,9 +94,17 @@ export default class StrataEditor extends Vue {
             throw new Error("No partition column set");
         }
 
-        const shimLabel = `Partition (${partitionColumn.label})`;
+        const shimLabel = partitionColumn.label;
 
         return Stratum.init(shimLabel);
+    }
+
+    /**
+     * Returns a shim object that satisfies the stratum naming config for a
+     * partition
+     */
+    get partitionStratumNamingShimObject() {
+        return StratumNamingConfig.init([], StratumNamingConfigContext.Context.GLOBAL);
     }
 
     /**

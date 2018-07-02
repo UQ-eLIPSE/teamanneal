@@ -7,6 +7,7 @@ Version of TeamAnneal written in JavaScript for server and client.
 * Node.js 8.9.0+
   * npm 5.0.0+ (this should be included)
 * Redis 3.0+
+  * You should use Redis packages for Windows from https://github.com/MicrosoftArchive/redis/releases
 
 ## Installation
 
@@ -18,12 +19,15 @@ npm install
 
 ## Building and running server
 
+Ensure that you have a configuration file set (see below). Then:
+
 ```bash
 npm run build
 npm start
 ```
 
-Currently the server runs on `http://localhost:8080`. This is set in `server/src/index.ts`.
+Currently the server runs on `http://localhost:8080`, but the port is
+configurable in the configuration file.
 
 More information about the API is below.
 

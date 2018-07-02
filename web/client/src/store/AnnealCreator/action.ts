@@ -47,8 +47,6 @@ export enum AnnealCreatorAction {
     UPSERT_CONSTRAINT = "Upserting constraint",
     DELETE_CONSTRAINT = "Deleting constraint",
 
-    UPDATE_RECORD_COLUMN_DATA = "Updating a record column's data",
-
     SET_RECORD_ID_COLUMN = "Setting record ID column",
     CLEAR_RECORD_ID_COLUMN = "Clearing record ID column",
 
@@ -364,29 +362,6 @@ const actions = {
         // Find index of constraint and delete that one
         const index = context.state.constraintConfig.constraints.findIndex(c => Constraint.Equals(constraint, c));
         commit(context, M.DELETE_CONSTRAINT, index);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.UPDATE_RECORD_COLUMN_DATA](context: Context, column: IColumnData) {
-        const $state = context.state;
-
-        // Check that the column isn't used by any constraints
-        const constraints = $state.constraintConfig.constraints;
-
-        if (constraints.some(c => ColumnData.Equals(column, c.filter.column))) {
-            const message =
-                `Column "${column.label}" is currently used by at least one constraint and cannot have its type changed.
-
-Delete constraints that use this column and try again.`;
-
-            alert(message);
-            return;
-        }
-
-        // Find index of column and update it
-        const index = $state.recordData.source.columns.findIndex(c => ColumnData.Equals(column, c));
-        commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },

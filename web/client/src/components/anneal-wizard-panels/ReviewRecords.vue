@@ -4,7 +4,7 @@
             <div class="desc-text">
                 <h1>Review record data</h1>
                 <p>
-                    Take a moment to make sure column data types and all records are correct.
+                    Take a moment to make sure all records are correct.
                     <a class="more help-link"
                        :class="{'active': showHelp}"
                        href="#"
@@ -13,11 +13,6 @@
                 <p>If you need to reload the file, simply click on the file name in the sidebar, click "Swap File" and try again.</p>
                 <div class="help-box"
                      v-if="showHelp">
-                    <h2>Choosing column types ("text", "number")</h2>
-                    <p>Normally you do not need to worry about choosing a column type - TeamAnneal will automatically detect this and choose the most appropriate type for you.</p>
-                    <p>If you believe that the type detection has incorrectly set the type of a column, you can switch between the two types by selecting the option from the dropdown menu in the header of the column in question. You will be able to see the result of the type conversion immediately in the viewer below.</p>
-                    <p>Make sure that the values in the column are correct after you change the column type.</p>
-
                     <h2>Bad or incorrectly parsed data</h2>
                     <p>If the content in the viewer below appears to be invalid, check that your input CSV file is correctly formatted, reload the file and try again.</p>
                     <p>If you continue to encounter issues,
@@ -31,17 +26,18 @@
                     <p>Please change the below columns in your data file to ensure that you have unique column names.</p>
                     <ul>
                         <li v-for="x in duplicateColumnListMessage"
-                            :key="x.label">Found duplicated column name "
-                            <b>{{ x.label }}</b>" at columns: {{ x.columnIndicies.join(", ") }}.
+                            :key="x.label">Found duplicated column name
+                            <b>{{ x.label }}</b> at columns: {{ x.columnIndicies.join(", ") }}.
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="spreadsheet">
-                <SpreadsheetView class="viewer"
-                                 :invalidColumns="duplicateColumns"
-                                 :rows="cookedDataWithHeader"
-                                 :columnData="columns"></SpreadsheetView>
+                <SpreadsheetTreeView2 class="viewer"
+                                      :headerRow="headerRow"
+                                      :headerStyles="headerStyles"
+                                      :recordRows="cookedDataRows">
+                </SpreadsheetTreeView2>
             </div>
         </div>
         <div class="wizard-panel-bottom-buttons">
@@ -66,7 +62,7 @@ import { ColumnData, Data as IColumnData } from "../../data/ColumnData";
 
 import { numberSort } from "../../util/Array";
 
-import SpreadsheetView from "../SpreadsheetView.vue";
+import SpreadsheetTreeView2 from "../SpreadsheetTreeView2.vue";
 
 interface ColumnIndexInfo {
     column: IColumnData,
@@ -75,7 +71,7 @@ interface ColumnIndexInfo {
 
 @Component({
     components: {
-        SpreadsheetView,
+        SpreadsheetTreeView2,
     },
 })
 export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
@@ -89,6 +85,33 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
 
     get cookedDataWithHeader() {
         return ColumnData.TransposeIntoCookedValueRowArray(this.columns, true);
+    }
+
+    get cookedDataRows() {
+        // Just return the rows, not including the header
+        return this.cookedDataWithHeader.slice(1);
+    }
+
+    get headerRow() {
+        // Return just the header
+        return this.cookedDataWithHeader[0].map(x => "" + x);
+    }
+
+    get headerStyles() {
+        const duplicateColumnIndices = this.duplicateColumnIndices;
+
+        return this.headerRow.map((_header, i) => {
+            if (duplicateColumnIndices.indexOf(i) !== -1) {
+                // If header is for duplicate column, format as warning
+                return {
+                    color: "#000",
+                    backgroundColor: "darkorange",
+                };
+            };
+
+            // Otherwise no styles
+            return undefined;
+        });
     }
 
     get hasDuplicateColumnNames() {
@@ -114,7 +137,7 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
     /** 
      * Returns columns which have duplicate labels
      */
-    get duplicateColumns() {
+    get duplicateColumnIndices() {
         const duplicateColumnIndexInfo: ColumnIndexInfo[] = [];
 
         this.columnIndexInfoMap.forEach((colInfo) => {
@@ -123,7 +146,7 @@ export default class ReviewRecords extends Mixin(AnnealProcessWizardPanel) {
             }
         });
 
-        return duplicateColumnIndexInfo.map(x => x.column);
+        return duplicateColumnIndexInfo.map(x => x.index);
     }
 
     /** 

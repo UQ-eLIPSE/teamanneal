@@ -1,7 +1,7 @@
 import * as RecordData from "../../../common/RecordData";
 import * as HTTPResponseCode from "../core/HTTPResponseCode";
 
-import * as express from "express";
+import express from "express";
 
 import * as Data_RecordData from "../data/RecordData";
 
