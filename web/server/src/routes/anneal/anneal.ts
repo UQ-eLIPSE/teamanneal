@@ -5,6 +5,7 @@ import { AnnealStatusState, StatusMap } from "../../../../common/AnnealState";
 
 import * as IPCData from "../../data/IPCData";
 import * as IPCQueue from "../../data/IPCQueue";
+import * as PendingResultCollationStore from "../../data/PendingResultCollationStore";
 
 import * as HTTPResponseCode from "../../core/HTTPResponseCode";
 
@@ -22,17 +23,39 @@ export const runAnneal: express.RequestHandler =
 
         console.log(`Anneal request to server worker received; response tagged with ID ${redisResponseId}`);
 
-        const annealJobData: IPCData.AnnealRequestMessageData = {
-            _meta: {
-                redisResponseId
-            },
+        // Start splitting job
+        console.log(`Anneal request [${redisResponseId}] - Starting...`);
 
-            annealRequest,
-        }
+        const { strata, constraints, recordData, annealNodes } = annealRequest;
+        const numberOfNodes = annealNodes.length;
 
+        // Create entry in result collation store
+        PendingResultCollationStore.add(redisResponseId, numberOfNodes);
 
-        // Queue request data now to reduce server blocking
-        IPCQueue.queueMessage("anneal-request", annealJobData);
+        // Set expected number of results for anneal in Redis
+        storeExpectedNumberOfResults(redisResponseId, numberOfNodes);
+
+        // Split job, one per anneal node in the request
+        annealNodes.forEach((annealNode, i) => {
+            console.log(`Anneal request [${redisResponseId}] - Splitting job: ${i + 1}/${numberOfNodes}`);
+
+            const annealJobMessage: IPCData.AnnealJobData = {
+                _meta: {
+                    redisResponseId,
+                    annealNode: {
+                        id: annealNode._id,
+                        index: i,
+                    },
+                },
+
+                annealNode,
+                constraints,
+                recordData,
+                strata,
+            };
+
+            IPCQueue.queueMessage("anneal", annealJobMessage);
+        });
 
         // Send response with anneal job's ID (stored in Redis) 
         res
@@ -151,3 +174,12 @@ export const getAnnealResult: express.RequestHandler =
                 .send({ error: e });
         }
     }
+
+/**
+ * Stores the expected number of partitions in redis as a new key
+ * @param redisResponseId 
+ * @param numberOfResults Expected number of results
+ */
+function storeExpectedNumberOfResults(redisResponseId: string, numberOfResults: number): boolean {
+    return RedisService.getClient().set(RedisService.appendExpectedNumberOfAnnealResultsTag(redisResponseId), numberOfResults + '');
+}

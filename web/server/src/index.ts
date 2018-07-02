@@ -2,7 +2,6 @@ import os from "os";
 import cluster from "cluster";
 
 import * as ServerProcess from "./process/ServerProcess";
-import * as AnnealRequestProcess from "./process/AnnealRequestProcess";
 import * as AnnealProcess from "./process/AnnealProcess";
 
 import { Config } from "./utils/Config";
@@ -13,19 +12,13 @@ import { Config } from "./utils/Config";
 // -------------------------------------------------------------------------
 //    Master | Web server process
 //           | * Responsible for direct communication to client
-//           | * Server forwards request to the anneal request queue to 
-//           |   reduce processing impact on main server thread
+//           | * Server creates anneal jobs, one for each anneal node, onto
+//           |   the anneal queue to reduce processing impact on main server
+//           |   thread
 //           |
-//         0 | Anneal request worker ("anneal-request", "anneal-result")
-//           | * Receives forwarded requests from main server process, and
-//           |   creates anneal jobs, one for each anneal node
-//           | * Also responsible for waiting for all individual anneals
-//           |   to complete, and compiling the final response to be given
-//           |   back to the main server process to send back to the client
-//           |
-//        1+ | Anneal worker ("anneal")
+//        0+ | Anneal worker ("anneal")
 //           | * Run actual annealing on data that is queued by the anneal
-//           |   request worker 
+//           |   request worker
 
 if (cluster.isMaster) {
     // Initialise the main server process for master
@@ -55,13 +48,6 @@ if (cluster.isMaster) {
         throw new Error("Undefined worker ID");
     }
 
-    const workerNumId = +workerId;
-
-    if (workerNumId === 0) {
-        // Anneal request worker
-        AnnealRequestProcess.init();
-    } else {
-        // Anneal worker
-        AnnealProcess.init(workerId);
-    }
+    // Anneal worker
+    AnnealProcess.init(workerId);
 }
