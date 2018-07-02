@@ -1,5 +1,6 @@
 <template>
     <div id="teamanneal">
+        <Notifications></Notifications>
         <Header :minimal="headerOptions.minimal"
                 :headerText="headerOptions.headerText"
                 :enableMenu="headerOptions.enableMenu"></Header>
@@ -15,10 +16,11 @@
 import { Vue, Component } from "av-ts";
 import Header from "./Header.vue";
 import { HEADER_CONFIG } from "../data/Header";
-
+import Notifications from "./Notifications.vue";
 @Component({
     components: {
-        Header
+        Header,
+        Notifications
     }
 })
 export default class TeamAnneal extends Vue {
