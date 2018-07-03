@@ -7,7 +7,8 @@
             <template v-if="annealCanBeExecuted">
                 <div class="wizard-panel-content">
                     <h1>Ready to anneal</h1>
-                    <p>[TODO: Message]</p>
+                    <p>TeamAnneal is ready to perform an anneal to form groups using your configured constraints.</p>
+                    <p>Click "Start anneal" to begin.</p>
                 </div>
                 <div class="wizard-panel-bottom-buttons">
                     <button class="button"
@@ -51,7 +52,7 @@
         <template v-if="annealResponseIsSuccess">
             <div class="wizard-panel-content">
                 <h1>Anneal successful</h1>
-                <p>[TODO: Message]</p>
+                <p>To view your results, click "View results".</p>
                 <p>If you would like to perform another anneal, click "Retry anneal".</p>
             </div>
             <div class="wizard-panel-bottom-buttons">
