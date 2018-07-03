@@ -45,11 +45,11 @@ export const MENU_ITEMS: { route: string; label: string }[] = [
     },
     {
         route: '/anneal',
-        label: 'Team Creator'
+        label: 'TeamAnneal Creator'
     },
     {
         route: '/editor',
-        label: 'Team Editor'
+        label: 'TeamAnneal Editor'
     },
     {
         route: '/help',
