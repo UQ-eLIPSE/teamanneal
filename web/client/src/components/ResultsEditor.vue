@@ -22,8 +22,8 @@
         <div class="get-started"
              v-else>
             <h1>Welcome</h1>
-            <p>The TeamAnneal Editor allows you to view and modify teams generated from the anneal process.</p>
-            <p>Get started by obtaining team data from
+            <p>The TeamAnneal Editor allows you to view and modify group generated from the anneal process.</p>
+            <p>Get started by obtaining group data from
                 <router-link :to="'anneal'">running an anneal</router-link>, or
                 <a href="#import-results-package-file"
                    @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
