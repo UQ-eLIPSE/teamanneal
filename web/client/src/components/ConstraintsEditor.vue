@@ -61,7 +61,7 @@ export default class ConstraintsEditor extends Vue {
             throw new Error("No partition column set");
         }
 
-        const shimLabel = `Partition (${partitionColumn.label})`;
+        const shimLabel = `Pool (${partitionColumn.label})`;
 
         return Stratum.init(shimLabel);
     }
