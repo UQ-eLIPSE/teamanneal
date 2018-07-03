@@ -96,12 +96,12 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     //     name: "remove",
     //     label: "Remove a person or group",
     // },
-    {
-        name: "help",
-        label: "Help",
-        region: "end",
-        component: Help,
-    },
+    // {
+    //     name: "help",
+    //     label: "Help",
+    //     region: "end",
+    //     component: Help,
+    // },
 ];
 
 @Component({
