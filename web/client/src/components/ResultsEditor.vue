@@ -57,7 +57,7 @@ import ExportFile from "./results-editor-side-panels/ExportFile.vue";
 import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
 // import Print from "./results-editor-side-panels/Print.vue";
-import Help from "./results-editor-side-panels/Help.vue";
+// import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
