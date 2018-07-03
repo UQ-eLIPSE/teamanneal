@@ -71,6 +71,8 @@ export default class HeaderMenu extends Vue {
     display: flex;
     flex-direction: column;
     border: 0.1em solid rgba(73, 7, 94, 0.6);
+    border-left: 0;
+    border-top: 0;
     background-color: rgba(250, 250, 250, 1);
     position: absolute;
     width: 20rem;
@@ -99,7 +101,7 @@ export default class HeaderMenu extends Vue {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.4rem 1rem;
+    padding: 0.7rem 1rem;
     border: none;
     background: #49075e;
     border-right: 0.1rem solid rgba(255, 255, 255, 0.15);
