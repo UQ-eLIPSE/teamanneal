@@ -20,12 +20,12 @@
                 <p>In the above example, multiple "subgroups" are formed under each "team".</p>
 
                 <h2>Group limitations</h2>
-                <p>At present, groups can be created up to two levels deep (excluding partitions.)</p>
+                <p>At present, groups can be created up to two levels deep (excluding pools.)</p>
             </div>
             <div v-if="!isStrataConfigNamesValid"
                  class="error-msg">
                 <h3>Group structure is not valid</h3>
-                <p>You have groups with blank or conflicting names, or are using names which are not permitted, such as "Partition". Please correct this before continuing.</p>
+                <p>You have groups with blank or conflicting names, or are using names which are not permitted, such as "Pool". Please correct this before continuing.</p>
             </div>
             <p>
                 <StrataStructureEditor></StrataStructureEditor>

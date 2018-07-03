@@ -319,7 +319,7 @@ export default class ExportFile extends Vue {
             throw new Error("No partition column set");
         }
 
-        const shimLabel = `Partition (${partitionColumn.label})`;
+        const shimLabel = `Pool (${partitionColumn.label})`;
 
         return Stratum.init(shimLabel);
     }
@@ -337,7 +337,7 @@ export default class ExportFile extends Vue {
 
             list.unshift({
                 label: partitionShimObject.label,
-                placeholder: "{{Partition}}",
+                placeholder: "{{Pool}}",
             });
         }
 
@@ -381,7 +381,7 @@ export default class ExportFile extends Vue {
         });
 
         // Internally we use _PARTITION to represent the partition column
-        format = replaceAll(format, "{{_PARTITION}}", "{{Partition}}");
+        format = replaceAll(format, "{{_PARTITION}}", "{{Pool}}");
 
         return format;
     }
@@ -393,7 +393,7 @@ export default class ExportFile extends Vue {
         });
 
         // Internally we use _PARTITION to represent the partition column
-        newValue = replaceAll(newValue, "{{Partition}}", "{{_PARTITION}}");
+        newValue = replaceAll(newValue, "{{Pool}}", "{{_PARTITION}}");
 
         this.groupCombinedNameFormatInternal = newValue;
     }
