@@ -3,7 +3,7 @@
          v-if="enableMenu">
         <button class="menu-button"
                 @click.prevent.stop="toggleMenu">
-            <span>{{iconText}}</span>
+            <span class="icon-text">{{iconText}}</span>
             <span class="menu-heading">Menu</span>
         </button>
         <div class="menu-items"
@@ -100,8 +100,8 @@ export default class HeaderMenu extends Vue {
 .menu-button {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 0.7rem 1rem;
+    padding-left: 0.2rem;
     border: none;
     background: #49075e;
     border-right: 0.1rem solid rgba(255, 255, 255, 0.15);
@@ -122,5 +122,9 @@ export default class HeaderMenu extends Vue {
 .menu-heading {
     font-size: 0.8em;
     font-weight: 400;
+}
+
+.icon-text {
+    flex-grow: 1;
 }
 </style>
