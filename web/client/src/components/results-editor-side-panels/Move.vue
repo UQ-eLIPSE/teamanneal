@@ -93,7 +93,13 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        return this.data.targetGroup && this.data.targetGroup;
+        const groupId = this.data.targetGroup;
+
+        if (groupId === undefined) {
+            return undefined;
+        }
+
+        return S.state.groupNode.nameMap[groupId];
     }
 
     get sortedTestPermutationData() {
