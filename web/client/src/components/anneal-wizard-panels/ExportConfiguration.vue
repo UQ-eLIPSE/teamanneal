@@ -2,6 +2,10 @@
     <div class="wizard-panel">
         <div class="wizard-panel-content">
             <h1>Export configuration</h1>
+            <div v-if="configHasError"
+                 class="error-msg">
+                <h3>Your TeamAnneal configuration has some errors, but it can still be downloaded</h3>
+            </div>
             <p>
                 You can export your TeamAnneal configuration by clicking on the button below.
             </p>
@@ -47,6 +51,10 @@ export default class ExportConfiguration extends Mixin(AnnealProcessWizardPanel)
 
         FileSaver.saveAs(fileBlob, `export-${Date.now()}.taconfig`, true);
     }
+    
+    get configHasError() {
+        return !S.get(S.getter.IS_ANNEAL_ABLE_TO_BE_EXECUTED);
+    }
 }
 </script>
 
@@ -55,5 +63,10 @@ export default class ExportConfiguration extends Mixin(AnnealProcessWizardPanel)
 <style scoped src="../../static/anneal-process-wizard-panel.css"></style>
 
 <style scoped>
-
+.error-msg {
+    font-size: 0.9em;
+    background: darkorange;
+    padding: 1px 1em;
+}
 </style>
+
