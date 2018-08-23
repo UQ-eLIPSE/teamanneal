@@ -67,7 +67,7 @@ function getRows(p: Props_NodeStratumWithRecordChildren) {
         throw new Error("Node record array map not defined; cannot fetch record");
     }
 
-    const recordIds = recordMap[p.node._id];
+    const recordIds = recordMap[p.node._id] || [];
 
     return recordIds.map(id => ({ id, data: p.recordLookupMap.get(id)! }));
 }

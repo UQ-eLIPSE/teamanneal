@@ -7,6 +7,7 @@ Version of TeamAnneal written in JavaScript for server and client.
 * Node.js 8.9.0+
   * npm 5.0.0+ (this should be included)
 * Redis 3.0+
+  * You should use Redis packages for Windows from https://github.com/MicrosoftArchive/redis/releases
 
 ## Installation
 
@@ -18,14 +19,26 @@ npm install
 
 ## Building and running server
 
+Ensure that you have a configuration file set (see below). Then:
+
 ```bash
 npm run build
 npm start
 ```
 
-Currently the server runs on `http://localhost:8080`. This is set in `server/src/index.ts`.
+Currently the server runs on `http://localhost:8080`, but the port is
+configurable in the configuration file.
 
 More information about the API is below.
+
+## Configuration
+
+Server configuration is loaded from files under `server/config`. The name of the
+file is expected to be the value of `$NODE_ENV` as set in your environment, or
+it will default to look for `development`.
+
+You should use the `example.json` file included as the template for your
+configuration.
 
 ## Tests
 
@@ -45,15 +58,13 @@ Files that can be used to test anneals can be found under `test-files`.
 
 ## Folder structure
 
-* build (created upon build)
-  * client
-  * common
-  * server
 * client
+  * build (once built)
   * src
 * common
 * scripts
 * server
+  * build (once built)
   * src
 * test
 * test-files

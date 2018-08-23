@@ -2,13 +2,14 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
 import { AnnealCreatorState as State } from "./state";
 import { AnnealCreatorMutation as M, commit } from "./mutation";
+import { AnnealCreatorGetter as G } from "./getter";
 
 import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { Constraint, Data as IConstraint } from "../../data/Constraint";
 import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "../../data/ColumnData";
 
-import { RecordData } from "../../data/RecordData";
+import { RecordData, RecordDataSource } from "../../data/RecordData";
 import { Stratum, init as initStratum, equals as stratumEquals } from "../../data/Stratum";
 import { init as initStratumSize } from "../../data/StratumSize";
 import { init as initStratumNamingConfig, StratumNamingConfig, getStratumNamingConfig } from "../../data/StratumNamingConfig";
@@ -16,9 +17,9 @@ import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum }
 import { ListCounterType } from "../../data/ListCounter";
 import { AnnealResponse } from "../../data/AnnealResponse";
 import * as AnnealRequestState from "../../data/AnnealRequestState";
+import * as AnnealCreatorStoreState from "../../data/AnnealCreatorStoreState";
 
-import { replaceAll } from "../../util/String";
-import { serialiseWithUndefined, deserialiseWithUndefined } from "../../util/Object";
+import { deserialiseWithUndefined } from "../../util/Object";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
@@ -31,6 +32,7 @@ export enum AnnealCreatorAction {
     RESET_STATE = "Resetting state",
 
     SET_RECORD_DATA = "Setting record data",
+    INIT_RECORD_DATA = "Initialise state with brand new record data",
     CLEAR_RECORD_DATA = "Clearing record data",
 
     UPSERT_STRATUM = "Upserting stratum",
@@ -45,20 +47,13 @@ export enum AnnealCreatorAction {
     UPSERT_CONSTRAINT = "Upserting constraint",
     DELETE_CONSTRAINT = "Deleting constraint",
 
-    UPDATE_RECORD_COLUMN_DATA = "Updating a record column's data",
-
     SET_RECORD_ID_COLUMN = "Setting record ID column",
     CLEAR_RECORD_ID_COLUMN = "Clearing record ID column",
 
     SET_RECORD_PARTITION_COLUMN = "Setting record partition column",
     CLEAR_RECORD_PARTITION_COLUMN = "Clearing record partition column",
 
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT = "Setting node naming combined name format",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT = "Clearing node naming combined name format",
-    SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER = "Setting node naming combined name format and flagging it as being set by user",
-    CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER = "Clearing node naming combined name format and flagging it as being set by user",
-
-    UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT = "Updating system generated node naming combined name format",
+    SET_RECORD_DATA_SOURCE = "Setting record data source",
 
     SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING = "Setting anneal request state to 'not running'",
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
@@ -85,22 +80,49 @@ function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(co
 
 /** Store action functions */
 const actions = {
-    async [A.HYDRATE](context: Context, dehydratedState: string) {
+    async [A.HYDRATE](context: Context, { dehydratedState, keepExistingRecordDataSource }: { dehydratedState: string, keepExistingRecordDataSource?: boolean }) {
+        // Hold reference to existing record data
+        const oldRecordData = context.state.recordData;
+
+        // Feed in the dehydrated state
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
-        await dispatch(context, A.RESET_STATE, undefined);
+        // Clear data
+        commit(context, M.CLEAR_CONSTRAINTS, undefined);
+        commit(context, M.CLEAR_STRATA, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         // Record data
-        await dispatch(context, A.SET_RECORD_DATA, state.recordData);
+        if (keepExistingRecordDataSource) {
+            await dispatch(context, A.SET_RECORD_DATA_SOURCE, oldRecordData.source);
+        } else {
+            await dispatch(context, A.SET_RECORD_DATA_SOURCE, state.recordData.source);
+        }
 
-        // Constraints config -> constraints
-        for (let constraint of state.constraintConfig.constraints) {
-            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
+        // Read off latest columns from the state
+        const columns = context.state.recordData.source.columns;
+
+        // Import the partition and ID columns
+        const { partitionColumn, idColumn } = state.recordData;
+
+        if (idColumn !== undefined) {
+            const newIdColumn = ColumnData.MatchOldColumnInNewColumns(columns, idColumn, true)!;
+            dispatch(context, A.SET_RECORD_ID_COLUMN, newIdColumn);
+        }
+
+        if (partitionColumn !== undefined) {
+            const newPartitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, partitionColumn, true)!;
+            dispatch(context, A.SET_RECORD_PARTITION_COLUMN, newPartitionColumn);
         }
 
         // Strata config -> strata
         for (let stratum of state.strataConfig.strata) {
             await dispatch(context, A.UPSERT_STRATUM, stratum);
+        }
+
+        // Constraints config -> constraints
+        for (let constraint of state.constraintConfig.constraints) {
+            await dispatch(context, A.UPSERT_CONSTRAINT, constraint);
         }
 
         // Strata config -> naming config
@@ -111,38 +133,96 @@ const actions = {
             commit(context, M.INIT_STRATA_NAMING_CONFIG, undefined);
         }
 
-        // Node naming config -> combined name config
-        const combinedNameConfig = state.nodeNamingConfig.combined;
-        if (combinedNameConfig.format) {
-            await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, combinedNameConfig.format);
-        } else {
-            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+        // Constraints config -> constraints
+        //
+        // We also attempt to match up columns here when inserting constraints
+        for (let constraint of state.constraintConfig.constraints) {
+            const matchedColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, true)!;
+
+            // `any` override required due to conflicts between the three
+            // constraint types
+            await dispatch(context, A.UPSERT_CONSTRAINT, {
+                ...constraint,
+                filter: {
+                    ...constraint.filter,
+                    column: ColumnData.ConvertToMinimalDescriptor(matchedColumn),
+                },
+            } as any);
         }
-        commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, combinedNameConfig.userProvided);
 
         // Anneal request state
-        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
+        //
+        // Even though the state defines `annealRequest` to be present always, 
+        // we may be importing TARESULTS files which don't have this, in which 
+        // case we just shove in a blank anneal request object
+        if (state.annealRequest !== undefined) {
+            commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, state.annealRequest);
+        } else {
+            await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
+        }
     },
 
-    async [A.DEHYDRATE](context: Context) {
-        return serialiseWithUndefined(context.state);
+    async [A.DEHYDRATE](context: Context, { deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
+        return AnnealCreatorStoreState.dehydrate(context.state, deleteAnnealRequest, deleteRecordDataSource);
     },
 
     async [A.RESET_STATE](context: Context) {
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.SET_RECORD_DATA](context: Context, recordData: RecordData) {
+        // Set the record data
+        commit(context, M.SET_RECORD_DATA, recordData);
+
+        // Set default ID column to first available ID column if present
+        //
+        // We can't use the nice type safe getters here because they would
+        // not have been initialised at this point in time, and trying to force
+        // it in may introduce a circular dependency
+        const validIdColumns: ReadonlyArray<IColumnData> = context.getters[G.VALID_ID_COLUMNS];
+
+        if (validIdColumns.length > 0) {
+            await dispatch(context, A.SET_RECORD_ID_COLUMN, ColumnData.ConvertToMinimalDescriptor(validIdColumns[0]));
+        }
+
+        // Attempt to match up old column references in constraints
+        const constraints = context.state.constraintConfig.constraints;
+        const columns = context.state.recordData.source.columns;
+
+        for (let constraint of constraints) {
+            const newColumn = ColumnData.MatchOldColumnInNewColumns(columns, constraint.filter.column, false);
+
+            if (newColumn !== undefined) {
+                // `any` override required due to conflicts between the three
+                // constraint types
+                await dispatch(context, A.UPSERT_CONSTRAINT, {
+                    ...constraint,
+                    filter: {
+                        ...constraint.filter,
+                        column: ColumnData.ConvertToMinimalDescriptor(newColumn),
+                    },
+                } as any);
+            }
+        }
+
+        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
+    },
+
+    async [A.SET_RECORD_DATA_SOURCE](context: Context, recordDataSource: RecordDataSource) {
+        // Set the record data source
+        commit(context, M.SET_RECORD_DATA_SOURCE, recordDataSource);
+    },
+
+    async [A.INIT_RECORD_DATA](context: Context, recordData: RecordData) {
         // Wipe record data first
         await dispatch(context, A.CLEAR_RECORD_DATA, undefined);
 
-        // Set the record data
-        commit(context, M.SET_RECORD_DATA, recordData);
+        // Set record data back in
+        await dispatch(context, A.SET_RECORD_DATA, recordData);
 
         // Add a generic stratum now for users to get started with
         const stratumLabel = "Team";
@@ -151,15 +231,13 @@ const actions = {
         const genericStratum = initStratum(stratumLabel, stratumSize);
 
         await dispatch(context, A.UPSERT_STRATUM, genericStratum);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
     async [A.CLEAR_RECORD_DATA](context: Context) {
 
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -174,14 +252,12 @@ const actions = {
             // Update
             commit(context, M.SET_STRATUM, { stratum, index });
         } else {
-            // Insert
-            commit(context, M.INSERT_STRATUM, stratum);
-
             // Create new naming config by default
             await dispatch(context, A.SET_STRATUM_NAMING_CONFIG, { stratum, namingConfig: initStratumNamingConfig() });
-        }
 
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
+            // Insert
+            commit(context, M.INSERT_STRATUM, stratum);
+        }
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -232,17 +308,6 @@ const actions = {
                 });
             }
         }
-
-        // Replace the combined name format with a new version that has the 
-        // reference to this stratum erased
-        const combinedNameFormat = $state.nodeNamingConfig.combined.format;
-
-        if (combinedNameFormat !== undefined) {
-            const newCombinedNameFormat = replaceAll(combinedNameFormat, `{{${stratumId}}}`, "");
-            await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, newCombinedNameFormat);
-        }
-
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -301,29 +366,6 @@ const actions = {
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
-    async [A.UPDATE_RECORD_COLUMN_DATA](context: Context, column: IColumnData) {
-        const $state = context.state;
-
-        // Check that the column isn't used by any constraints
-        const constraints = $state.constraintConfig.constraints;
-
-        if (constraints.some(c => ColumnData.Equals(column, c.filter.column))) {
-            const message =
-                `Column "${column.label}" is currently used by at least one constraint and cannot have its type changed.
-
-Delete constraints that use this column and try again.`;
-
-            alert(message);
-            return;
-        }
-
-        // Find index of column and update it
-        const index = $state.recordData.columns.findIndex(c => ColumnData.Equals(column, c));
-        commit(context, M.SET_RECORD_COLUMN_DATA, { column, index });
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
     async [A.SET_RECORD_ID_COLUMN](context: Context, idColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_ID_COLUMN, idColumn);
 
@@ -338,8 +380,6 @@ Delete constraints that use this column and try again.`;
 
     async [A.SET_RECORD_PARTITION_COLUMN](context: Context, partitionColumn: IColumnData_MinimalDescriptor) {
         commit(context, M.SET_RECORD_PARTITION_COLUMN, partitionColumn);
-
-        await dispatch(context, A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
 
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
@@ -361,78 +401,12 @@ Delete constraints that use this column and try again.`;
         await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
     },
 
-    async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context, nameFormat: string) {
-        // If input is effectively blank, then set as undefined
-        if (nameFormat.trim().length === 0) {
-            await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-        } else {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
-        commit(context, M.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.SET_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context, nameFormat: string) {
-        await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
-
-        // Flag as user provided name format, if not already flagged
-        if (!context.state.nodeNamingConfig.combined.userProvided) {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT_BY_USER](context: Context) {
-        await dispatch(context, A.CLEAR_NODE_NAMING_COMBINED_NAME_FORMAT, undefined);
-
-        // Flag as user provided name format, if not already flagged
-        if (!context.state.nodeNamingConfig.combined.userProvided) {
-            commit(context, M.SET_NODE_NAMING_COMBINED_NAME_USER_PROVIDED_FLAG, true);
-        }
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
-    async [A.UPDATE_SYSTEM_GENERATED_NODE_NAMING_COMBINED_NAME_FORMAT](context: Context) {
-        const $state = context.state;
-        const combinedNameConfig = $state.nodeNamingConfig.combined;
-
-        // Only update for non-user-provided name formats
-        if (combinedNameConfig.userProvided) {
-            return;
-        }
-
-        // Map out the names of items currently in strata
-        const nameItems = $state.strataConfig.strata.map(stratum => `{{${stratum._id}}}`);
-
-        // Add partition if set
-        const partitionColumn = $state.recordData.partitionColumn;
-
-        if (partitionColumn !== undefined) {
-            nameItems.unshift("{{_PARTITION}}");
-        }
-
-        // Generate name format
-        const nameFormat = `Team ${nameItems.join("-")}`;
-
-        await dispatch(context, A.SET_NODE_NAMING_COMBINED_NAME_FORMAT, nameFormat);
-
-        await dispatch(context, A.CLEAR_ANNEAL_REQUEST_STATE, undefined);
-    },
-
     async [A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING](context: Context) {
         commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initNotRunning());
     },
 
-    async [A.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS](context: Context) {
-        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initInProgress());
+    async [A.SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS](context: Context, data: Record<string, any>) {
+        commit(context, M.SET_ANNEAL_REQUEST_STATE_OBJECT, AnnealRequestState.initInProgress(data));
     },
 
     async [A.SET_ANNEAL_REQUEST_STATE_TO_COMPLETED](context: Context, response: AnnealResponse) {
@@ -443,7 +417,7 @@ Delete constraints that use this column and try again.`;
         if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
             await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
         }
-    }
+    },
 };
 
 export function init() {

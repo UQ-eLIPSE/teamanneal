@@ -1,7 +1,7 @@
 import * as Application from "../Application";
 
-import * as http from "http";
-import * as express from "express";
+import http from "http";
+import express from "express";
 
 describe("`init`", () => {
     test("returns something", () => {

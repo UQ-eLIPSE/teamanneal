@@ -1,31 +1,27 @@
 {
     "compilerOptions": {
         "target": "es5",
+        
         "module": "commonjs",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+
         "lib": [
             "dom",
             "es2015"
         ],
 
-        "outDir": "../build",
+        "outDir": "./build",
 
         "sourceMap": true,
-
-        "alwaysStrict": true,
-
+        
         "forceConsistentCasingInFileNames": true,
 
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-
-        "strictNullChecks": true,
-
+        "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-
-
         "allowUnreachableCode": false
     },
 

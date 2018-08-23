@@ -14,6 +14,9 @@ export interface AnnealRequestProgress_InProgress {
 
     /** Timestamp of last progress update */
     lastUpdated: number,
+
+    /** Generic in-progress status data */
+    data: Record<string, any>,
 }
 
 export interface AnnealRequestProgress_Completed {
@@ -29,10 +32,11 @@ export function initNotRunning() {
     return obj;
 }
 
-export function initInProgress(lastUpdated: number = Date.now()) {
+export function initInProgress(data: Record<string, any> = {}, lastUpdated: number = Date.now()) {
     const obj: AnnealRequestProgress_InProgress = {
         type: "in-progress",
         lastUpdated,
+        data,
     };
 
     return obj;

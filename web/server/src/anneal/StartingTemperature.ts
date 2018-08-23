@@ -5,20 +5,20 @@ import * as TemperatureDerivation from "./TemperatureDerivation";
 
 import { AnnealStratum } from "../data/AnnealStratum";
 import { AnnealRecordPointerArray } from "../data/AnnealRecordPointerArray";
+import { Config } from "../utils/Config";
 
 /**
  * Derives starting temperature.
  */
 export function derive(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>) {
-    // TODO: Make `tempDerSamples` and `maximumLoopIterations` configurable in 
-    // TA-79
-    const tempDerSamples = 200;
+    const annealConfig = Config.get().anneal;
+    const tempDerSamples = annealConfig.temperatureDerivation.numberOfSamples;
 
     // We define a maximum number of iterations to run for deriving the starting
     // temperature because some anneal configurations may have few uphill costs
     // being accumulated, leading to a long running derivation loop or even
     // infinite loops
-    const maximumLoopIterations = 1e7 >>> 0;    // 10 million
+    const maximumLoopIterations = annealConfig.temperatureDerivation.maxLoopIterations >>> 0;
     let loopIterationCount = 0;
 
     // Preserve the initial state

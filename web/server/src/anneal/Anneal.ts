@@ -20,6 +20,7 @@ import * as Iteration from "./Iteration";
 import * as UphillTracker from "./UphillTracker";
 import * as StartingTemperature from "./StartingTemperature";
 import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
+import { Config } from "../utils/Config";
 
 export function setupAnnealVariables(annealRootNode: AnnealNode.NodeRoot, recordData: RecordData.Desc, strataDefinitions: ReadonlyArray<Stratum.Desc>, constraintDefinitions: ReadonlyArray<Constraint.Desc>) {
     /// ==================
@@ -128,9 +129,9 @@ export function anneal(annealRootNode: AnnealNode.NodeRoot, recordData: RecordDa
 }
 
 function annealMainLoop(recordPointers: AnnealRecordPointerArray, strata: ReadonlyArray<AnnealStratum>, startTemp: number) {
-    // TODO: Make parameters configurable in TA-79
-    const defaultBranchIterationScalar: number = 4;
-    const defaultAvgUphillProbabilityThreshold: number = 0.0025;
+    const annealConfig = Config.get().anneal;
+    const defaultBranchIterationScalar: number = annealConfig.mainLoop.defaultNumberOfBranchIterations;
+    const defaultAvgUphillProbabilityThreshold: number = annealConfig.mainLoop.avgUphillProbabilityThreshold;
 
     const numberOfRecords = recordPointers.numberOfRecords;
 

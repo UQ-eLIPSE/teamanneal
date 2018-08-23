@@ -3,8 +3,7 @@ import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
 import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
-
-import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
+import { MoveRecordTestPermutationOperationInfo, SwapRecordsTestPermutationOperationInfo } from "../../../common/ToServerSatisfactionTestPermutationRequest";
 
 interface InternalAnnealMeta {
     redisResponseId: string,
@@ -15,12 +14,6 @@ interface InternalAnnealNodeMeta {
         id: string,
         index: number,
     }
-}
-
-export interface AnnealRequestMessageData {
-    _meta: InternalAnnealMeta,
-
-    annealRequest: ToServerAnnealRequest.Root,
 }
 
 export interface AnnealJobData {
@@ -47,4 +40,27 @@ export interface AnnealResponseMessageData {
 
     results?: AnnealResultMessageData[],
     error?: string,
+}
+
+export interface SatisfactionCalculationJobData {
+    recordData: RecordData.Desc,
+    annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
+    strata: ReadonlyArray<Stratum.Desc>,
+    constraints: ReadonlyArray<Constraint.Desc>,
+}
+
+export interface TestPermutationMoveRecordJobData {
+    recordData: RecordData.Desc,
+    annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
+    strata: ReadonlyArray<Stratum.Desc>,
+    constraints: ReadonlyArray<Constraint.Desc>,
+    operation: MoveRecordTestPermutationOperationInfo,
+}
+
+export interface TestPermutationSwapRecordsJobData {
+    recordData: RecordData.Desc,
+    annealNodes: ReadonlyArray<AnnealNode.NodeRoot>,
+    strata: ReadonlyArray<Stratum.Desc>,
+    constraints: ReadonlyArray<Constraint.Desc>,
+    operation: SwapRecordsTestPermutationOperationInfo,
 }

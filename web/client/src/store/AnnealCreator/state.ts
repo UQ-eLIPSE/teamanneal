@@ -4,7 +4,6 @@ import * as AnnealResponse from "../../data/AnnealResponse";
 import { RecordData, init as initRecordData } from "../../data/RecordData";
 import { StrataConfig, init as initStrataConfig } from "../../data/StrataConfig";
 import { ConstraintConfig, init as initConstraintConfig } from "../../data/ConstraintConfig";
-import { NamingConfig, init as initNamingConfig } from "../../data/NamingConfig";
 
 import { ResultTree } from "../../data/ResultTree";
 import { ColumnData } from "../../data/ColumnData";
@@ -17,7 +16,7 @@ import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateSt
 
 import * as AnnealNode from "../../../../common/AnnealNode";
 
-export interface AnnealCreatorState {
+export interface AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
     recordData: RecordData,
 
@@ -27,9 +26,11 @@ export interface AnnealCreatorState {
     /** Configuration of strata  */
     strataConfig: StrataConfig,
 
-    /** Naming configuration for nodes */
-    nodeNamingConfig: NamingConfig,
+    // Placeholder possible property
+    annealRequest?: AnnealRequestState.AnnealRequestState,
+}
 
+export interface AnnealCreatorState extends AnnealCreatorStateSerialisable {
     /** Anneal request/response information */
     annealRequest: AnnealRequestState.AnnealRequestState,
 }
@@ -41,8 +42,6 @@ export function init() {
         constraintConfig: initConstraintConfig(),
 
         strataConfig: initStrataConfig(),
-
-        nodeNamingConfig: initNamingConfig(),
 
         annealRequest: AnnealRequestState.initNotRunning(),
     };
@@ -75,7 +74,7 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     // Grab full partition column data
     const _partitionColumn = state.recordData.partitionColumn;
-    const partitionColumn = _partitionColumn === undefined ? undefined : ColumnData.ConvertToDataObject(state.recordData.columns, _partitionColumn);
+    const partitionColumn = _partitionColumn === undefined ? undefined : ColumnData.ConvertToDataObject(state.recordData.source.columns, _partitionColumn);
 
     // Walk the tree and decompose data
     const nameMap = ResultTree.GenerateNodeNameMap(state.strataConfig, partitionColumn, annealNodeRoots);

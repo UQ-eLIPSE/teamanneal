@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
 
-// Delete build folder
-fs.removeSync(`${__dirname}/../build`);
+// Delete build folders
+fs.removeSync(`${__dirname}/../client/build`);
+fs.removeSync(`${__dirname}/../server/build`);

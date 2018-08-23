@@ -11,25 +11,19 @@
                 </div>
             </div>
         </p>
-
         <div v-if="!isCustomNameListValid"
              class="error-msg">
             <p v-if="doesCustomNameListContainDuplicates">List contains duplicates which may result in identical names in the final output.</p>
-            <p v-if="doesCustomNameListContainEmptyLines">Warning: Empty lines detected. Please make sure there are no empty lines in the list.</p>
-            <p v-if="isCustomNameListEmpty">Warning: Name list cannot be empty.</p>
+            <p v-if="doesCustomNameListContainEmptyLines">Empty lines detected. Please make sure there are no empty lines in the list.</p>
+            <p v-if="isCustomNameListEmpty">Name list cannot be empty.</p>
+            <p v-if="isCustomNameListInsufficient">There are insufficient names to label every {{ stratumLabel }} uniquely. TeamAnneal will cycle through this list with a number appended if more names are not supplied.</p>
         </div>
-        <p class="smaller-margins">
-            For example:
-            <i>{{ stratumLabel }} {{ randomExampleName }}</i>
-        </p>
     </div>
 </template>
 
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
-
-import * as StratumNamingConfig from "../data/StratumNamingConfig";
 
 import TextareaWithLineNumbers from "./TextareaWithLineNumbers.vue";
 
@@ -48,6 +42,9 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
 
     /** List of names for the custom name list */
     @Prop names = p<ReadonlyArray<string>>({ type: Array, required: false, default: () => [], });
+
+    /** Custom name list minimum expected count threshold */
+    @Prop minCount = p({ type: Number, required: false, });
 
     get nameListInputTextareaValue() {
         return this.names.join("\n");
@@ -68,7 +65,8 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
         return !(
             this.doesCustomNameListContainDuplicates ||
             this.doesCustomNameListContainEmptyLines ||
-            this.isCustomNameListEmpty
+            this.isCustomNameListEmpty ||
+            this.isCustomNameListInsufficient
         );
     }
 
@@ -77,6 +75,17 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
      */
     get isCustomNameListEmpty() {
         return this.numberOfCustomNames === 0;
+    }
+
+    /**
+     * Returns whether the name list is not long enough for the minimum count
+     */
+    get isCustomNameListInsufficient() {
+        if (this.minCount === undefined) {
+            return true;
+        }
+
+        return this.numberOfCustomNames < this.minCount;
     }
 
     get doesCustomNameListContainDuplicates() {
@@ -104,10 +113,6 @@ export default class StrataEditorStratumItemCustomNameList extends Vue {
                 // If the line when trimmed is length 0, it is considered empty
                 return name.trim().length === 0;
             });
-    }
-
-    get randomExampleName() {
-        return StratumNamingConfig.generateRandomExampleNameStringArray(this.names);
     }
 }
 </script>

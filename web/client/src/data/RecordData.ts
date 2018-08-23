@@ -3,18 +3,20 @@ import { ColumnData, Data as IColumnData, MinimalDescriptor as IColumnData_Minim
 import { parseFile, trimWhollyEmptyRows } from "../util/CSV";
 import { fillGaps, transpose } from "../util/Array";
 
-export interface RecordData {
-    /** Data source (file, etc.) */
-    source: {
-        /** Name of source (file name, etc.) */
-        name: string | undefined,
+export interface RecordDataSource {
+    /** Name of source (file name, etc.) */
+    name: string | undefined,
 
-        /** Number of rows in raw file */
-        length: number,
-    },
+    /** Number of rows in raw file */
+    length: number,
 
     /** Data organised by column */
     columns: IColumnData[],
+}
+
+export interface RecordData {
+    /** Data source (file, etc.) */
+    source: RecordDataSource,
 
     /** ID column (ColumnData minimal descriptor) */
     idColumn: IColumnData_MinimalDescriptor | undefined,
@@ -28,8 +30,8 @@ export function init(sourceName: string | undefined = undefined, sourceLength: n
         source: {
             name: sourceName,
             length: sourceLength,
+            columns,
         },
-        columns,
         idColumn,
         partitionColumn,
     };
@@ -37,7 +39,7 @@ export function init(sourceName: string | undefined = undefined, sourceLength: n
     return obj;
 }
 
-export async function parseFileToRecordData(file: File) {
+export async function parseFileToRecordData(file: File, previousRecordData?: RecordData) {
     const parseResult = await parseFile(file);
     const data: string[][] = parseResult.data;
 
@@ -63,5 +65,24 @@ export async function parseFileToRecordData(file: File) {
                 return ColumnData.Init(columnValues, label);
             });
 
-    return init(file.name, rows.length, columns);
+    // If previous record data is defined, we attempt to pass on the information
+    // to the new RecordData object
+    if (previousRecordData !== undefined) {
+        const idColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.idColumn, false);
+        const partitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, true);
+
+        return init(
+            file.name,
+            rows.length,
+            columns,
+            idColumn && ColumnData.ConvertToMinimalDescriptor(idColumn),
+            partitionColumn && ColumnData.ConvertToMinimalDescriptor(partitionColumn),
+        );
+    } else {
+        return init(
+            file.name,
+            rows.length,
+            columns,
+        );
+    }
 }
