@@ -2,21 +2,32 @@
     <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
          class="test-permutations">
         <h5>Suggestions</h5>
-        <ul class="suggestions">
 
+        <table class="suggestions">
+            <tr>
+                <th width="70%">Move to ...</th>
+                <th width="30%">% Change in satisfaction</th>
+            </tr>
+
+            <tr class="suggestion" v-for="x in sortedTestPermutationData" :key="x.toNode"
+                @click="groupSelected(x.toNode)">
+                <td class="ancestors" :title="getAncestors(x.toNode).join(' > ')" width="70%">
+                     <span :title="getAncestors(x.toNode).join(' > ')" v-for="ancestor in getAncestors(x.toNode)" :key="ancestor">{{ancestor}}</span>
+                </td>
+                <td class="value" width="30%" :class="getSatisfactionChangeClass(x.satisfaction.value)">{{ getSatisfactionPercentChangeFormatted(x.satisfaction.value) }}</td>    
+            </tr>
+        </table>
+        <!-- <ul class="suggestions">
             <li v-for="x in sortedTestPermutationData"
                 class="suggestion"
                 :key="x.toNode"
                 @click="groupSelected(x.toNode)">
-                <span :title="getAncestors(x.toNode).join(' > ')"
-                      class="ancestors">{{ getAncestors(x.toNode).join(" > ") }}</span>
-                <div class="field" :class="getSatisfactionChangeClass(x.satisfaction.value)">
-                    <span class="label">Satisfaction</span>
-                    <span class="value">{{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                <div class="ancestors">
+                    <span :title="getAncestors(x.toNode).join(' > ')" v-for="ancestor in getAncestors(x.toNode)" :key="ancestor">{{ancestor}}</span>
                 </div>
-
+                <div :class="getSatisfactionChangeClass(x.satisfaction.value)" class="satisfaction-value">{{getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</div>
             </li>
-        </ul>
+        </ul> -->
         <button class="button secondary small"
                 @click="clearSatisfactionTestPermutationData">Close suggestions</button>
     </div>
@@ -138,21 +149,62 @@ export default class MoveSuggestionsDisplay extends Vue {
 }
 
 .suggestion {
-    display: flex;
-    flex-direction: column;
-    border: 0.1em solid rgba(1, 0, 0, 0.1);
-    overflow: auto;
+    background: white;
+    border: none;
+    outline: 0.1em solid rgba(1, 0, 0, 0.1);
     cursor: pointer;
-    flex-shrink: 0;
     margin: 0.25rem;
     font-size: 0.9em;
 }
 
-.suggestion .ancestors {
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    text-overflow: ellipsis;
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th {
+    background-color: #49075e;
+    color: white;
+}
+
+td {
+    background-color: white;
+}
+
+
+
+.ancestors {
+    padding: 0.5rem;
+}
+
+.ancestors>* {
+    display: inline-block;
+}
+.ancestors>*:nth-child(n+2)::before {
+    content: "";
+    border-style: solid;
+    border-width: 0.15em 0.15em 0 0;
+    display: inline-block;
+    height: 0.5em;
+    left: 0.15em;
+    position: relative;
+    transform: rotate(-45deg);
+    vertical-align: middle;
+    width: 0.5em;
+    left: 0;
+    transform: rotate(45deg);
+    margin: 0 0.5ch;
+    color: #49075e;
+}
+
+.satisfaction-value {
+    display: flex;
+    align-items: center;
     padding: 0.25rem;
+    font-weight: bold;
 }
 
 .field {
@@ -162,11 +214,13 @@ export default class MoveSuggestionsDisplay extends Vue {
     padding: 0.5rem;
 }
 
-.value {
+td.value {
+    text-align: center;
     font-weight: bold;
 }
 .positive {
-    background: rgba(53, 146, 56, 0.2);
+    background-color: #4BB543;
+    color: white;
 }
 
 .negative {
