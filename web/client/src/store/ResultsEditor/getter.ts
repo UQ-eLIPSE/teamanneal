@@ -339,22 +339,22 @@ const getters = {
      */
     [G.GET_RECORD_LOOKUP_MAP](state: State) {
 
-        if (!state.recordData || !state.recordData.columns || state.recordData.columns.length === 0) return {};
+        if (!state.recordData || !state.recordData.source.columns || state.recordData.source.columns.length === 0) return {};
 
-        const recordRows = ColumnData.TransposeIntoCookedValueRowArray(state.recordData.columns);
+        const recordRows = ColumnData.TransposeIntoCookedValueRowArray(state.recordData.source.columns);
         const idColumnDesc = state.recordData.idColumn;
 
         if (idColumnDesc === undefined) {
             throw new Error("No ID column set");
         }
 
-        const idColumn = state.recordData.columns.find(col => ColumnData.Equals(idColumnDesc, col));
+        const idColumn = state.recordData.source.columns.find(col => ColumnData.Equals(idColumnDesc, col));
 
         if (idColumn === undefined) {
             throw new Error("No ID column set");
         }
 
-        const idColumnIndex = state.recordData.columns.indexOf(idColumn);
+        const idColumnIndex = state.recordData.source.columns.indexOf(idColumn);
 
         return recordRows.reduce((map, record) => {
             const id = record[idColumnIndex];

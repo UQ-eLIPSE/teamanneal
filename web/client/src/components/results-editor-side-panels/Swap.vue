@@ -54,7 +54,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../../store";
 
@@ -76,6 +76,19 @@ export default class Swap extends Vue {
     /** Data returned from test permutation request */
     p_testPermutationData: SwapRecordsTestPermutationOperationResult | undefined = undefined;
 
+    @Watch('data')
+    handler(newVal: SwapSidePanelToolData, oldVal: SwapSidePanelToolData) {
+        if(newVal.personA) {
+            if(oldVal.personA) {
+                if(oldVal.personA.node !== newVal.personA.node) {
+                    this.onGetSuggestionsButtonClick();
+                }
+            } else {
+                this.onGetSuggestionsButtonClick();
+            }
+        }
+        
+    }
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
     }

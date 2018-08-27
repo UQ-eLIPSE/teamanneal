@@ -2,20 +2,22 @@ import { ResultsEditor as S } from "../store";
 import { GroupNode } from "../data/GroupNode";
 
 export namespace Suggestions {
+    export function getCurrentParent(childToParentNodeMap: any, nodeId: string, parents: string[]): string[] {
 
-
+        if(nodeId === null || nodeId === undefined) {
+            return parents;
+        } else {
+            parents.push(nodeId);
+            return getCurrentParent(childToParentNodeMap, childToParentNodeMap[nodeId], parents) || [];
+        }        
+    }
     export function getAncestors(nodeId: string) {
-        const nodeMap = childToParentNodeMap();
-        const parentageArray = [];
-        let childId: string | null = nodeId;
-        do {
-            parentageArray.push(childId);
-            childId = nodeMap[childId];
-        } while (childId !== null);
-
+        const lineage = getCurrentParent(childToParentNodeMap(), nodeId, []);
         const nodeNameMap = S.state.groupNode.nameMap;
-        const names = parentageArray.map((nodeId: string) => nodeNameMap[nodeId]);
-        return names.reverse();
+        const names = lineage.filter((nodeId: string) => nodeNameMap[nodeId] !== undefined && nodeNameMap[nodeId] !== null);
+        const nodeNames = names.map((nodeId: string) => nodeNameMap[nodeId]);
+        
+        return nodeNames.reverse();
     }
 
     export function getParentage(childToParentNodeMap: { [nodeId: string]: string | null }, node: GroupNode) {
@@ -34,10 +36,16 @@ export namespace Suggestions {
     export function childToParentNodeMap() {
         const nodeRoots = S.state.groupNode.structure.roots;
         const childToParentNodeMap: { [nodeId: string]: string | null } = {};
-        nodeRoots.forEach((root) => getParentage(childToParentNodeMap, root))
+        
+        if(nodeRoots.length === 1) {
+            // If data was not partitioned i.e. only a single partition
+            nodeRoots[0].children.forEach((child) => getParentage(childToParentNodeMap, child));
+        } else {
+            // Partitioned data. Cycle through all partitions
+            nodeRoots.forEach((root) => getParentage(childToParentNodeMap, root))
+        }
+
         return childToParentNodeMap;
     }
-
-
 
 }

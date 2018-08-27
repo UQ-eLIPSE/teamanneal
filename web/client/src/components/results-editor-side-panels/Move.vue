@@ -55,7 +55,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../../store";
 
@@ -77,6 +77,20 @@ export default class Move extends Vue {
 
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
+
+    @Watch('data')
+    handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
+        
+        if(newVal.sourcePerson) {
+            if(oldVal.sourcePerson) {
+                if(oldVal.sourcePerson.node !== newVal.sourcePerson.node) {
+                    this.onGetSuggestionsButtonClick();
+                }
+            } else {
+                this.onGetSuggestionsButtonClick();
+            }
+        }
+    }
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;

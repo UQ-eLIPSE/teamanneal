@@ -1,32 +1,27 @@
 <template>
-    <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'"
-         class="test-permutations">
+    <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'" class="test-permutations">
         <h5>Suggestions</h5>
         <ul class="suggestions">
-            <li v-for="x in sortedTestPermutationData"
-                class="suggestion"
-                :key="x.nodeB + x.recordIdB"
-                @click="personBSelected(x.nodeB, x.recordIdB)">
+            <li class="suggestion header">
+                <div class="ancestors">Swap with ...</div>
+                <div class="satisfaction-value">Overall constraints satisfaction</div>
+            </li>
 
-                <span class="ancestors">{{getAncestors(x.nodeB).join(' > ')}}</span>
-                <div class="content"
-                     :class="getSatisfactionChangeClass(x.satisfaction.value)">
-                    <div class="field">
-                        <span class="label">Satisfaction: </span>
-                        <span class="value">{{ getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
-                    </div>
-                    <div class="record">
-                        <div class="field">
-                            <span class="label">{{ idColumnName }}: </span>
-                            <span class="value">{{ getIdValue(x.recordIdB) }}</span>
-                        </div>
-                        <SwapSuggestionsDisplayRecord :recordId="x.recordIdB"></SwapSuggestionsDisplayRecord>
-                    </div>
+            <li v-for="x in sortedTestPermutationData" class="suggestion" :key="x.nodeB + x.recordIdB" @click="personBSelected(x.nodeB, x.recordIdB)">
+                <div class="ancestors">
+                    <span class="id-value" :title="getIdValue(x.recordIdB)">{{ getIdValue(x.recordIdB) }}</span>
+                    in
+                    <span :title="getAncestors(x.nodeB).join(' > ')" v-for="ancestor in getAncestors(x.nodeB)" :key="ancestor">{{ancestor}}</span>
+                    <SwapSuggestionsDisplayRecord class="record-details" :recordId="x.recordIdB"></SwapSuggestionsDisplayRecord>
+
                 </div>
+                <div :class="getSatisfactionChangeClass(x.satisfaction.value)" class="satisfaction-value">
+                    <span>{{getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+                </div>
+
             </li>
         </ul>
-        <button class="button secondary small"
-                @click="clearSatisfactionTestPermutationData">Close suggestions</button>
+        <button class="button secondary small" @click="clearSatisfactionTestPermutationData">Close suggestions</button>
     </div>
 </template>
 
@@ -40,113 +35,107 @@ import { ResultsEditor as S } from "../store";
 import SwapSuggestionsDisplayRecord from "./SwapSuggestionsDisplayRecord.vue";
 
 @Component({
-    components: {
-        SwapSuggestionsDisplayRecord
-    }
+  components: {
+    SwapSuggestionsDisplayRecord
+  }
 })
 export default class SwapSuggestionsDisplay extends Vue {
+  @Prop sortedTestPermutationData = p<SwapRecordsTestPermutationOperationResult>({ required: true });
+  @Prop data = p<any>({ required: true });
 
-    @Prop sortedTestPermutationData = p<SwapRecordsTestPermutationOperationResult>({ required: true });
-    @Prop data = p<any>({ required: true });
+  personBSelected(nodeId: string, recordId: string) {
+    this.$emit("personBSelected", nodeId, recordId);
+  }
+  get currentConfigurationSatisfactionValue() {
+    const personA = this.data.personA;
+    if (personA === undefined) return undefined;
 
+    const selectedNodeId = personA.node;
+    const sortedTestPermutationData = this.sortedTestPermutationData;
 
-    personBSelected(nodeId: string, recordId: string) {
-        this.$emit("personBSelected", nodeId, recordId);
-    }
-    get currentConfigurationSatisfactionValue() {
-        const personA = this.data.personA;
-        if (personA === undefined) return undefined;
-
-        const selectedNodeId = personA.node;
-        const sortedTestPermutationData = this.sortedTestPermutationData;
-
-        if (sortedTestPermutationData === undefined) {
-            return undefined;
-        }
-
-        const satisfactionObject = sortedTestPermutationData.find((p) => p.nodeB === selectedNodeId);
-
-        return satisfactionObject === undefined ? undefined : { value: satisfactionObject.satisfaction.value, max: satisfactionObject.satisfaction.max };
+    if (sortedTestPermutationData === undefined) {
+      return undefined;
     }
 
-    getAncestors(id: string) {
-        return Suggestions.getAncestors(id);
+    const satisfactionObject = sortedTestPermutationData.find(p => p.nodeB === selectedNodeId);
+
+    return satisfactionObject === undefined ? undefined : { value: satisfactionObject.satisfaction.value, max: satisfactionObject.satisfaction.max };
+  }
+
+  getAncestors(id: string) {
+    return Suggestions.getAncestors(id);
+  }
+
+  clearSatisfactionTestPermutationData() {
+    this.$emit("clearSuggestions");
+  }
+
+  getSatisfactionPercentChange(satisfactionValue: number) {
+    const satisfactionObject = this.currentConfigurationSatisfactionValue;
+    if (satisfactionObject === undefined) {
+      return;
     }
 
-    clearSatisfactionTestPermutationData() {
-        this.$emit("clearSuggestions");
+    const percentChange = (satisfactionValue - satisfactionObject.value) / satisfactionObject.max * 100;
+
+    return percentChange;
+  }
+
+  getSatisfactionPercentChangeFormatted(satisfactionValue: number) {
+    const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
+    if (percentChange === undefined) return;
+
+    const formatted = percentChange.toFixed(2);
+
+    if (percentChange > 0) {
+      return "+" + formatted + "%";
+    } else if (percentChange === 0) {
+      return "No change";
     }
 
-    getSatisfactionPercentChange(satisfactionValue: number) {
-        const satisfactionObject = this.currentConfigurationSatisfactionValue;
-        if (satisfactionObject === undefined) {
-            return;
-        }
+    return formatted + "%";
+  }
 
-        const percentChange = ((satisfactionValue - satisfactionObject.value) / satisfactionObject.max) * 100;
+  getSatisfactionChangeClass(satisfactionValue: number) {
+    const classes = [];
+    const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
 
-        return percentChange;
+    if (percentChange === undefined) return;
+
+    if (percentChange > 0) {
+      classes.push("positive");
+    } else if (percentChange < 0) {
+      classes.push("negative");
+    } else if (percentChange === 0) {
+      classes.push("neutral");
     }
 
-    getSatisfactionPercentChangeFormatted(satisfactionValue: number) {
-        const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
-        if (percentChange === undefined) return;
+    return classes;
+  }
 
-        const formatted = percentChange.toFixed(2);
+  get idColumnIndex() {
+    const columns = S.state.recordData.source.columns;
+    const idColumnId = S.state.recordData.idColumn!._id;
+    const idColumnIndex = columns.findIndex(col => col._id === idColumnId);
+    return idColumnIndex;
+  }
 
-        if (percentChange >= 0) {
-            return "+" + formatted + "%";
-        }
+  get idColumnName() {
+    return S.state.recordData.idColumn!.label;
+  }
 
-        return formatted + "%";
-    }
+  getIdValue(recordId: any) {
+    const idColumnIndex = this.idColumnIndex;
+    if (idColumnIndex === undefined) return "";
+    return this.recordLookupMap.get(recordId)[idColumnIndex];
+  }
 
-    getSatisfactionChangeClass(satisfactionValue: number) {
-        const classes = [];
-        const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
+  get recordLookupMap() {
+    return S.get(S.getter.GET_RECORD_LOOKUP_MAP) as any;
+  }
 
-        if (percentChange === undefined) return;
-
-        if (percentChange > 0) {
-            classes.push("positive");
-        } else if (percentChange < 0) {
-            classes.push("negative");
-        } else if(percentChange === 0) {
-            classes.push("neutral");
-        }
-
-        return classes;
-    }
-
-    get idColumnIndex() {
-        const columns = S.state.recordData.columns;
-        const idColumnId = S.state.recordData.idColumn!._id;
-        const idColumnIndex = columns.findIndex((col) => col._id === idColumnId);
-        return idColumnIndex;
-    }
-    
-
-    get idColumnName() {
-        return S.state.recordData.idColumn!.label;
-    }
-
-    getIdValue(recordId: any) {
-        const idColumnIndex = this.idColumnIndex;
-        if(idColumnIndex === undefined) return "";
-        return this.recordLookupMap.get(recordId)[idColumnIndex];
-    }
-
-    get recordLookupMap() {
-        
-        return S.get(S.getter.GET_RECORD_LOOKUP_MAP) as any;
-    }
-
-    @Lifecycle 
-    created() {
-    }
-
-
-
+  @Lifecycle
+  created() {}
 }
 </script>
 
@@ -156,80 +145,114 @@ export default class SwapSuggestionsDisplay extends Vue {
 
 <style scoped>
 .test-permutations {
-    background: rgba(220, 220, 220, 1);
-    padding: 0 0.5rem;
-    height: 60%;
-    display: flex;
-    justify-content: flex-start;
-    flex-direction: column;
+  background: rgba(220, 220, 220, 1);
+  padding: 0.5rem;
+  height: 65%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-.test-permutations>h5 {
-    color: #49075E;
-    /* font-style: italic; */
-    margin: 0.25rem;
+.test-permutations > h5 {
+  color: #49075e;
+  margin: 0.25rem 0.5rem;
 }
 
 .suggestions {
-    display: flex;
-    flex-flow: column;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    overflow: auto;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  overflow: auto;
 }
 
 .suggestion {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    border: 0.1em solid rgba(1, 0, 0, 0.1);
-    overflow: auto;
-    cursor: pointer;
-    flex-shrink: 0;
-    margin: 0.25rem;
-    font-size: 0.9em;
+  display: flex;
+  background-color: #ffffff;
+  border: none;
+  outline: 0.1em solid rgba(1, 0, 0, 0.1);
+  cursor: pointer;
+  margin: 0.25rem;
+  font-size: 0.9em;
 }
 
-.suggestion .ancestors {
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    text-overflow: ellipsis;
-    padding: 0.25rem;
+.suggestion.header {
+  cursor: default;
+  position: sticky;
+  top:0;
 }
 
-.suggestion .content {
-    padding: 0.5rem;
+.suggestion:hover {
+  background-color: rgb(240, 240, 240);
+}
+
+.suggestion.header > * {
+  background-color: #49075e;
+  color: white;
+  padding: 0.5rem;
+  font-weight: bold;
+  border-left: 0.05em solid rgba(255, 255, 255, 0.3);
+}
+
+.ancestors {
+  padding: 0.5rem;
+  width: 75%;
+}
+
+.ancestors > * {
+  display: inline-block;
+}
+
+.ancestors > span:nth-child(n + 3)::before {
+  content: "";
+  border-style: solid;
+  border-width: 0.15em 0.15em 0 0;
+  display: inline-block;
+  height: 0.5em;
+  left: 0.15em;
+  position: relative;
+  transform: rotate(-45deg);
+  vertical-align: middle;
+  width: 0.5em;
+  left: 0;
+  transform: rotate(45deg);
+  margin: 0 0.5ch;
+  color: #49075e;
+}
+
+.ancestors .id-value {
+  display: block;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.satisfaction-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  font-weight: bold;
+  width: 25%;
 }
 
 .positive {
-    background: rgba(53, 146, 56, 0.2);
+  background-color: #4bb543;
+  color: white;
 }
 
 .negative {
-    background: rgba(171, 39, 45, 0.2);
-}
-
-.record {
-    display: flex;
-    flex-direction: column;
-    overflow: auto;
-}
-
-.field {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap:wrap;
-    padding: 0.2rem 0;
-}
-
-.value {
-    font-weight: bold;
+  background: rgba(171, 39, 45, 0.2);
 }
 
 .neutral {
-    background: #eee;
+  background: #eee;
 }
 
+.record-details {
+  position: static;
+}
+.record-details > button {
+
+    align-self: baseline;
+}
 </style>
