@@ -60,6 +60,9 @@ import { Vue, Component } from "av-ts";
 import { ResultsEditor as S } from "../../store";
 
 import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
+import { NotificationPayload } from "../../data/Notification";
+import { notifySystem } from "../../util/NotificationEventBus";
+
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
@@ -134,7 +137,34 @@ export default class Swap extends Vue {
             throw new Error("Underspecified swap operation");
         }
 
-        await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
+
+        // Check to see if the swap has failed
+        try {
+            await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
+            const notifyPacket = {
+                title: "Swap",
+                message: " Success",
+                options: {
+                    duration: 5000,
+                    mode: "success"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
+        } catch(e) {
+            const err = e as Error;
+
+            const notifyPacket = {
+                title: "Swap",
+                message: err.toString(),
+                options: {
+                    duration: 5000,
+                    mode: "error"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
+        }
 
         // TODO: Review whether we should close the side panel or not
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);

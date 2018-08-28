@@ -61,6 +61,8 @@ import { ResultsEditor as S } from "../../store";
 
 import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
+import { NotificationPayload } from "../../data/Notification";
+import { notifySystem } from "../../util/NotificationEventBus";
 
 import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
 
@@ -134,7 +136,33 @@ export default class Move extends Vue {
             throw new Error("Underspecified move operation");
         }
 
-        await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
+        // Check to see if the swap has failed
+        try {
+            await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
+            const notifyPacket = {
+                title: "Move",
+                message: " Moving of student successful",
+                options: {
+                    duration: 5000,
+                    mode: "success"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
+        } catch(e) {
+            const err = e as Error;
+
+            const notifyPacket = {
+                title: "Move",
+                message: err.toString(),
+                options: {
+                    duration: 5000,
+                    mode: "error"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
+        }
 
         // TODO: Review whether we should close the side panel or not
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
