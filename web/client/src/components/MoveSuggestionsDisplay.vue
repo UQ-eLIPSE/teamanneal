@@ -66,6 +66,7 @@ export default class MoveSuggestionsDisplay extends Vue {
       return;
     }
 
+    // Find the % change in overall satisfaction value between the old(current config) and the new (would-be) configuration
     const percentChange = (satisfactionValue - satisfactionObject.value) / satisfactionObject.max * 100;
 
     return percentChange;

@@ -1,38 +1,40 @@
 <template>
-    <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'" class="test-permutations">
-        <h5>Suggestions</h5>
-        <ul class="suggestions">
-            <li class="suggestion header">
-                <div class="ancestors">Swap with ...</div>
-                <div class="satisfaction-value">Overall constraints satisfaction</div>
-            </li>
+  <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'" class="test-permutations">
+    <h5>Suggestions</h5>
+    <ul class="suggestions">
+      <li class="suggestion header">
+        <div class="ancestors">Swap with ...</div>
+        <div class="satisfaction-value">Overall constraints satisfaction</div>
+      </li>
 
-            <li v-for="x in sortedTestPermutationData" class="suggestion" :key="x.nodeB + x.recordIdB" @click="personBSelected(x.nodeB, x.recordIdB)">
-                <div class="ancestors">
-                    <span class="id-value" :title="getIdValue(x.recordIdB)">{{ getIdValue(x.recordIdB) }}</span>
-                    in
-                    <span :title="getAncestors(x.nodeB).join(' > ')" v-for="ancestor in getAncestors(x.nodeB)" :key="ancestor">{{ancestor}}</span>
-                    <SwapSuggestionsDisplayRecord class="record-details" :recordId="x.recordIdB"></SwapSuggestionsDisplayRecord>
+      <li v-for="x in sortedTestPermutationData" class="suggestion" :key="x.nodeB + x.recordIdB" @click="personBSelected(x.nodeB, x.recordIdB)">
+        <div class="ancestors">
+          <span class="id-value" :title="getIdValue(x.recordIdB)">{{ getIdValue(x.recordIdB) }}</span>
+          in
+          <span :title="getAncestors(x.nodeB).join(' > ')" v-for="ancestor in getAncestors(x.nodeB)" :key="ancestor">{{ancestor}}</span>
+          <SwapSuggestionsDisplayRecord class="record-details" :recordId="x.recordIdB"></SwapSuggestionsDisplayRecord>
 
-                </div>
-                <div :class="getSatisfactionChangeClass(x.satisfaction.value)" class="satisfaction-value">
-                    <span>{{getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
-                </div>
+        </div>
+        <div :class="getSatisfactionChangeClass(x.satisfaction.value)" class="satisfaction-value">
+          <span>{{getSatisfactionPercentChangeFormatted(x.satisfaction.value)}}</span>
+        </div>
 
-            </li>
-        </ul>
-        <button class="button secondary small" @click="clearSatisfactionTestPermutationData">Close suggestions</button>
-    </div>
+      </li>
+    </ul>
+    <button class="button secondary small" @click="clearSatisfactionTestPermutationData">Close suggestions</button>
+  </div>
 </template>
 
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Prop, p, Lifecycle } from "av-ts";
+import { Vue, Component, Prop, p } from "av-ts";
 import { SwapRecordsTestPermutationOperationResult } from "../../../common/ToClientSatisfactionTestPermutationResponse";
 import { Suggestions } from "../data/Suggestions";
 import { ResultsEditor as S } from "../store";
+import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
 import SwapSuggestionsDisplayRecord from "./SwapSuggestionsDisplayRecord.vue";
+import { RecordElement, Record } from "../../../common/Record";
 
 @Component({
   components: {
@@ -41,7 +43,7 @@ import SwapSuggestionsDisplayRecord from "./SwapSuggestionsDisplayRecord.vue";
 })
 export default class SwapSuggestionsDisplay extends Vue {
   @Prop sortedTestPermutationData = p<SwapRecordsTestPermutationOperationResult>({ required: true });
-  @Prop data = p<any>({ required: true });
+  @Prop data = p<SwapSidePanelToolData>({ required: true });
 
   personBSelected(nodeId: string, recordId: string) {
     this.$emit("personBSelected", nodeId, recordId);
@@ -75,7 +77,7 @@ export default class SwapSuggestionsDisplay extends Vue {
     if (satisfactionObject === undefined) {
       return;
     }
-
+    // Find the % change in overall satisfaction value between the old(current config) and the new (would-be) configuration
     const percentChange = (satisfactionValue - satisfactionObject.value) / satisfactionObject.max * 100;
 
     return percentChange;
@@ -124,18 +126,17 @@ export default class SwapSuggestionsDisplay extends Vue {
     return S.state.recordData.idColumn!.label;
   }
 
-  getIdValue(recordId: any) {
+  getIdValue(recordId: RecordElement) {
     const idColumnIndex = this.idColumnIndex;
-    if (idColumnIndex === undefined) return "";
-    return this.recordLookupMap.get(recordId)[idColumnIndex];
+    const record = this.recordLookupMap.get(recordId);
+    if (idColumnIndex === undefined || record === undefined) return "";
+    
+    return record[idColumnIndex];
   }
 
   get recordLookupMap() {
-    return S.get(S.getter.GET_RECORD_LOOKUP_MAP) as any;
+    return S.get(S.getter.GET_RECORD_LOOKUP_MAP) as Map<RecordElement, Record>;;
   }
-
-  @Lifecycle
-  created() {}
 }
 </script>
 
@@ -179,7 +180,7 @@ export default class SwapSuggestionsDisplay extends Vue {
 .suggestion.header {
   cursor: default;
   position: sticky;
-  top:0;
+  top: 0;
 }
 
 .suggestion:hover {
@@ -248,11 +249,7 @@ export default class SwapSuggestionsDisplay extends Vue {
   background: #eee;
 }
 
-.record-details {
-  position: static;
-}
 .record-details > button {
-
-    align-self: baseline;
+  align-self: baseline;
 }
 </style>

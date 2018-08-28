@@ -1,6 +1,6 @@
 <template>
     <div class="record">
-        <button type="button" class="button secondary small expand" @click.prevent="toggleVisibility">{{visibilityButtonText}}</button>
+        <button type="button" class="button secondary small expand" @click.prevent.stop="toggleVisibility">{{visibilityButtonText}}</button>
         <div v-show="visible" class="modal">
           
             <div class="field" v-for="(field,i) in fields" :key="recordId + i">
@@ -66,21 +66,28 @@ export default class SwapSuggestionsDisplayRecord extends Vue {
 <style scoped>
 .record {
   display: flex;
-  position: static;
   flex-direction: column;
   overflow: auto;
 }
 
 .modal {
   padding: 0.5rem;
-  background-color: white;
 }
 
 .field {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   border-top: 0.1em solid rgba(1, 0, 0, 0.1);
+}
+
+.field>* {
+  word-wrap:break-word;
+}
+
+.field .label {
+  font-size: 0.8em;
 }
 .value {
   font-weight: bold;

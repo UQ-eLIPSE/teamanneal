@@ -76,6 +76,7 @@ export default class Swap extends Vue {
     /** Data returned from test permutation request */
     p_testPermutationData: SwapRecordsTestPermutationOperationResult | undefined = undefined;
 
+    /** Watches side panel data in store and updates suggestions automatically */
     @Watch('data')
     handler(newVal: SwapSidePanelToolData, oldVal: SwapSidePanelToolData) {
         if(newVal.personA) {

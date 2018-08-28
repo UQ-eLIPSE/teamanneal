@@ -78,6 +78,7 @@ export default class Move extends Vue {
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
 
+    /** Watches side panel data in store and updates suggestions automatically */
     @Watch('data')
     handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
         
