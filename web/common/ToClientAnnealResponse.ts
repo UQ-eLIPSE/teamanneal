@@ -5,7 +5,10 @@ import { AnnealStatus } from "../common/AnnealStatus";
 interface OutputResult {
     readonly result?: {
         tree: AnnealNode.NodeRoot,
-        satisfaction: ConstraintSatisfaction.SatisfactionMap,
+        satisfaction: {
+            satisfactionMap: ConstraintSatisfaction.SatisfactionMap,
+            statistics: {[key: string]:ConstraintSatisfaction.MultipleSatisfactionStats}
+        }
     },
     readonly error?: string,
 }

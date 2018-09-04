@@ -102,7 +102,7 @@ const actions = {
         const annealCreatorState = deserialiseWithUndefined<AnnealCreatorState>(dehydratedState);
 
         // Generate names from the data in the AnnealCreator state
-        const { roots, nameMap, nodeRecordArrayMap } = generateGroupNodeCompatibleData(annealCreatorState);
+        const { roots, nameMap, nodeRecordArrayMap, satisfaction } = generateGroupNodeCompatibleData(annealCreatorState);
 
         await dispatch(context, A.RESET_STATE, undefined);
 
@@ -117,8 +117,9 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
-    },
 
+        commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+    },
     async [A.RESET_STATE](context: Context) {
         commit(context, M.CLEAR_RECORD_DATA, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);

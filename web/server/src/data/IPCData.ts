@@ -37,7 +37,10 @@ export interface AnnealResultMessageData {
 
     result?: {
         tree: AnnealNode.NodeRoot,
-        satisfaction: ConstraintSatisfaction.SatisfactionMap,
+        satisfaction: {
+            satisfactionMap: ConstraintSatisfaction.SatisfactionMap,
+            statistics: {[key: string]:ConstraintSatisfaction.MultipleSatisfactionStats}
+        }
     },
     error?: string,
 }

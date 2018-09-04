@@ -30,7 +30,9 @@ export interface ResultsEditorState {
     sideToolArea: {
         /** Information about the active side tool item */
         activeItem: SidePanelActiveTool | undefined,
-    }
+    },
+
+    satisfaction: any
 }
 
 export function init() {
@@ -49,6 +51,10 @@ export function init() {
 
         sideToolArea: {
             activeItem: undefined,
+        },
+        satisfaction: {
+            satisfactionMap: {},
+            statistics: []
         }
     };
 

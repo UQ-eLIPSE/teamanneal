@@ -2,8 +2,8 @@ import * as UUID from "../util/UUID";
 
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "./ColumnData";
 import * as Record from "../../../common/Record";
-import { GroupNodeRecordArrayMap } from "./GroupNodeRecordArrayMap";
-import { Data as IColumnData } from "./ColumnData";
+// import { GroupNodeRecordArrayMap } from "./GroupNodeRecordArrayMap";
+// import { Data as IColumnData } from "./ColumnData";
 
 export type Data = Limit | Count | Similarity;
 
@@ -299,7 +299,7 @@ export namespace ConstraintSentence {
         return ((weightItem === undefined) ? "" : weightItem.text) + ' ';
     }
 
-    function getConstraintConditionFunctionText(constraint: Data) {
+    export function getConstraintConditionFunctionText(constraint: Data) {
         const item = findItemInList(ConstraintPhraseMaps.ConditionFunctionList, "value", constraint.condition.function);
         let phrase = ((item === undefined) ? "" : item.text) + ' ';
         if (showConditionCount(constraint)) {
@@ -309,7 +309,7 @@ export namespace ConstraintSentence {
         return phrase;
     }
 
-    function getPersonUnitText(constraint: Data) {
+    export function getPersonUnitText(constraint: Data) {
         if (personUnitNounFollowsCondition(constraint)) {
             return personUnitNoun(constraint) + ' with ';
         }
@@ -422,60 +422,63 @@ export namespace ConstraintSentence {
     }
 }
 
-export namespace LimitConstraintSatisfaction {
+/**
+ * The following code is now redundant since functionality has been shifted to the server
+ */
+// export namespace LimitConstraintSatisfaction {
 
-    interface PartitionConstraintSatisfaction {
-        [partitionId: string]: { [constraintId: string]: { total: number, pass: number } }
-    }
+//     interface PartitionConstraintSatisfaction {
+//         [partitionId: string]: { [constraintId: string]: { total: number, pass: number } }
+//     }
 
     /**
      * This function returns an object which maps (limit) constraint ids to the number of nodes that have passed the constraint
      */
-    export function getNumberOfPassingGroupsPerConstraint(constraintsArray: Data[], nodeRecordMap: GroupNodeRecordArrayMap,
-        partitionNodeArrayMap: { [nodeId: string]: string[] }, nodeToStratumMap: { [nodeId: string]: string },
-        recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]): { [constraintId: string]: { pass: number, total: number } } {
+    // export function getNumberOfPassingGroupsPerConstraint(constraintsArray: Data[], nodeRecordMap: GroupNodeRecordArrayMap,
+    //     partitionNodeArrayMap: { [nodeId: string]: string[] }, nodeToStratumMap: { [nodeId: string]: string },
+    //     recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]): { [constraintId: string]: { pass: number, total: number } } {
 
-        const constraintPassMap: { [constraintId: string]: { pass: number, total: number } } = {};
-        const map = partitionLimitConstraintSatisfactionMap(constraintsArray, nodeRecordMap,
-            partitionNodeArrayMap, nodeToStratumMap, recordLookupMap, columns);
+    //     const constraintPassMap: { [constraintId: string]: { pass: number, total: number } } = {};
+    //     const map = partitionLimitConstraintSatisfactionMap(constraintsArray, nodeRecordMap,
+    //         partitionNodeArrayMap, nodeToStratumMap, recordLookupMap, columns);
 
-        const limitConstraints = constraintsArray.filter((c) => c.type === "limit");
-        limitConstraints.forEach((constraint) => {
-            const passed = Object.keys(map).reduce((totalSum, partitionId) => {
-                return totalSum + map[partitionId][constraint._id].pass;
-            }, 0);
+    //     const limitConstraints = constraintsArray.filter((c) => c.type === "limit");
+    //     limitConstraints.forEach((constraint) => {
+    //         const passed = Object.keys(map).reduce((totalSum, partitionId) => {
+    //             return totalSum + map[partitionId][constraint._id].pass;
+    //         }, 0);
 
-            const total = Object.keys(map).reduce((totalSum, partitionId) => {
-                return totalSum + map[partitionId][constraint._id].total;
-            }, 0);
+    //         const total = Object.keys(map).reduce((totalSum, partitionId) => {
+    //             return totalSum + map[partitionId][constraint._id].total;
+    //         }, 0);
 
-            constraintPassMap[constraint._id] = { pass: passed, total: total };
-        });
+    //         constraintPassMap[constraint._id] = { pass: passed, total: total };
+    //     });
 
-        return constraintPassMap;
-    }
+    //     return constraintPassMap;
+    // }
 
-    export function partitionLimitConstraintSatisfactionMap(constraintsArray: Data[], nodeRecordMap: GroupNodeRecordArrayMap,
-        partitionNodeArrayMap: { [nodeId: string]: string[] }, nodeToStratumMap: { [nodeId: string]: string }, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
+    // export function partitionLimitConstraintSatisfactionMap(constraintsArray: Data[], nodeRecordMap: GroupNodeRecordArrayMap,
+    //     partitionNodeArrayMap: { [nodeId: string]: string[] }, nodeToStratumMap: { [nodeId: string]: string }, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
 
-        const resultPartitionConstraintSatisfaction: PartitionConstraintSatisfaction = {};
+    //     const resultPartitionConstraintSatisfaction: PartitionConstraintSatisfaction = {};
 
-        const limitConstraints = constraintsArray.filter((c) => c.type === "limit");
+    //     const limitConstraints = constraintsArray.filter((c) => c.type === "limit");
 
-        limitConstraints.forEach((constraint) => {
-            Object.keys(partitionNodeArrayMap).forEach((partitionId) => {
-                const res = calculateSatisfactionValueForPartition(partitionNodeArrayMap[partitionId], constraint,
-                    nodeToStratumMap, nodeRecordMap, recordLookupMap, columns);
-                if (resultPartitionConstraintSatisfaction[partitionId] === undefined) {
-                    resultPartitionConstraintSatisfaction[partitionId] = {};
-                }
+    //     limitConstraints.forEach((constraint) => {
+    //         Object.keys(partitionNodeArrayMap).forEach((partitionId) => {
+    //             const res = calculateSatisfactionValueForPartition(partitionNodeArrayMap[partitionId], constraint,
+    //                 nodeToStratumMap, nodeRecordMap, recordLookupMap, columns);
+    //             if (resultPartitionConstraintSatisfaction[partitionId] === undefined) {
+    //                 resultPartitionConstraintSatisfaction[partitionId] = {};
+    //             }
 
-                resultPartitionConstraintSatisfaction[partitionId][constraint._id] = res;
-            });
-        });
+    //             resultPartitionConstraintSatisfaction[partitionId][constraint._id] = res;
+    //         });
+    //     });
 
-        return resultPartitionConstraintSatisfaction;
-    }
+    //     return resultPartitionConstraintSatisfaction;
+    // }
 
 
 
@@ -489,19 +492,19 @@ export namespace LimitConstraintSatisfaction {
      * @param recordLookupMap Maps record id to record element
      * @param columns columns
      */
-    function calculateSatisfactionValueForPartition(nodesInPartition: string[], constraint: Data,
-        nodeToStratumMap: { [nodeId: string]: string }, nodeRecordMap: GroupNodeRecordArrayMap, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
+    // function calculateSatisfactionValueForPartition(nodesInPartition: string[], constraint: Data,
+    //     nodeToStratumMap: { [nodeId: string]: string }, nodeRecordMap: GroupNodeRecordArrayMap, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
 
-        // Get all node ids where constraint applies
-        const applicableNodeIds = nodesInPartition.filter((nodeId: string) =>
-            nodeToStratumMap[nodeId] === constraint.stratum);
+    //     // Get all node ids where constraint applies
+    //     const applicableNodeIds = nodesInPartition.filter((nodeId: string) =>
+    //         nodeToStratumMap[nodeId] === constraint.stratum);
 
-        // Test constraint over these nodes
-        const result = testConstraintOverapplicableRecordsNodes(applicableNodeIds, nodeRecordMap, constraint,
-            recordLookupMap, columns);
+    //     // Test constraint over these nodes
+    //     const result = testConstraintOverapplicableRecordsNodes(applicableNodeIds, nodeRecordMap, constraint,
+    //         recordLookupMap, columns);
 
-        return result;
-    }
+    //     return result;
+    // }
 
 
 
@@ -513,45 +516,45 @@ export namespace LimitConstraintSatisfaction {
      * @param recordLookupMap A lookup map for records by record id
      * @param columns columns
      */
-    function testConstraintOverapplicableRecordsNodes(nodeIds: string[], nodeRecordMap: GroupNodeRecordArrayMap, constraint: Data, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
-        const nodeApplicableRecordsMap: { [nodeId: string]: { [applicableRecords: string]: number } } = {};
+    // function testConstraintOverapplicableRecordsNodes(nodeIds: string[], nodeRecordMap: GroupNodeRecordArrayMap, constraint: Data, recordLookupMap: Map<Record.RecordElement, Record.Record>, columns: IColumnData[]) {
+    //     const nodeApplicableRecordsMap: { [nodeId: string]: { [applicableRecords: string]: number } } = {};
 
-        // Get constraint and filter values
-        const constraintColumn = constraint.filter.column;
-        const colIndex = columns.indexOf(columns.find((col) => col._id === constraintColumn._id)!);
-        const filterValue = (constraint.filter as any).values[0];
+    //     // Get constraint and filter values
+    //     const constraintColumn = constraint.filter.column;
+    //     const colIndex = columns.indexOf(columns.find((col) => col._id === constraintColumn._id)!);
+    //     const filterValue = (constraint.filter as any).values[0];
 
-        // Traverse through all applicableRecords nodes
-        nodeIds.forEach((nodeId: string) => {
-            // Find records where filter value applies
-            const records = nodeRecordMap[nodeId].map((recordId) => recordLookupMap.get(recordId)!);
-            const applicableRecords = records.filter((record) => record[colIndex] === filterValue);
-            // Store number of applicable records in map
-            nodeApplicableRecordsMap[nodeId] = { applicableRecords: applicableRecords.length };
-        });
-
-
-        // Total number of nodes
-        const totalNodes = nodeIds.length;
-
-        // Number of records where filter value was found
-        const filterSatisfiedCount = nodeIds.reduce((s: number, id: string) => nodeApplicableRecordsMap[id].applicableRecords + s, 0);
-
-        // If no `applicableRecords` were found, all nodes pass this constraint
-        if (filterSatisfiedCount === 0) return { total: totalNodes, pass: totalNodes };
-
-        const { min, max, idealConfig } = getIdealRecordConfig(filterSatisfiedCount, totalNodes);
-
-        const actualNumberOfNodesWithMinRecords = nodeIds.filter((id: string) => nodeApplicableRecordsMap[id].applicableRecords === min).length;
-        const actualNumberOfNodesWithMaxRecords = nodeIds.filter((id: string) => nodeApplicableRecordsMap[id].applicableRecords === max).length;
-
-        const passCount = Math.min(idealConfig.idealNumberOfNodesWithMinRecords, actualNumberOfNodesWithMinRecords) +
-            Math.min(idealConfig.idealNumberOfNodesWithMaxRecords, actualNumberOfNodesWithMaxRecords);
-
-        return { total: totalNodes, pass: passCount };
+    //     // Traverse through all applicableRecords nodes
+    //     nodeIds.forEach((nodeId: string) => {
+    //         // Find records where filter value applies
+    //         const records = nodeRecordMap[nodeId].map((recordId) => recordLookupMap.get(recordId)!);
+    //         const applicableRecords = records.filter((record) => record[colIndex] === filterValue);
+    //         // Store number of applicable records in map
+    //         nodeApplicableRecordsMap[nodeId] = { applicableRecords: applicableRecords.length };
+    //     });
 
 
-    }
+    //     // Total number of nodes
+    //     const totalNodes = nodeIds.length;
+
+    //     // Number of records where filter value was found
+    //     const filterSatisfiedCount = nodeIds.reduce((s: number, id: string) => nodeApplicableRecordsMap[id].applicableRecords + s, 0);
+
+    //     // If no `applicableRecords` were found, all nodes pass this constraint
+    //     if (filterSatisfiedCount === 0) return { total: totalNodes, pass: totalNodes };
+
+    //     const { min, max, idealConfig } = getIdealRecordConfig(filterSatisfiedCount, totalNodes);
+
+    //     const actualNumberOfNodesWithMinRecords = nodeIds.filter((id: string) => nodeApplicableRecordsMap[id].applicableRecords === min).length;
+    //     const actualNumberOfNodesWithMaxRecords = nodeIds.filter((id: string) => nodeApplicableRecordsMap[id].applicableRecords === max).length;
+
+    //     const passCount = Math.min(idealConfig.idealNumberOfNodesWithMinRecords, actualNumberOfNodesWithMinRecords) +
+    //         Math.min(idealConfig.idealNumberOfNodesWithMaxRecords, actualNumberOfNodesWithMaxRecords);
+
+    //     return { total: totalNodes, pass: passCount };
+
+
+    // }
 
     /**
      * This utility function returns the ideal configuration of group members (in a group) that satisfy
@@ -559,32 +562,32 @@ export namespace LimitConstraintSatisfaction {
      * @param filterSatisfiedCount Number of records which contain the constraint's filter value
      * @param totalNodes The total number of nodes that a constraint applies to
      */
-    function getIdealRecordConfig(filterSatisfiedCount: number, totalNodes: number) {
-        if (filterSatisfiedCount > totalNodes) {
-            const recordsPerNode = Math.floor(filterSatisfiedCount / totalNodes);
-            const idealConfig = {
-                idealNumberOfNodesWithMinRecords: totalNodes - (filterSatisfiedCount % totalNodes),
-                idealNumberOfNodesWithMaxRecords: filterSatisfiedCount % totalNodes
-            }
+    // function getIdealRecordConfig(filterSatisfiedCount: number, totalNodes: number) {
+    //     if (filterSatisfiedCount > totalNodes) {
+    //         const recordsPerNode = Math.floor(filterSatisfiedCount / totalNodes);
+    //         const idealConfig = {
+    //             idealNumberOfNodesWithMinRecords: totalNodes - (filterSatisfiedCount % totalNodes),
+    //             idealNumberOfNodesWithMaxRecords: filterSatisfiedCount % totalNodes
+    //         }
 
-            return filterSatisfiedCount % totalNodes === 0 ?
-                { min: recordsPerNode, max: recordsPerNode, idealConfig: idealConfig } :
-                { min: recordsPerNode, max: recordsPerNode + 1, idealConfig: idealConfig };
+    //         return filterSatisfiedCount % totalNodes === 0 ?
+    //             { min: recordsPerNode, max: recordsPerNode, idealConfig: idealConfig } :
+    //             { min: recordsPerNode, max: recordsPerNode + 1, idealConfig: idealConfig };
 
-        } else if (filterSatisfiedCount < totalNodes) {
-            const idealConfig = {
-                idealNumberOfNodesWithMinRecords: totalNodes - filterSatisfiedCount,
-                idealNumberOfNodesWithMaxRecords: filterSatisfiedCount
-            }
-            return { min: 0, max: 1, idealConfig: idealConfig };
-        } else {
-            const idealConfig = {
-                idealNumberOfNodesWithMinRecords: totalNodes,
-                idealNumberOfNodesWithMaxRecords: totalNodes
-            }
-            return { min: 1, max: 1, idealConfig: idealConfig };
-        }
-    }
+    //     } else if (filterSatisfiedCount < totalNodes) {
+    //         const idealConfig = {
+    //             idealNumberOfNodesWithMinRecords: totalNodes - filterSatisfiedCount,
+    //             idealNumberOfNodesWithMaxRecords: filterSatisfiedCount
+    //         }
+    //         return { min: 0, max: 1, idealConfig: idealConfig };
+    //     } else {
+    //         const idealConfig = {
+    //             idealNumberOfNodesWithMinRecords: totalNodes,
+    //             idealNumberOfNodesWithMaxRecords: totalNodes
+    //         }
+    //         return { min: 1, max: 1, idealConfig: idealConfig };
+    //     }
+    // }
 
-}
+// }
 

@@ -51,6 +51,7 @@ export enum ResultsEditorMutation {
 
     INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
+    SET_SATISFACTION_DATA = "Setting satisfaction data"
 }
 
 /** Shorthand for Mutation enum above */
@@ -73,6 +74,9 @@ const mutations = {
 
     [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
+    },
+    [M.SET_SATISFACTION_DATA](state: State, satisfaction: {satisfactionMap: any, statistics: any[]}) {
+        state.satisfaction = satisfaction;
     },
 
     [M.SET_CONSTRAINT](state: State, { constraint, index }: { constraint: Constraint, index: number }) {

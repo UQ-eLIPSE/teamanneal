@@ -72,6 +72,7 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     // NOTE: Assumes results and no errors are in the tree
     const annealNodeRoots = data.results.map(res => res.result!.tree);
+    const annealNodeRootSatisfaction = data.results.map(res => res.result!.satisfaction);
 
     // Grab full partition column data
     const _partitionColumn = state.recordData.partitionColumn;
@@ -132,9 +133,22 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     annealNodeRoots.forEach(walkAnnealTreeAndTransform);
 
+    const satisfactionMap = annealNodeRootSatisfaction.reduce((carry: any, sMap: any) => {
+        // const satisfactionMap = sMap;
+        const satisfactionMap = sMap.satisfactionMap;
+        return Object.assign(carry, satisfactionMap);
+
+    }, {});
+
+    const statistics = annealNodeRootSatisfaction.map((satisfaction: any) => satisfaction.statistics) || [];
+
     return {
         roots: newRoots,
         nameMap: newNameMap,
         nodeRecordArrayMap: newNodeRecordArrayMap,
+        satisfaction: {
+            satisfactionMap: satisfactionMap,
+            statistics: statistics
+        }
     };
 }
