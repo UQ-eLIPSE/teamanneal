@@ -50,6 +50,7 @@ import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter
 import { ColumnData } from "../data/ColumnData";
 
 import { AnnealCreator as S } from "../store";
+import { setMutation } from "../util/MutationTrackerUtil";
 
 @Component({
     components: {
@@ -106,6 +107,7 @@ export default class ConstraintsEditorStratum extends Vue {
         const newConstraint = Constraint.Init(constraintType, constraintWeight, constraintStratum, constraintFilter, constraintCondition);
 
         await S.dispatch(S.action.UPSERT_CONSTRAINT, newConstraint);
+        setMutation();
     }
 }
 </script>

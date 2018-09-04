@@ -54,6 +54,10 @@ export enum AnnealCreatorMutation {
     SET_RECORD_DATA_SOURCE = "Setting record data source",
 
     SET_ANNEAL_REQUEST_STATE_OBJECT = "Setting anneal request state object",
+
+    SET_MUTATION_FLAG = "Setting mutation flag",
+
+    SET_IMPORT_FLAG = "Setting import flag"
 }
 
 /** Shorthand for Mutation enum above */
@@ -175,6 +179,14 @@ const mutations = {
     [M.SET_ANNEAL_REQUEST_STATE_OBJECT](state: State, annealRequestState: AnnealRequestState) {
         set(state, "annealRequest", annealRequestState);
     },
+
+    [M.SET_IMPORT_FLAG](state: State, incomingFlag: boolean) {
+        set(state.annealFlags!, "importFlag" , incomingFlag);
+    },
+
+    [M.SET_MUTATION_FLAG](state: State, incomingFlag: boolean) {
+        set(state.annealFlags!, "mutationFlag", incomingFlag);
+    }
 };
 
 export function init() {

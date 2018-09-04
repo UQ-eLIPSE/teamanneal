@@ -88,6 +88,8 @@ import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealCreator as S } from "../../store";
+import { setMutation } from "../../util/MutationTrackerUtil";
+
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -234,6 +236,8 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
             this.lastSetColumn = val;
             S.dispatch(S.action.SET_RECORD_PARTITION_COLUMN, val);
         }
+
+        setMutation();
     }
 
     @Lifecycle mounted() {

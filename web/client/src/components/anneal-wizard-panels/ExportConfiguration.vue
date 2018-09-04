@@ -47,6 +47,9 @@ export default class ExportConfiguration extends Mixin(AnnealProcessWizardPanel)
         // (just a JSON file internally)
         const serialisedContent = await S.dispatch(S.action.DEHYDRATE, { deleteRecordDataSource: true, deleteAnnealRequest: true });
 
+        // Time to remove some flags too
+        S.dispatch(S.action.SET_MUTATION_FLAG_LOW, undefined);
+
         const fileBlob = new Blob([serialisedContent], { type: "application/json" });
 
         FileSaver.saveAs(fileBlob, `export-${Date.now()}.taconfig`, true);

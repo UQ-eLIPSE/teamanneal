@@ -13,6 +13,7 @@ import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
 import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
+import { MutationTracker, init as initMutationTracker } from "../../data/MutationTracker";
 
 import * as AnnealNode from "../../../../common/AnnealNode";
 
@@ -28,6 +29,9 @@ export interface AnnealCreatorStateSerialisable {
 
     // Placeholder possible property
     annealRequest?: AnnealRequestState.AnnealRequestState,
+
+    /** Keeps track of user changes */
+    annealFlags?: MutationTracker
 }
 
 export interface AnnealCreatorState extends AnnealCreatorStateSerialisable {
@@ -44,6 +48,8 @@ export function init() {
         strataConfig: initStrataConfig(),
 
         annealRequest: AnnealRequestState.initNotRunning(),
+        
+        annealFlags: initMutationTracker()
     };
 
     return state;

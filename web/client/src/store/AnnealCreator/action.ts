@@ -59,6 +59,13 @@ export enum AnnealCreatorAction {
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
     SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
     CLEAR_ANNEAL_REQUEST_STATE = "Clearing anneal request state",
+
+    SET_MUTATION_FLAG_HIGH = "Setting the mutation flag to high",
+    SET_MUTATION_FLAG_LOW = "Setting the mutation flag to low",
+
+    SET_IMPORT_FLAG_HIGH = "Setting the import flag to high",
+    SET_IMPORT_FLAG_LOW = "Setting the import flag to low",
+
 }
 
 /** Shorthand for Action enum above */
@@ -417,6 +424,22 @@ const actions = {
         if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
             await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
         }
+    },
+
+    async [A.SET_MUTATION_FLAG_HIGH](context: Context) {
+        commit(context, M.SET_MUTATION_FLAG, true);
+    },
+
+    async [A.SET_MUTATION_FLAG_LOW](context: Context) {
+        commit(context, M.SET_MUTATION_FLAG, false);
+    },
+
+    async [A.SET_IMPORT_FLAG_HIGH](context: Context) {
+        commit(context, M.SET_IMPORT_FLAG, true);
+    },
+
+    async [A.SET_IMPORT_FLAG_LOW](context: Context) {
+        commit(context, M.SET_IMPORT_FLAG, false);
     },
 };
 

@@ -69,6 +69,8 @@ import { Vue, Component } from "av-ts";
 import * as FileSaver from "file-saver";
 
 import { ResultsEditor as S } from "../../store";
+// Unfortunately we need all exports to be affect flags unless we create an additional subfolder/different controller
+import { AnnealCreator as A } from "../../store";
 
 import * as Record from "../../../../common/Record";
 
@@ -212,6 +214,7 @@ export default class ExportFile extends Vue {
     async onExportConfigButtonClick() {
         // Export only anneal config
         const serialisedContent = await S.dispatch(S.action.DEHYDRATE_ANNEAL_CONFIG, { deleteRecordDataSource: true, deleteAnnealRequest: true });
+        A.dispatch(A.action.SET_MUTATION_FLAG_LOW, undefined);
 
         const fileBlob = new Blob([serialisedContent], { type: "application/json" });
 

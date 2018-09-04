@@ -37,6 +37,8 @@ export enum AnnealCreatorGetter {
     EXPECTED_NAME_LABELS_FOR_EACH_STRATUM = "Expected name labels for each stratum",
     POSSIBLE_GROUP_SIZES_FOR_EACH_STRATUM = "Possible group sizes for each stratum",
     IS_ANNEAL_ABLE_TO_BE_EXECUTED = "Is anneal able to be executed",
+    HAS_IMPORT = "Has imported",
+    HAS_MUTATED = "Has mutated"
 }
 
 /** Shorthand for Getter enum above */
@@ -73,6 +75,14 @@ const getters = {
 
     [G.HAS_CONSTRAINTS](state: State) {
         return state.constraintConfig.constraints.length > 0;
+    },
+
+    [G.HAS_MUTATED](state: State) {
+        return state.annealFlags!.mutationFlag;
+    },
+
+    [G.HAS_IMPORT](state: State) {
+        return state.annealFlags!.importFlag;
     },
 
     [G.IS_STRATA_CONFIG_NAMES_VALID](state: State) {

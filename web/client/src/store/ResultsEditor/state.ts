@@ -4,6 +4,7 @@ import { ConstraintConfig, init as initConstraintConfig } from "../../data/Const
 import { GroupNodeNameMap, init as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { MutationTracker } from "../../data/MutationTracker";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 import { AnnealCreatorStateSerialisable } from "../AnnealCreator/state";
@@ -32,7 +33,9 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     sideToolArea: {
         /** Information about the active side tool item */
         activeItem: SidePanelActiveTool | undefined,
-    }
+    },
+
+    annealFlags?: MutationTracker
 }
 
 export function init() {
@@ -51,7 +54,9 @@ export function init() {
 
         sideToolArea: {
             activeItem: undefined,
-        }
+        },
+
+        // Doesn't need to keep track of the flags
     };
 
     return state;
