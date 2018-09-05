@@ -16,7 +16,7 @@
         </div>
 
         <div v-if="isLimitTypeConstraint">
-          <LimitSatisfactionBarChart :stratumLabel="stratumLabel" :constraintFilterText="constraintFilterText" :data="limitConstraintDistributionData"></LimitSatisfactionBarChart>
+          <LimitSatisfactionChart :stratumLabel="stratumLabel" :constraintFilterText="constraintFilterText" :data="limitConstraintDistributionData"></LimitSatisfactionChart>
         </div>
     </div>
 </template>
@@ -25,11 +25,11 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import { Data as IConstraint } from "../data/Constraint";
 import { ConstraintSentence } from "../data/Constraint";
-import LimitSatisfactionBarChart from "./LimitSatisfactionBarChart.vue";
+import LimitSatisfactionChart from "./LimitSatisfactionChart.vue";
 
 @Component({
   components: {
-    LimitSatisfactionBarChart
+    LimitSatisfactionChart
   }
 })
 export default class ConstraintAcceptabilityCard extends Vue {
