@@ -78,7 +78,7 @@
                                        class="hidden-file-input"
                                        ref="config-file-input"
                                        accept=".taconfig,.taresults"
-                                       @click="setPrompt()"
+                                       @click="setPrompt($event)"
                                        @change="onConfigFileInputChanged($event)">
                                 <button class="button"
                                         @click.stop.prevent="openConfigFilePicker">Select TeamAnneal file...</button>
@@ -170,9 +170,13 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         (this.$refs["config-file-input"] as HTMLInputElement[])[0].click();
     }
 
-    setPrompt() {
+    setPrompt(e : Event) {
         if (S.get(S.getter.HAS_IMPORT) && (S.get(S.getter.HAS_MUTATED))) {
             this.acceptPrompt = confirm("You have unsaved changes with your configuration, would you like to continue?");
+
+            if (!this.acceptPrompt) {
+                e.preventDefault();
+            }
         }
 
     }
