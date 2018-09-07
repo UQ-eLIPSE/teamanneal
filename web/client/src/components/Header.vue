@@ -65,7 +65,7 @@ export default class Header extends Vue {
 }
 
 .header-minimal {
-    padding: 0.3rem 0rem;
+    padding: 0;
 }
 
 

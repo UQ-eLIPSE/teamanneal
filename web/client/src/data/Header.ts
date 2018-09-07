@@ -51,8 +51,8 @@ export const MENU_ITEMS: { route: string; label: string }[] = [
         route: '/editor',
         label: 'TeamAnneal Editor'
     },
-    {
-        route: '/help',
-        label: 'Help'
-    }
+    // {
+    //     route: '/help',
+    //     label: 'Help'
+    // }
 ];

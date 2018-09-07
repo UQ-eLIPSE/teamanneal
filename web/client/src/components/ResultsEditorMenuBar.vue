@@ -109,7 +109,7 @@ export default class ResultsEditorMenuBar extends Vue {
 
     border: 0;
     margin: 0;
-    padding: 0;
+    padding: 0.3em;
     overflow: hidden;
 
     background: none;
