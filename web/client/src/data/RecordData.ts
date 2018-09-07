@@ -69,7 +69,7 @@ export async function parseFileToRecordData(file: File, previousRecordData?: Rec
     // to the new RecordData object
     if (previousRecordData !== undefined) {
         const idColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.idColumn, false);
-        const partitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, true);
+        const partitionColumn = ColumnData.MatchOldColumnInNewColumns(columns, previousRecordData.partitionColumn, false);
 
         return init(
             file.name,
