@@ -2,6 +2,11 @@
     <div class="results-editor">
         <div class="workspace"
              v-if="displayWorkspace">
+            <SpreadsheetDropdownFilter :nodeRoots="nodeRoots"
+                                    :nodeNameMap="nameMap"
+                                    :nodeRecordMap="nodeRecordMap">
+
+            </SpreadsheetDropdownFilter>
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -51,6 +56,8 @@ import { RecordElement } from "../../../common/Record";
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
+import SpreadsheetDropdownFilter from "./SpreadsheetDropdownFilter.vue";
+
 
 import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
@@ -108,7 +115,8 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     components: {
         SpreadsheetTreeView2,
         ResultsEditorSideToolArea,
-        SpreadsheetTreeView2ColumnsFilter
+        SpreadsheetTreeView2ColumnsFilter,
+        SpreadsheetDropdownFilter,
     },
 })
 export default class ResultsEditor extends Vue {
