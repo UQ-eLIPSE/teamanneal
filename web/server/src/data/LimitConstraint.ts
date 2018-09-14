@@ -11,9 +11,9 @@ export class LimitConstraint extends AbstractConstraint {
      * An array of boolean values {0=false, 1=true} for each record element's
      * satisfaction of the condition function
      */
-    private recordSatisfactionArray: Uint8Array;
+    private recordSatisfactionArray!: Uint8Array;
 
-    private constraintConditionCostFunction: (setSize: number, count: number) => number;
+    private constraintConditionCostFunction!: (setSize: number, count: number) => number;
 
     protected init(records: Record.RecordSet) {
         // Initialise record array

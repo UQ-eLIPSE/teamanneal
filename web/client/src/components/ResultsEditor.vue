@@ -1,20 +1,21 @@
 <template>
-    <div class="results-editor">
+  <div class="results-editor">
+    <div class="workspace" v-if="displayWorkspace">
+      <SpreadsheetTreeView2ColumnsFilter :items="columns" :selectedIndices="columnsDisplayIndices" @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
-        <div class="workspace">
-            <SpreadsheetTreeView2ColumnsFilter :items="columns" :selectedIndices="columnsDisplayIndices" @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
-
-            <SpreadsheetTreeView2 class="spreadsheet" :nodeRoots="nodeRoots" :headerRow="headerRow" :columnsDisplayIndices="columnsDisplayIndices" :recordRows="recordRows" :nodeNameMap="nameMap" :nodeRecordMap="nodeRecordMap" :nodeStyles="nodeStyles" :idColumnIndex="idColumnIndex" :hiddenNodes="hiddenNodes" :onToggleNodeVisibility="onToggleNodeVisibility" @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
-        </div>
-
-        <ConstraintOverview class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
-        </ConstraintOverview>
-
-        <!-- Made redundant since limit constraint satisfaction calculation has also been moved to the server -->
-        <!-- :limitConstraintPassCount="numberOfPassingGroupsPerConstraintMap"> -->
-
-        <ResultsEditorSideToolArea class="side-tool-area" :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+      <SpreadsheetTreeView2 class="spreadsheet" :nodeRoots="nodeRoots" :headerRow="headerRow" :columnsDisplayIndices="columnsDisplayIndices" :recordRows="recordRows" :nodeNameMap="nameMap" :nodeRecordMap="nodeRecordMap" :nodeStyles="nodeStyles" :idColumnIndex="idColumnIndex" :hiddenNodes="hiddenNodes" :onToggleNodeVisibility="onToggleNodeVisibility" @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+      <ConstraintOverview class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
+      </ConstraintOverview>
     </div>
+    <div class="get-started" v-else>
+      <h1>Welcome</h1>
+      <p>The TeamAnneal Editor allows you to view and modify teams generated from the anneal process.</p>
+      <p>Get started by obtaining team data from
+        <router-link :to="'anneal'">running an anneal</router-link>, or
+        <a href="#import-results-package-file" @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
+    </div>
+    <ResultsEditorSideToolArea class="side-tool-area" :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+  </div>
 </template>
 
 <!-- ####################################################################### -->
@@ -43,52 +44,52 @@ import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
 import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
-import Print from "./results-editor-side-panels/Print.vue";
+// import Print from "./results-editor-side-panels/Print.vue";
 import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
-  {
-    name: "import",
-    label: "Import",
-    region: "start",
-    component: ImportFile
-  },
-  {
-    name: "export",
-    label: "Export",
-    region: "start",
-    component: ExportFile
-  },
-  {
-    name: "print",
-    label: "Print",
-    region: "start",
-    component: Print
-  },
-  {
-    name: "move",
-    label: "Move a person",
-    component: Move
-  },
-  {
-    name: "swap",
-    label: "Swap people",
-    component: Swap
-  },
-  {
-    name: "add",
-    label: "Add a person or group"
-  },
-  {
-    name: "remove",
-    label: "Remove a person or group"
-  },
-  {
-    name: "help",
-    label: "Help",
-    region: "end",
-    component: Help
-  }
+    {
+        name: "import",
+        label: "Import",
+        region: "start",
+        component: ImportFile,
+    },
+    {
+        name: "export",
+        label: "Export",
+        region: "start",
+        component: ExportFile,
+    },
+    // {
+    //     name: "print",
+    //     label: "Print",
+    //     region: "start",
+    //     component: Print,
+    // },
+    {
+        name: "move",
+        label: "Move a person",
+        component: Move,
+    },
+    {
+        name: "swap",
+        label: "Swap people",
+        component: Swap,
+    },
+    // {
+    //     name: "add",
+    //     label: "Add a person or group",
+    // },
+    // {
+    //     name: "remove",
+    //     label: "Remove a person or group",
+    // },
+    {
+        name: "help",
+        label: "Help",
+        region: "end",
+        component: Help,
+    },
 ];
 
 @Component({
@@ -123,7 +124,7 @@ export default class ResultsEditor extends Vue {
   }
 
   get columns() {
-    return this.recordData.columns;
+    return this.recordData.source.columns;
   }
 
   get strata() {
@@ -148,21 +149,24 @@ export default class ResultsEditor extends Vue {
 
   //TODO: Replace with Result editor's state when ready
   get annealResults() {
-    const responseContent = (this.creatorState.annealRequest as any).response;
-    const responseData = responseContent.data as any;
+    // const responseContent = (this.creatorState.annealRequest as any).response;
+    // const responseData = responseContent.data as any;
 
     // We're working on the presumption that we definitely have results
-    return responseData.results!;
+    // return responseData.results!;
+    this.state.satisfaction
+    return [];
   }
 
   //TODO: Replace with Result editor's state when ready
   get annealSatisfactionMap() {
-    return this.annealResults.map((res: any) => res.result!.satisfaction).reduce((carry: any, sMap: any) => { 
-        // const satisfactionMap = sMap;
-        const satisfactionMap = sMap.satisfactionMap;
-        return Object.assign(carry, satisfactionMap);
+    return this.state.satisfaction.satisfactionMap;
+    // return this.annealResults.map((res: any) => res.result!.satisfaction).reduce((carry: any, sMap: any) => { 
+    //     // const satisfactionMap = sMap;
+    //     const satisfactionMap = sMap.satisfactionMap;
+    //     return Object.assign(carry, satisfactionMap);
         
-        }, {});
+    //     }, {});
   }
 
   get annealStratumStatistics() {
@@ -324,6 +328,14 @@ export default class ResultsEditor extends Vue {
     return MENU_BAR_ITEMS;
   }
 
+  /** 
+   * Determines when to display the main workspace for the results editor,
+   * containing the spreadsheet and other parts
+   */
+  get displayWorkspace() {
+      return this.nodeRoots.length > 0;
+  }
+  
   onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
     // When we have an active side panel tool open
     const activeSidePanelTool = S.state.sideToolArea.activeItem;
@@ -496,6 +508,9 @@ export default class ResultsEditor extends Vue {
 
     return map;
   }
+    openImportSidePanel() {
+        S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
+    }
 }
 </script>
 
@@ -514,12 +529,15 @@ export default class ResultsEditor extends Vue {
 }
 
 .workspace {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  position: relative;
-  overflow: scroll;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    position: relative;
+    overflow: none;
+
+    /** This sets the workspace to take the minimal amount of room required */
+    width: 0;
 }
 
 .side-tool-area {
@@ -528,14 +546,26 @@ export default class ResultsEditor extends Vue {
 }
 
 .spreadsheet {
-  /* TODO: Review styles when column display checkbox location is decided */
-  /* 
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0; 
-    */
+    flex-grow: 1;
+}
+
+.get-started {
+    width: 100%;
+    padding: 3em;
+    background: #f2f2f2;
+    background: linear-gradient(to bottom right, transparent, transparent 70%, rgba(73, 7, 94, 0.5)), #f2f2f2;
+}
+
+.get-started h1 {
+    color: #49075E;
+    font-weight: 400;
+    font-size: 3em;
+    margin-top: 0;
+}
+
+.get-started a,
+.get-started a:visited {
+    color: #00d;
 }
 
 .constraint-overview {

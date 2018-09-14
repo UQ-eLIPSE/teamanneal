@@ -12,6 +12,7 @@ import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { Stratum } from "../../data/Stratum";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 import { FunctionParam2 } from "../../data/FunctionParam2";
+import * as AnnealCreatorStoreState from "../../data/AnnealCreatorStoreState";
 
 import { RecordElement } from "../../../../common/Record";
 
@@ -26,7 +27,9 @@ export enum ResultsEditorAction {
     HYDRATE = "Hydrating module",
     DEHYDRATE = "Dehydrating module",
 
+    DEHYDRATE_ANNEAL_CONFIG = "Dehydrate only anneal config",
     HYDRATE_FROM_ANNEAL_CREATOR_STATE = "Hydrating from dehydrated AnnealCreator state",
+    SHALLOW_MERGE_STATE = "Shallow merge state",
 
     RESET_STATE = "Resetting state",
 
@@ -77,11 +80,11 @@ const actions = {
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
 
+        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
+
         for (let constraint of state.constraintConfig.constraints) {
             commit(context, M.INSERT_CONSTRAINT, constraint);
         }
-
-        await dispatch(context, A.SET_STRATA, state.strataConfig.strata);
 
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
@@ -94,8 +97,18 @@ const actions = {
         }
     },
 
-    async [A.DEHYDRATE](context: Context) {
-        return serialiseWithUndefined(context.state);
+    async [A.DEHYDRATE](context: Context, { deleteSideToolAreaActiveItem }: Partial<{ deleteSideToolAreaActiveItem: boolean }>) {
+        const state = { ...context.state };
+
+        if (deleteSideToolAreaActiveItem) {
+            state.sideToolArea = { activeItem: undefined };
+        }
+
+        return serialiseWithUndefined(state);
+    },
+
+    async [A.DEHYDRATE_ANNEAL_CONFIG](context: Context, { deleteRecordDataSource, deleteAnnealRequest }: Partial<{ deleteRecordDataSource: boolean, deleteAnnealRequest: boolean }>) {
+        return AnnealCreatorStoreState.dehydrate(context.state, deleteAnnealRequest, deleteRecordDataSource);
     },
 
     async [A.HYDRATE_FROM_ANNEAL_CREATOR_STATE](context: Context, dehydratedState: string) {
@@ -106,13 +119,8 @@ const actions = {
 
         await dispatch(context, A.RESET_STATE, undefined);
 
-        await dispatch(context, A.SET_RECORD_DATA, annealCreatorState.recordData);
-
-        for (let constraint of annealCreatorState.constraintConfig.constraints) {
-            commit(context, M.INSERT_CONSTRAINT, constraint);
-        }
-
-        await dispatch(context, A.SET_STRATA, annealCreatorState.strataConfig.strata);
+        // Copy the creator state wholesale
+        await dispatch(context, A.SHALLOW_MERGE_STATE, annealCreatorState);
 
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
@@ -120,13 +128,19 @@ const actions = {
 
         commit(context, M.SET_SATISFACTION_DATA, satisfaction);
     },
+    async [A.SHALLOW_MERGE_STATE](context: Context, creatorState: AnnealCreatorState) {
+        // Drop anneal request part
+        const { annealRequest, ...state } = creatorState;
+        commit(context, M.SHALLOW_MERGE_STATE, state);
+    },
+
     async [A.RESET_STATE](context: Context) {
-        commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
+        commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_STRUCTURE, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_NAME_MAP, undefined);
-        commit(context, M.CLEAR_GROUP_NODE_RECORD_ARRAY_MAP, undefined);
+        commit(context, M.CLEAR_RECORD_DATA, undefined);
         await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 

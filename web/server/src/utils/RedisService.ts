@@ -1,6 +1,6 @@
-import * as redis from "redis";
+import redis from "redis";
 import { promisify } from 'util';
-import * as uuidv4 from "uuid/v4";
+import uuidv4 from "uuid/v4";
 
 /**
  * Instance of redis client

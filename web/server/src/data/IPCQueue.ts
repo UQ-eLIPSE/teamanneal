@@ -1,4 +1,4 @@
-import * as kue from "kue";
+import kue from "kue";
 
 /** Default TTL = 30 minutes */
 export const DefaultTTL: number = 1000 * 60 * 30;

@@ -23,6 +23,9 @@ body {
     box-sizing: inherit;
     line-height: inherit;
 
+    /* Make font family similar throughout */
+    font-family: inherit;
+
     /* Some platforms have rounded borders which affects visual style */
     border-radius: 0;
 }
@@ -36,7 +39,6 @@ b {
 input,
 select,
 option {
-    font-family: inherit;
     font-weight: inherit;
     font-size: inherit;
 

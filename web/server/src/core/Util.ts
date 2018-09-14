@@ -130,6 +130,16 @@ export const stdDev =
         return Math.sqrt(sumOfSquareDiffs / (size - 1));
     }
 
+/**
+ * Sorts a number array by numeric value rather than by string representation.
+ */
+export function numberSort(array: number[]) {
+    array.sort((a, b) => a - b);
+
+    // Side effects present - do not return value
+    return;
+}
+
 
 /// Objects
 

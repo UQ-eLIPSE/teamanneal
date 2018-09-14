@@ -1,4 +1,4 @@
-import * as crypto from "crypto";
+import crypto from "crypto";
 import { MT19937 } from "./MT19937";
 
 /** The Mersenne Twister PRNG object */

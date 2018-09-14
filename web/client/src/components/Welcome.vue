@@ -28,13 +28,13 @@ import { Vue, Component } from "av-ts";
 export default class WelcomePanel extends Vue {
     goToAnneal() {
         this.$router.push({
-            path: "/anneal",
+            name: "anneal",
         });
     }
 
     goToEditor() {
         this.$router.push({
-            path: "/editor",
+            name: "results-editor",
         });
     }
 }

@@ -128,7 +128,7 @@ const getters = {
     },
 
     [G.GET_RECORD_COOKED_VALUE_ROW_ARRAY](state: State) {
-        const stateColumns = state.recordData.columns;
+        const stateColumns = state.recordData.source.columns;
 
         // No data
         if (stateColumns.length === 0) {
@@ -149,7 +149,7 @@ const getters = {
         // Keep track of the ID column
         let idColumnIndex: number | undefined = undefined;
 
-        const columns = state.recordData.columns.map((column, i) => {
+        const columns = state.recordData.source.columns.map((column, i) => {
             const isId = ColumnData.Equals(idColumn, column);
 
             if (isId) {
@@ -193,7 +193,7 @@ const getters = {
 
     [G.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY](state: State) {
         const stateStrata = state.strataConfig.strata;
-        const stateColumns = state.recordData.columns;
+        const stateColumns = state.recordData.source.columns;
 
         // No data
         if (stateStrata.length === 0 || stateColumns.length === 0) {

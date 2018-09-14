@@ -145,3 +145,10 @@ export function numberSort(array: number[]) {
     // Side effects present - do not return value
     return;
 }
+
+/**
+ * Picks a random element from a given array, or `undefined` if array is empty.
+ */
+export function pickRandom<T>(array: ReadonlyArray<T>): T | undefined {
+    return array[(array.length * Math.random()) >>> 0];
+}

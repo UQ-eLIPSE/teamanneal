@@ -1,91 +1,118 @@
 <template>
     <div>
-        <div>
-            <span class="stratum-label">{{ stratum.label }}</span>
-        </div>
-        <div v-if="!isPartition"
-             class="stratum-config">
-            <div class="stratum-size">
-                <h3>Size
-                    <span class="size-unit-text">({{ pluralChildUnitTextFirstCharCapitalised }} per {{ stratum.label }})</span>
-                </h3>
-                <div class="size-block">
-                    <div class="three-sizes">
-                        <label :class="stratumSizeMinClasses">
-                            <div>Min</div>
-                            <span class="input-area">
-                                <DynamicWidthInputField class="input"
-                                                        v-model="stratumSizeMin"></DynamicWidthInputField>
-                            </span>
-                        </label>
-                        <label :class="stratumSizeIdealClasses">
-                            <div>Ideal</div>
-                            <span class="input-area">
-                                <DynamicWidthInputField class="input"
-                                                        v-model="stratumSizeIdeal"></DynamicWidthInputField>
-                            </span>
-                        </label>
-                        <label :class="stratumSizeMaxClasses">
-                            <div>Max</div>
-                            <span class="input-area">
-                                <DynamicWidthInputField class="input"
-                                                        v-model="stratumSizeMax"></DynamicWidthInputField>
-                            </span>
-                        </label>
-                    </div>
-                    <ul v-if="stratumSizeErrors.length > 0"
-                        class="stratum-size-errors">
-                        <li v-for="msg in stratumSizeErrors"
-                            :key="msg">{{ msg }}</li>
-                    </ul>
-                </div>
-                <template v-if="stratumSizeErrors.length === 0">
-                    <h3>{{ stratum.label }} distribution</h3>
-                    <ul class="distribution">
-                        <li v-for="groupSizeInfo in stratumGroupSizes"
-                            :key="groupSizeInfo.size">
-                            {{ groupSizeInfo.count }}
-                            <template v-if="groupSizeInfo.count === 1">{{ stratum.label }}</template>
-                            <template v-else>{{ stratum.label }}s</template> with {{ groupSizeInfo.size }} {{ pluralChildUnitText }}
-                        </li>
-                    </ul>
-                </template>
+        <!-- Special information layout for partitions -->
+        <template v-if="isPartition">
+            <div>
+                <span class="stratum-label">Partition ({{ stratum.label }})</span>
             </div>
-            <div class="stratum-name">
-                <h3>Name</h3>
-                <h4 class="smaller-margins">Format</h4>
-                <p class="smaller-margins">
-                    <select v-model="counterType">
-                        <option v-for="counterOption in counterList"
-                                :key="counterOption.value"
-                                :value="counterOption.value">{{ counterOption.text }}</option>
-                    </select>
-                </p>
+            <div class="stratum-config">
+                <div>
+                    <table class="partition-table">
+                        <tr>
+                            <th>{{ stratum.label }}</th>
+                            <th>Number of {{ pluralChildUnitText }}</th>
+                        </tr>
+                        <tr v-for="(partition, i) in limitedPartitions"
+                            :key="i">
+                            <td>{{ partition.value }}</td>
+                            <td>{{ numberOfPartitionChildren(i) }}</td>
+                        </tr>
+                    </table>
+                    <p>
+                        <a href="#" 
+                           v-if="partitions.length > limitedPartitionsDisplayLength"
+                           class="more"
+                           @click.prevent="togglePartitionList">{{ moreButtonText }}</a>
+                    </p>
+                </div>
+            </div>
+        </template>
 
-                <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
-                                                       v-model="customNameList"
-                                                       :stratumLabel="stratum.label"></StrataEditorStratumItemCustomNameList>
-
-                <template v-if="showNamingContextOptions">
-                    <h4 class="smaller-margins">Context</h4>
+        <!-- General layout for all other strata -->
+        <template v-else>
+            <div>
+                <span class="stratum-label">{{ stratum.label }}</span>
+            </div>
+            <div class="stratum-config">
+                <div class="stratum-size">
+                    <h3>Size
+                        <span class="size-unit-text">({{ pluralChildUnitTextFirstCharCapitalised }} per {{ stratum.label }})</span>
+                    </h3>
+                    <div class="size-block">
+                        <div class="three-sizes">
+                            <label :class="stratumSizeMinClasses">
+                                <div>Min</div>
+                                <span class="input-area">
+                                    <DynamicWidthInputField class="input"
+                                                            v-model="stratumSizeMin"></DynamicWidthInputField>
+                                </span>
+                            </label>
+                            <label :class="stratumSizeIdealClasses">
+                                <div>Ideal</div>
+                                <span class="input-area">
+                                    <DynamicWidthInputField class="input"
+                                                            v-model="stratumSizeIdeal"></DynamicWidthInputField>
+                                </span>
+                            </label>
+                            <label :class="stratumSizeMaxClasses">
+                                <div>Max</div>
+                                <span class="input-area">
+                                    <DynamicWidthInputField class="input"
+                                                            v-model="stratumSizeMax"></DynamicWidthInputField>
+                                </span>
+                            </label>
+                        </div>
+                        <ul v-if="stratumSizeErrors.length > 0"
+                            class="stratum-size-errors">
+                            <li v-for="msg in stratumSizeErrors"
+                                :key="msg">{{ msg }}</li>
+                        </ul>
+                    </div>
+                    <template v-if="stratumSizeErrors.length === 0">
+                        <h3>{{ stratum.label }} distribution</h3>
+                        <ul class="distribution">
+                            <li v-for="groupSizeInfo in stratumGroupSizes"
+                                :key="groupSizeInfo.size">
+                                {{ groupSizeInfo.count }}
+                                <template v-if="groupSizeInfo.count === 1">{{ stratum.label }}</template>
+                                <template v-else>{{ stratum.label }}s</template> with {{ groupSizeInfo.size }} {{ pluralChildUnitText }}
+                            </li>
+                        </ul>
+                    </template>
+                </div>
+                <div class="stratum-name">
+                    <h3>Name</h3>
+                    <h4 class="smaller-margins">Format</h4>
                     <p class="smaller-margins">
-                        Make {{ stratum.label }} names unique:
-                        <br>
-                        <select v-model="namingContext">
-                            <option v-for="namingContextOption in namingContextOptionList"
-                                    :key="namingContextOption.value"
-                                    :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                        <select v-model="counterType">
+                            <option v-for="counterOption in counterList"
+                                    :key="counterOption.value"
+                                    :value="counterOption.value">{{ counterOption.text }}</option>
                         </select>
                     </p>
-                </template>
+                    <StrataEditorStratumItemCustomNameList v-if="isCounterCustomList"
+                                                           v-model="customNameList"
+                                                           :stratumLabel="stratum.label"
+                                                           :minCount="customNameListMinCounts[stratum._id]"></StrataEditorStratumItemCustomNameList>
+                    <p class="smaller-margins">
+                        For example:
+                        <i>{{ stratum.label }} {{ randomExampleName }}</i>
+                    </p>
+                    <template v-if="showNamingContextOptions">
+                        <h4 class="smaller-margins">Context</h4>
+                        <p class="smaller-margins">
+                            Make {{ stratum.label }} names unique:
+                            <br>
+                            <select v-model="namingContext">
+                                <option v-for="namingContextOption in namingContextOptionList"
+                                        :key="namingContextOption.value"
+                                        :value="namingContextOption.value">{{ namingContextOption.text }}</option>
+                            </select>
+                        </p>
+                    </template>
+                </div>
             </div>
-        </div>
-        <div v-else
-             class="stratum-config">
-            <div>
-                <i>You cannot configure the size or names of partitions.</i>
-            </div>
-        </div>
+        </template>
     </div>
 </template>
 
@@ -100,7 +127,7 @@ import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum } from "../data/Stratum";
 import * as StratumSize from "../data/StratumSize";
-import { StratumNamingConfig } from "../data/StratumNamingConfig";
+import { StratumNamingConfig, generateRandomExampleName } from "../data/StratumNamingConfig";
 import { StratumNamingConfigContext, Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 import { MinimalDescriptor as IColumnData_MinimalDescriptor } from "../data/ColumnData";
 import * as ListCounter from "../data/ListCounter";
@@ -144,6 +171,16 @@ export default class StrataEditorStratumItem extends Vue {
     @Prop isPartition = p({ type: Boolean, required: false, default: false, });
     @Prop partitionColumnData = p<IColumnData_MinimalDescriptor | undefined>({ required: false, default: undefined, });
     @Prop namingContexts = p<ReadonlyArray<Stratum>>({ type: Array, required: false, default: () => [], });
+
+    /** 
+     * Manages whether all partitions are to be displayed or just min(#partitions, limitedPartitionsDisplayLength).
+     * Limits i.e. value is `true` by default
+     */
+    private limitPartitionList: boolean = true;
+
+    get randomExampleName() {
+        return generateRandomExampleName(this.stratumNamingConfig);
+    }
 
     get stratumSize() {
         return this.stratum.size;
@@ -384,6 +421,60 @@ export default class StrataEditorStratumItem extends Vue {
     set customNameList(names: string[]) {
         S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: names });
     }
+
+    get customNameListMinCounts() {
+        return S.get(S.getter.EXPECTED_NAME_LABELS_FOR_EACH_STRATUM);
+    }
+
+    get partitions() {
+        return S.get(S.getter.EXPECTED_PARTITIONS);
+    }
+
+    get expectedNodeTree() {
+        return S.get(S.getter.EXPECTED_NODE_TREE);
+    }
+
+    /**
+     * Returns a limited number of partitions i.e. min(#partitions, limitedPartitionsDisplayLength) when `limitPartitionsList` is set to `true`.
+     * Returns all partitions if `limitPartitionList` is set to `false`.
+     */
+    get limitedPartitions() {
+        if (this.limitPartitionList) {
+            return this.partitions.slice(0, Math.min(this.partitions.length, this.limitedPartitionsDisplayLength));
+        }
+        return this.partitions;
+    }
+
+    get moreButtonText() {
+        const numberOfPartitions = this.partitions.length;
+        return this.limitPartitionList ? `Show all ${numberOfPartitions} ${this.stratum.label + (numberOfPartitions === 1 ? "" : "s")}` : `Show fewer ${this.stratum.label}s`;
+    }
+
+    togglePartitionList() {
+        this.limitPartitionList = !this.limitPartitionList;
+    }
+
+    /**
+     * Returns number of immediate child nodes for a given partition.
+     * 
+     * @param partitionIndex Index of the given partition
+     */
+    numberOfPartitionChildren(partitionIndex: number) {
+        const partitionNode = this.expectedNodeTree[partitionIndex];
+
+        if (partitionNode === undefined) {
+            return undefined;
+        }
+
+        return partitionNode.children.length
+    }
+
+    /**
+     * Specifies the number of partitions displayed when list of partitions is limited. Can be changed to any positive integer if required.
+     */
+    get limitedPartitionsDisplayLength() {
+        return 3;
+    }
 }
 </script>
 
@@ -507,5 +598,24 @@ ul.stratum-size-errors {
 ul.distribution {
     padding: 0;
     padding-left: 1.5em;
+}
+
+a.more {
+    color: #49075e;
+    border-bottom: 1px dotted #49075e;
+    text-decoration: none;
+    display: inline-block;
+    padding: 0 3px;
+    align-self: flex-end;
+}
+
+.partition-table {
+    border-collapse: collapse;
+}
+
+.partition-table th,
+.partition-table td {
+    border: 1px solid #aaa;
+    padding: 0.2em 0.6em;
 }
 </style>

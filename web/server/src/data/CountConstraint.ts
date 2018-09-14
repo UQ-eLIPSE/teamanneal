@@ -11,9 +11,9 @@ export class CountConstraint extends AbstractConstraint {
      * An array of boolean values {0=false, 1=true} for each record element's
      * satisfaction of the condition function
      */
-    private recordSatisfactionArray: Uint8Array;
+    private recordSatisfactionArray!: Uint8Array;
 
-    private constraintConditionSatisfactionFunction: (count: number) => boolean;
+    private constraintConditionSatisfactionFunction!: (count: number) => boolean;
 
     protected init(records: Record.RecordSet) {
         // Initialise record array
