@@ -28,6 +28,10 @@
                 <a href="#import-results-package-file"
                    @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
         </div>
+
+        <ConstraintOverview v-if="displayWorkspace" class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
+        </ConstraintOverview>
+        
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     <!-- </div>

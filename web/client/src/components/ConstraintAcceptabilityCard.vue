@@ -15,9 +15,9 @@
 
         </div>
 
-        <div v-if="isLimitTypeConstraint">
+        <!-- <div v-if="isLimitTypeConstraint">
           <LimitSatisfactionChart :stratumLabel="stratumLabel" :constraintFilterText="constraintFilterText" :data="limitConstraintDistributionData"></LimitSatisfactionChart>
-        </div>
+        </div> -->
     </div>
 </template>
 
@@ -67,9 +67,9 @@ export default class ConstraintAcceptabilityCard extends Vue {
     };
   }
 
-  get limitConstraintDistributionData() {
-    return this.limitConstraintStatistics;
-  }
+  // get limitConstraintDistributionData() {
+  //   return this.limitConstraintStatistics;
+  // }
 }
 </script>
 
