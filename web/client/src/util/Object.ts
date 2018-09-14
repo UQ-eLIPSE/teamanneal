@@ -74,6 +74,7 @@ function reviverWithUndefined(_key: any, value: any) {
 }
 
 export function serialiseWithUndefined<T extends object>(object: T) {
+    console.log(object);
     return JSON.stringify(object, replacerWithUndefined);
 }
 

@@ -2,6 +2,7 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
 import { ResultsEditorState as State } from "./state";
 import { ResultsEditorMutation as M, commit } from "./mutation";
+import { ResultsEditorGetter } from "./getter";
 
 import { State as AnnealCreatorState } from "../AnnealCreator";
 
@@ -18,6 +19,9 @@ import { RecordElement } from "../../../../common/Record";
 
 import { deserialiseWithUndefined, serialiseWithUndefined, deepMerge } from "../../util/Object";
 import { generateGroupNodeCompatibleData } from "../AnnealCreator/state";
+
+import * as SatisfactionCalculationRequest from "../../data/SatisfactionCalculationRequest";
+import { extractSatisfactionDataFromPartitionSatisfactionArray } from "../AnnealCreator/state";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
@@ -52,6 +56,8 @@ export enum ResultsEditorAction {
     MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
 
     SWAP_RECORDS = "Swapping records",
+
+    RECALCULATE_SATISFACTION = "Recalculating satisfaction"
 }
 
 /** Shorthand for Action enum above */
@@ -76,6 +82,8 @@ const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
+        commit(context, M.SET_SATISFACTION_DATA, state.satisfaction);
+        
         await dispatch(context, A.RESET_STATE, undefined);
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
@@ -89,14 +97,39 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
+        
 
         if (state.sideToolArea.activeItem !== undefined) {
             await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
         } else {
             await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
         }
-    },
 
+        
+    },
+    async [A.RECALCULATE_SATISFACTION](context: Context) {
+
+        const constraints = context.getters[ResultsEditorGetter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY];
+        const columns = context.getters[ResultsEditorGetter.GET_COMMON_COLUMN_DESCRIPTOR_ARRAY];
+        const records = context.getters[ResultsEditorGetter.GET_RECORD_COOKED_VALUE_ROW_ARRAY];
+        const strata = context.getters[ResultsEditorGetter.GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER];
+        const annealNodes = context.getters[ResultsEditorGetter.GET_COMMON_ANNEALNODE_ARRAY];
+
+        const requestBody = SatisfactionCalculationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes);
+        const { request, token } = SatisfactionCalculationRequest.createRequest(requestBody);
+
+        token;
+        // Wait for response
+        const response = await request;
+
+        // Set response data
+        const partitionSatisfactionArray = response.data;
+
+        const satisfaction = extractSatisfactionDataFromPartitionSatisfactionArray(partitionSatisfactionArray);
+
+        commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+
+    },
     async [A.DEHYDRATE](context: Context, { deleteSideToolAreaActiveItem }: Partial<{ deleteSideToolAreaActiveItem: boolean }>) {
         const state = { ...context.state };
 

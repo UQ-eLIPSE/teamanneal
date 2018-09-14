@@ -4,8 +4,7 @@ import * as Stratum from "../../../common/Stratum";
 import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
-import { ToServerSatisfactionTestPermutationRequest, MoveRecordTestPermutationOperationInfo, SwapRecordsTestPermutationOperationInfo } from "../../../common/ToServerSatisfactionTestPermutationRequest";
-
+import * as ToServerAnnealRequest from "../../../common/ToServerAnnealRequest";
 import * as UUID from "../util/UUID";
 
 /**
@@ -14,24 +13,23 @@ import * as UUID from "../util/UUID";
  */
 const requestTokenMap = new WeakMap<AxiosPromise, string>();
 
-export function packageRequestBody(recordData: RecordData.Desc, strata: Stratum.Desc[], constraints: Constraint.Desc[], annealNodes: AnnealNode.NodeRoot[], operation: MoveRecordTestPermutationOperationInfo | SwapRecordsTestPermutationOperationInfo) {
-    const requestBody: ToServerSatisfactionTestPermutationRequest = {
+export function packageRequestBody(recordData: RecordData.Desc, strata: Stratum.Desc[], constraints: Constraint.Desc[], annealNodes: AnnealNode.NodeRoot[]) {
+    const requestBody: ToServerAnnealRequest.Root = {
         recordData,
         strata,
         constraints,
         annealNodes,
-        operation,
     };
 
     return requestBody;
 }
 
-export function createRequest(body: ToServerSatisfactionTestPermutationRequest, token: string = UUID.generate()) {
+export function createRequest(body: ToServerAnnealRequest.Root, token: string = UUID.generate()) {
     // Create a cancellation token
     // This is used in event of overlapping requests
     const cancelTokenSource = axios.CancelToken.source();
 
-    const request = axios.post(`/api/satisfaction/test-permutation/calculate`, body, {
+    const request = axios.post(`/api/satisfaction/calculate`, body, {
         cancelToken: cancelTokenSource.token,
     });
 

@@ -49,6 +49,20 @@ export function init() {
     return state;
 }
 
+export function extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfactionMap: any) {
+    
+    const satisfactionMap = annealNodeRootSatisfactionMap.reduce((carry: any, sMap: any) => {
+        // const satisfactionMap = sMap;
+        const satisfactionMap = sMap.satisfactionMap;
+        return Object.assign(carry, satisfactionMap);
+
+    }, {});
+
+    const statistics = annealNodeRootSatisfactionMap.map((satisfaction: any) => satisfaction.statistics) || [];
+
+    return { satisfactionMap, statistics };
+}
+
 export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
     // Incoming state must be such that it has an anneal response
     if (!(AnnealRequestState.isCompleted(state.annealRequest) &&
@@ -132,14 +146,7 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     annealNodeRoots.forEach(walkAnnealTreeAndTransform);
 
-    const satisfactionMap = annealNodeRootSatisfaction.reduce((carry: any, sMap: any) => {
-        // const satisfactionMap = sMap;
-        const satisfactionMap = sMap.satisfactionMap;
-        return Object.assign(carry, satisfactionMap);
-
-    }, {});
-
-    const statistics = annealNodeRootSatisfaction.map((satisfaction: any) => satisfaction.statistics) || [];
+    const { satisfactionMap, statistics } = extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfaction);
 
     return {
         roots: newRoots,

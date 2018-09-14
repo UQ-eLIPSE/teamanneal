@@ -31,7 +31,7 @@
 
         <ConstraintOverview v-if="displayWorkspace" class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
         </ConstraintOverview>
-        
+
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
     <!-- </div>
@@ -169,15 +169,15 @@ export default class ResultsEditor extends Vue {
   }
 
   //TODO: Replace with Result editor's state when ready
-  get annealResults() {
-    // const responseContent = (this.creatorState.annealRequest as any).response;
-    // const responseData = responseContent.data as any;
+  // get annealResults() {
+  //   // const responseContent = (this.creatorState.annealRequest as any).response;
+  //   // const responseData = responseContent.data as any;
 
-    // We're working on the presumption that we definitely have results
-    // return responseData.results!;
-    this.state.satisfaction
-    return [];
-  }
+  //   // We're working on the presumption that we definitely have results
+  //   // return responseData.results!;
+  //   this.state.satisfaction
+  //   return [];
+  // }
 
   //TODO: Replace with Result editor's state when ready
   get annealSatisfactionMap() {
@@ -191,7 +191,8 @@ export default class ResultsEditor extends Vue {
   }
 
   get annealStratumStatistics() {
-    const partitionStatsArray = this.annealResults.map((result: any) => result.result!.satisfaction.statistics);
+    // const partitionStatsArray = this.annealResults.map((result: any) => result.result!.satisfaction.statistics);
+    const partitionStatsArray = this.state.satisfaction.statistics;
 
     
     const limitConstraintDistributionMap = this.limitConstraints.map((constraint) => {
