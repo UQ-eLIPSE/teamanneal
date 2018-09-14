@@ -32,7 +32,11 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     sideToolArea: {
         /** Information about the active side tool item */
         activeItem: SidePanelActiveTool | undefined,
-    }
+    },
+
+    requestDepth: number,
+
+    requestIdJump: string
 }
 
 export function init() {
@@ -51,7 +55,11 @@ export function init() {
 
         sideToolArea: {
             activeItem: undefined,
-        }
+        },
+        
+        requestDepth: -1,
+
+        requestIdJump: ""
     };
 
     return state;

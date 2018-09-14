@@ -93,7 +93,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
     const constraintSatisfaction = overallConstraintSatisfaction(p);
 
     const headingContentElementArray = [
-        createElement("div", { class: "label" }, heading),
+        createElement("div", { class: "label", attrs: { id : p.node._id } }, heading),
     ];
 
     if (constraintSatisfaction !== undefined) {

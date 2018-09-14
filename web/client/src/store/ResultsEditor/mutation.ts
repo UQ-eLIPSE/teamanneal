@@ -53,6 +53,9 @@ export enum ResultsEditorMutation {
 
     INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
+
+    SET_DISPLAY_DEPTH = "Setting request depth",
+    SET_JUMP_REQUEST_ID = "Setting request id"
 }
 
 /** Shorthand for Mutation enum above */
@@ -164,6 +167,14 @@ const mutations = {
     [M.DELETE_RECORD_ID_FROM_GROUP_NODE](state: State, { node, id }: { node: string, id: RecordElement }) {
         const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node];
         del(recordsUnderNode, recordsUnderNode.indexOf(id));
+    },
+
+    [M.SET_DISPLAY_DEPTH](state: State, depth: number) {
+        set(state, "requestDepth", depth);
+    },
+
+    [M.SET_JUMP_REQUEST_ID](state: State, id: string) {
+        set(state, "requestIdJump", id);
     },
 };
 

@@ -41,7 +41,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -50,6 +50,9 @@ import { ColumnData } from "../data/ColumnData";
 import { MenuItem } from "../data/ResultsEditorMenuBar";
 import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
 import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
+import { GroupNodeRoot } from "../data/GroupNodeRoot";
+import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
+import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 
 import { RecordElement } from "../../../common/Record";
 
@@ -127,6 +130,8 @@ export default class ResultsEditor extends Vue {
     // Private
     /** Stores `node` ids of nodes which were collapsed (hidden).   */
     hiddenNodes: { [key: string]: true } = {};
+
+    pRequestId: string = "";
 
     /** New reference to module state */
     get state() {
@@ -280,6 +285,69 @@ export default class ResultsEditor extends Vue {
 
     get menuBarItems() {
         return MENU_BAR_ITEMS;
+    }
+
+    // We need to hide the node visibility based on the requested id
+    get requestId() {
+        // In essence this calls the computed tag
+        this.pRequestId = this.state.requestIdJump;
+        this.jumpAndScroll();
+        return this.state.requestIdJump;
+    }
+
+    get displayDepth() {
+        return this.state.requestDepth;
+    }
+
+    @Watch("state.requestIdJump")
+    jumpAndScroll(_value: string, _oldValue: string) {
+        // The idea is to uncollapse everything associated with the path
+        let path: string[] = [];
+        for (let i = 0; i < this.nodeRoots.length; i++) {
+            let maybePath = this.recursePath(this.pRequestId, this.nodeRoots[i], []);
+
+            // Stop searching at the top level
+            if (maybePath !== null) {
+                path = maybePath;
+                break;
+            }
+        }
+
+        // Now collapse
+        for (let i  = 0; i < path.length; i++) {
+            Vue.delete(this.hiddenNodes, path[i]);
+        }
+
+        // Now scroll. Since the startum are manually created. We can safely use the id
+        const elmnt = document.getElementById(this.pRequestId);
+        if(elmnt !== null) {
+            elmnt.scrollIntoView();
+        }
+
+    }
+
+    recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
+        // If we somehow equal the path. stop
+        if(targetName === incomingNode._id) {
+            // Go back as we found the source
+            output.push(incomingNode._id);
+            return output;
+        }
+
+        // Keep going. If we receive a non-empty array
+        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
+            for(let i = 0; i < incomingNode.children.length; i++) {
+                const possiblePath = this.recursePath(targetName, incomingNode.children[i], output);
+                if (possiblePath !== null ) {
+                    // We have something, stop searching and return
+                    output.push(incomingNode._id);
+                    return output;
+                }
+             }
+        }
+
+        // Return a null to show failure to find the id in that path
+        return null;
     }
 
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
