@@ -1,20 +1,37 @@
 <template>
-  <div class="results-editor">
-    <div class="workspace" v-if="displayWorkspace">
-      <SpreadsheetTreeView2ColumnsFilter :items="columns" :selectedIndices="columnsDisplayIndices" @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
+    <div class="results-editor">
+        <div class="workspace"
+             v-if="displayWorkspace">
+            <SpreadsheetTreeView2ColumnsFilter :items="columns"
+                                               :selectedIndices="columnsDisplayIndices"
+                                               @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
-      <SpreadsheetTreeView2 class="spreadsheet" :nodeRoots="nodeRoots" :headerRow="headerRow" :columnsDisplayIndices="columnsDisplayIndices" :recordRows="recordRows" :nodeNameMap="nameMap" :nodeRecordMap="nodeRecordMap" :nodeStyles="nodeStyles" :idColumnIndex="idColumnIndex" :hiddenNodes="hiddenNodes" :onToggleNodeVisibility="onToggleNodeVisibility" @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
-      <ConstraintOverview class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
-      </ConstraintOverview>
-    </div>
-    <div class="get-started" v-else>
-      <h1>Welcome</h1>
-      <p>The TeamAnneal Editor allows you to view and modify teams generated from the anneal process.</p>
-      <p>Get started by obtaining team data from
-        <router-link :to="'anneal'">running an anneal</router-link>, or
-        <a href="#import-results-package-file" @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
-    </div>
-    <ResultsEditorSideToolArea class="side-tool-area" :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+            <SpreadsheetTreeView2 class="spreadsheet"
+                                  :nodeRoots="nodeRoots"
+                                  :headerRow="headerRow"
+                                  :columnsDisplayIndices="columnsDisplayIndices"
+                                  :recordRows="recordRows"
+                                  :nodeNameMap="nameMap"
+                                  :nodeRecordMap="nodeRecordMap"
+                                  :nodeStyles="nodeStyles"
+                                  :idColumnIndex="idColumnIndex"
+                                  :hiddenNodes="hiddenNodes"
+                                  :onToggleNodeVisibility="onToggleNodeVisibility"
+                                  @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+        </div>
+        <div class="get-started"
+             v-else>
+            <h1>Welcome</h1>
+            <p>The TeamAnneal Editor allows you to view and modify groups generated from the anneal process.</p>
+            <p>Get started by obtaining group data from
+                <router-link :to="'anneal'">running an anneal</router-link>, or
+                <a href="#import-results-package-file"
+                   @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
+        </div>
+        <ResultsEditorSideToolArea class="side-tool-area"
+                                   :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+    <!-- </div>
+    <ResultsEditorSideToolArea class="side-tool-area" :menuItems="menuBarItems"></ResultsEditorSideToolArea> -->
   </div>
 </template>
 
@@ -45,7 +62,7 @@ import ExportFile from "./results-editor-side-panels/ExportFile.vue";
 import Move from "./results-editor-side-panels/Move.vue";
 import Swap from "./results-editor-side-panels/Swap.vue";
 // import Print from "./results-editor-side-panels/Print.vue";
-import Help from "./results-editor-side-panels/Help.vue";
+// import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     {
@@ -84,12 +101,12 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
     //     name: "remove",
     //     label: "Remove a person or group",
     // },
-    {
-        name: "help",
-        label: "Help",
-        region: "end",
-        component: Help,
-    },
+    // {
+    //     name: "help",
+    //     label: "Help",
+    //     region: "end",
+    //     component: Help,
+    // },
 ];
 
 @Component({
