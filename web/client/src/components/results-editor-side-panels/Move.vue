@@ -82,8 +82,8 @@ export default class Move extends Vue {
     @Watch('data')
     handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
         
-        if(newVal.sourcePerson) {
-            if(oldVal.sourcePerson) {
+        if(newVal && newVal.sourcePerson) {
+            if(oldVal && oldVal.sourcePerson) {
                 if(oldVal.sourcePerson.node !== newVal.sourcePerson.node) {
                     this.onGetSuggestionsButtonClick();
                 }

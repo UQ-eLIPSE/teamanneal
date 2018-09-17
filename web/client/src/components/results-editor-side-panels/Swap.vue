@@ -79,8 +79,8 @@ export default class Swap extends Vue {
     /** Watches side panel data in store and updates suggestions automatically */
     @Watch('data')
     handler(newVal: SwapSidePanelToolData, oldVal: SwapSidePanelToolData) {
-        if(newVal.personA) {
-            if(oldVal.personA) {
+        if(newVal && newVal.personA) {
+            if(oldVal && oldVal.personA) {
                 if(oldVal.personA.node !== newVal.personA.node) {
                     this.onGetSuggestionsButtonClick();
                 }
@@ -88,7 +88,6 @@ export default class Swap extends Vue {
                 this.onGetSuggestionsButtonClick();
             }
         }
-        
     }
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;

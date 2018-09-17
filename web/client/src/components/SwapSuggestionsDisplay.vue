@@ -98,11 +98,11 @@ export default class SwapSuggestionsDisplay extends Vue {
     return formatted + "%";
   }
 
-  getSatisfactionChangeClass(satisfactionValue: number) {
-    const classes = [];
+  getSatisfactionChangeClass(satisfactionValue: number): string[] {
+    const classes: string[] = [];
     const percentChange = this.getSatisfactionPercentChange(satisfactionValue);
 
-    if (percentChange === undefined) return;
+    if (percentChange === undefined) return [];
 
     if (percentChange > 0) {
       classes.push("positive");
