@@ -467,14 +467,20 @@ export namespace Limit {
         // Go through nodes and get the actual distribution and also accumulate
         // the total number of leaves/records to distribute
         const actualDistribution: { [satisfyingCountInNode: number]: number } = {};
+        
+        /** Maps node id to number of satisfying records contained by the node */
         const nodeToSatisfyingRecordCountMap: { [key: string]: number } = {};
+
+        
         const numberOfNodes = nodes.length;
-        // Calculate the expected distribution
-        const expectedDistribution = generateExpectedDistribution(numberOfNodes, numberToDistribute);
-        const { minSatisfyingRecordCount, maxSatisfyingRecordCount } = generateMinMaxFromDistribution(expectedDistribution);
+        
+        /** Maps node id to node satisfaction */
         const nodeIdSatisfactionMap: { [key: string]: number | undefined } = {};
 
+        // Iterate through nodes
         for (let node of nodes) {
+
+            // Get all records under that node
             const nodeRecordPointers = node.getRecordPointers();
             const satisfyingRecordCount = constraint.countFilterSatisfyingRecords(nodeRecordPointers);
 
@@ -486,6 +492,13 @@ export namespace Limit {
             // Accumulate number to distribute
             numberToDistribute += satisfyingRecordCount;
         }
+
+        // Calculate the expected distribution of this stratum based on total number of nodes in the
+        // stratum and the number of records to distribute among them
+        const expectedDistribution = generateExpectedDistribution(numberOfNodes, numberToDistribute);
+
+        // Find minimum and maximum record count values
+        const { minSatisfyingRecordCount, maxSatisfyingRecordCount } = generateMinMaxFromDistribution(expectedDistribution);
 
         // Fail any nodes which have satisfying record count outside the (min, max) range
         for(const nodeId in nodeToSatisfyingRecordCountMap) {

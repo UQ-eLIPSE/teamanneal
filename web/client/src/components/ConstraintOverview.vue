@@ -2,19 +2,10 @@
     <div class="constraint-overview">
         <h2>Constraints Overview</h2>
         <div class="constraints-container">
-            <div class="stratum"
-                 v-for="stratum in strata"
-                 :key="stratum._id">
+            <div class="stratum" v-for="stratum in strata" v-if="getConstraintsArrayByStratum(stratum).length > 0" :key="stratum._id">
                 <h2>{{stratum.label}} Constraints</h2>
 
-                <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
-                                             class="card"
-                                             :key="constraint._id"
-                                             :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
-                                             :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
-                                             :stratumLabel="getStratumLabel(constraint)"
-                                             :limitConstraintStatistics="getLimitConstraintStatistics(constraint)"
-                                             :constraint="constraint"> </ConstraintAcceptabilityCard>
+                <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)" class="card" :key="constraint._id" :fulfilledNumber="getFulfilledNumberOfGroups(constraint)" :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)" :stratumLabel="getStratumLabel(constraint)" :limitConstraintStatistics="getLimitConstraintStatistics(constraint)" :constraint="constraint"> </ConstraintAcceptabilityCard>
             </div>
 
         </div>
@@ -31,107 +22,104 @@ import ConstraintAcceptabilityCard from "./ConstraintAcceptabilityCard.vue";
 // type LimitConstraintPassCountMap = { [constraintId: string]: { pass: number, total: number } };
 
 @Component({
-    components: {
-        ConstraintAcceptabilityCard
-    }
+  components: {
+    ConstraintAcceptabilityCard
+  }
 })
 export default class ConstraintOverview extends Vue {
+  @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: true });
 
-    @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: true, });
+  @Prop constraints = p<IConstraint[]>({ required: true });
 
-    @Prop constraints = p<IConstraint[]>({ required: true });
+  @Prop strata = p<Stratum[]>({ required: true });
 
-    @Prop strata = p<Stratum[]>({ required: true });
+  @Prop limitConstraintStatistics = p<any>({ required: false });
+  /** Map of constraint to number of groups passing that constraint */
+  // @Prop limitConstraintPassCount = p<LimitConstraintPassCountMap>({ required: false });
 
-    @Prop limitConstraintStatistics = p<any>({ required: false });
-    /** Map of constraint to number of groups passing that constraint */
-    // @Prop limitConstraintPassCount = p<LimitConstraintPassCountMap>({ required: false });
+  getFulfilledNumberOfGroups(constraint: IConstraint) {
+    const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
 
-    getFulfilledNumberOfGroups(constraint: IConstraint) {
-        const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
+    // Redundant since functionality shifted to the server
+    // if (constraint.type === "limit") {
+    //     // If limit constraint, get value from limit constraint pass count prop
+    //     const passed = this.limitConstraintPassCount![constraint._id].pass;
+    //     return passed === undefined ? 0 : passed;
+    // }
 
-        // Redundant since functionality shifted to the server
-        // if (constraint.type === "limit") {
-        //     // If limit constraint, get value from limit constraint pass count prop
-        //     const passed = this.limitConstraintPassCount![constraint._id].pass;
-        //     return passed === undefined ? 0 : passed;
-        // }
-   
-        const count = nodesUnderConstraint.filter(
-            (nodeId) => (this.constraintSatisfactionMap[nodeId][constraint._id] as number) === 1).length;
-        return count;
+    const count = nodesUnderConstraint.filter(nodeId => (this.constraintSatisfactionMap[nodeId][constraint._id] as number) === 1).length;
+    return count;
+  }
+
+  getLimitConstraintStatistics(constraint: IConstraint) {
+    if (this.limitConstraintStatistics === undefined) return undefined;
+
+    if (constraint.type === "limit") {
+      return this.limitConstraintStatistics.find((distributionObject: any) => distributionObject.constraint._id === constraint._id);
     }
 
-    getLimitConstraintStatistics(constraint: IConstraint) {
-        if(this.limitConstraintStatistics === undefined) return undefined;
+    return undefined;
+  }
 
-        if(constraint.type === 'limit') {
-            return this.limitConstraintStatistics.find((distributionObject: any) => distributionObject.constraint._id === constraint._id);
+  getNumberOfGroupsWithConstraintApplicable(constraint: IConstraint) {
+    return this.constraintToNodeMap[constraint._id].length;
+  }
+
+  getStratumLabel(constraint: IConstraint) {
+    return this.strata.find(stratum => stratum._id === constraint.stratum)!.label;
+  }
+
+  get constraintToNodeMap() {
+    const csMap = this.constraintSatisfactionMap;
+
+    return Object.keys(csMap).reduce<{ [constraintId: string]: string[] }>((carry, nodeId) => {
+      const nodeSatisfaction = csMap[nodeId];
+
+      Object.keys(nodeSatisfaction).forEach(constraintId => {
+        let constraintToNodeArray = carry[constraintId];
+
+        if (constraintToNodeArray === undefined) {
+          constraintToNodeArray = carry[constraintId] = [];
         }
 
-        return undefined;
-    }
+        constraintToNodeArray.push(nodeId);
+      });
 
-    getNumberOfGroupsWithConstraintApplicable(constraint: IConstraint) {
-        return this.constraintToNodeMap[constraint._id].length;
-    }
+      return carry;
+    }, {});
+  }
 
-    getStratumLabel(constraint: IConstraint) {
-        return this.strata.find((stratum) => stratum._id === constraint.stratum)!.label;
-    }
-
-    get constraintToNodeMap() {
-        const csMap = this.constraintSatisfactionMap;
-        
-        return Object.keys(csMap).reduce<{ [constraintId: string]: string[] }>((carry, nodeId) => {
-            const nodeSatisfaction = csMap[nodeId];
-
-            Object.keys(nodeSatisfaction).forEach((constraintId) => {
-                let constraintToNodeArray = carry[constraintId];
-
-                if (constraintToNodeArray === undefined) {
-                    constraintToNodeArray = (carry[constraintId] = []);
-                }
-
-                constraintToNodeArray.push(nodeId);
-            });
-
-            return carry;
-        }, {});
-    }
-
-    getConstraintsArrayByStratum(stratum: Stratum) {
-        return this.constraints.filter((constraint) => constraint.stratum === stratum._id);
-    }
-
+  getConstraintsArrayByStratum(stratum: Stratum) {
+    return this.constraints.filter(constraint => constraint.stratum === stratum._id);
+  }
 }
 </script>
 
 
 <style scoped>
 .constraint-overview {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    background: rgba(245, 245, 245, 0.9);
-    overflow-y: scroll;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  background: rgba(245, 245, 245, 0.9);
+  overflow-y: scroll;
 }
 
 h2 {
-    color: #49075E;
+  color: #49075e;
 }
 
 .constraints-container {
-    display: flex;
-    flex-direction: column;
-    padding: 0.5em;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5em;
 }
 
-.constraints-container>* {
-    margin: 0.1rem 0 0.1rem 0;
+.constraints-container > * {
+  margin: 0.1rem 0 0.1rem 0;
 }
 
 .card {
-    margin: 0.5rem 0;
+  margin: 0.5rem 0;
 }
 </style>

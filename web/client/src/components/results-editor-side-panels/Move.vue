@@ -39,11 +39,11 @@
             <button class="button secondary small"
                     @click="clearSatisfactionTestPermutationData">Close suggestions</button>
         </div>
-        <!-- <div class="form-block"> -->
-            <!-- <button class="button secondary small" -->
-                    <!-- @click="onGetSuggestionsButtonClick">Get suggestions</button> -->
+        <div class="form-block">
+            <button class="button secondary small"
+                    @click="onGetSuggestionsButtonClick">Get suggestions</button>
             <!-- <button class="button secondary small">Advanced...</button> -->
-        <!-- </div> -->
+        </div>
         <div class="form-block"
              style="text-align: right;">
             <button class="button small"
@@ -145,6 +145,7 @@ export default class Move extends Vue {
         // TODO: Review whether we should close the side panel or not
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
 
+        // Recalculate satisfaction after successful swap operation
         await S.dispatch(S.action.RECALCULATE_SATISFACTION, undefined);
     }
 

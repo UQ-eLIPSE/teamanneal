@@ -82,6 +82,7 @@ const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
+        // Hydrate with satisfaction data
         commit(context, M.SET_SATISFACTION_DATA, state.satisfaction);
         
         await dispatch(context, A.RESET_STATE, undefined);

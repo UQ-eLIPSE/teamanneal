@@ -15,6 +15,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { RecordElement } from "../../../../common/Record";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
 
 type MutationFunction<M extends ResultsEditorMutation> = typeof mutations[M];
 
@@ -85,7 +86,7 @@ const mutations = {
     [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
-    [M.SET_SATISFACTION_DATA](state: State, satisfaction: {satisfactionMap: any, statistics: any[]}) {
+    [M.SET_SATISFACTION_DATA](state: State, satisfaction: { satisfactionMap: ConstraintSatisfaction.SatisfactionMap, statistics: { [nodeId: string]: ConstraintSatisfaction.MultipleSatisfactionStats }[] }) {
         state.satisfaction = satisfaction;
     },
 

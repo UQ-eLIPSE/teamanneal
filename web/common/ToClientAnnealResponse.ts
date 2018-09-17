@@ -2,15 +2,17 @@ import * as AnnealNode from "./AnnealNode";
 import * as ConstraintSatisfaction from "./ConstraintSatisfaction";
 import { AnnealStatus } from "../common/AnnealStatus";
 
-interface OutputResult {
+export interface OutputResult {
     readonly result?: {
         tree: AnnealNode.NodeRoot,
-        satisfaction: {
-            satisfactionMap: ConstraintSatisfaction.SatisfactionMap,
-            statistics: {[key: string]:ConstraintSatisfaction.MultipleSatisfactionStats}
-        }
+        satisfaction: SatisfactionResponse
     },
     readonly error?: string,
+}
+
+export interface SatisfactionResponse {
+    satisfactionMap: ConstraintSatisfaction.SatisfactionMap,
+    statistics: {[key: string]:ConstraintSatisfaction.MultipleSatisfactionStats}
 }
 
 export interface Root {

@@ -15,6 +15,9 @@ import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
 
 import * as AnnealNode from "../../../../common/AnnealNode";
+import { DeepReadonly } from "../../data/DeepReadonly";
+import { SatisfactionResponse } from "../../../../common/ToClientAnnealResponse";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
 
 export interface AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
@@ -49,16 +52,15 @@ export function init() {
     return state;
 }
 
-export function extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfactionMap: any) {
+export function extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfactionMap: DeepReadonly<SatisfactionResponse>[]) {
     
-    const satisfactionMap = annealNodeRootSatisfactionMap.reduce((carry: any, sMap: any) => {
-        // const satisfactionMap = sMap;
+    const satisfactionMap = annealNodeRootSatisfactionMap.reduce<ConstraintSatisfaction.SatisfactionMap>((carry, sMap) => {
         const satisfactionMap = sMap.satisfactionMap;
         return Object.assign(carry, satisfactionMap);
 
     }, {});
 
-    const statistics = annealNodeRootSatisfactionMap.map((satisfaction: any) => satisfaction.statistics) || [];
+    const statistics = annealNodeRootSatisfactionMap.map((satisfaction) => satisfaction.statistics) || [];
 
     return { satisfactionMap, statistics };
 }
