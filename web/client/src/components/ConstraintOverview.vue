@@ -1,15 +1,24 @@
 <template>
-    <div class="constraint-overview">
-        <h2>Constraints Overview</h2>
-        <div class="constraints-container">
-            <div class="stratum" v-for="stratum in strata" v-if="getConstraintsArrayByStratum(stratum).length > 0" :key="stratum._id">
-                <h2>{{stratum.label}} Constraints</h2>
+  <div class="constraint-overview">
+    <h2>Constraints Overview</h2>
+    <div class="constraints-container">
+      <div class="stratum"
+           v-for="stratum in strata"
+           v-if="getConstraintsArrayByStratum(stratum).length > 0"
+           :key="stratum._id">
+        <h2>{{stratum.label}} Constraints</h2>
 
-                <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)" class="card" :key="constraint._id" :fulfilledNumber="getFulfilledNumberOfGroups(constraint)" :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)" :stratumLabel="getStratumLabel(constraint)" :constraint="constraint"> </ConstraintAcceptabilityCard>
-            </div>
+        <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
+                                     class="card"
+                                     :key="constraint._id"
+                                     :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
+                                     :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
+                                     :stratumLabel="getStratumLabel(constraint)"
+                                     :constraint="constraint"> </ConstraintAcceptabilityCard>
+      </div>
 
-        </div>
     </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -33,7 +42,7 @@ export default class ConstraintOverview extends Vue {
 
   getFulfilledNumberOfGroups(constraint: IConstraint) {
     const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
-    if(!nodesUnderConstraint) return 0;
+    if (!nodesUnderConstraint) return 0;
 
     const count = nodesUnderConstraint.filter(nodeId => (this.constraintSatisfactionMap[nodeId][constraint._id] as number) === 1).length;
 
@@ -41,13 +50,9 @@ export default class ConstraintOverview extends Vue {
   }
 
   getNumberOfGroupsWithConstraintApplicable(constraint: IConstraint) {
-    if(!Array.isArray(this.constraintToNodeMap[constraint._id])) {
-      // Satisfaction data not available
-      // TODO: Attempt to recalculate satisfaction data
-      
-      return 0;
-    }
-    return this.constraintToNodeMap[constraint._id].length;
+    const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
+    if (!nodesUnderConstraint || !Array.isArray(nodesUnderConstraint)) return 0;
+    return nodesUnderConstraint.length;
   }
 
   getStratumLabel(constraint: IConstraint) {
@@ -100,7 +105,7 @@ h2 {
   padding: 0.5em;
 }
 
-.constraints-container > * {
+.constraints-container>* {
   margin: 0.1rem 0 0.1rem 0;
 }
 

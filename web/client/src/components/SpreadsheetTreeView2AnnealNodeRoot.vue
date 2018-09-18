@@ -63,9 +63,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
-    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true });
     /** Function passed down by parent to toggle a node's visibility */
-    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true});
+    @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true });
 
 
     /** Handles click on the heading rendered in this component */
@@ -165,5 +165,4 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 .toggle-visibility-button:focus {
     background: rgba(119, 129, 139, 0.1);
 }
-
 </style>

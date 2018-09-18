@@ -103,10 +103,10 @@ const actions = {
             await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
         }
 
-        // Note: satisfaction needs to be set last since it needs preceding configuration
-
+        // Note: Satisfaction needs to be set last since it needs preceding configuration to be loaded in the state
         // Hydrate with satisfaction data
         if (!state.satisfaction) {
+            // Satisfaction does not exist
             // Recalculate satisfaction server-side with current configuration
             await dispatch(context, A.CALCULATE_SATISFACTION, undefined);
         } else {

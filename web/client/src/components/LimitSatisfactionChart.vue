@@ -1,3 +1,12 @@
+<!--
+
+*******************************************************************
+* THIS CHART FEATURE MAY BE USEFUL IN THE FUTURE
+* NOT BEING USED FOR NOW
+*******************************************************************
+
+-->
+
 <template>
     <div class="limit-satisfaction-charts">
         <Chart :chart-data="chartData" :height="200" :options="generatedOptions"></Chart>
@@ -10,7 +19,6 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import Chart from "./Chart.vue";
 
-/** THE CHART FEATURE MAY BE USEFUL IN THE FUTURE, NOT BEING USED FOR NOW */
 @Component({
   components: {
     Chart

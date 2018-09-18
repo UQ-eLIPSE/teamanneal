@@ -87,7 +87,7 @@ const mutations = {
     [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
-    [M.SET_SATISFACTION_DATA](state: State, satisfaction: { satisfactionMap: ConstraintSatisfaction.SatisfactionMap, statistics: { [nodeId: string]: ConstraintSatisfaction.MultipleSatisfactionStats }[] }) {
+    [M.SET_SATISFACTION_DATA](state: State, satisfaction: { satisfactionMap: ConstraintSatisfaction.SatisfactionMap, statistics: { [nodeId: string]: ConstraintSatisfaction.MultipleNodeSatisfactionStatistics }[] }) {
         set(state, "satisfaction", satisfaction);
     },
     [M.CLEAR_SATISFACTION_DATA](state: State) {

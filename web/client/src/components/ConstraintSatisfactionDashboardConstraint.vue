@@ -1,3 +1,11 @@
+<!--
+
+*******************************************************************
+* THIS COMPONENT WAS DEVELOPED INITIALLY BUT IS NOT BEING USED.
+* WILL MOST LIKELY BE REMOVED AT A LATER STAGE.
+*******************************************************************
+
+-->
 <template>
     <a class="constraint-item"
        :class="constraintItemClasses"
@@ -20,6 +28,8 @@ import { Data as IState } from "../data/State";
 import { Data as IConstraint } from "../data/Constraint";
 import { ConstraintSentence } from "../data/Constraint";
 
+// TODO: Decide if this component will be included
+/** THIS COMPONENT WAS DEVELOPED INITIALLY BUT IS NOT BEING USED. WILL MOST LIKELY BE REMOVED AT A LATER STAGE */
 @Component
 export default class ConstraintSatisfactionDashboardConstraint extends Vue {
     @Prop constraint = p<IConstraint>({ required: true, });

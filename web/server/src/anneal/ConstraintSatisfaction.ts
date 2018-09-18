@@ -2,7 +2,7 @@ import * as Stratum from "../../../common/Stratum";
 import * as RecordData from "../../../common/RecordData";
 import * as Constraint from "../../../common/Constraint";
 import * as AnnealNode from "../../../common/AnnealNode";
-import { NodeSatisfactionObject, SatisfactionMap, MultipleSatisfactionObject, MultipleSatisfactionStats } from "../../../common/ConstraintSatisfaction";
+import { NodeSatisfactionObject, SatisfactionMap, MultipleSatisfactionObject, MultipleNodeSatisfactionStatistics } from "../../../common/ConstraintSatisfaction";
 
 import { AbstractConstraint } from "../data/AbstractConstraint";
 import { CountConstraint } from "../data/CountConstraint";
@@ -57,7 +57,7 @@ export function calculateValueMultipleNodeSatisfactionCalculation(constraint: Ab
         // If constraint is not applicable to any nodes in the stratum
         return {
             nodeToSatisfactionMapForConstraint: undefined,
-            stats: undefined
+            statistics: undefined
         };
     }
 
@@ -95,7 +95,7 @@ export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractCons
         multipleNode: multipleNodeSatConstraints,
     } = binConstraintsBySatisfactionCalculationType(stratumConstraints);
 
-    const stratumStatistics: { [constraintId: string]: MultipleSatisfactionStats } = {};
+    const stratumStatistics: { [constraintId: string]: MultipleNodeSatisfactionStatistics } = {};
 
     // Collect up all node satisfaction objects into one large lookup map
 
@@ -117,7 +117,7 @@ export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractCons
     for (let constraint of multipleNodeSatConstraints) {
         // For every "multiple node constraint"
         // Calculate satisfaction value for applicable stratum
-        const { nodeToSatisfactionMapForConstraint, stats } = calculateValueMultipleNodeSatisfactionCalculation(constraint, stratum.nodes);
+        const { nodeToSatisfactionMapForConstraint, statistics } = calculateValueMultipleNodeSatisfactionCalculation(constraint, stratum.nodes);
 
 
         if (nodeToSatisfactionMapForConstraint !== undefined && nodeToSatisfactionMapForConstraint !== null) {
@@ -130,9 +130,9 @@ export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractCons
             });
         }
 
-        if (stats !== undefined && stats !== null) {
+        if (statistics !== undefined && statistics !== null) {
             // Store limit constraint statistics per constraint
-            stratumStatistics[constraint.constraintDef._id] = stats;
+            stratumStatistics[constraint.constraintDef._id] = statistics;
         }
     }
 
@@ -253,7 +253,7 @@ export function calculateStratumSatisfactionValue(constraints: ReadonlyArray<Abs
             if (value !== undefined) {
                 // If a value is defined for this constraint's satisfaction,
                 // increment maximum possible satisfaction
-                maxSatisfaction++;
+                ++maxSatisfaction;
                 return stratumSatisfactionSum + value;
             } else return stratumSatisfactionSum;
 
@@ -292,7 +292,7 @@ export function calculateStratumSatisfactionValue(constraints: ReadonlyArray<Abs
 
 /**
  * Calculates the satisfaction value for one stratum.
- * 
+ * @deprecated Function not used. Retained for reference.
  * @param constraints 
  * @param stratum 
  */
@@ -516,58 +516,14 @@ export namespace Limit {
             }
         }
 
-        const stats = {
+        const statistics = {
             // Expected distribution among stratum nodes, based on constraint satisfaction of records
             expectedDistribution,
             // Actual distribution among stratum nodes
             actualDistribution
         };
 
-        return { nodeToSatisfactionMapForConstraint: nodeIdSatisfactionMap, stats: stats };
-
-        // // Get the distribution intersection to generate the number that fit the
-        // // "pigeonhole" arrangement
-        // let numberOfFittingNodes: number = 0;
-        // for (let expectedSatisfyingCount in expectedDistribution) {
-        //     const expectedNumberOfNodesForCount = expectedDistribution[expectedSatisfyingCount];
-        //     const actualNumberOfNodesForCount = actualDistribution[expectedSatisfyingCount] || 0;
-
-        //     // Increment number of fitting nodes by minimum of either the actual
-        //     // number of nodes or expected (this is the set "intersection")
-        //     numberOfFittingNodes += Math.min(actualNumberOfNodesForCount, expectedNumberOfNodesForCount);
-        // }
-
-        // let expectedDistributionClone = Object.assign({}, expectedDistribution);
-
-        // // For every node, check if it complies to the expected distribution
-        // for (const nodeId in nodeToSatisfyingRecordCountMap) {
-        //     const numberOfSatisfyingRecords = nodeToSatisfyingRecordCountMap[nodeId];
-        //     const remainingValidFlags = expectedDistributionClone[numberOfSatisfyingRecords];
-
-        //     if (remainingValidFlags === undefined) {
-        //         // Unexpected distribution
-        //         nodeIdSatisfactionMap[nodeId] = 0;
-        //     } else {
-        //         // Expected distribution
-        //         if (remainingValidFlags > 0) {
-        //             // Slot is available
-        //             expectedDistributionClone[numberOfSatisfyingRecords] -= 1;
-        //             nodeIdSatisfactionMap[nodeId] = 1;
-        //         } else {
-        //             // Max limit reached for numberOfSatisfyingRecords
-        //             nodeIdSatisfactionMap[nodeId] = 0;
-        //         }
-        //     }
-        // }
-
-
-        // return {
-        //     /** Number of nodes actually fitting the expected "pigeonhole" arrangement */
-        //     value: numberOfFittingNodes,
-
-        //     /** The number of applicable nodes considered */
-        //     nodes: numberOfNodes,
-        // };
+        return { nodeToSatisfactionMapForConstraint: nodeIdSatisfactionMap, statistics: statistics };
     }
 }
 

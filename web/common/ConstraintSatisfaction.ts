@@ -9,17 +9,17 @@ export interface NodeSatisfactionObject {
 
 export type MultipleSatisfactionObject = {
     nodeToSatisfactionMapForConstraint: { [key: string]: number | undefined },
-    stats: MultipleSatisfactionStats
+    statistics: MultipleNodeSatisfactionStatistics
 }
 
-export type MultipleSatisfactionStats = {
+export type MultipleNodeSatisfactionStatistics = {
     expectedDistribution: { [satisfyingCountInNode: number]: number },
     actualDistribution: { [satisfyingCountInNode: number]: number }
 }
 
 export interface SatisfactionState {
     satisfactionMap: SatisfactionMap,
-    statistics: { [nodeId: string]: MultipleSatisfactionStats }[]
+    statistics: { [nodeId: string]: MultipleNodeSatisfactionStatistics }[]
 }
 
 export function initConstraintSatisfactionState() {

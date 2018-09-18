@@ -2,8 +2,6 @@ import * as UUID from "../util/UUID";
 
 import { Data as IColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor, ColumnData } from "./ColumnData";
 import * as Record from "../../../common/Record";
-// import { GroupNodeRecordArrayMap } from "./GroupNodeRecordArrayMap";
-// import { Data as IColumnData } from "./ColumnData";
 
 import { parse } from "../util/Number";
 

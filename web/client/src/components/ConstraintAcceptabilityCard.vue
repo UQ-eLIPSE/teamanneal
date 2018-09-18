@@ -1,19 +1,20 @@
 <template>
-    <div class="main">
-        <div class="constraint-item">
-            <div class="sentence-groups">
-                <div class="sentence">
-                    <span>{{constraintSentence}}</span>
+  <div class="main">
+    <div class="constraint-item">
+      <div class="sentence-groups">
+        <div class="sentence">
+          <span>{{constraintSentence}}</span>
 
-                </div>
-                <div class="number-of-groups" :style="cardStyles">
-                    <span class="number">{{fulfilledNumber}}</span>
-                    <span class="number number-bottom">{{totalGroups}}</span>
-                    <span>pass</span>
-                </div>
-            </div>
         </div>
+        <div class="number-of-groups"
+             :style="cardStyles">
+          <span class="number">{{fulfilledNumber}}</span>
+          <span class="number number-bottom">{{totalGroups}}</span>
+          <span>pass</span>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -33,10 +34,10 @@ export default class ConstraintAcceptabilityCard extends Vue {
 
   /** Total number of nodes to which this constraint applies */
   @Prop totalGroups = p({ type: Number, required: true });
-  
+
 
   get constraintFilterText() {
-    return ConstraintSentence.getConstraintFilterText(this.constraint) ;
+    return ConstraintSentence.getConstraintFilterText(this.constraint);
   }
 
 
@@ -60,6 +61,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
   flex-shrink: 0;
   text-decoration: none;
 }
+
 .constraint-item {
   display: flex;
   flex-direction: column;

@@ -1,39 +1,43 @@
 <template>
-    <div class="results-editor">
-        <div class="workspace"
-             v-if="displayWorkspace">
-            <SpreadsheetTreeView2ColumnsFilter :items="columns"
-                                               :selectedIndices="columnsDisplayIndices"
-                                               @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
+  <div class="results-editor">
+    <div class="workspace"
+         v-if="displayWorkspace">
+      <SpreadsheetTreeView2ColumnsFilter :items="columns"
+                                         :selectedIndices="columnsDisplayIndices"
+                                         @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
-            <SpreadsheetTreeView2 class="spreadsheet"
-                                  :nodeRoots="nodeRoots"
-                                  :headerRow="headerRow"
-                                  :columnsDisplayIndices="columnsDisplayIndices"
-                                  :recordRows="recordRows"
-                                  :nodeNameMap="nameMap"
-                                  :nodeRecordMap="nodeRecordMap"
-                                  :nodeStyles="nodeStyles"
-                                  :idColumnIndex="idColumnIndex"
-                                  :hiddenNodes="hiddenNodes"
-                                  :onToggleNodeVisibility="onToggleNodeVisibility"
-                                  @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
-        </div>
-        <div class="get-started"
-             v-else>
-            <h1>Welcome</h1>
-            <p>The TeamAnneal Editor allows you to view and modify groups generated from the anneal process.</p>
-            <p>Get started by obtaining group data from
-                <router-link :to="'anneal'">running an anneal</router-link>, or
-                <a href="#import-results-package-file"
-                   @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
-        </div>
+      <SpreadsheetTreeView2 class="spreadsheet"
+                            :nodeRoots="nodeRoots"
+                            :headerRow="headerRow"
+                            :columnsDisplayIndices="columnsDisplayIndices"
+                            :recordRows="recordRows"
+                            :nodeNameMap="nameMap"
+                            :nodeRecordMap="nodeRecordMap"
+                            :nodeStyles="nodeStyles"
+                            :idColumnIndex="idColumnIndex"
+                            :hiddenNodes="hiddenNodes"
+                            :onToggleNodeVisibility="onToggleNodeVisibility"
+                            @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+    </div>
+    <div class="get-started"
+         v-else>
+      <h1>Welcome</h1>
+      <p>The TeamAnneal Editor allows you to view and modify groups generated from the anneal process.</p>
+      <p>Get started by obtaining group data from
+        <router-link :to="'anneal'">running an anneal</router-link>, or
+        <a href="#import-results-package-file"
+           @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
+    </div>
 
-        <ConstraintOverview v-if="displayWorkspace" class="constraint-overview" :constraints="constraints" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
-        </ConstraintOverview>
+    <ConstraintOverview v-if="displayWorkspace"
+                        class="constraint-overview"
+                        :constraints="constraints"
+                        :constraintSatisfactionMap="annealSatisfactionMap"
+                        :strata="strata">
+    </ConstraintOverview>
 
-        <ResultsEditorSideToolArea class="side-tool-area"
-                                   :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+    <ResultsEditorSideToolArea class="side-tool-area"
+                               :menuItems="menuBarItems"></ResultsEditorSideToolArea>
   </div>
 </template>
 
@@ -66,48 +70,48 @@ import Swap from "./results-editor-side-panels/Swap.vue";
 // import Help from "./results-editor-side-panels/Help.vue";
 
 const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
-    {
-        name: "import",
-        label: "Import",
-        region: "start",
-        component: ImportFile,
-    },
-    {
-        name: "export",
-        label: "Export",
-        region: "start",
-        component: ExportFile,
-    },
-    // {
-    //     name: "print",
-    //     label: "Print",
-    //     region: "start",
-    //     component: Print,
-    // },
-    {
-        name: "move",
-        label: "Move a person",
-        component: Move,
-    },
-    {
-        name: "swap",
-        label: "Swap people",
-        component: Swap,
-    },
-    // {
-    //     name: "add",
-    //     label: "Add a person or group",
-    // },
-    // {
-    //     name: "remove",
-    //     label: "Remove a person or group",
-    // },
-    // {
-    //     name: "help",
-    //     label: "Help",
-    //     region: "end",
-    //     component: Help,
-    // },
+  {
+    name: "import",
+    label: "Import",
+    region: "start",
+    component: ImportFile
+  },
+  {
+    name: "export",
+    label: "Export",
+    region: "start",
+    component: ExportFile
+  },
+  // {
+  //     name: "print",
+  //     label: "Print",
+  //     region: "start",
+  //     component: Print,
+  // },
+  {
+    name: "move",
+    label: "Move a person",
+    component: Move
+  },
+  {
+    name: "swap",
+    label: "Swap people",
+    component: Swap
+  }
+  // {
+  //     name: "add",
+  //     label: "Add a person or group",
+  // },
+  // {
+  //     name: "remove",
+  //     label: "Remove a person or group",
+  // },
+  // {
+  //     name: "help",
+  //     label: "Help",
+  //     region: "end",
+  //     component: Help,
+  // },
 ];
 
 @Component({
@@ -156,11 +160,8 @@ export default class ResultsEditor extends Vue {
     return this.state.constraintConfig.constraints;
   }
 
-
   get annealSatisfactionMap() {
-    // const satMap = this.state.satisfaction.satisfactionMap;
     return S.get(S.getter.GET_SATISFACTION).satisfactionMap;
-    // return undefined;
   }
 
   get partitionColumn() {
@@ -262,15 +263,14 @@ export default class ResultsEditor extends Vue {
     this.p_columnsDisplayIndices = indices;
   }
 
-
-  /** 
+  /**
    * Determines when to display the main workspace for the results editor,
    * containing the spreadsheet and other parts
    */
   get displayWorkspace() {
-      return this.nodeRoots.length > 0;
+    return this.nodeRoots.length > 0;
   }
-  
+
   visibleColumnListUpdateHandler(columnList: ReadonlyArray<number>) {
     this.columnsDisplayIndices = columnList;
   }
@@ -292,7 +292,7 @@ export default class ResultsEditor extends Vue {
   get menuBarItems() {
     return MENU_BAR_ITEMS;
   }
-  
+
   onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
     // When we have an active side panel tool open
     const activeSidePanelTool = S.state.sideToolArea.activeItem;
@@ -452,9 +452,9 @@ export default class ResultsEditor extends Vue {
 
     return map;
   }
-    openImportSidePanel() {
-        S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
-    }
+  openImportSidePanel() {
+    S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
+  }
 }
 </script>
 
@@ -473,15 +473,15 @@ export default class ResultsEditor extends Vue {
 }
 
 .workspace {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    position: relative;
-    overflow: none;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  position: relative;
+  overflow: none;
 
-    /** This sets the workspace to take the minimal amount of room required */
-    width: 0;
+  /** This sets the workspace to take the minimal amount of room required */
+  width: 0;
 }
 
 .side-tool-area {
@@ -490,26 +490,30 @@ export default class ResultsEditor extends Vue {
 }
 
 .spreadsheet {
-    flex-grow: 1;
+  flex-grow: 1;
 }
 
 .get-started {
-    width: 100%;
-    padding: 3em;
-    background: #f2f2f2;
-    background: linear-gradient(to bottom right, transparent, transparent 70%, rgba(73, 7, 94, 0.5)), #f2f2f2;
+  width: 100%;
+  padding: 3em;
+  background: #f2f2f2;
+  background: linear-gradient( to bottom right,
+  transparent,
+  transparent 70%,
+  rgba(73, 7, 94, 0.5)),
+  #f2f2f2;
 }
 
 .get-started h1 {
-    color: #49075E;
-    font-weight: 400;
-    font-size: 3em;
-    margin-top: 0;
+  color: #49075e;
+  font-weight: 400;
+  font-size: 3em;
+  margin-top: 0;
 }
 
 .get-started a,
 .get-started a:visited {
-    color: #00d;
+  color: #00d;
 }
 
 .constraint-overview {
