@@ -31,7 +31,9 @@ export enum ResultsEditorGetter {
     GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER = "Get common strata descriptor array in server order ([lowest/leaf, ..., highest])",
     GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY = "Get common constraint descriptor array",
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
-    GET_SATISFACTION = "Get satisfaction data"
+    GET_SATISFACTION = "Get satisfaction data",
+    GET_RECORD_LOOKUP_MAP = "Get record lookup map",
+    GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map"
 }
 
 const G = ResultsEditorGetter;
@@ -336,7 +338,51 @@ const getters = {
         });
     },
     [G.GET_SATISFACTION](state: State): SatisfactionState {
+    
         return state.satisfaction;
+    },
+    /**
+     * Copied existing record lookup map functionality from Results editor for now
+     */
+    [G.GET_RECORD_LOOKUP_MAP](state: State) {
+
+        if (!state.recordData || !state.recordData.source.columns || state.recordData.source.columns.length === 0) return {};
+
+        const recordRows = ColumnData.TransposeIntoCookedValueRowArray(state.recordData.source.columns);
+        const idColumnDesc = state.recordData.idColumn;
+
+        if (idColumnDesc === undefined) {
+            throw new Error("No ID column set");
+        }
+
+        const idColumn = state.recordData.source.columns.find(col => ColumnData.Equals(idColumnDesc, col));
+
+        if (idColumn === undefined) {
+            throw new Error("No ID column set");
+        }
+
+        const idColumnIndex = state.recordData.source.columns.indexOf(idColumn);
+
+        return recordRows.reduce((map, record) => {
+            const id = record[idColumnIndex];
+            map.set(id, record);
+            return map;
+        }, new Map<Record.RecordElement, Record.Record>());
+
+    },
+    /** Maps child node id to parent node id. For root nodes, parent is null */
+    [G.GET_CHILD_TO_PARENT_MAP](state: State): { [key: string]: (string | null) } {
+        const nodeRoots = state.groupNode.structure.roots;
+        const childToParentNodeMap: { [nodeId: string]: string | null } = {};
+
+        if (nodeRoots.length === 1) {
+            // If data was not partitioned i.e. only a single partition (by default)
+            nodeRoots[0].children.forEach((child) => mapChildToParentRecursively(childToParentNodeMap, child));
+        } else {
+            // Partitioned data. Cycle through all partitions
+            nodeRoots.forEach((root) => mapChildToParentRecursively(childToParentNodeMap, root))
+        }
+        return childToParentNodeMap;
     }
 }
 
@@ -373,6 +419,20 @@ function convertConstraintValue(columnDescriptor: IColumnData_MinimalDescriptor,
     }
 
     return value;
+}
+
+export function mapChildToParentRecursively(childToParentNodeMap: { [nodeId: string]: string | null }, node: GroupNode) {
+    if (node.type === "root") {
+        // Root node has no parent, assign null
+        childToParentNodeMap[node._id] = null;
+    }
+
+    if (node.type === "intermediate-stratum" || node.type === "root") {
+        node.children.forEach((child) => {
+            childToParentNodeMap[child._id] = node._id;
+            mapChildToParentRecursively(childToParentNodeMap, child);
+        });
+    }
 }
 
 export function init() {
