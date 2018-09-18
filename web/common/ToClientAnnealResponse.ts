@@ -12,7 +12,7 @@ export interface OutputResult {
 
 export interface SatisfactionResponse {
     satisfactionMap: ConstraintSatisfaction.SatisfactionMap,
-    statistics: {[key: string]:ConstraintSatisfaction.MultipleSatisfactionStats}
+    statistics: { [constraintId: string]: ConstraintSatisfaction.MultipleSatisfactionStats }
 }
 
 export interface Root {

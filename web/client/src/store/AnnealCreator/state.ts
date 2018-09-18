@@ -52,6 +52,7 @@ export function init() {
     return state;
 }
 
+/** Aggregates satisfaction objects (returned by server, per partition)  */
 export function extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfactionMap: DeepReadonly<SatisfactionResponse>[]) {
     
     const satisfactionMap = annealNodeRootSatisfactionMap.reduce<ConstraintSatisfaction.SatisfactionMap>((carry, sMap) => {

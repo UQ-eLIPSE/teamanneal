@@ -29,13 +29,11 @@
                    @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
         </div>
 
-        <ConstraintOverview v-if="displayWorkspace" class="constraint-overview" :constraints="constraintsArray" :limitConstraintStatistics="annealStratumStatistics" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
+        <ConstraintOverview v-if="displayWorkspace" class="constraint-overview" :constraints="constraints" :constraintSatisfactionMap="annealSatisfactionMap" :strata="strata">
         </ConstraintOverview>
 
         <ResultsEditorSideToolArea class="side-tool-area"
                                    :menuItems="menuBarItems"></ResultsEditorSideToolArea>
-    <!-- </div>
-    <ResultsEditorSideToolArea class="side-tool-area" :menuItems="menuBarItems"></ResultsEditorSideToolArea> -->
   </div>
 </template>
 
@@ -44,7 +42,7 @@
 <script lang="ts">
 import { Vue, Component } from "av-ts";
 
-import { ResultsEditor as S, AnnealCreator as S_AnnealCreator } from "../store";
+import { ResultsEditor as S } from "../store";
 
 import { GroupNode } from "../data/GroupNode";
 import { ColumnData } from "../data/ColumnData";
@@ -54,7 +52,6 @@ import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
 
 import { Record, RecordElement } from "../../../common/Record";
 
-// import { LimitConstraintSatisfaction } from "../data/Constraint";
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import ConstraintOverview from "./ConstraintOverview.vue";
@@ -135,11 +132,6 @@ export default class ResultsEditor extends Vue {
     return S.state;
   }
 
-  // TODO: Remove the need for getting creator state, replace with result editor's own state
-  get creatorState() {
-    return S_AnnealCreator.state;
-  }
-
   get recordData() {
     return this.state.recordData;
   }
@@ -160,74 +152,16 @@ export default class ResultsEditor extends Vue {
     return this.state.groupNode.nodeRecordArrayMap;
   }
 
-  get constraintsArray() {
+  get constraints() {
     return this.state.constraintConfig.constraints;
   }
 
-  get limitConstraints() {
-      return this.constraintsArray.filter((constraint) => constraint.type === "limit");
-  }
 
-  //TODO: Replace with Result editor's state when ready
-  // get annealResults() {
-  //   // const responseContent = (this.creatorState.annealRequest as any).response;
-  //   // const responseData = responseContent.data as any;
-
-  //   // We're working on the presumption that we definitely have results
-  //   // return responseData.results!;
-  //   this.state.satisfaction
-  //   return [];
-  // }
-
-  //TODO: Replace with Result editor's state when ready
   get annealSatisfactionMap() {
-    return this.state.satisfaction.satisfactionMap;
-    // return this.annealResults.map((res: any) => res.result!.satisfaction).reduce((carry: any, sMap: any) => { 
-    //     // const satisfactionMap = sMap;
-    //     const satisfactionMap = sMap.satisfactionMap;
-    //     return Object.assign(carry, satisfactionMap);
-        
-    //     }, {});
+    // const satMap = this.state.satisfaction.satisfactionMap;
+    return S.get(S.getter.GET_SATISFACTION).satisfactionMap;
+    // return undefined;
   }
-
-  get annealStratumStatistics() {
-    // const partitionStatsArray = this.annealResults.map((result: any) => result.result!.satisfaction.statistics);
-    const partitionStatsArray = this.state.satisfaction.statistics;
-
-    
-    const limitConstraintDistributionMap = this.limitConstraints.map((constraint) => {
-        
-        type KeyNumPair = {[key: string]: number|undefined};
-        const distributionMap: {actual: KeyNumPair, expected:KeyNumPair} = {actual: {}, expected: {}};
-
-        partitionStatsArray.forEach((statistics: any) => {
-            const stats = statistics[constraint._id];
-
-            for(let numberOfNodes in stats.actualDistribution) {
-                if(distributionMap.actual[numberOfNodes] === undefined) distributionMap.actual[numberOfNodes] = stats.actualDistribution[numberOfNodes];
-                else {
-                    distributionMap.actual[numberOfNodes] += stats.actualDistribution[numberOfNodes];
-                }
-            }
-
-
-            for(let numberOfNodes in stats.expectedDistribution) {
-                if(distributionMap.expected[numberOfNodes] === undefined) distributionMap.expected[numberOfNodes] = stats.expectedDistribution[numberOfNodes];
-                else {
-                    distributionMap.expected[numberOfNodes] += stats.expectedDistribution[numberOfNodes];
-                }
-            }
-        });
-
-        return {constraint: constraint, distributionMap: distributionMap};
-    })
-
-
-    return limitConstraintDistributionMap;
-    
-      
-  }
-
 
   get partitionColumn() {
     const partitionColumnDesc = this.recordData.partitionColumn;
@@ -328,6 +262,15 @@ export default class ResultsEditor extends Vue {
     this.p_columnsDisplayIndices = indices;
   }
 
+
+  /** 
+   * Determines when to display the main workspace for the results editor,
+   * containing the spreadsheet and other parts
+   */
+  get displayWorkspace() {
+      return this.nodeRoots.length > 0;
+  }
+  
   visibleColumnListUpdateHandler(columnList: ReadonlyArray<number>) {
     this.columnsDisplayIndices = columnList;
   }
@@ -348,14 +291,6 @@ export default class ResultsEditor extends Vue {
 
   get menuBarItems() {
     return MENU_BAR_ITEMS;
-  }
-
-  /** 
-   * Determines when to display the main workspace for the results editor,
-   * containing the spreadsheet and other parts
-   */
-  get displayWorkspace() {
-      return this.nodeRoots.length > 0;
   }
   
   onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
@@ -482,19 +417,6 @@ export default class ResultsEditor extends Vue {
       return map;
     }, new Map<RecordElement, Record>());
   }
-
-//   get numberOfPassingGroupsPerConstraintMap() {
-//     const partitionNodeArrayMap = S.get(S.getter.GET_PARTITION_NODE_MAP);
-//     const nodeRecordsArrayMap = S.get(S.getter.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP);
-//     return LimitConstraintSatisfaction.getNumberOfPassingGroupsPerConstraint(
-//       this.constraintsArray,
-//       nodeRecordsArrayMap,
-//       partitionNodeArrayMap,
-//       this.generateNodeStratumMap,
-//       this.recordLookupMap,
-//       this.columns
-//     );
-//   }
 
   // TODO: Remove this and implement properly in its own ticket.
   get generateNodeStratumMap() {

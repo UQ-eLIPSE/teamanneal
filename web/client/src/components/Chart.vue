@@ -2,7 +2,7 @@
 
 import { Doughnut, mixins } from "vue-chartjs";
 
-
+/** THE CHART FEATURE MAY BE USEFUL IN THE FUTURE, NOT BEING USED FOR NOW */
 export default {
 
   extends: Doughnut,

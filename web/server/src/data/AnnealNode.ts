@@ -72,19 +72,29 @@ export function fillSizeMap(sizeMap: WeakMap<AnnealNode.Node, number>, node: Ann
     // NOTE: Returned number is only for internal use for the Array#reduce calls
     (function _fillSizeMap(node: AnnealNode.Node): number {
         // For the leaf nodes with records attached to them, return the number of records
-        if (node.type === "stratum-records") {
-            const size = node.recordIds.length;
-            sizeMap.set(node, size);
 
-            return size;
+        try {
+            if (node.type === "stratum-records") {
+                const size = node.recordIds.length;
+                sizeMap.set(node, size);
+
+                return size;
+            }
+
+            // For general nodes with children, sum up the sizes of all children
+            const children = node.children;
+            const totalSize = children.reduce((carry, child) => carry + _fillSizeMap(child), 0);
+            sizeMap.set(node, totalSize);
+
+            return totalSize;
+        } catch (error) {
+            console.log('Fill size map, error encountered');
+            console.log(node);
+            console.log(error);
+            return 0;
         }
 
-        // For general nodes with children, sum up the sizes of all children
-        const children = node.children;
-        const totalSize = children.reduce((carry, child) => carry + _fillSizeMap(child), 0);
-        sizeMap.set(node, totalSize);
 
-        return totalSize;
     })(node);
 }
 

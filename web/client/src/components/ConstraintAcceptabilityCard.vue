@@ -12,12 +12,7 @@
                     <span>pass</span>
                 </div>
             </div>
-
         </div>
-
-        <!-- <div v-if="isLimitTypeConstraint">
-          <LimitSatisfactionChart :stratumLabel="stratumLabel" :constraintFilterText="constraintFilterText" :data="limitConstraintDistributionData"></LimitSatisfactionChart>
-        </div> -->
     </div>
 </template>
 
@@ -25,13 +20,8 @@
 import { Vue, Component, Prop, p } from "av-ts";
 import { Data as IConstraint } from "../data/Constraint";
 import { ConstraintSentence } from "../data/Constraint";
-import LimitSatisfactionChart from "./LimitSatisfactionChart.vue";
 
-@Component({
-  components: {
-    LimitSatisfactionChart
-  }
-})
+@Component
 export default class ConstraintAcceptabilityCard extends Vue {
   @Prop constraint = p<IConstraint>({ required: true });
 
@@ -43,8 +33,6 @@ export default class ConstraintAcceptabilityCard extends Vue {
 
   /** Total number of nodes to which this constraint applies */
   @Prop totalGroups = p({ type: Number, required: true });
-
-  @Prop limitConstraintStatistics = p<any>({ required: false });
   
 
   get constraintFilterText() {
@@ -56,20 +44,12 @@ export default class ConstraintAcceptabilityCard extends Vue {
     return ConstraintSentence.convertConstraintToSentence(this.constraint, this.stratumLabel);
   }
 
-  get isLimitTypeConstraint() {
-    return this.constraint.type === "limit";
-  }
-
   get cardStyles() {
     const passingGroupsProportion = this.fulfilledNumber / this.totalGroups;
     return {
       background: `hsl(${passingGroupsProportion * 120}, 100%, 40%)`
     };
   }
-
-  // get limitConstraintDistributionData() {
-  //   return this.limitConstraintStatistics;
-  // }
 }
 </script>
 

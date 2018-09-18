@@ -57,7 +57,7 @@ export enum ResultsEditorAction {
 
     SWAP_RECORDS = "Swapping records",
 
-    RECALCULATE_SATISFACTION = "Recalculating satisfaction"
+    CALCULATE_SATISFACTION = "Calculating satisfaction"
 }
 
 /** Shorthand for Action enum above */
@@ -82,9 +82,6 @@ const actions = {
     async [A.HYDRATE](context: Context, dehydratedState: string) {
         const state = deserialiseWithUndefined<State>(dehydratedState);
 
-        // Hydrate with satisfaction data
-        commit(context, M.SET_SATISFACTION_DATA, state.satisfaction);
-        
         await dispatch(context, A.RESET_STATE, undefined);
 
         await dispatch(context, A.SET_RECORD_DATA, state.recordData);
@@ -98,7 +95,7 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, state.groupNode.structure);
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
-        
+
 
         if (state.sideToolArea.activeItem !== undefined) {
             await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
@@ -106,9 +103,18 @@ const actions = {
             await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
         }
 
-        
+        // Note: satisfaction needs to be set last since it needs preceding configuration
+
+        // Hydrate with satisfaction data
+        if (!state.satisfaction) {
+            // Recalculate satisfaction server-side with current configuration
+            await dispatch(context, A.CALCULATE_SATISFACTION, undefined);
+        } else {
+            // Hydrate with existing satisfaction data
+            commit(context, M.SET_SATISFACTION_DATA, state.satisfaction);
+        }
     },
-    async [A.RECALCULATE_SATISFACTION](context: Context) {
+    async [A.CALCULATE_SATISFACTION](context: Context) {
 
         const constraints = context.getters[ResultsEditorGetter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY];
         const columns = context.getters[ResultsEditorGetter.GET_COMMON_COLUMN_DESCRIPTOR_ARRAY];
@@ -117,18 +123,29 @@ const actions = {
         const annealNodes = context.getters[ResultsEditorGetter.GET_COMMON_ANNEALNODE_ARRAY];
 
         const requestBody = SatisfactionCalculationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes);
-        const { request, token } = SatisfactionCalculationRequest.createRequest(requestBody);
+        const { request } = SatisfactionCalculationRequest.createRequest(requestBody);
 
-        token;
         // Wait for response
-        const response = await request;
+        try {
+            const response = await request;
 
-        // Set response data
-        const partitionSatisfactionArray = response.data;
+            // Set response data
+            const partitionSatisfactionArray = response.data;
 
-        const satisfaction = extractSatisfactionDataFromPartitionSatisfactionArray(partitionSatisfactionArray);
+            const satisfaction = extractSatisfactionDataFromPartitionSatisfactionArray(partitionSatisfactionArray);
 
-        commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+            // Reset existing satisfaction
+            commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+            
+            // Set new satisfaction data
+            commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+        } catch (error) {
+            // TODO: Proper error handling w/ message
+            alert('Satisfaction could not be calculated. Please try again.');
+
+            // Clear satisfaction data
+            commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+        }
 
     },
     async [A.DEHYDRATE](context: Context, { deleteSideToolAreaActiveItem }: Partial<{ deleteSideToolAreaActiveItem: boolean }>) {
@@ -175,6 +192,8 @@ const actions = {
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
         commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+
         await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 

@@ -36,7 +36,7 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
         activeItem: SidePanelActiveTool | undefined,
     },
 
-    satisfaction: { satisfactionMap: ConstraintSatisfaction.SatisfactionMap, statistics: { [nodeId: string]: ConstraintSatisfaction.MultipleSatisfactionStats }[] }
+    satisfaction: ConstraintSatisfaction.SatisfactionState
 }
 
 export function init() {
@@ -56,10 +56,7 @@ export function init() {
         sideToolArea: {
             activeItem: undefined,
         },
-        satisfaction: {
-            satisfactionMap: {},
-            statistics: []
-        }
+        satisfaction: ConstraintSatisfaction.initConstraintSatisfactionState()
     };
 
     return state;

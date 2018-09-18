@@ -1,10 +1,6 @@
 <template>
     <div class="limit-satisfaction-charts">
-        <!-- <Chart :chart-data="chartDataActual" :options="options"></Chart> -->
-        <!-- <Chart :chart-data="chartDataExpected" :options="options"></Chart> -->
-        <!-- <Chart :chart-data="expectedChartDatasetPie" :height="200" :options="generateOptions('Expected Distribution', true)"></Chart> -->
         <Chart :chart-data="chartData" :height="200" :options="generatedOptions"></Chart>
-
     </div>
 </template>
 
@@ -13,7 +9,8 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 import Chart from "./Chart.vue";
-// const colors = ["red", "green", "blue", "orange", "purple"];
+
+/** THE CHART FEATURE MAY BE USEFUL IN THE FUTURE, NOT BEING USED FOR NOW */
 @Component({
   components: {
     Chart

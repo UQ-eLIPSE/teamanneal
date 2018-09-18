@@ -146,7 +146,7 @@ export default class Move extends Vue {
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
 
         // Recalculate satisfaction after successful swap operation
-        await S.dispatch(S.action.RECALCULATE_SATISFACTION, undefined);
+        await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
     }
 
     async fetchSatisfactionTestPermutationData() {

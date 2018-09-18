@@ -16,3 +16,14 @@ export type MultipleSatisfactionStats = {
     expectedDistribution: { [satisfyingCountInNode: number]: number },
     actualDistribution: { [satisfyingCountInNode: number]: number }
 }
+
+export interface SatisfactionState {
+    satisfactionMap: SatisfactionMap,
+    statistics: { [nodeId: string]: MultipleSatisfactionStats }[]
+}
+
+export function initConstraintSatisfactionState() {
+    const obj: SatisfactionState = { satisfactionMap: {}, statistics: [] };
+
+    return obj;
+}

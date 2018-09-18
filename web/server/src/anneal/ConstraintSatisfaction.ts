@@ -53,16 +53,12 @@ export function calculateValueMultipleNodeSatisfactionCalculation(constraint: Ab
 
     // If no nodes are left, we can't really generate a meaningful result
 
-    // TODO: Review commented out code
     if (applicableNodes.length === 0) {
+        // If constraint is not applicable to any nodes in the stratum
         return {
             nodeToSatisfactionMapForConstraint: undefined,
             stats: undefined
         };
-        //     return {
-        //     value: undefined,
-        //     nodes: applicableNodes.length,
-        // };
     }
 
     switch (constraint.constraintDef.type) {
@@ -99,7 +95,7 @@ export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractCons
         multipleNode: multipleNodeSatConstraints,
     } = binConstraintsBySatisfactionCalculationType(stratumConstraints);
 
-    const stratumStatistics: { [key: string]: MultipleSatisfactionStats } = {};
+    const stratumStatistics: { [constraintId: string]: MultipleSatisfactionStats } = {};
 
     // Collect up all node satisfaction objects into one large lookup map
 
@@ -118,30 +114,28 @@ export function generateSingleStratumMap(constraints: ReadonlyArray<AbstractCons
         }, {});
 
     // Second pass: all "multiple node satisfaction calculation" constraints
-    multipleNodeSatConstraints.forEach((constraint) => {
+    for (let constraint of multipleNodeSatConstraints) {
+        // For every "multiple node constraint"
+        // Calculate satisfaction value for applicable stratum
         const { nodeToSatisfactionMapForConstraint, stats } = calculateValueMultipleNodeSatisfactionCalculation(constraint, stratum.nodes);
-        console.log('\n\n----------Stats for Stratum ' + stratum.id);
-        if (nodeToSatisfactionMapForConstraint === undefined) return;
-        Object.keys(nodeToSatisfactionMapForConstraint).forEach((nodeId: string) => {
-            if (satisfactionMap[nodeId] === undefined) satisfactionMap[nodeId] = {};
-            satisfactionMap[nodeId][constraint.constraintDef._id] = nodeToSatisfactionMapForConstraint[nodeId];
-        });
 
-        if (stats === undefined) return;
 
-        // if(stratumStatistics[stratum.id] === undefined) stratumStatistics[stratum.id] = {};
+        if (nodeToSatisfactionMapForConstraint !== undefined && nodeToSatisfactionMapForConstraint !== null) {
+            // For every node in current stratum
+            Object.keys(nodeToSatisfactionMapForConstraint).forEach((nodeId: string) => {
 
-        // TODO: Implement better method to deep copy objects
-        stratumStatistics[constraint.constraintDef._id] = JSON.parse(JSON.stringify(stats));
-        console.log('Current state of stratumStatistics : ');
-        console.log(stratumStatistics);
-        console.log(stratumStatistics[constraint.constraintDef._id]);
-    });
-    console.log('Satisfaction Map --------');
-    console.log(satisfactionMap);
-    console.log('Stratum statistics :-');
-    console.log(stratumStatistics);
-    // return satisfactionMap;
+                // Add constraint's satisfaction value (for that node) to the satisfaction map
+                if (satisfactionMap[nodeId] === undefined) satisfactionMap[nodeId] = {};
+                satisfactionMap[nodeId][constraint.constraintDef._id] = nodeToSatisfactionMapForConstraint[nodeId];
+            });
+        }
+
+        if (stats !== undefined && stats !== null) {
+            // Store limit constraint statistics per constraint
+            stratumStatistics[constraint.constraintDef._id] = stats;
+        }
+    }
+
     return { satisfactionMap: satisfactionMap, stratumStatistics: stratumStatistics };
 
 }
@@ -198,12 +192,17 @@ export function binConstraintBySatisfactionCalculationType(constraint: AbstractC
  * Generates a satisfaction map object that covers all given strata.
  */
 export function generateMap(constraints: ReadonlyArray<AbstractConstraint>, strata: ReadonlyArray<AnnealStratum>) {
-    // Generate satisfaction map of all stratum nodes combined into one
-    const satisfactionMap = strata.map(stratum => generateSingleStratumMap(constraints, stratum).satisfactionMap)
+
+    // Generate satisfaction data for every stratum
+    const strataSatisfaction = strata.map(stratum => generateSingleStratumMap(constraints, stratum));
+
+    // Combine all satisfaction maps (per stratum) into a single map
+    const satisfactionMap = strataSatisfaction.map(sat => sat.satisfactionMap)
         .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
 
-
-    const statisticsMap = strata.map(stratum => generateSingleStratumMap(constraints, stratum).stratumStatistics)
+    // Generate satisfaction statistics map
+    // Combine all satisfaction statistics (per stratum) into one map 
+    const statisticsMap = strataSatisfaction.map(sat => sat.stratumStatistics)
         .reduce((carry, stratumSatisfactionMap) => Object.assign(carry, stratumSatisfactionMap), {});
 
     return { satisfactionMap: satisfactionMap, statistics: statisticsMap };
@@ -451,29 +450,33 @@ export namespace Limit {
         };
     }
 
-    function generateMinMaxFromDistribution(distribution: { [key: string]: number }) {
+    function generateMinMaxFromDistribution(distribution: { [satisfyingRecordCount: string]: number }) {
+        // The distribution describes [satisfyingRecordCount]: Number of nodes which have that record count
         const sortedDistribution = Object.keys(distribution)
             .map((satisfyingRecordCountString: string) => parseInt(satisfyingRecordCountString))
+            // Sort distribution
             .sort((a, b) => a - b);
-        
+
+        // Return minimum and maximum record count extracted from the distribution
         return { minSatisfyingRecordCount: sortedDistribution[0], maxSatisfyingRecordCount: sortedDistribution[sortedDistribution.length - 1] }
 
     }
 
     export function calculateSatisfaction(constraint: LimitConstraint, nodes: ReadonlyArray<AnnealStratumNode>): MultipleSatisfactionObject {
         // We count the satisfying record count below = number to distribute
+        /** Qualifying record count based on constraint */
         let numberToDistribute: number = 0;
-    
+
         // Go through nodes and get the actual distribution and also accumulate
         // the total number of leaves/records to distribute
         const actualDistribution: { [satisfyingCountInNode: number]: number } = {};
-        
+
         /** Maps node id to number of satisfying records contained by the node */
         const nodeToSatisfyingRecordCountMap: { [key: string]: number } = {};
 
-        
+        /** Total number of nodes */
         const numberOfNodes = nodes.length;
-        
+
         /** Maps node id to node satisfaction */
         const nodeIdSatisfactionMap: { [key: string]: number | undefined } = {};
 
@@ -497,23 +500,29 @@ export namespace Limit {
         // stratum and the number of records to distribute among them
         const expectedDistribution = generateExpectedDistribution(numberOfNodes, numberToDistribute);
 
-        // Find minimum and maximum record count values
+        // Find minimum and maximum qualifying record count values
         const { minSatisfyingRecordCount, maxSatisfyingRecordCount } = generateMinMaxFromDistribution(expectedDistribution);
 
         // Fail any nodes which have satisfying record count outside the (min, max) range
-        for(const nodeId in nodeToSatisfyingRecordCountMap) {
+        // Generate a one-to-one mapping between nodes and limit constraint satisfaction values
+        for (const nodeId in nodeToSatisfyingRecordCountMap) {
             const numSatisfyingRecords = nodeToSatisfyingRecordCountMap[nodeId];
-            if(numSatisfyingRecords < minSatisfyingRecordCount || numSatisfyingRecords > maxSatisfyingRecordCount) {
+            if (numSatisfyingRecords < minSatisfyingRecordCount || numSatisfyingRecords > maxSatisfyingRecordCount) {
+                // record count of the node lies outside the distribution limits
                 nodeIdSatisfactionMap[nodeId] = 0;
             } else {
+                // Record count is within the (min, max) range
                 nodeIdSatisfactionMap[nodeId] = 1;
             }
         }
 
         const stats = {
+            // Expected distribution among stratum nodes, based on constraint satisfaction of records
             expectedDistribution,
+            // Actual distribution among stratum nodes
             actualDistribution
         };
+
         return { nodeToSatisfactionMapForConstraint: nodeIdSatisfactionMap, stats: stats };
 
         // // Get the distribution intersection to generate the number that fit the

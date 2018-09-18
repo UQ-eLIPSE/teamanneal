@@ -13,6 +13,7 @@ import * as Constraint from "../../../../common/Constraint";
 import * as RecordDataColumn from "../../../../common/RecordDataColumn";
 
 import { reverse } from "../../util/Array";
+import { SatisfactionState } from "../../../../common/ConstraintSatisfaction";
 
 type GetterFunction<G extends ResultsEditorGetter> = typeof getters[G];
 
@@ -30,6 +31,7 @@ export enum ResultsEditorGetter {
     GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER = "Get common strata descriptor array in server order ([lowest/leaf, ..., highest])",
     GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY = "Get common constraint descriptor array",
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
+    GET_SATISFACTION = "Get satisfaction data"
 }
 
 const G = ResultsEditorGetter;
@@ -333,6 +335,9 @@ const getters = {
             return rootNode;
         });
     },
+    [G.GET_SATISFACTION](state: State): SatisfactionState {
+        return state.satisfaction;
+    }
 }
 
 function getAllChildNodes(node: GroupNode, nodeArray: any[]) {

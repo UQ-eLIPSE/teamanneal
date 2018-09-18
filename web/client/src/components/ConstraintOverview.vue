@@ -5,7 +5,7 @@
             <div class="stratum" v-for="stratum in strata" v-if="getConstraintsArrayByStratum(stratum).length > 0" :key="stratum._id">
                 <h2>{{stratum.label}} Constraints</h2>
 
-                <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)" class="card" :key="constraint._id" :fulfilledNumber="getFulfilledNumberOfGroups(constraint)" :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)" :stratumLabel="getStratumLabel(constraint)" :limitConstraintStatistics="getLimitConstraintStatistics(constraint)" :constraint="constraint"> </ConstraintAcceptabilityCard>
+                <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)" class="card" :key="constraint._id" :fulfilledNumber="getFulfilledNumberOfGroups(constraint)" :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)" :stratumLabel="getStratumLabel(constraint)" :constraint="constraint"> </ConstraintAcceptabilityCard>
             </div>
 
         </div>
@@ -19,8 +19,6 @@ import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 import { Stratum } from "../data/Stratum";
 import ConstraintAcceptabilityCard from "./ConstraintAcceptabilityCard.vue";
 
-// type LimitConstraintPassCountMap = { [constraintId: string]: { pass: number, total: number } };
-
 @Component({
   components: {
     ConstraintAcceptabilityCard
@@ -33,35 +31,22 @@ export default class ConstraintOverview extends Vue {
 
   @Prop strata = p<Stratum[]>({ required: true });
 
-  @Prop limitConstraintStatistics = p<any>({ required: false });
-  /** Map of constraint to number of groups passing that constraint */
-  // @Prop limitConstraintPassCount = p<LimitConstraintPassCountMap>({ required: false });
-
   getFulfilledNumberOfGroups(constraint: IConstraint) {
     const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
-
-    // Redundant since functionality shifted to the server
-    // if (constraint.type === "limit") {
-    //     // If limit constraint, get value from limit constraint pass count prop
-    //     const passed = this.limitConstraintPassCount![constraint._id].pass;
-    //     return passed === undefined ? 0 : passed;
-    // }
+    if(!nodesUnderConstraint) return 0;
 
     const count = nodesUnderConstraint.filter(nodeId => (this.constraintSatisfactionMap[nodeId][constraint._id] as number) === 1).length;
+
     return count;
   }
 
-  getLimitConstraintStatistics(constraint: IConstraint) {
-    if (this.limitConstraintStatistics === undefined) return undefined;
-
-    if (constraint.type === "limit") {
-      return this.limitConstraintStatistics.find((distributionObject: any) => distributionObject.constraint._id === constraint._id);
-    }
-
-    return undefined;
-  }
-
   getNumberOfGroupsWithConstraintApplicable(constraint: IConstraint) {
+    if(!Array.isArray(this.constraintToNodeMap[constraint._id])) {
+      // Satisfaction data not available
+      // TODO: Attempt to recalculate satisfaction data
+      
+      return 0;
+    }
     return this.constraintToNodeMap[constraint._id].length;
   }
 
