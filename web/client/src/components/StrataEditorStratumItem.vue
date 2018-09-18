@@ -3,7 +3,7 @@
         <!-- Special information layout for partitions -->
         <template v-if="isPartition">
             <div>
-                <span class="stratum-label">Partition ({{ stratum.label }})</span>
+                <span class="stratum-label">Pool ({{ stratum.label }})</span>
             </div>
             <div class="stratum-config">
                 <div>

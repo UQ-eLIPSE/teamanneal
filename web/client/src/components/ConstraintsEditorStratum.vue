@@ -32,7 +32,7 @@
         <div v-else
              class="stratum-constraints">
             <div>
-                <i>Constraints are not applicable to partitions.</i>
+                <i>Constraints are not applicable to pools.</i>
             </div>
         </div>
     </div>
