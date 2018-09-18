@@ -9,7 +9,7 @@
                 :colspan="totalNumberOfColumns - depth"
                 @click="onHeadingClick">
                 <div class="anr-heading-content">
-                    <div class="anr-label">{{ label }}</div>
+                    <div class="anr-label" :id="node._id">{{ label }}</div>
                     <!-- Node roots/partitions do not have constraints and thus no satisfaction values -->
                 </div>
             </td>

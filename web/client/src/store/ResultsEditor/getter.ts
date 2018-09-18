@@ -30,6 +30,9 @@ export enum ResultsEditorGetter {
     GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER = "Get common strata descriptor array in server order ([lowest/leaf, ..., highest])",
     GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY = "Get common constraint descriptor array",
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
+    GET_THE_REQUEST_ID_JUMP = "Get request ID JUMP",
+    GET_THE_REQUEST_DEPTH = "Get request ID DEPTH"
+
 }
 
 const G = ResultsEditorGetter;
@@ -333,6 +336,14 @@ const getters = {
             return rootNode;
         });
     },
+
+    [G.GET_THE_REQUEST_ID_JUMP](state: State) {
+        return state.requestIdJump;
+    },
+
+    [G.GET_THE_REQUEST_DEPTH](state: State) {
+        return state.requestDepth;
+    }
 }
 
 function getAllChildNodes(node: GroupNode, nodeArray: any[]) {

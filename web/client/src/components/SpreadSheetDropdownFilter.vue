@@ -5,8 +5,8 @@
             <option v-for="(n, i) in selectionGroup" :key="i" :value="n.nodeId">{{n.label}}</option>
         </select>
         <h1>Display Level</h1>
-        <select>
-            <option v-for="(s, i) in strataLevels" :key="i">{{s}}</option>
+        <select v-model="selectedDepth">
+            <option v-for="(s, i) in strataLevels" :key="i" :value="i">{{s}}</option>
         </select>
     </div>
 </template>
@@ -50,6 +50,11 @@ export default class SpreadSheetDropdownFilter extends Vue {
         const levels: string[] = [];
         const strata = S.state.strataConfig.strata;
 
+        // Get the partition if applicable
+        if (S.state.recordData.partitionColumn) {
+            levels.push(S.state.recordData.partitionColumn.label);
+        }
+
         for(let i = 0; i < strata.length; i++) {
             levels.push(strata[i].label);
         }
@@ -65,8 +70,9 @@ export default class SpreadSheetDropdownFilter extends Vue {
     get selectionGroup() {
         const strataStructure = S.state.groupNode.structure.roots;
         const output: NodeLabel[] = [];
+
         for(let i = 0; i <  strataStructure.length; i++) {
-            output.concat(this.loopLevel(strataStructure[i], output, 0));
+            this.loopLevel(strataStructure[i], output, 0);
         }
 
         return output;

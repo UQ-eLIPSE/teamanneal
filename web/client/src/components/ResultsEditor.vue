@@ -289,22 +289,20 @@ export default class ResultsEditor extends Vue {
 
     // We need to hide the node visibility based on the requested id
     get requestId() {
-        // In essence this calls the computed tag
-        this.pRequestId = this.state.requestIdJump;
-        this.jumpAndScroll();
-        return this.state.requestIdJump;
+        // Use getters so the store will realise the change
+        return S.get(S.getter.GET_THE_REQUEST_ID_JUMP);
     }
 
-    get displayDepth() {
-        return this.state.requestDepth;
+    get requestDepth(): number {
+        return S.get(S.getter.GET_THE_REQUEST_DEPTH);
     }
 
-    @Watch("state.requestIdJump")
+    @Watch("requestId")
     jumpAndScroll(_value: string, _oldValue: string) {
-        // The idea is to uncollapse everything associated with the path
+        // The idea If targetdepth <= depth, add it to the list associated with the path
         let path: string[] = [];
         for (let i = 0; i < this.nodeRoots.length; i++) {
-            let maybePath = this.recursePath(this.pRequestId, this.nodeRoots[i], []);
+            let maybePath = this.recursePath(_value, this.nodeRoots[i], []);
 
             // Stop searching at the top level
             if (maybePath !== null) {
@@ -312,18 +310,55 @@ export default class ResultsEditor extends Vue {
                 break;
             }
         }
-
         // Now collapse
         for (let i  = 0; i < path.length; i++) {
             Vue.delete(this.hiddenNodes, path[i]);
         }
 
         // Now scroll. Since the startum are manually created. We can safely use the id
-        const elmnt = document.getElementById(this.pRequestId);
+        const elmnt = document.getElementById(_value);
         if(elmnt !== null) {
             elmnt.scrollIntoView();
         }
 
+    }
+
+    @Watch("requestDepth")
+    collapseOnDepth(_value: number, _oldValue: number) {
+        // Traverse through the path and delete all the nodes necessary
+        Object.keys(this.hiddenNodes).forEach((key) => {
+            Vue.delete(this.hiddenNodes, key);
+        });
+
+        let output: string[] = [];
+        const TOP_LEVEL = 0;
+
+        for (let i = 0; i < this.nodeRoots.length; i++) {
+            let tempOutput = this.recursePathDepth(this.nodeRoots[i], _value, TOP_LEVEL, []);
+            output = output.concat(tempOutput);
+        }
+
+        // Now hide
+        for(let i = 0; i < output.length; i++) {
+            Vue.set(this.hiddenNodes, output[i], true);
+        }
+    }
+
+    // If targetdepth <= depth, add it to the list
+    recursePathDepth(incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, targetDepth: number, depth: number, output: string[]) {
+
+        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
+            for(let i = 0 ; i < incomingNode.children.length; i++) {
+                this.recursePathDepth(incomingNode.children[i], targetDepth, depth + 1, output);
+            }
+        }
+
+        // Push and grab the children too
+        if (targetDepth < depth) {
+            output.push(incomingNode._id);
+        }
+
+        return output;
     }
 
     recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
