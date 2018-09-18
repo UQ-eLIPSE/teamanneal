@@ -29,33 +29,33 @@
                         @click="clearTargetGroup">Clear</button>
             </div>
         </div>
-        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
-             class="test-permutations">
-            <ul>
-                <li v-for="x in sortedTestPermutationData"
-                    :key="x.toNode"
-                    @click="setTargetGroup(x.toNode)">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
-            </ul>
+
+
+        <MoveSuggestionsDisplay @groupSelected="setTargetGroup"
+                                @closeSuggestions="clearSatisfactionTestPermutationData"
+                                :data="data"
+                                :sortedTestPermutationData="sortedTestPermutationData" @clearSuggestions="clearSatisfactionTestPermutationData"></MoveSuggestionsDisplay>
+
+        <div class="form-block">
             <button class="button secondary small"
-                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
+                    @click="onGetSuggestionsButtonClick">Get suggestions</button>
+            <button class="button secondary small">Advanced...</button>
         </div>
-        <!-- <div class="form-block"> -->
-            <!-- <button class="button secondary small" -->
-                    <!-- @click="onGetSuggestionsButtonClick">Get suggestions</button> -->
-            <!-- <button class="button secondary small">Advanced...</button> -->
-        <!-- </div> -->
         <div class="form-block"
              style="text-align: right;">
             <button class="button small"
                     @click="commitMove">Move</button>
         </div>
+
+
+
     </div>
 </template>
 
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../../store";
 
@@ -63,14 +63,35 @@ import { MoveSidePanelToolData } from "../../data/MoveSidePanelToolData";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+import MoveSuggestionsDisplay from "../MoveSuggestionsDisplay.vue";
+import { Suggestions } from "../../data/Suggestions";
 
-@Component
+@Component({
+    components: {
+        MoveSuggestionsDisplay
+    }
+})
 export default class Move extends Vue {
     /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
-    
+
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
+
+    /** Watches side panel data in store and updates suggestions automatically */
+    @Watch('data')
+    handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
+        
+        if(newVal && newVal.sourcePerson) {
+            if(oldVal && oldVal.sourcePerson) {
+                if(oldVal.sourcePerson.node !== newVal.sourcePerson.node) {
+                    this.onGetSuggestionsButtonClick();
+                }
+            } else {
+                this.onGetSuggestionsButtonClick();
+            }
+        }
+    }
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;
@@ -93,13 +114,9 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        const groupId = this.data.targetGroup;
-
-        if (groupId === undefined) {
-            return undefined;
-        }
-
-        return S.state.groupNode.nameMap[groupId];
+        const target = this.data.targetGroup && this.data.targetGroup;
+        if (target === undefined) return target;
+        return Suggestions.getAncestors(target).join(" > ");
     }
 
     get sortedTestPermutationData() {
@@ -207,6 +224,7 @@ export default class Move extends Vue {
     setTargetGroup(targetNodeId: string) {
         S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNodeId });
     }
+
 }
 </script>
 
