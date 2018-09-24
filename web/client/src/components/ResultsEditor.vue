@@ -2,11 +2,8 @@
     <div class="results-editor">
         <div class="workspace"
              v-if="displayWorkspace">
-            <SpreadsheetDropdownFilter :nodeRoots="nodeRoots"
-                                    :nodeNameMap="nameMap"
-                                    :nodeRecordMap="nodeRecordMap">
-
-            </SpreadsheetDropdownFilter>
+            <JumpToFilter></JumpToFilter>
+            <DisplayFilter></DisplayFilter>
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -41,7 +38,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Watch } from "av-ts";
+import { Vue, Component, Watch, Lifecycle } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -59,8 +56,9 @@ import { RecordElement } from "../../../common/Record";
 import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
-import SpreadsheetDropdownFilter from "./SpreadsheetDropdownFilter.vue";
 
+import JumpToFilter from "./JumpToFilter.vue";
+import DisplayFilter from "./DisplayFilter.vue";
 
 import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
@@ -119,7 +117,8 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         SpreadsheetTreeView2,
         ResultsEditorSideToolArea,
         SpreadsheetTreeView2ColumnsFilter,
-        SpreadsheetDropdownFilter,
+        JumpToFilter,
+        DisplayFilter
     },
 })
 export default class ResultsEditor extends Vue {
@@ -297,6 +296,10 @@ export default class ResultsEditor extends Vue {
         return S.get(S.getter.GET_THE_REQUEST_DEPTH);
     }
 
+    @Lifecycle mounted() {
+        this.collapseOnDepth(this.requestDepth);
+    }
+
     @Watch("requestId")
     jumpAndScroll(_value: string, _oldValue: string) {
         // The idea If targetdepth <= depth, add it to the list associated with the path
@@ -324,7 +327,11 @@ export default class ResultsEditor extends Vue {
     }
 
     @Watch("requestDepth")
-    collapseOnDepth(value: number, _oldValue: number) {
+    collapseOnChange(value: number, _oldValue: number) {
+        this.collapseOnDepth(value);
+    }
+
+    collapseOnDepth(value: number) {
         // Traverse through the path and delete all the nodes necessary
         Object.keys(this.hiddenNodes).forEach((key) => {
             Vue.delete(this.hiddenNodes, key);
