@@ -45,6 +45,9 @@ export default class SpreadSheetDropdownFilter extends Vue {
     // -1 indicates 
     selectedDepth: number = DEFAULT_LEVEL;
 
+    // Has root
+    hasRoot: boolean = false;
+
     // Gets the levels that users can choose to display
     get strataLevels() {
         const levels: string[] = [];
@@ -53,6 +56,9 @@ export default class SpreadSheetDropdownFilter extends Vue {
         // Get the partition if applicable
         if (S.state.recordData.partitionColumn) {
             levels.push(S.state.recordData.partitionColumn.label);
+            this.hasRoot = true;
+        } else {
+            this.hasRoot = false;
         }
 
         for(let i = 0; i < strata.length; i++) {
@@ -104,20 +110,25 @@ export default class SpreadSheetDropdownFilter extends Vue {
 
     // Change the collapse
     @Watch("selectedId")
-    onSelectIdChange(_value: string, _oldValue: string) {
+    onSelectIdChange(value: string, _oldValue: string) {
         // Collapse everything except that id
-        S.dispatch(S.action.SET_JUMP_REQUEST_ID, _value);
+        S.dispatch(S.action.SET_JUMP_REQUEST_ID, value);
     }
 
     
     @Watch("selectedDepth")
-    onDepthChange(_value: number, _oldValue: number) {
+    onDepthChange(value: number, _oldValue: number) {
         // Collapse based on depth
         // Actually it is smarter to think of the reverse.
         // E.g. Don't collapse until we reach this level.
         
         // Temporarily do this on the store level
-        S.dispatch(S.action.SET_DISPLAY_DEPTH, _value);
+        S.dispatch(S.action.SET_DISPLAY_DEPTH, value);
+    }
+
+    @Watch("hasRoot")
+    onRootChange(value: boolean, _oldValue:boolean) {
+        S.dispatch(S.action.SET_HAS_ROOT, value);
     }
 
 

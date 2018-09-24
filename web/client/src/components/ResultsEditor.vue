@@ -324,7 +324,7 @@ export default class ResultsEditor extends Vue {
     }
 
     @Watch("requestDepth")
-    collapseOnDepth(_value: number, _oldValue: number) {
+    collapseOnDepth(value: number, _oldValue: number) {
         // Traverse through the path and delete all the nodes necessary
         Object.keys(this.hiddenNodes).forEach((key) => {
             Vue.delete(this.hiddenNodes, key);
@@ -334,7 +334,7 @@ export default class ResultsEditor extends Vue {
         const TOP_LEVEL = 0;
 
         for (let i = 0; i < this.nodeRoots.length; i++) {
-            let tempOutput = this.recursePathDepth(this.nodeRoots[i], _value, TOP_LEVEL, []);
+            let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
             output = output.concat(tempOutput);
         }
 
@@ -354,13 +354,22 @@ export default class ResultsEditor extends Vue {
         }
 
         // Push and grab the children too
-        if (targetDepth < depth) {
-            output.push(incomingNode._id);
+        if (this.state.hasRoot) {
+            if (targetDepth <= depth) {
+                output.push(incomingNode._id);
+            }
+        } else {
+            // Issue is we need to check if we have an actual root or not in terms of pushing
+            if (targetDepth < depth) {
+                output.push(incomingNode._id);
+            }
         }
+
 
         return output;
     }
 
+    // This is for jump to paths
     recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
         // If we somehow equal the path. stop
         if(targetName === incomingNode._id) {
@@ -373,7 +382,7 @@ export default class ResultsEditor extends Vue {
         if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
             for(let i = 0; i < incomingNode.children.length; i++) {
                 const possiblePath = this.recursePath(targetName, incomingNode.children[i], output);
-                if (possiblePath !== null ) {
+                if (possiblePath !== null) {
                     // We have something, stop searching and return
                     output.push(incomingNode._id);
                     return output;

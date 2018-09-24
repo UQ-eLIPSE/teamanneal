@@ -54,7 +54,8 @@ export enum ResultsEditorAction {
     SWAP_RECORDS = "Swapping records",
 
     SET_JUMP_REQUEST_ID = "Setting the jump request id",
-    SET_DISPLAY_DEPTH = "Setting the jump/display depth for editor"
+    SET_DISPLAY_DEPTH = "Setting the jump/display depth for editor",
+    SET_HAS_ROOT = "Setting whether or not there is a proper root node"
 }
 
 /** Shorthand for Action enum above */
@@ -227,6 +228,11 @@ const actions = {
     async [A.SET_DISPLAY_DEPTH](context: Context, depth: number) {
         commit(context, M.SET_DISPLAY_DEPTH, depth);
     },
+
+    async [A.SET_HAS_ROOT](context: Context, hasRoot: boolean) {
+        commit(context, M.SET_HAS_ROOT, hasRoot);
+    }
+
     
 };
 

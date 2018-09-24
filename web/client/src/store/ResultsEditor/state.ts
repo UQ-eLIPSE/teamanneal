@@ -36,7 +36,9 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
 
     requestDepth: number,
 
-    requestIdJump: string
+    requestIdJump: string,
+
+    hasRoot: boolean
 }
 
 export function init() {
@@ -59,7 +61,9 @@ export function init() {
         
         requestDepth: -1,
 
-        requestIdJump: ""
+        requestIdJump: "",
+
+        hasRoot: false
     };
 
     return state;

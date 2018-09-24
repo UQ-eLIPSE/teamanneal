@@ -55,7 +55,8 @@ export enum ResultsEditorMutation {
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
 
     SET_DISPLAY_DEPTH = "Setting request depth",
-    SET_JUMP_REQUEST_ID = "Setting request id"
+    SET_JUMP_REQUEST_ID = "Setting request id",
+    SET_HAS_ROOT = "Setting whether the partitions have a root or not"
 }
 
 /** Shorthand for Mutation enum above */
@@ -176,6 +177,10 @@ const mutations = {
     [M.SET_JUMP_REQUEST_ID](state: State, id: string) {
         set(state, "requestIdJump", id);
     },
+
+    [M.SET_HAS_ROOT](state: State, hasRoot: boolean) {
+        set(state, "hasRoot", hasRoot);
+    }
 };
 
 export function init() {
