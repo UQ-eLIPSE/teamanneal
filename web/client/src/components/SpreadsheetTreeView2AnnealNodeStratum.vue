@@ -25,7 +25,7 @@ interface Props_NodeStratumWithRecordChildren {
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    hiddenNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true }
 }
 
 interface Props_NodeStratumWithStratumChildren {
@@ -39,7 +39,7 @@ interface Props_NodeStratumWithStratumChildren {
     constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    hiddenNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true }
 }
 
 function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
@@ -81,7 +81,7 @@ function displayToggleVisibilityButtonText(p: Props) {
 }
 
 function isNodeVisible(p: Props) {
-    return p.hiddenNodes[p.node._id] === undefined;
+    return p.collapsedNodes[p.node._id] === undefined;
 }
 
 /** Creates the heading elements for stratum nodes */
@@ -223,7 +223,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         constraintSatisfactionMap: { required: false, },
         onToggleNodeVisibility: { required: true },
         onItemClick: { required: true, },
-        hiddenNodes: { required: true }
+        collapsedNodes: { required: true }
     },
 
     render: function(h, ctx) {
@@ -267,7 +267,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                             constraintSatisfactionMap: p.constraintSatisfactionMap,
                             onItemClick: __onItemClick,
                             onToggleNodeVisibility: p.onToggleNodeVisibility,
-                            hiddenNodes: p.hiddenNodes
+                            collapsedNodes: p.collapsedNodes
                         }
                     })
                 ));

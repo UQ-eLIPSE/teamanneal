@@ -55,7 +55,8 @@ export enum ResultsEditorMutation {
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
 
     SET_DISPLAY_DEPTH = "Setting request depth",
-    SET_JUMP_REQUEST_ID = "Setting request id",
+    COLLAPSE_NODES = "Collapse node i.e. Add to collapsedNodes",
+    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes"
 }
 
 /** Shorthand for Mutation enum above */
@@ -173,9 +174,13 @@ const mutations = {
         set(state, "requestDepth", depth);
     },
 
-    [M.SET_JUMP_REQUEST_ID](state: State, id: string) {
-        set(state, "requestIdJump", id);
+    [M.COLLAPSE_NODES](state: State, nodeIdArray: string[]) {
+        nodeIdArray.forEach((nodeId) => set(state.collapsedNodes, nodeId , true));
     },
+    [M.UNCOLLAPSE_NODES](state: State, nodeIdArray: string[]) {
+        nodeIdArray.forEach((nodeId) => del(state.collapsedNodes, nodeId));
+        
+    }
 
 };
 

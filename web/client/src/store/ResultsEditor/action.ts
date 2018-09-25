@@ -52,10 +52,11 @@ export enum ResultsEditorAction {
     MOVE_RECORD_TO_GROUP_NODE = "Moving record to group node",
 
     SWAP_RECORDS = "Swapping records",
-
-    SET_JUMP_REQUEST_ID = "Setting the jump request id",
     
     SET_DISPLAY_DEPTH = "Setting the jump/display depth for editor",
+
+    COLLAPSE_NODES = "Collapse node i.e. Add to collapsedNodes",
+    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes"
 }
 
 /** Shorthand for Action enum above */
@@ -221,13 +222,18 @@ const actions = {
         commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personA.node, id: personB.id });
     },
 
-    async [A.SET_JUMP_REQUEST_ID](context: Context, id: string) {
-        commit(context, M.SET_JUMP_REQUEST_ID, id);
-    },
-
     async [A.SET_DISPLAY_DEPTH](context: Context, depth: number) {
         commit(context, M.SET_DISPLAY_DEPTH, depth);
     },
+
+    [A.COLLAPSE_NODES](context: Context, nodeIdArray: string[]) {
+        commit(context, M.COLLAPSE_NODES, nodeIdArray);
+        
+    },
+
+    [A.UNCOLLAPSE_NODES](context: Context, nodeIdArray: string[]) {
+        commit(context, M.UNCOLLAPSE_NODES, nodeIdArray);
+    }
     
 };
 

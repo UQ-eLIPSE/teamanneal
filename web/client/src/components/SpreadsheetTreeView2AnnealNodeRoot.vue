@@ -16,7 +16,7 @@
         </tr>
         <template v-if="displayInnerNodes">
             <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
-                                                   :hiddenNodes="hiddenNodes"
+                                                   :collapsedNodes="collapsedNodes"
                                                    :key="node._id"
                                                    :node="node"
                                                    :depth="depth + 1"
@@ -63,7 +63,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
-    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true});
+    @Prop collapsedNodes = p<{ [key: string]: true }>({ required: true});
     /** Function passed down by parent to toggle a node's visibility */
     @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true});
 
@@ -79,9 +79,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
     }
 
-    /** Check if node id exists as a key in `hiddenNodes` */
+    /** Check if node id exists as a key in `collapsedNodes` */
     get displayInnerNodes() {
-        return this.hiddenNodes[this.node._id] === undefined;
+        return this.collapsedNodes[this.node._id] === undefined;
     }
 
     get label() {

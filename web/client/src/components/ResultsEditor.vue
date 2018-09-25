@@ -17,7 +17,7 @@
                                   :nodeRecordMap="nodeRecordMap"
                                   :nodeStyles="nodeStyles"
                                   :idColumnIndex="idColumnIndex"
-                                  :hiddenNodes="hiddenNodes"
+                                  :collapsedNodes="collapsedNodes"
                                   :onToggleNodeVisibility="onToggleNodeVisibility"
                                   @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
         </div>
@@ -38,7 +38,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Watch, Lifecycle } from "av-ts";
+import { Vue, Component } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -47,9 +47,6 @@ import { ColumnData } from "../data/ColumnData";
 import { MenuItem } from "../data/ResultsEditorMenuBar";
 import { MoveSidePanelToolData } from "../data/MoveSidePanelToolData";
 import { SwapSidePanelToolData } from "../data/SwapSidePanelToolData";
-import { GroupNodeRoot } from "../data/GroupNodeRoot";
-import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
-import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 
 import { RecordElement } from "../../../common/Record";
 
@@ -126,15 +123,16 @@ export default class ResultsEditor extends Vue {
     /** Stores the indices of the columns to be displayed */
     p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
-    // Private
-    /** Stores `node` ids of nodes which were collapsed (hidden).   */
-    hiddenNodes: { [key: string]: true } = {};
-
     pRequestId: string = "";
 
     /** New reference to module state */
     get state() {
         return S.state;
+    }
+
+    /** Stores `node` ids of nodes which were collapsed (hidden).   */
+    get collapsedNodes() {
+        return this.state.collapsedNodes;
     }
 
     get recordData() {
@@ -268,17 +266,17 @@ export default class ResultsEditor extends Vue {
         this.columnsDisplayIndices = columnList;
     }
 
-    /** Checks if `node` id exists as a key in the `hiddenNodes` object. */
+    /** Checks if `node` id exists as a key in the `collapsedNodes` object. */
     isNodeVisible(node: GroupNode) {
-        return this.hiddenNodes[node._id] === undefined;
+        return this.collapsedNodes[node._id] === undefined;
     }
 
-    /** Hides the selected `node` (Adds it to the `hiddenNodes` object). Passed down as a `prop` to child components. */
+    /** Hides the selected `node` (Adds it to the `collapsedNodes` object). Passed down as a `prop` to child components. */
     onToggleNodeVisibility(node: GroupNode) {
         if (this.isNodeVisible(node)) {
-            Vue.set(this.hiddenNodes, node._id, true);
+            S.dispatch(S.action.COLLAPSE_NODES, [node._id]);
         } else {
-            Vue.delete(this.hiddenNodes, node._id);
+            S.dispatch(S.action.UNCOLLAPSE_NODES, [node._id]);
         }
     }
 
@@ -286,120 +284,6 @@ export default class ResultsEditor extends Vue {
         return MENU_BAR_ITEMS;
     }
 
-    // We need to hide the node visibility based on the requested id
-    get requestId() {
-        // Use getters so the store will realise the change
-        return S.get(S.getter.GET_THE_REQUEST_ID_JUMP);
-    }
-
-    get requestDepth(): number {
-        return S.get(S.getter.GET_THE_REQUEST_DEPTH);
-    }
-
-    @Lifecycle mounted() {
-        this.collapseOnDepth(this.requestDepth);
-    }
-
-    @Watch("requestId")
-    jumpAndScroll(_value: string, _oldValue: string) {
-        // The idea If targetdepth <= depth, add it to the list associated with the path
-        let path: string[] = [];
-        for (let i = 0; i < this.nodeRoots.length; i++) {
-            let maybePath = this.recursePath(_value, this.nodeRoots[i], []);
-
-            // Stop searching at the top level
-            if (maybePath !== null) {
-                path = maybePath;
-                break;
-            }
-        }
-        // Now collapse
-        for (let i  = 0; i < path.length; i++) {
-            Vue.delete(this.hiddenNodes, path[i]);
-        }
-
-        // Now scroll. Since the startum are manually created. We can safely use the id
-        const elmnt = document.getElementById(_value);
-        if(elmnt !== null) {
-            elmnt.scrollIntoView();
-        }
-
-    }
-
-    @Watch("requestDepth")
-    collapseOnChange(value: number, _oldValue: number) {
-        this.collapseOnDepth(value);
-    }
-
-    collapseOnDepth(value: number) {
-        // Traverse through the path and delete all the nodes necessary
-        Object.keys(this.hiddenNodes).forEach((key) => {
-            Vue.delete(this.hiddenNodes, key);
-        });
-
-        let output: string[] = [];
-        const TOP_LEVEL = 0;
-
-        for (let i = 0; i < this.nodeRoots.length; i++) {
-            let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
-            output = output.concat(tempOutput);
-        }
-
-        // Now hide
-        for(let i = 0; i < output.length; i++) {
-            Vue.set(this.hiddenNodes, output[i], true);
-        }
-    }
-
-    // If targetdepth <= depth, add it to the list
-    recursePathDepth(incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, targetDepth: number, depth: number, output: string[]) {
-
-        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
-            for(let i = 0 ; i < incomingNode.children.length; i++) {
-                this.recursePathDepth(incomingNode.children[i], targetDepth, depth + 1, output);
-            }
-        }
-
-        // Push and grab the children too
-        if(S.get(S.getter.IS_DATA_PARTITIONED)) {
-            if (targetDepth <= depth) {
-                output.push(incomingNode._id);
-            }
-        } else {
-            // Issue is we need to check if we have an actual root or not in terms of pushing
-            if (targetDepth < depth) {
-                output.push(incomingNode._id);
-            }
-        }
-
-
-        return output;
-    }
-
-    // This is for jump to paths
-    recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
-        // If we somehow equal the path. stop
-        if(targetName === incomingNode._id) {
-            // Go back as we found the source
-            output.push(incomingNode._id);
-            return output;
-        }
-
-        // Keep going. If we receive a non-empty array
-        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
-            for(let i = 0; i < incomingNode.children.length; i++) {
-                const possiblePath = this.recursePath(targetName, incomingNode.children[i], output);
-                if (possiblePath !== null) {
-                    // We have something, stop searching and return
-                    output.push(incomingNode._id);
-                    return output;
-                }
-             }
-        }
-
-        // Return a null to show failure to find the id in that path
-        return null;
-    }
 
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         // When we have an active side panel tool open

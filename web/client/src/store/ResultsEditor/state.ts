@@ -38,6 +38,9 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
 
     requestIdJump: string,
 
+    /** Stores `node` ids of nodes which were collapsed.   */
+    collapsedNodes: { [key: string]: true }
+
 }
 
 export function init() {
@@ -57,10 +60,13 @@ export function init() {
         sideToolArea: {
             activeItem: undefined,
         },
-        
-        requestDepth: -1,
+
+        requestDepth: 0,
 
         requestIdJump: "",
+
+        /** Stores `node` ids of nodes which were collapsed (hidden).   */
+        collapsedNodes: {}
 
     };
 

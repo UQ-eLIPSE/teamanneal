@@ -1,7 +1,7 @@
 <template>
     <div class="SpreadsheetJumpToFilter">
-        <h1>Jump to...</h1>
         <select v-model="selectedId">
+            <option :value="defaultId">Jump To...</option>
             <option v-for="(n, i) in selectionGroup" :key="i" :value="n.nodeId">{{n.label}}</option>
         </select>
     </div>
@@ -43,6 +43,13 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
     }
 
+    get defaultId() {
+        return DEFAULT_ID;
+    }
+    get nodeRoots() {
+        return S.state.groupNode.structure.roots;
+    }
+
     // Recurses through the structure and slowly adds them in the list
     loopLevel(incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: NodeLabel[], depth: number) {
         const testLabel: NodeLabel = {
@@ -71,11 +78,59 @@ export default class SpreadsheetJumpToFilter extends Vue {
         return output;
     }
 
-    // Change the collapse
     @Watch("selectedId")
-    onSelectIdChange(value: string, _oldValue: string) {
-        // Collapse everything except that id
-        S.dispatch(S.action.SET_JUMP_REQUEST_ID, value);
+    jumpAndScroll(value: string, _oldValue: string) {
+
+        if(value !== this.defaultId) {
+            // The idea If targetdepth <= depth, add it to the list associated with the path
+            let path: string[] = [];
+            for (let i = 0; i < this.nodeRoots.length; i++) {
+                let maybePath = this.recursePath(value, this.nodeRoots[i], []);
+
+                // Stop searching at the top level
+                if (maybePath !== null) {
+                    path = maybePath;
+                    break;
+                }
+            }
+            // Now collapse
+            S.dispatch(S.action.UNCOLLAPSE_NODES, path);
+
+            // Now scroll. Since the startum are manually created. We can safely use the id
+            const elmnt = document.getElementById(value);
+            if(elmnt !== null) {
+                elmnt.scrollIntoView();
+            }
+
+            this.selectedId = DEFAULT_ID;
+        }
+
+    }
+
+
+    // This is for jump to paths
+    recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
+        // If we somehow equal the path. stop
+        if(targetName === incomingNode._id) {
+            // Go back as we found the source
+            output.push(incomingNode._id);
+            return output;
+        }
+
+        // Keep going. If we receive a non-empty array
+        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
+            for(let i = 0; i < incomingNode.children.length; i++) {
+                const possiblePath = this.recursePath(targetName, incomingNode.children[i], output);
+                if (possiblePath !== null) {
+                    // We have something, stop searching and return
+                    output.push(incomingNode._id);
+                    return output;
+                }
+             }
+        }
+
+        // Return a null to show failure to find the id in that path
+        return null;
     }
 
 

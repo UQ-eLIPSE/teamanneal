@@ -11,17 +11,22 @@
 <script lang="ts">
 import { Vue, Component, Watch, Lifecycle } from "av-ts";
 import { ResultsEditor as S } from "../store";
-
-// The default would be the level 1
-const DEFAULT_LEVEL = 1;
+import { GroupNodeRoot } from "../data/GroupNodeRoot";
+import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
+import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 
 @Component
 export default class SpreadsheetDisplayFilter extends Vue {
 
     MEMBER_LEVEL = "Member (individual) level";
 
-    // -1 indicates default
-    selectedDepth: number = DEFAULT_LEVEL;
+    get selectedDepth() {
+        return S.state.requestDepth;
+    }
+
+    set selectedDepth(value: number) {
+        S.dispatch(S.action.SET_DISPLAY_DEPTH, value);
+    }
 
     // Gets the levels that users can choose to display
     get strataLevels() {
@@ -42,23 +47,74 @@ export default class SpreadsheetDisplayFilter extends Vue {
 
         return levels;
     }
+
+    get nodeRoots() {
+        return S.state.groupNode.structure.roots;
+    }
+
+    get collapsedNodes() {
+        return S.state.collapsedNodes;
+    }
+
+    // If targetdepth <= depth, add it to the list
+    recursePathDepth(incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, targetDepth: number, depth: number, output: string[]) {
+
+        if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
+            for(let i = 0 ; i < incomingNode.children.length; i++) {
+                this.recursePathDepth(incomingNode.children[i], targetDepth, depth + 1, output);
+            }
+        }
+
+        // Push and grab the children too
+        if(S.get(S.getter.IS_DATA_PARTITIONED)) {
+            if (targetDepth <= depth) {
+                output.push(incomingNode._id);
+            }
+        } else {
+            // Issue is we need to check if we have an actual root or not in terms of pushing
+            if (targetDepth < depth) {
+                output.push(incomingNode._id);
+            }
+        }
+
+
+        return output;
+    }
     
-    @Watch("selectedDepth")
-    onDepthChange(value: number, _oldValue: number) {
-        // Collapse based on depth
-        // Actually it is smarter to think of the reverse.
-        // E.g. Don't collapse until we reach this level.
-        
-        // Temporarily do this on the store level
-        S.dispatch(S.action.SET_DISPLAY_DEPTH, value);
+    collapseOnDepth(value: number) {
+        // Traverse through the path and delete all the nodes necessary
+        S.dispatch(S.action.UNCOLLAPSE_NODES, Object.keys(this.collapsedNodes));
+
+
+        let output: string[] = [];
+        const TOP_LEVEL = 0;
+
+        for (let i = 0; i < this.nodeRoots.length; i++) {
+            let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
+            output = output.concat(tempOutput);
+        }
+
+        // Now hide
+        S.dispatch(S.action.COLLAPSE_NODES, output);
+
+    }
+    
+
+    get requestDepth(): number {
+        return S.get(S.getter.GET_THE_REQUEST_DEPTH);
     }
 
+    @Watch("requestDepth")
+    collapseOnChange(value: number, _oldValue: number) {
+        this.collapseOnDepth(value);
+    }
+
+    
     @Lifecycle mounted() {
-        // Dispatch the default level. If we have 2 items we want to hide the 0
-        let length = this.strataLevels.length - 2;
-        S.dispatch(S.action.SET_DISPLAY_DEPTH, length);
+        // Setting the initial depth as one level "above" member
+        const initialDepth = this.strataLevels.findIndex((level) => level === this.MEMBER_LEVEL) - 1;
+        this.selectedDepth = initialDepth;
     }
-
 
 }
 </script>
