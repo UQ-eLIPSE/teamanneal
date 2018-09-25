@@ -96,8 +96,8 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
                 // Push root, name
                 newRoots.push(newRoot);
-                newNameMap[nodeId] = `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
-
+                newNameMap[nodeId] = nameInfo.nodeGeneratedName === "undefined" ? "undefined" : `${nameInfo.stratumLabel} ${nameInfo.nodeGeneratedName}`;
+                
                 return newRoot;
             }
 
