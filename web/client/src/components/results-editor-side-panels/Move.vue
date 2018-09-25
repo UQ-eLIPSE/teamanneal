@@ -131,13 +131,14 @@ export default class Move extends Vue {
     async commitMove() {
         const { sourcePerson, targetGroup } = this.data;
 
-        if (sourcePerson === undefined || targetGroup === undefined) {
-            // TODO: Proper error handling
-            throw new Error("Underspecified move operation");
-        }
-
-        // Check to see if the swap has failed
+        // Check to see if the move has failed
         try {
+            if (sourcePerson === undefined || targetGroup === undefined) {
+                // TODO: Proper error handling
+                throw new Error("Underspecified move operation");
+            }
+
+
             await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
             const notifyPacket = {
                 title: "Move",
@@ -149,6 +150,12 @@ export default class Move extends Vue {
             } as NotificationPayload;
 
             notifySystem(notifyPacket);
+
+            
+            // Dispatch clear if we were successful in moving
+            // TODO: Review whether we should close the side panel or not
+            await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+
         } catch(e) {
             const err = e as Error;
 
@@ -164,8 +171,6 @@ export default class Move extends Vue {
             notifySystem(notifyPacket);
         }
 
-        // TODO: Review whether we should close the side panel or not
-        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     }
 
     async fetchSatisfactionTestPermutationData() {

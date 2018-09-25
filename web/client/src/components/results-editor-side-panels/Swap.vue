@@ -132,14 +132,14 @@ export default class Swap extends Vue {
     async commitSwap() {
         const { personA, personB } = this.data;
 
-        if (personA === undefined || personB === undefined) {
-            // TODO: Proper error handling
-            throw new Error("Underspecified swap operation");
-        }
-
-
         // Check to see if the swap has failed
         try {
+            
+            if (personA === undefined || personB === undefined) {
+                // TODO: Proper error handling
+                throw new Error("Underspecified swap operation");
+            }
+
             await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
             const notifyPacket = {
                 title: "Swap",
@@ -151,6 +151,11 @@ export default class Swap extends Vue {
             } as NotificationPayload;
 
             notifySystem(notifyPacket);
+
+            // Only close upon successful swap
+            // TODO: Review whether we should close the side panel or not
+            await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+
         } catch(e) {
             const err = e as Error;
 
@@ -166,8 +171,6 @@ export default class Swap extends Vue {
             notifySystem(notifyPacket);
         }
 
-        // TODO: Review whether we should close the side panel or not
-        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     }
 
     async fetchSatisfactionTestPermutationData() {
