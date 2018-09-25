@@ -2,8 +2,8 @@
     <div class="results-editor">
         <div class="workspace"
              v-if="displayWorkspace">
-            <JumpToFilter></JumpToFilter>
-            <DisplayFilter></DisplayFilter>
+            <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
+            <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -57,8 +57,8 @@ import SpreadsheetTreeView2 from "./SpreadsheetTreeView2.vue";
 import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
 
-import JumpToFilter from "./JumpToFilter.vue";
-import DisplayFilter from "./DisplayFilter.vue";
+import SpreadsheetJumpToFilter from "./SpreadsheetJumpToFilter.vue";
+import SpreadsheetDisplayFilter from "./SpreadsheetDisplayFilter.vue";
 
 import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
@@ -117,8 +117,8 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
         SpreadsheetTreeView2,
         ResultsEditorSideToolArea,
         SpreadsheetTreeView2ColumnsFilter,
-        JumpToFilter,
-        DisplayFilter
+        SpreadsheetJumpToFilter,
+        SpreadsheetDisplayFilter
     },
 })
 export default class ResultsEditor extends Vue {

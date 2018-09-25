@@ -1,5 +1,5 @@
 <template>
-    <div class="jumpToFilter">
+    <div class="SpreadsheetJumpToFilter">
         <h1>Jump to...</h1>
         <select v-model="selectedId">
             <option v-for="(n, i) in selectionGroup" :key="i" :value="n.nodeId">{{n.label}}</option>
@@ -24,7 +24,7 @@ interface NodeLabel {
 const DEFAULT_ID = "";
 
 @Component
-export default class JumpToFilter extends Vue {
+export default class SpreadsheetJumpToFilter extends Vue {
 
     // Empty should reference a null/noid
     selectedId: string = DEFAULT_ID;

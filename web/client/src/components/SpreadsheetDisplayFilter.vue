@@ -16,7 +16,7 @@ import { ResultsEditor as S } from "../store";
 const DEFAULT_LEVEL = 1;
 
 @Component
-export default class SpreadSheetDropdownFilter extends Vue {
+export default class SpreadsheetDisplayFilter extends Vue {
 
     MEMBER_LEVEL = "Member (individual) level";
 
