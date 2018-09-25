@@ -35,12 +35,20 @@ export default class SpreadsheetJumpToFilter extends Vue {
         const strataStructure = S.state.groupNode.structure.roots;
         const output: NodeLabel[] = [];
 
-        for(let i = 0; i <  strataStructure.length; i++) {
-            this.loopLevel(strataStructure[i], output, 0);
+        // Skip the root node level if only one node root exists
+        if(!this.isDataPartitioned) {
+            // If data is not partitioned, skip over the root node level
+            for(let i = 0; i < strataStructure[0].children.length; i++) {
+                this.loopLevel(strataStructure[0].children[i], output, 0);
+            }
+            
+        } else {
+            for(let i = 0; i <  strataStructure.length; i++) {
+                this.loopLevel(strataStructure[i], output, 0);
+            }
         }
 
         return output;
-
     }
 
     get defaultId() {
@@ -48,6 +56,9 @@ export default class SpreadsheetJumpToFilter extends Vue {
     }
     get nodeRoots() {
         return S.state.groupNode.structure.roots;
+    }
+    get isDataPartitioned() {
+        return S.get(S.getter.IS_DATA_PARTITIONED);
     }
 
     // Recurses through the structure and slowly adds them in the list
@@ -57,16 +68,11 @@ export default class SpreadsheetJumpToFilter extends Vue {
             label: "----".repeat(depth) + S.state.groupNode.nameMap[incomingNode._id]
         }
 
-        if(S.get(S.getter.IS_DATA_PARTITIONED)) {
-            // Push regardless if data is partitioned
-            output.push(testLabel);
-        } else {
-            // Not partitioned
-            if(incomingNode.type !== "root") {
-                // Push if not root
-                output.push(testLabel);
-            }
-        }
+        // Push test label
+        // Checks for whether the data is partitioned or not
+        // are done while calling the `loopLevel` function
+        output.push(testLabel);
+
 
         if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
             // Treat as root level
@@ -80,7 +86,6 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
     @Watch("selectedId")
     jumpAndScroll(value: string, _oldValue: string) {
-
         if(value !== this.defaultId) {
             // The idea If targetdepth <= depth, add it to the list associated with the path
             let path: string[] = [];
@@ -102,6 +107,7 @@ export default class SpreadsheetJumpToFilter extends Vue {
                 elmnt.scrollIntoView();
             }
 
+            // Reset ID to default ID
             this.selectedId = DEFAULT_ID;
         }
 
