@@ -49,11 +49,16 @@ export default class SpreadsheetJumpToFilter extends Vue {
             nodeId: incomingNode._id,
             label: "----".repeat(depth) + S.state.groupNode.nameMap[incomingNode._id]
         }
-        // Unfortunately the only way to get rid of the undefined is to either not show on a group 
-        // level or to not equal " undefined"
-        // TODO check this out
-        if (testLabel.label !== " undefined") {
+
+        if(S.get(S.getter.IS_DATA_PARTITIONED)) {
+            // Push regardless if data is partitioned
             output.push(testLabel);
+        } else {
+            // Not partitioned
+            if(incomingNode.type !== "root") {
+                // Push if not root
+                output.push(testLabel);
+            }
         }
 
         if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
