@@ -23,20 +23,14 @@ export default class SpreadsheetDisplayFilter extends Vue {
     // -1 indicates default
     selectedDepth: number = DEFAULT_LEVEL;
 
-    // Has root
-    hasRoot: boolean = false;
-
     // Gets the levels that users can choose to display
     get strataLevels() {
         const levels: string[] = [];
         const strata = S.state.strataConfig.strata;
 
         // Get the partition if applicable
-        if (S.state.recordData.partitionColumn) {
-            levels.push(S.state.recordData.partitionColumn.label);
-            this.hasRoot = true;
-        } else {
-            this.hasRoot = false;
+        if (S.get(S.getter.IS_DATA_PARTITIONED)) {
+            levels.push(S.state.recordData.partitionColumn!.label);
         }
 
         for(let i = 0; i < strata.length; i++) {
@@ -59,23 +53,10 @@ export default class SpreadsheetDisplayFilter extends Vue {
         S.dispatch(S.action.SET_DISPLAY_DEPTH, value);
     }
 
-    @Watch("hasRoot")
-    onRootChange(value: boolean, _oldValue:boolean) {
-        S.dispatch(S.action.SET_HAS_ROOT, value);
-    }
-
     @Lifecycle mounted() {
         // Dispatch the default level. If we have 2 items we want to hide the 0
         let length = this.strataLevels.length - 2;
         S.dispatch(S.action.SET_DISPLAY_DEPTH, length);
-
-        // Also give the root
-        if (S.state.recordData.partitionColumn) {
-            S.dispatch(S.action.SET_HAS_ROOT, true);
-        } else {
-            S.dispatch(S.action.SET_HAS_ROOT, false);
-        }
-
     }
 
 

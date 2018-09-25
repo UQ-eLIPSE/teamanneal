@@ -31,7 +31,8 @@ export enum ResultsEditorGetter {
     GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY = "Get common constraint descriptor array",
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
     GET_THE_REQUEST_ID_JUMP = "Get request ID JUMP",
-    GET_THE_REQUEST_DEPTH = "Get request ID DEPTH"
+    GET_THE_REQUEST_DEPTH = "Get request ID DEPTH",
+    IS_DATA_PARTITIONED = "Check if partitions(pools) were created"
 
 }
 
@@ -343,6 +344,10 @@ const getters = {
 
     [G.GET_THE_REQUEST_DEPTH](state: State) {
         return state.requestDepth;
+    },
+
+    [G.IS_DATA_PARTITIONED](state: State) {
+        return state.groupNode.structure.roots.length > 1;
     }
 }
 

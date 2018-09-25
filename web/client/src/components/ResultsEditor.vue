@@ -361,7 +361,7 @@ export default class ResultsEditor extends Vue {
         }
 
         // Push and grab the children too
-        if (this.state.hasRoot) {
+        if(S.get(S.getter.IS_DATA_PARTITIONED)) {
             if (targetDepth <= depth) {
                 output.push(incomingNode._id);
             }
