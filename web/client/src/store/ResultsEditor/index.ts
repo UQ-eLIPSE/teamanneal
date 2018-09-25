@@ -13,7 +13,7 @@ export function init(namespaced: boolean = true) {
         state: initState,
 
         mutations: initMutations(),
-
+        
         actions: initActions(),
 
         getters: initGetters(),

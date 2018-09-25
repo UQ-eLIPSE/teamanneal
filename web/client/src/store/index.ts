@@ -38,9 +38,8 @@ export const AnnealCreator = {
 
 export const ResultsEditor = {
     prefix: ModulePrefix.ResultsEditor,
-
-    action: _ResultsEditor.Action,
     getter: _ResultsEditor.Getter,
+    action: _ResultsEditor.Action,
 
     dispatch: _ResultsEditor.dispatchFactory(store, ModulePrefix.ResultsEditor),
     get: _ResultsEditor.getFactory(store, ModulePrefix.ResultsEditor),

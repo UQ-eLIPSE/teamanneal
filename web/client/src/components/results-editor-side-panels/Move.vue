@@ -161,6 +161,9 @@ export default class Move extends Vue {
 
         // TODO: Review whether we should close the side panel or not
         await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+
+        // Recalculate satisfaction after successful swap operation
+        await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
     }
 
     async fetchSatisfactionTestPermutationData() {
