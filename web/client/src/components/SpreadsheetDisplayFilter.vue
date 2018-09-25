@@ -1,6 +1,6 @@
 <template>
     <div class="displayFilterBody">
-        <h1>Display Level</h1>
+        <span class="display-text">Display </span>
         <select v-model="selectedDepth">
             <option v-for="(s, i) in strataLevels" :key="i" :value="i">{{s}}</option>
         </select>
@@ -18,8 +18,13 @@ import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 @Component
 export default class SpreadsheetDisplayFilter extends Vue {
 
-    MEMBER_LEVEL = "Member (individual) level";
+    get memberLevel() {
+        return this.leafStratum.label + ' ' + 'members';
+    }
 
+    get leafStratum() {
+        return S.state.strataConfig.strata[S.state.strataConfig.strata.length - 1];
+    }
     get selectedDepth() {
         return S.state.requestDepth;
     }
@@ -43,7 +48,7 @@ export default class SpreadsheetDisplayFilter extends Vue {
         }
 
         // Final push would be the default/lower case of members
-        levels.push(this.MEMBER_LEVEL);
+        levels.push(this.memberLevel);
 
         return levels;
     }
@@ -112,7 +117,7 @@ export default class SpreadsheetDisplayFilter extends Vue {
     
     @Lifecycle mounted() {
         // Setting the initial depth as one level "above" member
-        const initialDepth = this.strataLevels.findIndex((level) => level === this.MEMBER_LEVEL) - 1;
+        const initialDepth = this.strataLevels.findIndex((level) => level === this.memberLevel) - 1;
         this.selectedDepth = initialDepth;
     }
 
@@ -122,7 +127,21 @@ export default class SpreadsheetDisplayFilter extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-.filterBody {
+.displayFilterBody {
+    display: flex;
+    padding: 0.5rem;
+    align-items: center;
+    background: rgb(240, 240, 240);
+    
+}
 
+.displayFilterBody > * {
+    margin-left: 0.25rem;
+    font-size: 1.25rem;
+    padding: 0.25rem;
+}
+
+.display-text {
+    font-size: 1.5rem;
 }
 </style>

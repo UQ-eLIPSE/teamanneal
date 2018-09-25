@@ -2,8 +2,10 @@
     <div class="results-editor">
         <div class="workspace"
              v-if="displayWorkspace">
-            <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
-            <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+            <div class="filter-row">
+                <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
+                <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+            </div>
             <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                                :selectedIndices="columnsDisplayIndices"
                                                @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -464,4 +466,18 @@ export default class ResultsEditor extends Vue {
 .get-started a:visited {
     color: #00d;
 }
+
+.filter-row {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #49075e;
+    margin: 0.5rem 0;
+}
+
+.filter-row > *:nth-child(2n) {
+    border-left: 0.05rem solid rgb(200, 200, 200);
+}
+
 </style>

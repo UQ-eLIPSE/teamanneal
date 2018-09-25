@@ -1,8 +1,10 @@
 <template>
-    <div class="SpreadsheetJumpToFilter">
+    <div class="jump-to-filter">
         <select v-model="selectedId">
             <option :value="defaultId">Jump To...</option>
-            <option v-for="(n, i) in selectionGroup" :key="i" :value="n.nodeId">{{n.label}}</option>
+            <option v-for="(n, i) in selectionGroup"
+                    :key="i"
+                    :value="n.nodeId">{{n.label}}</option>
         </select>
     </div>
 </template>
@@ -36,14 +38,14 @@ export default class SpreadsheetJumpToFilter extends Vue {
         const output: NodeLabel[] = [];
 
         // Skip the root node level if only one node root exists
-        if(!this.isDataPartitioned) {
+        if (!this.isDataPartitioned) {
             // If data is not partitioned, skip over the root node level
-            for(let i = 0; i < strataStructure[0].children.length; i++) {
+            for (let i = 0; i < strataStructure[0].children.length; i++) {
                 this.loopLevel(strataStructure[0].children[i], output, 0);
             }
-            
+
         } else {
-            for(let i = 0; i <  strataStructure.length; i++) {
+            for (let i = 0; i < strataStructure.length; i++) {
                 this.loopLevel(strataStructure[i], output, 0);
             }
         }
@@ -76,8 +78,8 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
         if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
             // Treat as root level
-            for(let i = 0; i < incomingNode.children.length; i++) {
-                this.loopLevel(incomingNode.children[i], output, depth + 1);   
+            for (let i = 0; i < incomingNode.children.length; i++) {
+                this.loopLevel(incomingNode.children[i], output, depth + 1);
             }
         }
 
@@ -86,7 +88,7 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
     @Watch("selectedId")
     jumpAndScroll(value: string, _oldValue: string) {
-        if(value !== this.defaultId) {
+        if (value !== this.defaultId) {
             // The idea If targetdepth <= depth, add it to the list associated with the path
             let path: string[] = [];
             for (let i = 0; i < this.nodeRoots.length; i++) {
@@ -103,7 +105,7 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
             // Now scroll. Since the startum are manually created. We can safely use the id
             const elmnt = document.getElementById(value);
-            if(elmnt !== null) {
+            if (elmnt !== null) {
                 elmnt.scrollIntoView();
             }
 
@@ -117,7 +119,7 @@ export default class SpreadsheetJumpToFilter extends Vue {
     // This is for jump to paths
     recursePath(targetName: string, incomingNode: GroupNodeRoot | GroupNodeIntermediateStratum | GroupNodeLeafStratum, output: string[]) {
         // If we somehow equal the path. stop
-        if(targetName === incomingNode._id) {
+        if (targetName === incomingNode._id) {
             // Go back as we found the source
             output.push(incomingNode._id);
             return output;
@@ -125,14 +127,14 @@ export default class SpreadsheetJumpToFilter extends Vue {
 
         // Keep going. If we receive a non-empty array
         if ((incomingNode.type === "root") || (incomingNode.type === "intermediate-stratum")) {
-            for(let i = 0; i < incomingNode.children.length; i++) {
+            for (let i = 0; i < incomingNode.children.length; i++) {
                 const possiblePath = this.recursePath(targetName, incomingNode.children[i], output);
                 if (possiblePath !== null) {
                     // We have something, stop searching and return
                     output.push(incomingNode._id);
                     return output;
                 }
-             }
+            }
         }
 
         // Return a null to show failure to find the id in that path
@@ -146,7 +148,15 @@ export default class SpreadsheetJumpToFilter extends Vue {
 <!-- ####################################################################### -->
 
 <style scoped>
-.filterBody {
+.jump-to-filter {
+    padding: 0.5rem;
+    background: rgb(240, 240, 240);
+    align-items: center;
+    display: flex;
+}
 
+select {
+    padding: 0.25rem;
+    font-size: 1.25rem;
 }
 </style>
