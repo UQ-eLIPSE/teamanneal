@@ -349,6 +349,10 @@ export namespace ConstraintPhraseMaps {
 
     export const ConditionFunctionList = [
         {
+            value: "low",
+            text: "an even distribution of",
+        },
+        {
             value: "eq",
             text: "exactly",
         },
@@ -372,14 +376,16 @@ export namespace ConstraintPhraseMaps {
             value: "lt",
             text: "fewer than",
         },
-        {
-            value: "low",
-            text: "as few",
-        },
-        {
-            value: "high",
-            text: "as many",
-        },
+        // Commenting these out since they have been replaced
+        // by `an even distribution of` instead
+        // {
+        //     value: "low",
+        //     text: "as few",
+        // },
+        // {
+        //     value: "high",
+        //     text: "as many",
+        // },
         {
             value: "similar",
             text: "similar values of",
