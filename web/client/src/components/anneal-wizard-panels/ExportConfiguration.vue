@@ -50,6 +50,9 @@ export default class ExportConfiguration extends Mixin(AnnealProcessWizardPanel)
         // Time to remove some flags too
         S.dispatch(S.action.SET_MUTATION_FLAG_LOW, undefined);
 
+        // Technically when you export, you have a save which means you need to raise the import flag
+        S.dispatch(S.action.SET_IMPORT_FLAG_HIGH, undefined);
+
         const fileBlob = new Blob([serialisedContent], { type: "application/json" });
 
         FileSaver.saveAs(fileBlob, `export-${Date.now()}.taconfig`, true);

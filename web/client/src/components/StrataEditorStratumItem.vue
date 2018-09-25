@@ -134,7 +134,6 @@ import * as ListCounter from "../data/ListCounter";
 import { DeepPartial } from "../data/DeepPartial";
 
 import { AnnealCreator as S } from "../store";
-import { setMutation } from "../util/MutationTrackerUtil";
 
 
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -304,7 +303,6 @@ export default class StrataEditorStratumItem extends Vue {
         } else {
             S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: newValue as ListCounter.ListCounterType });
         }
-        setMutation();
     }
 
     get isCounterCustomList() {
@@ -317,7 +315,6 @@ export default class StrataEditorStratumItem extends Vue {
 
     set namingContext(newValue: StratumNamingConfigContext) {
         S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratum: this.stratum, context: newValue });
-        setMutation();
     }
 
     get namingContextOptionList() {
@@ -354,7 +351,6 @@ export default class StrataEditorStratumItem extends Vue {
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
         await S.dispatch(S.action.UPSERT_STRATUM, newStratum);
-        setMutation();
     }
 
     get stratumSizeMin() {
@@ -425,7 +421,6 @@ export default class StrataEditorStratumItem extends Vue {
 
     set customNameList(names: string[]) {
         S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_COUNTER, { stratum: this.stratum, counter: names });
-        setMutation();
     }
 
     get customNameListMinCounts() {

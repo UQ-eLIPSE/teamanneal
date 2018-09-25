@@ -29,7 +29,6 @@ import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum } from "../data/Stratum";
 import { DeepPartial } from "../data/DeepPartial";
-import { setMutation } from "../util/MutationTrackerUtil";
 
 import { AnnealCreator as S } from "../store";
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
@@ -51,7 +50,6 @@ export default class StrataStructureEditorStratumItem extends Vue {
         const newStratum = deepMerge(deepCopy(this.stratum), diff);
 
         await S.dispatch(S.action.UPSERT_STRATUM, newStratum);
-        setMutation();
     }
 
     async deleteStratum() {

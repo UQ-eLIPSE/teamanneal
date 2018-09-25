@@ -81,7 +81,6 @@ import { ColumnData, Data as IColumnData } from "../data/ColumnData";
 import { DeepPartial } from "../data/DeepPartial";
 
 import { AnnealCreator as S } from "../store";
-import { setMutation } from "../util/MutationTrackerUtil";
 
 
 import DynamicWidthSelect from "./DynamicWidthSelect.vue";
@@ -342,7 +341,6 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     async deleteConstraint() {
         await S.dispatch(S.action.DELETE_CONSTRAINT, this.constraint);
 
-        setMutation();
     }
 
     async updateConstraint<T extends IConstraint>(diff: DeepPartial<T>) {
@@ -351,7 +349,6 @@ export default class ConstraintsEditorConstraintItem extends Vue {
 
         await S.dispatch(S.action.UPSERT_CONSTRAINT, newConstraint);
 
-        setMutation();
     }
 
     get constraintCostWeight() {

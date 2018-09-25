@@ -36,7 +36,6 @@ import * as StratumSize from "../data/StratumSize";
 import { Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 
 import { AnnealCreator as S } from "../store";
-import { setMutation } from "../util/MutationTrackerUtil";
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
 @Component({
@@ -76,7 +75,6 @@ export default class StrataStructureEditor extends Vue {
 
         await S.dispatch(S.action.UPSERT_STRATUM, newStratum);
         await S.dispatch(S.action.SET_STRATUM_NAMING_CONFIG_CONTEXT, { stratum: newStratum, context: stratumNamingConfigContext });
-        setMutation();
     }
 
     isStratumDeletable(i: number) {

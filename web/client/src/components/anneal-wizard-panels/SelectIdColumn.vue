@@ -47,7 +47,6 @@ import { ColumnData, MinimalDescriptor as IColumnData_MinimalDescriptor } from "
 import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntries";
 
 import { AnnealCreator as S } from "../../store";
-import { setMutation } from "../../util/MutationTrackerUtil";
 
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
@@ -86,7 +85,6 @@ export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
             S.dispatch(S.action.SET_RECORD_ID_COLUMN, val);
         }
 
-        setMutation();
     }
 }
 </script>
