@@ -29,16 +29,13 @@
                         @click="clearTargetGroup">Clear</button>
             </div>
         </div>
-        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'targetGroup'"
-             class="test-permutations">
-            <ul>
-                <li v-for="x in sortedTestPermutationData"
-                    :key="x.toNode"
-                    @click="setTargetGroup(x.toNode)">{{ nodeToNameMap[x.toNode] }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
-            </ul>
-            <button class="button secondary small"
-                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
-        </div>
+
+
+        <MoveSuggestionsDisplay @groupSelected="setTargetGroup"
+                                @closeSuggestions="clearSatisfactionTestPermutationData"
+                                :data="data"
+                                :sortedTestPermutationData="sortedTestPermutationData" @clearSuggestions="clearSatisfactionTestPermutationData"></MoveSuggestionsDisplay>
+
         <div class="form-block">
             <button class="button secondary small"
                     @click="onGetSuggestionsButtonClick">Get suggestions</button>
@@ -49,13 +46,16 @@
             <button class="button small"
                     @click="commitMove">Move</button>
         </div>
+
+
+
     </div>
 </template>
 
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../../store";
 
@@ -65,14 +65,35 @@ import { NotificationPayload } from "../../data/Notification";
 import { notifySystem } from "../../util/NotificationEventBus";
 
 import { MoveRecordTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+import MoveSuggestionsDisplay from "../MoveSuggestionsDisplay.vue";
+import { Suggestions } from "../../data/Suggestions";
 
-@Component
+@Component({
+    components: {
+        MoveSuggestionsDisplay
+    }
+})
 export default class Move extends Vue {
     /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
-    
+
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
+
+    /** Watches side panel data in store and updates suggestions automatically */
+    @Watch('data')
+    handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
+        
+        if(newVal && newVal.sourcePerson) {
+            if(oldVal && oldVal.sourcePerson) {
+                if(oldVal.sourcePerson.node !== newVal.sourcePerson.node) {
+                    this.onGetSuggestionsButtonClick();
+                }
+            } else {
+                this.onGetSuggestionsButtonClick();
+            }
+        }
+    }
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;
@@ -95,7 +116,9 @@ export default class Move extends Vue {
     }
 
     get targetGroupFieldBlockText() {
-        return this.data.targetGroup && this.data.targetGroup;
+        const target = this.data.targetGroup && this.data.targetGroup;
+        if (target === undefined) return target;
+        return Suggestions.getAncestors(target).join(" > ");
     }
 
     get sortedTestPermutationData() {
@@ -154,7 +177,9 @@ export default class Move extends Vue {
             // Dispatch clear if we were successful in moving
             // TODO: Review whether we should close the side panel or not
             await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
-
+            
+            // Recalculate satisfaction after successful move operation
+            await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
         } catch(e) {
             const err = e as Error;
 
@@ -233,6 +258,7 @@ export default class Move extends Vue {
     setTargetGroup(targetNodeId: string) {
         S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { targetGroup: targetNodeId });
     }
+
 }
 </script>
 

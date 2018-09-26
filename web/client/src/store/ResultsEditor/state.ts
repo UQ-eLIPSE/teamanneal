@@ -7,6 +7,8 @@ import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "..
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 import { AnnealCreatorStateSerialisable } from "../AnnealCreator/state";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
+
 
 export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
@@ -32,7 +34,9 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     sideToolArea: {
         /** Information about the active side tool item */
         activeItem: SidePanelActiveTool | undefined,
-    }
+    },
+
+    satisfaction: ConstraintSatisfaction.SatisfactionState
 }
 
 export function init() {
@@ -51,7 +55,8 @@ export function init() {
 
         sideToolArea: {
             activeItem: undefined,
-        }
+        },
+        satisfaction: ConstraintSatisfaction.initConstraintSatisfactionState()
     };
 
     return state;

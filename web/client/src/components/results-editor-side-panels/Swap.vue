@@ -29,16 +29,15 @@
                         @click="clearPersonB">Clear</button>
             </div>
         </div>
-        <div v-if="sortedTestPermutationData !== undefined && data.cursor === 'personB'"
-             class="test-permutations">
-            <ul>
-                <li v-for="x in sortedTestPermutationData"
-                    :key="x.nodeB + x.recordIdB"
-                    @click="setPersonB(x.nodeB, x.recordIdB)">{{ nodeToNameMap[x.nodeB] }}#{{ x.recordIdB }} -> {{ x.satisfaction.value }}/{{ x.satisfaction.max }}</li>
-            </ul>
-            <button class="button secondary small"
-                    @click="clearSatisfactionTestPermutationData">Close suggestions</button>
-        </div>
+
+        <SwapSuggestionsDisplay @personBSelected="setPersonB"
+                                @closeSuggestions="clearSatisfactionTestPermutationData"
+                                :data="data"
+                                :sortedTestPermutationData="sortedTestPermutationData" @clearSuggestions="clearSatisfactionTestPermutationData"></SwapSuggestionsDisplay>
+
+
+
+
         <div class="form-block">
             <button class="button secondary small"
                     @click="onGetSuggestionsButtonClick">Get suggestions</button>
@@ -55,7 +54,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Watch } from "av-ts";
 
 import { ResultsEditor as S } from "../../store";
 
@@ -66,8 +65,13 @@ import { notifySystem } from "../../util/NotificationEventBus";
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
+import SwapSuggestionsDisplay from "../SwapSuggestionsDisplay.vue";
 
-@Component
+@Component({
+    components: {
+        SwapSuggestionsDisplay
+    }
+})
 export default class Swap extends Vue {
     /** Token for each run of the test permutation request */
     p_testPermutationRequestToken: string | undefined = undefined;
@@ -75,6 +79,19 @@ export default class Swap extends Vue {
     /** Data returned from test permutation request */
     p_testPermutationData: SwapRecordsTestPermutationOperationResult | undefined = undefined;
 
+    /** Watches side panel data in store and updates suggestions automatically */
+    @Watch('data')
+    handler(newVal: SwapSidePanelToolData, oldVal: SwapSidePanelToolData) {
+        if(newVal && newVal.personA) {
+            if(oldVal && oldVal.personA) {
+                if(oldVal.personA.node !== newVal.personA.node) {
+                    this.onGetSuggestionsButtonClick();
+                }
+            } else {
+                this.onGetSuggestionsButtonClick();
+            }
+        }
+    }
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
     }
@@ -155,6 +172,8 @@ export default class Swap extends Vue {
             // TODO: Review whether we should close the side panel or not
             await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
 
+            // Recalculate satisfaction after successful swap operation
+            await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
         } catch(e) {
             const err = e as Error;
 
@@ -233,6 +252,7 @@ export default class Swap extends Vue {
     setPersonB(nodeB: string, recordIdB: string) {
         S.dispatch(S.action.PARTIAL_UPDATE_SIDE_PANEL_ACTIVE_TOOL_INTERNAL_DATA, { personB: { node: nodeB, id: recordIdB } });
     }
+
 }
 </script>
 

@@ -1,0 +1,21 @@
+{
+    "server": {
+        "port": 8080,
+        "api": {
+            "root": "/api"
+        },
+        "workers": {
+            "maxInstances": 20
+        }
+    },
+    "anneal": {
+        "mainLoop": {
+            "defaultNumberOfBranchIterations": 4,
+            "avgUphillProbabilityThreshold": 0.0025
+        },
+        "temperatureDerivation": {
+            "numberOfSamples": 200,
+            "maxLoopIterations": 1e7
+        }
+    }
+}

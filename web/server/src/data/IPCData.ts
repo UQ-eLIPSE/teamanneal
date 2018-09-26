@@ -2,8 +2,8 @@ import * as Stratum from "../../../common/Stratum";
 import * as AnnealNode from "../../../common/AnnealNode";
 import * as Constraint from "../../../common/Constraint";
 import * as RecordData from "../../../common/RecordData";
-import * as ConstraintSatisfaction from "../../../common/ConstraintSatisfaction";
 import { MoveRecordTestPermutationOperationInfo, SwapRecordsTestPermutationOperationInfo } from "../../../common/ToServerSatisfactionTestPermutationRequest";
+import { SatisfactionResponse } from "../../../common/ToClientAnnealResponse";
 
 interface InternalAnnealMeta {
     redisResponseId: string,
@@ -30,7 +30,7 @@ export interface AnnealResultMessageData {
 
     result?: {
         tree: AnnealNode.NodeRoot,
-        satisfaction: ConstraintSatisfaction.SatisfactionMap,
+        satisfaction: SatisfactionResponse
     },
     error?: string,
 }

@@ -29,6 +29,7 @@ export const calculateSatisfaction: express.RequestHandler =
 
             const job = IPCQueue.queueMessage("satisfaction-calculation", jobMessage);
 
+            // Map out the satisfaction objects per root node (partition)
             const satisfactionObjects =
                 await new Promise<SatisfactionMap[]>((resolve, reject) => {
                     job.on("complete", res => resolve(res));
