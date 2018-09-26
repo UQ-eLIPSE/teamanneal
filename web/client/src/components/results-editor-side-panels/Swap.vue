@@ -136,7 +136,6 @@ export default class Swap extends Vue {
         try {
             
             if (personA === undefined || personB === undefined) {
-                // TODO: Proper error handling
                 throw new Error("Underspecified swap operation");
             }
 

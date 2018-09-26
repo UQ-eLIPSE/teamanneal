@@ -134,7 +134,6 @@ export default class Move extends Vue {
         // Check to see if the move has failed
         try {
             if (sourcePerson === undefined || targetGroup === undefined) {
-                // TODO: Proper error handling
                 throw new Error("Underspecified move operation");
             }
 
