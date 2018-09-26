@@ -159,7 +159,7 @@ export default class Swap extends Vue {
             await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
             const notifyPacket = {
                 title: "Swap",
-                message: " Success",
+                message: "Members swapped successfully",
                 options: {
                     duration: 5000,
                     mode: "success"

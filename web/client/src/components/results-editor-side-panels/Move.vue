@@ -164,7 +164,7 @@ export default class Move extends Vue {
             await S.dispatch(S.action.MOVE_RECORD_TO_GROUP_NODE, { sourcePerson, targetGroup });
             const notifyPacket = {
                 title: "Move",
-                message: " Moving of student successful",
+                message: " Member moved to " + S.state.groupNode.nameMap[targetGroup],
                 options: {
                     duration: 5000,
                     mode: "success"
