@@ -59,6 +59,9 @@ import { Vue, Component, Watch } from "av-ts";
 import { ResultsEditor as S } from "../../store";
 
 import { SwapSidePanelToolData } from "../../data/SwapSidePanelToolData";
+import { NotificationPayload } from "../../data/Notification";
+import { notifySystem } from "../../util/NotificationEventBus";
+
 import * as SatisfactionTestPermutationRequest from "../../data/SatisfactionTestPermutationRequest";
 
 import { SwapRecordsTestPermutationOperationResult } from "../../../../common/ToClientSatisfactionTestPermutationResponse";
@@ -146,18 +149,46 @@ export default class Swap extends Vue {
     async commitSwap() {
         const { personA, personB } = this.data;
 
-        if (personA === undefined || personB === undefined) {
-            // TODO: Proper error handling
-            throw new Error("Underspecified swap operation");
+        // Check to see if the swap has failed
+        try {
+            
+            if (personA === undefined || personB === undefined) {
+                throw new Error("Underspecified swap operation");
+            }
+
+            await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
+            const notifyPacket = {
+                title: "Swap",
+                message: "Members swapped successfully",
+                options: {
+                    duration: 5000,
+                    mode: "success"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
+
+            // Only close upon successful swap
+            // TODO: Review whether we should close the side panel or not
+            await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
+
+            // Recalculate satisfaction after successful swap operation
+            await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
+        } catch(e) {
+            const err = e as Error;
+
+            const notifyPacket = {
+                title: "Swap",
+                message: err.toString(),
+                options: {
+                    duration: 5000,
+                    mode: "error"
+                }
+            } as NotificationPayload;
+
+            notifySystem(notifyPacket);
         }
 
-        await S.dispatch(S.action.SWAP_RECORDS, { personA, personB });
-
-        // TODO: Review whether we should close the side panel or not
-        await S.dispatch(S.action.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
-
-        // Recalculate satisfaction after successful swap operation
-        await S.dispatch(S.action.CALCULATE_SATISFACTION, undefined);
     }
 
     async fetchSatisfactionTestPermutationData() {
