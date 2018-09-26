@@ -114,7 +114,7 @@ const getters = {
 
                 case "intermediate-stratum": {
                     map[node._id] = stateStrata[depth]._id;
-                    node.children.forEach(c => writeNodeStratumMap(c, depth));
+                    node.children.forEach(c => writeNodeStratumMap(c, depth + 1));
                     break;
                 }
 
