@@ -2,6 +2,7 @@
 import Vue, { VNode, CreateElement } from "vue";
 
 import { Record, RecordElement } from "../../../common/Record";
+import { SatisfactionMap, NodeSatisfactionObject } from "../../../common/ConstraintSatisfaction";
 
 import { GroupNode } from "../data/GroupNode";
 import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
@@ -22,7 +23,7 @@ interface Props_NodeStratumWithRecordChildren {
     nodeNameMap: GroupNodeNameMap | undefined,
     nodeRecordMap: GroupNodeRecordArrayMap | undefined,
     nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
-    constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
+    constraintSatisfactionMap:  SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     hiddenNodes: { [key: string]: true }
@@ -36,11 +37,17 @@ interface Props_NodeStratumWithStratumChildren {
     nodeNameMap: GroupNodeNameMap | undefined,
     nodeRecordMap: GroupNodeRecordArrayMap | undefined,
     nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
-    constraintSatisfactionMap: { [nodeId: string]: number | undefined } | undefined,
+    constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     hiddenNodes: { [key: string]: true }
 }
+
+// Determines how big the cell is and the associated percent
+/*interface ConstraintCell {
+    constraintPercent: number,
+    rowspan: number
+}*/
 
 function propsHasRecordChildren(p: Props): p is Props_NodeStratumWithRecordChildren {
     return p.node.type === "leaf-stratum";
@@ -84,35 +91,52 @@ function isNodeVisible(p: Props) {
     return p.hiddenNodes[p.node._id] === undefined;
 }
 
+/** Gets the count of children */
+function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNodeLeafStratum, p: Props) {
+    let output = 0;
+
+    if (rootNode.type == "intermediate-stratum") {
+        for (let i = 0 ; i < rootNode.children.length; i++) {
+            const child = rootNode.children[i];
+            if (child.type == "leaf-stratum" && (p.hiddenNodes[child._id] === undefined)) {
+                output = output + getNumberOfDescendants(child, p);
+            }
+
+            // Even if the child is invisible, still add to the count
+            output = output + 1;
+        }
+    } else {
+        // We need to grab the nodeMap
+        if (p.nodeRecordMap && p.nodeRecordMap[rootNode._id]) {
+            return p.nodeRecordMap[rootNode._id].length;
+        } else {
+            return 0;
+        }
+    }
+
+    return output;
+}
+
 /** Creates the heading elements for stratum nodes */
 function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void, p: Props) {
     const leadingPadCells = p.depth;
     const totalNumberOfColumns = p.totalNumberOfColumns;
     const heading = getGroupHeadingLabel(p);
 
-    const constraintSatisfaction = overallConstraintSatisfaction(p);
 
     const headingContentElementArray = [
         createElement("div", { class: "label" }, heading),
     ];
 
-    if (constraintSatisfaction !== undefined) {
-        headingContentElementArray.push(
-            createElement("div", { class: "overall-constraint-satisfaction" }, [
-                `${(constraintSatisfaction * 100) >>> 0}%`,
-                createElement("meter",
-                    {
-                        attrs: {
-                            value: constraintSatisfaction,
-                            min: 0,
-                            max: 1,
-                            low: 0.5,
-                        },
-                    }
-                )
-            ])
-        );
+    // Get the rowspan associated with the cell, remember to include self
+    const rowspan = getNumberOfDescendants(p.node, p) + 1;
+
+    // Iterate through satisfactions
+    let satisfaction: NodeSatisfactionObject = {};
+    if (p.constraintSatisfactionMap &&  p.constraintSatisfactionMap[p.node._id]) {
+        satisfaction = p.constraintSatisfactionMap[p.node._id];
     }
+    const satisfactionKeys = Object.keys(satisfaction);
 
     // Get style information from node style map
     const style = p.nodeStyles && p.nodeStyles.get(p.node._id);
@@ -151,6 +175,14 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 createElement("div", { class: "heading-content" }, headingContentElementArray)
             ]
         ),
+        ...satisfactionKeys.map((element) => {
+            return isNodeVisible(p) ? createElement("td", {
+                attrs: { rowspan: rowspan,
+                    bgcolor: satisfaction[element]! == 1 ? "green" : "red"
+                }
+                // This should just return an empty/irrelvant element
+            }, satisfaction[element]!.toString()): createElement("");
+        }),
     ]);
 }
 
@@ -198,15 +230,6 @@ function getCellDisplayedValue(cellValue: number | string | null) {
     }
 
     return "" + cellValue;
-}
-
-function overallConstraintSatisfaction(p: Props) {
-    // No map to use
-    if (p.constraintSatisfactionMap === undefined) {
-        return undefined;
-    }
-
-    return p.constraintSatisfactionMap[p.node._id];
 }
 
 export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {

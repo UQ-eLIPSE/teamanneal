@@ -38,6 +38,7 @@
 import { Vue, Component, Prop, p } from "av-ts";
 
 import { Record, RecordElement } from "../../../common/Record";
+import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
 import { GroupNode } from "../data/GroupNode";
 import { GroupNodeRoot } from "../data/GroupNodeRoot";
@@ -60,7 +61,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop nodeNameMap = p<GroupNodeNameMap>({ required: false, });
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
     @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
-    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    @Prop constraintSatisfactionMap = p< SatisfactionMap | undefined >({ required: false, });
     /** True when anneal results have multiple partitions */
     @Prop isDataPartitioned = p({ type: Boolean, required: true });
     @Prop hiddenNodes = p<{ [key: string]: true }>({ required: true });

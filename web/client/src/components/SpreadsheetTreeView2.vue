@@ -61,6 +61,7 @@ import { GroupNode } from "../data/GroupNode";
 import { GroupNodeRoot } from "../data/GroupNodeRoot";
 import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
@@ -98,7 +99,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
     @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: false, default: 0, });
-    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
     @Prop columnsDisplayIndices = p<number[]>({ required: false, });
     @Prop hiddenNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });

@@ -33,7 +33,9 @@ export enum ResultsEditorGetter {
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
     GET_SATISFACTION = "Get satisfaction data",
     GET_RECORD_LOOKUP_MAP = "Get record lookup map",
-    GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map"
+    GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map",
+    GET_LEAF_CONSTRAINTS = "Get the leaf constraints",
+    GET_INTERMEDIATE_CONSTRAINTS = "Get the intermediate constraints"
 }
 
 const G = ResultsEditorGetter;
@@ -107,14 +109,14 @@ const getters = {
         function writeNodeStratumMap(node: GroupNode, depth: number = 0) {
             switch (node.type) {
                 case "root": {
-                    // Roots do not appear in strata
+                    // Roots do not appear in stratanot appear in strata
                     node.children.forEach(c => writeNodeStratumMap(c, depth));
                     break;
                 }
 
                 case "intermediate-stratum": {
                     map[node._id] = stateStrata[depth]._id;
-                    node.children.forEach(c => writeNodeStratumMap(c, depth));
+                    node.children.forEach(c => writeNodeStratumMap(c, depth + 1));
                     break;
                 }
 
@@ -383,6 +385,68 @@ const getters = {
             nodeRoots.forEach((root) => mapChildToParentRecursively(childToParentNodeMap, root))
         }
         return childToParentNodeMap;
+    },
+
+    [G.GET_INTERMEDIATE_CONSTRAINTS](state: State) {
+        const output = [];
+
+        const allConstraints = state.constraintConfig.constraints;
+
+        // Get the node to stratum map
+        const map = getters[G.GET_NODE_TO_STRATUM_MAP](state);
+        
+        // Get the flat array with only leaf nodes
+        const flatArray = getters[G.GET_FLAT_NODE_ARRAY](state).filter((element) => {
+            return element.type == "intermediate-stratum";
+        });
+
+        // Go through the flat array with just the leafs. Grab an element and find the strata id
+        if(flatArray.length > 0) {
+            const stratumId = map[flatArray[0]._id];
+
+            if (stratumId) {
+                // Find all constraints that point to the stratumId
+                for (let i = 0 ; i < allConstraints.length; i++) {
+                    if (allConstraints[i].stratum === stratumId) {
+                        output.push(allConstraints[i]);
+                    }
+                }
+            }
+        }
+
+        return output;
+
+    },
+
+    [G.GET_LEAF_CONSTRAINTS](state: State) {
+        const output = [];
+        
+        const allConstraints = state.constraintConfig.constraints;
+
+        // Get the node to stratum map
+        const map = getters[G.GET_NODE_TO_STRATUM_MAP](state);
+        
+        // Get the flat array with only leaf nodes
+        const flatArray = getters[G.GET_FLAT_NODE_ARRAY](state).filter((element) => {
+            return element.type == "leaf-stratum";
+        });
+
+
+        // Go through the flat array with just the leafs. Grab an element and find the strata id
+        if(flatArray.length > 0) {
+            const stratumId = map[flatArray[0]._id];
+            
+            if (stratumId) {
+                // Find all constraints that point to the stratumId
+                for (let i = 0 ; i < allConstraints.length; i++) {
+                    if (allConstraints[i].stratum === stratumId) {
+                        output.push(allConstraints[i]);
+                    }
+                }
+            }
+        }
+
+        return output;
     }
 }
 

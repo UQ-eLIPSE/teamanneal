@@ -7,6 +7,14 @@
         <th v-for="(label, i) in headerRow"
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
+        <th v-for="(inter, i) in intermediateConstraints"
+            :key="inter._id">
+            {{ "TC" + i}}
+        </th>
+        <th v-for="(leaf, i) in leafConstraints"
+            :key="leaf._id">
+            {{ "GC" + i}}
+        </th>
     </tr>
 </template>
 
@@ -14,6 +22,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
+import { ResultsEditor as S } from "../store";
 
 @Component
 export default class SpreadsheetTreeView2Header extends Vue {
@@ -42,6 +51,14 @@ export default class SpreadsheetTreeView2Header extends Vue {
             minWidth: cellWidth,
             maxWidth: cellWidth,
         };
+    }
+
+    get intermediateConstraints() {
+        return S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS);
+    }
+
+    get leafConstraints() {
+        return S.get(S.getter.GET_LEAF_CONSTRAINTS);
     }
 }   
 </script>
