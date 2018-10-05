@@ -17,6 +17,10 @@
                     <td v-for="i in numberOfDataColumns"
                         :key="i"
                         :style="dataColumnStyle(i-1)"></td>
+                    <td v-for="i in numberofConstraintColumns"
+                        :key="i + numberOfDataColumns"
+                        :style="dataColumnStyle(i + numberOfDataColumns - 1)"
+                    ></td>
                 </tr>
 
                 <!-- If we're in the sizing phase, we need to include the header in the contents of the table before we do an analysis of the widths of the columns -->
@@ -54,7 +58,7 @@
 
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
-
+import { ResultsEditor as S } from "../store";
 import { Record, RecordElement } from "../../../common/Record";
 
 import { GroupNode } from "../data/GroupNode";
@@ -128,6 +132,10 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     get numberOfDataColumns() {
         return this.filteredHeaderRow.length;
+    }
+
+    get numberofConstraintColumns() {
+        return  S.get(S.getter.GET_LEAF_CONSTRAINTS).length +  S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS).length;
     }
 
     get filteredHeaderRow() {
