@@ -23,7 +23,7 @@
                 <p>If you wish to use a custom list of names, choose "Custom list" from the dropdown and fill in one name per line.</p>
 
                 <h2>When group names are generated and applied</h2>
-                <p>TeamAnneal generates and applies group names after annealing; you will be able to see this clearly labelled on each team on the results page once the process is complete.</p>
+                <p>TeamAnneal generates and applies group names after annealing; you will be able to see this clearly labelled on each group on the results page once the process is complete.</p>
             </div>
             <p>
                 <StrataEditor></StrataEditor>

@@ -8,6 +8,8 @@ import { MutationTracker } from "../../data/MutationTracker";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 import { AnnealCreatorStateSerialisable } from "../AnnealCreator/state";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
+
 
 export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
@@ -36,6 +38,7 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     },
 
     annealFlags?: MutationTracker
+    satisfaction: ConstraintSatisfaction.SatisfactionState
 }
 
 export function init() {
@@ -57,6 +60,7 @@ export function init() {
         },
 
         // Doesn't need to keep track of the flags
+        satisfaction: ConstraintSatisfaction.initConstraintSatisfactionState()
     };
 
     return state;

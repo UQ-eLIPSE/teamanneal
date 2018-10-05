@@ -97,8 +97,8 @@ const getters = {
             // Do not permit blank string names
             if (label.length === 0) { return false; }
 
-            // Do not permit "partition" as a name - it is reserved
-            if (label === "partition") { return false; }
+            // Do not permit "pool" as a name - it is reserved
+            if (label === "pool") { return false; }
 
             strataNameSet.add(label);
         }

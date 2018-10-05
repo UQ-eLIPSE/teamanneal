@@ -193,7 +193,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
 
         // Save to state
         // If some record file or config is set, then only set the record data
-        // in
+        // (If current source record data and the new source record data have a compatible file (column) structure)
         if (this.hasConfig || this.hasSourceFileData) {
             await S.dispatch(S.action.SET_RECORD_DATA, recordData);
         } else {

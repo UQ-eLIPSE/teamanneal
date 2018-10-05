@@ -12,12 +12,18 @@ export function init() {
             // Start processing job
             console.log(`Calculating satisfaction...`);
 
-            // Map out the satisfaction objects per node
-            const satisfactionObjects =
-                annealNodes.map(annealNode => generateSatisfactionMapFromAnnealRequest(annealNode, recordData, strata, constraints));
+            try {
+                // Map out the satisfaction objects per node
+                const satisfactionObjects =
+                    annealNodes.map(annealNode => generateSatisfactionMapFromAnnealRequest(annealNode, recordData, strata, constraints));
 
-            done(undefined, satisfactionObjects);
+                done(undefined, satisfactionObjects);
 
-            console.log(`Satisfaction calculation finished`);
+                console.log(`Satisfaction calculation finished`);
+            } catch (error) {
+                console.log('Error encountered in satisfaction calculation: ');
+                console.log(error);
+                done(error);
+            }
         });
 }

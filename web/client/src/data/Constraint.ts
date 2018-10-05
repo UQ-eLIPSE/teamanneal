@@ -349,6 +349,10 @@ export namespace ConstraintPhraseMaps {
 
     export const ConditionFunctionList = [
         {
+            value: "low",
+            text: "an even distribution of",
+        },
+        {
             value: "eq",
             text: "exactly",
         },
@@ -372,14 +376,16 @@ export namespace ConstraintPhraseMaps {
             value: "lt",
             text: "fewer than",
         },
-        {
-            value: "low",
-            text: "as few",
-        },
-        {
-            value: "high",
-            text: "as many",
-        },
+        // Commenting these out since they have been replaced
+        // by `an even distribution of` instead
+        // {
+        //     value: "low",
+        //     text: "as few",
+        // },
+        // {
+        //     value: "high",
+        //     text: "as many",
+        // },
         {
             value: "similar",
             text: "similar values of",
@@ -409,3 +415,149 @@ export namespace ConstraintPhraseMaps {
         },
     ];
 }
+
+export namespace ConstraintSentence {
+
+    /** Constructs a phrase from the key-values in the `constraint` prop. */
+    export function convertConstraintToSentence(constraint: Data, selectedStratumLabel: string) {
+        let sentence = "";
+
+        sentence += selectedStratumLabel + ' ';
+        sentence += getWeightText(constraint);
+        sentence += getConstraintConditionFunctionText(constraint);
+        sentence += getPersonUnitText(constraint);
+        sentence += getConstraintFilterText(constraint);
+        sentence += ' when ' + selectedStratumLabel + ' has ';
+        sentence += getConstraintGroupApplicabilityText(constraint);
+
+        return sentence;
+    }
+
+    function getWeightText(constraint: Data) {
+        const weightItem = findItemInList(ConstraintPhraseMaps.CostWeightList, "value", constraint.weight);
+        return ((weightItem === undefined) ? "" : weightItem.text) + ' ';
+    }
+
+    export function getConstraintConditionFunctionText(constraint: Data) {
+        const item = findItemInList(ConstraintPhraseMaps.ConditionFunctionList, "value", constraint.condition.function);
+        let phrase = ((item === undefined) ? "" : item.text) + ' ';
+        if (showConditionCount(constraint)) {
+            phrase += (constraint.condition as any).value + ' ';
+        }
+
+        return phrase;
+    }
+
+    export function getPersonUnitText(constraint: Data) {
+        if (personUnitNounFollowsCondition(constraint)) {
+            return personUnitNoun(constraint) + ' with ';
+        }
+        return '';
+    }
+
+    export function getConstraintFilterText(constraint: Data) {
+        let phrase = constraint.filter.column.label + ' ';
+
+        if (showFilterFunction(constraint)) {
+            phrase += constraintFilterFunction(constraint) + ' ' + (constraint.filter as any).values[0];
+        }
+
+        return phrase;
+    }
+
+    function getConstraintGroupApplicabilityText(constraint: Data) {
+        return constraintApplicabilityPhrase(constraint) + ' ' + groupSizeApplicabilityConditionPersonUnitNoun(constraint);
+    }
+
+    // -------------------------------------------------
+    // Utility functions for building constraint phrases
+    // -------------------------------------------------
+
+    /**
+     * Determines if the person unit noun ("person" or "people") comes after
+     * the condition function text in the constraint sentence
+     */
+    function personUnitNounFollowsCondition(constraint: Data) {
+        switch (constraint.condition.function) {
+            case "similar":
+            case "different":
+                return false;
+        }
+
+        return true;
+    }
+
+    function constraintApplicability(constraint: Data) {
+        const groupSizeApplicability = constraint.applicability.find((applicabilityObject) => applicabilityObject.type === 'group-size');
+        if (groupSizeApplicability !== undefined) {
+            return groupSizeApplicability.value;
+        }
+
+        return undefined;
+    }
+
+    function constraintApplicabilityPhrase(constraint: Data) {
+        return constraintApplicability(constraint) || " any number of ";
+    }
+
+    function showFilterFunction(constraint: Data) {
+        switch (constraint.condition.function) {
+            case "similar":
+            case "different":
+                return false;
+        }
+
+        return true;
+    }
+
+    function constraintFilterFunction(constraint: Data) {
+        const filterType = constraint.filter.column.type;
+        const list = filterType === "number" ? ConstraintPhraseMaps.NumberFilterFunctionList : ConstraintPhraseMaps.StringFilterFunctionList;
+        const item = findItemInList(list, "value", (constraint.filter as any).function);
+        return (item === undefined) ? "" : item.text;
+    }
+
+    /**
+     * Generates the appropriate (pluralised) noun for the constraint sentence
+     */
+    function personUnitNoun(constraint: Data) {
+        // If the count is exactly one, return "person"
+        if (showConditionCount(constraint) && (constraint.condition as any).value === 1) {
+            return "person";
+        } else {
+            return "people";
+        }
+    }
+
+    function showConditionCount(constraint: Data) {
+        switch (constraint.condition.function) {
+            case "low":
+            case "high":
+            case "similar":
+            case "different":
+                return false;
+        }
+
+        return true;
+    }
+
+    function groupSizeApplicabilityConditionPersonUnitNoun(constraint: Data) {
+        if (constraintApplicability(constraint) === undefined) {
+            return "people";
+        }
+
+        if (constraintApplicability(constraint) === 1) {
+            return "person";
+        }
+
+        return "people";
+    }
+
+    /**
+     * A generic function used for finding array items for `value-text` maps in `ConstraintPhraseMaps` (see import)
+     */
+    function findItemInList<T extends object, U extends keyof T>(list: T[], property: U, value: T[U]) {
+        return list.find(listItem => listItem[property] === value);
+    }
+}
+
