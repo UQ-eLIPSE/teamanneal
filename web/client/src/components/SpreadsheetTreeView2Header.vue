@@ -9,11 +9,11 @@
             :style="dataColumnStyle(i)">{{ label }}</th>
         <th v-for="(inter, i) in intermediateConstraints"
             :key="inter._id">
-            {{ "TC" + i}}
+            {{ intermediateLabel + i}}
         </th>
         <th v-for="(leaf, i) in leafConstraints"
             :key="leaf._id">
-            {{ "GC" + i}}
+            {{ leafLabel + i}}
         </th>
     </tr>
 </template>
@@ -51,6 +51,18 @@ export default class SpreadsheetTreeView2Header extends Vue {
             minWidth: cellWidth,
             maxWidth: cellWidth,
         };
+    }
+
+    // At the moment we assume a 3 level system and also root is not placed in the strata
+    get leafLabel() {
+        return S.state.strataConfig.strata.length == 2 ? S.state.strataConfig.strata[1].label[0] + "C" : "";
+    }
+
+    /**
+     * E.g. returns TC if the intermediate label is Team
+     */
+    get intermediateLabel() {
+        return S.state.strataConfig.strata.length >= 1 ? S.state.strataConfig.strata[0].label[0] + "C" : "";
     }
 
     get intermediateConstraints() {

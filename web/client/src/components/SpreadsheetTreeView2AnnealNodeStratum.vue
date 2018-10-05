@@ -95,26 +95,31 @@ function isNodeVisible(p: Props) {
 function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNodeLeafStratum, p: Props) {
     let output = 0;
 
-    if (rootNode.type == "intermediate-stratum") {
-        for (let i = 0 ; i < rootNode.children.length; i++) {
-            const child = rootNode.children[i];
-            if (child.type == "leaf-stratum" && (p.hiddenNodes[child._id] === undefined)) {
-                output = output + getNumberOfDescendants(child, p);
+    if (p.hiddenNodes[rootNode._id] === undefined) {
+        if (rootNode.type == "intermediate-stratum") {
+            for (let i = 0 ; i < rootNode.children.length; i++) {
+                const child = rootNode.children[i];
+                if (child.type == "leaf-stratum" && (p.hiddenNodes[child._id] === undefined)) {
+                    output = output + getNumberOfDescendants(child, p);
+                }
+
+                // Even if the child is invisible, still add to the count
+                output = output + 1;
             }
-
-            // Even if the child is invisible, still add to the count
-            output = output + 1;
-        }
-    } else {
-        // We need to grab the nodeMap
-        if (p.nodeRecordMap && p.nodeRecordMap[rootNode._id]) {
-            return p.nodeRecordMap[rootNode._id].length;
         } else {
-            return 0;
+            // We are probably a leaf at this point
+            if (p.nodeRecordMap && p.nodeRecordMap[rootNode._id]) {
+                return p.nodeRecordMap[rootNode._id].length;
+            } else {
+                return 0;
+            }
         }
-    }
 
-    return output;
+        return output;
+    } else {
+        // It's invisible
+        return 0;
+    }
 }
 
 /** Creates the heading elements for stratum nodes */
@@ -176,12 +181,12 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
             ]
         ),
         ...satisfactionKeys.map((element) => {
-            return isNodeVisible(p) ? createElement("td", {
+            return createElement("td", {
                 attrs: { rowspan: rowspan,
                     bgcolor: satisfaction[element]! == 1 ? "green" : "red"
                 }
                 // This should just return an empty/irrelvant element
-            }, satisfaction[element]!.toString()): createElement("");
+            }, satisfaction[element]!.toString());
         }),
     ]);
 }
