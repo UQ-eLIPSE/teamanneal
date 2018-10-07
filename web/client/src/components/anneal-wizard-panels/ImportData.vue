@@ -78,6 +78,7 @@
                                        class="hidden-file-input"
                                        ref="config-file-input"
                                        accept=".taconfig,.taresults"
+                                       @click="setPrompt($event)"
                                        @change="onConfigFileInputChanged($event)">
                                 <button class="button"
                                         @click.stop.prevent="openConfigFilePicker">Select TeamAnneal file...</button>
@@ -126,6 +127,9 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     /** Object representing the configuration import result message */
     importConfigResult: { state: "success" | "failure" | undefined, message: string } = { state: undefined, message: "" };
 
+    /** Boolean which determines whether or not the prompt was good */
+    acceptPrompt: boolean = true;
+
     get filename() {
         return S.state.recordData.source.name;
     }
@@ -166,6 +170,17 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
         (this.$refs["config-file-input"] as HTMLInputElement[])[0].click();
     }
 
+    setPrompt(e : Event) {
+        if (S.get(S.getter.HAS_IMPORT) && (S.get(S.getter.HAS_MUTATED))) {
+            this.acceptPrompt = confirm("You have unsaved changes with your configuration, would you like to continue?");
+
+            if (!this.acceptPrompt) {
+                e.preventDefault();
+            }
+        }
+
+    }
+
     async extractRecordDataFromInput(inputEl: HTMLInputElement) {
         const file = inputEl.files![0];
         const previousRecordData = S.state.recordData;
@@ -190,39 +205,45 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
     }
 
     async onConfigFileInputChanged($event: Event) {
-        // Get file
-        const fileElement = $event.target as HTMLInputElement;
-        const file: File | undefined = fileElement.files![0];
 
-        if (file === undefined) {
-            this.importConfigResult = { state: undefined, message: `No file selected` };
-            return;
+        // Only load if necessary
+        if (this.acceptPrompt) {
+
+            // Get file
+            const fileElement = $event.target as HTMLInputElement;
+            const file: File | undefined = fileElement.files![0];
+
+            if (file === undefined) {
+                this.importConfigResult = { state: undefined, message: `No file selected` };
+                return;
+            }
+
+            // Set import config message to "in progress" state
+            this.importConfigResult = { state: undefined, message: "Importing..." };
+
+            try {
+                // Read file contents into state
+                const fileContents = await new Promise<string>((resolve, reject) => {
+                    // Set up reader
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = (e) => reject(e);
+
+                    // Commence reading
+                    reader.readAsText(file);
+                });
+
+                await S.dispatch(S.action.HYDRATE, { dehydratedState: fileContents, keepExistingRecordDataSource: true, });
+                S.dispatch(S.action.SET_IMPORT_FLAG_HIGH, undefined);
+                S.dispatch(S.action.SET_MUTATION_FLAG_LOW, undefined);
+                this.importConfigResult = { state: "success", message: `"${file.name}" imported successfully` };
+            } catch {
+                this.importConfigResult = { state: "failure", message: `Configuration failed to be imported` };
+            }
+
+            // Toggle key to force input element re-render
+            this.configFileInputElKey ^= 1;
         }
-
-        // Set import config message to "in progress" state
-        this.importConfigResult = { state: undefined, message: "Importing..." };
-
-        try {
-            // Read file contents into state
-            const fileContents = await new Promise<string>((resolve, reject) => {
-                // Set up reader
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = (e) => reject(e);
-
-                // Commence reading
-                reader.readAsText(file);
-            });
-
-            await S.dispatch(S.action.HYDRATE, { dehydratedState: fileContents, keepExistingRecordDataSource: true, });
-
-            this.importConfigResult = { state: "success", message: `"${file.name}" imported successfully` };
-        } catch {
-            this.importConfigResult = { state: "failure", message: `Configuration failed to be imported` };
-        }
-
-        // Toggle key to force input element re-render
-        this.configFileInputElKey ^= 1;
     }
 }
 </script>

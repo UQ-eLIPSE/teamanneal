@@ -13,8 +13,12 @@ import { GroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeLeafStratum } from "../../data/GroupNodeLeafStratum";
 import { GroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
 import { GroupNodeIntermediateStratum } from "../../data/GroupNodeIntermediateStratum";
+import { MutationTracker, init as initMutationTracker } from "../../data/MutationTracker";
 
 import * as AnnealNode from "../../../../common/AnnealNode";
+import { DeepReadonly } from "../../data/DeepReadonly";
+import { SatisfactionResponse } from "../../../../common/ToClientAnnealResponse";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
 
 export interface AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
@@ -28,6 +32,9 @@ export interface AnnealCreatorStateSerialisable {
 
     // Placeholder possible property
     annealRequest?: AnnealRequestState.AnnealRequestState,
+
+    /** Keeps track of user changes */
+    annealFlags?: MutationTracker
 }
 
 export interface AnnealCreatorState extends AnnealCreatorStateSerialisable {
@@ -44,9 +51,25 @@ export function init() {
         strataConfig: initStrataConfig(),
 
         annealRequest: AnnealRequestState.initNotRunning(),
+        
+        annealFlags: initMutationTracker()
     };
 
     return state;
+}
+
+/** Aggregates satisfaction objects (returned by server, per partition)  */
+export function extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfactionMap: DeepReadonly<SatisfactionResponse>[]) {
+    
+    const satisfactionMap = annealNodeRootSatisfactionMap.reduce<ConstraintSatisfaction.SatisfactionMap>((carry, sMap) => {
+        const satisfactionMap = sMap.satisfactionMap;
+        return Object.assign(carry, satisfactionMap);
+
+    }, {});
+
+    const statistics = annealNodeRootSatisfactionMap.map((satisfaction) => satisfaction.statistics) || [];
+
+    return { satisfactionMap, statistics };
 }
 
 export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
@@ -71,6 +94,7 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     // NOTE: Assumes results and no errors are in the tree
     const annealNodeRoots = data.results.map(res => res.result!.tree);
+    const annealNodeRootSatisfaction = data.results.map(res => res.result!.satisfaction);
 
     // Grab full partition column data
     const _partitionColumn = state.recordData.partitionColumn;
@@ -131,9 +155,15 @@ export function generateGroupNodeCompatibleData(state: AnnealCreatorState) {
 
     annealNodeRoots.forEach(walkAnnealTreeAndTransform);
 
+    const { satisfactionMap, statistics } = extractSatisfactionDataFromPartitionSatisfactionArray(annealNodeRootSatisfaction);
+
     return {
         roots: newRoots,
         nameMap: newNameMap,
         nodeRecordArrayMap: newNodeRecordArrayMap,
+        satisfaction: {
+            satisfactionMap: satisfactionMap,
+            statistics: statistics
+        }
     };
 }

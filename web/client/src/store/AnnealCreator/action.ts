@@ -20,6 +20,7 @@ import * as AnnealRequestState from "../../data/AnnealRequestState";
 import * as AnnealCreatorStoreState from "../../data/AnnealCreatorStoreState";
 
 import { deserialiseWithUndefined } from "../../util/Object";
+import { setMutation } from "../../util/MutationTrackerUtil";
 
 type ActionFunction<A extends AnnealCreatorAction> = typeof actions[A];
 
@@ -59,6 +60,13 @@ export enum AnnealCreatorAction {
     SET_ANNEAL_REQUEST_STATE_TO_IN_PROGRESS = "Setting anneal request state to 'in progress'",
     SET_ANNEAL_REQUEST_STATE_TO_COMPLETED = "Setting anneal request state to 'completed'",
     CLEAR_ANNEAL_REQUEST_STATE = "Clearing anneal request state",
+
+    SET_MUTATION_FLAG_HIGH = "Setting the mutation flag to high",
+    SET_MUTATION_FLAG_LOW = "Setting the mutation flag to low",
+
+    SET_IMPORT_FLAG_HIGH = "Setting the import flag to high",
+    SET_IMPORT_FLAG_LOW = "Setting the import flag to low",
+
 }
 
 /** Shorthand for Action enum above */
@@ -69,7 +77,25 @@ export function dispatchFactory<T>(store: Store<T>, modulePrefix?: string) {
     const prefix = (modulePrefix !== undefined) ? `${modulePrefix}/` : "";
 
     return function dispatch<A extends AnnealCreatorAction, F extends ActionFunction<A>>(action: A, payload: FunctionParam2<F>, options?: DispatchOptions): ReturnType<F> {
+        actionProxy(action);
         return store.dispatch(prefix + action, payload, options) as ReturnType<F>;
+    }
+}
+
+// Specify actions which should trigger mutations explicitly, so that this does not happen for every single action,
+// especially if new actions are added to the actions list in the future.
+export function actionProxy<A extends AnnealCreatorAction>(action: A) {
+    switch (action) {
+        case A.DELETE_CONSTRAINT:
+        case A.UPSERT_CONSTRAINT:
+        case A.UPSERT_STRATUM:
+        case A.SET_RECORD_PARTITION_COLUMN:
+        case A.CLEAR_RECORD_PARTITION_COLUMN:
+        case A.SET_RECORD_ID_COLUMN:
+        case A.CLEAR_RECORD_ID_COLUMN:
+        case A.SET_STRATUM_NAMING_CONFIG_COUNTER:
+        case A.SET_STRATUM_NAMING_CONFIG_CONTEXT:
+            setMutation();
     }
 }
 
@@ -417,6 +443,22 @@ const actions = {
         if (!AnnealRequestState.isNotRunning(context.state.annealRequest)) {
             await dispatch(context, A.SET_ANNEAL_REQUEST_STATE_TO_NOT_RUNNING, undefined);
         }
+    },
+
+    async [A.SET_MUTATION_FLAG_HIGH](context: Context) {
+        commit(context, M.SET_MUTATION_FLAG, true);
+    },
+
+    async [A.SET_MUTATION_FLAG_LOW](context: Context) {
+        commit(context, M.SET_MUTATION_FLAG, false);
+    },
+
+    async [A.SET_IMPORT_FLAG_HIGH](context: Context) {
+        commit(context, M.SET_IMPORT_FLAG, true);
+    },
+
+    async [A.SET_IMPORT_FLAG_LOW](context: Context) {
+        commit(context, M.SET_IMPORT_FLAG, false);
     },
 };
 

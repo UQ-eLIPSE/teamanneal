@@ -31,7 +31,6 @@ import { Stratum } from "../data/Stratum";
 import { DeepPartial } from "../data/DeepPartial";
 
 import { AnnealCreator as S } from "../store";
-
 import DynamicWidthInputField from "./DynamicWidthInputField.vue";
 
 @Component({

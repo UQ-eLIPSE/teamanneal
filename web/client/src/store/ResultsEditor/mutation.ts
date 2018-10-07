@@ -15,6 +15,7 @@ import { FunctionParam2 } from "../../data/FunctionParam2";
 
 import { RecordElement } from "../../../../common/Record";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
 
 type MutationFunction<M extends ResultsEditorMutation> = typeof mutations[M];
 
@@ -56,7 +57,9 @@ export enum ResultsEditorMutation {
 
     SET_DISPLAY_DEPTH = "Setting request depth",
     COLLAPSE_NODES = "Collapse node i.e. Add to collapsedNodes",
-    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes"
+    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes",
+    SET_SATISFACTION_DATA = "Setting satisfaction data",
+    CLEAR_SATISFACTION_DATA = "Clearing satisfaction data"
 }
 
 /** Shorthand for Mutation enum above */
@@ -88,7 +91,12 @@ const mutations = {
     [M.INSERT_CONSTRAINT](state: State, constraint: Constraint) {
         state.constraintConfig.constraints.push(constraint);
     },
-
+    [M.SET_SATISFACTION_DATA](state: State, satisfaction: { satisfactionMap: ConstraintSatisfaction.SatisfactionMap, statistics: { [nodeId: string]: ConstraintSatisfaction.MultipleNodeSatisfactionStatistics }[] }) {
+        set(state, "satisfaction", satisfaction);
+    },
+    [M.CLEAR_SATISFACTION_DATA](state: State) {
+        set(state, "satisfaction", ConstraintSatisfaction.initConstraintSatisfactionState());
+    },
     [M.SET_CONSTRAINT](state: State, { constraint, index }: { constraint: Constraint, index: number }) {
         set(state.constraintConfig.constraints, index, constraint);
     },

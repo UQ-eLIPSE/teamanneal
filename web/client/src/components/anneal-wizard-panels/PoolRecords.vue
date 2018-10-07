@@ -89,6 +89,7 @@ import * as AnnealProcessWizardEntries from "../../data/AnnealProcessWizardEntri
 
 import { AnnealCreator as S } from "../../store";
 
+
 import { AnnealProcessWizardPanel } from "../AnnealProcessWizardPanel";
 
 @Component
@@ -234,6 +235,7 @@ export default class PoolRecords extends Mixin(AnnealProcessWizardPanel) {
             this.lastSetColumn = val;
             S.dispatch(S.action.SET_RECORD_PARTITION_COLUMN, val);
         }
+
     }
 
     @Lifecycle mounted() {

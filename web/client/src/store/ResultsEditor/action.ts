@@ -2,6 +2,7 @@ import { ActionTree, ActionContext, DispatchOptions, Store } from "vuex";
 
 import { ResultsEditorState as State } from "./state";
 import { ResultsEditorMutation as M, commit } from "./mutation";
+import { ResultsEditorGetter } from "./getter";
 
 import { State as AnnealCreatorState } from "../AnnealCreator";
 
@@ -18,6 +19,9 @@ import { RecordElement } from "../../../../common/Record";
 
 import { deserialiseWithUndefined, serialiseWithUndefined, deepMerge } from "../../util/Object";
 import { generateGroupNodeCompatibleData } from "../AnnealCreator/state";
+
+import * as SatisfactionCalculationRequest from "../../data/SatisfactionCalculationRequest";
+import { extractSatisfactionDataFromPartitionSatisfactionArray } from "../AnnealCreator/state";
 
 type ActionFunction<A extends ResultsEditorAction> = typeof actions[A];
 
@@ -56,7 +60,9 @@ export enum ResultsEditorAction {
     SET_DISPLAY_DEPTH = "Setting the jump/display depth for editor",
 
     COLLAPSE_NODES = "Collapse node i.e. Add to collapsedNodes",
-    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes"
+    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes",
+
+    CALCULATE_SATISFACTION = "Calculating satisfaction"
 }
 
 /** Shorthand for Action enum above */
@@ -95,13 +101,58 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, state.groupNode.nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, state.groupNode.nodeRecordArrayMap);
 
+
         if (state.sideToolArea.activeItem !== undefined) {
             await dispatch(context, A.SET_SIDE_PANEL_ACTIVE_TOOL, state.sideToolArea.activeItem);
         } else {
             await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
         }
-    },
 
+        // Note: Satisfaction needs to be set last since it needs preceding configuration to be loaded in the state
+        // Hydrate with satisfaction data
+        if (!state.satisfaction) {
+            // Satisfaction does not exist
+            // Recalculate satisfaction server-side with current configuration
+            await dispatch(context, A.CALCULATE_SATISFACTION, undefined);
+        } else {
+            // Hydrate with existing satisfaction data
+            commit(context, M.SET_SATISFACTION_DATA, state.satisfaction);
+        }
+    },
+    async [A.CALCULATE_SATISFACTION](context: Context) {
+
+        const constraints = context.getters[ResultsEditorGetter.GET_COMMON_CONSTRAINT_DESCRIPTOR_ARRAY];
+        const columns = context.getters[ResultsEditorGetter.GET_COMMON_COLUMN_DESCRIPTOR_ARRAY];
+        const records = context.getters[ResultsEditorGetter.GET_RECORD_COOKED_VALUE_ROW_ARRAY];
+        const strata = context.getters[ResultsEditorGetter.GET_COMMON_STRATA_DESCRIPTOR_ARRAY_IN_SERVER_ORDER];
+        const annealNodes = context.getters[ResultsEditorGetter.GET_COMMON_ANNEALNODE_ARRAY];
+
+        const requestBody = SatisfactionCalculationRequest.packageRequestBody({ columns, records, }, strata, constraints, annealNodes);
+        const { request } = SatisfactionCalculationRequest.createRequest(requestBody);
+
+        // Wait for response
+        try {
+            const response = await request;
+
+            // Set response data
+            const partitionSatisfactionArray = response.data;
+
+            const satisfaction = extractSatisfactionDataFromPartitionSatisfactionArray(partitionSatisfactionArray);
+
+            // Reset existing satisfaction
+            commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+            
+            // Set new satisfaction data
+            commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+        } catch (error) {
+            // TODO: Proper error handling w/ message
+            alert('Satisfaction could not be calculated. Please try again.');
+
+            // Clear satisfaction data
+            commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+        }
+
+    },
     async [A.DEHYDRATE](context: Context, { deleteSideToolAreaActiveItem }: Partial<{ deleteSideToolAreaActiveItem: boolean }>) {
         const state = { ...context.state };
 
@@ -120,7 +171,7 @@ const actions = {
         const annealCreatorState = deserialiseWithUndefined<AnnealCreatorState>(dehydratedState);
 
         // Generate names from the data in the AnnealCreator state
-        const { roots, nameMap, nodeRecordArrayMap } = generateGroupNodeCompatibleData(annealCreatorState);
+        const { roots, nameMap, nodeRecordArrayMap, satisfaction } = generateGroupNodeCompatibleData(annealCreatorState);
 
         await dispatch(context, A.RESET_STATE, undefined);
 
@@ -130,8 +181,9 @@ const actions = {
         await dispatch(context, A.SET_GROUP_NODE_STRUCTURE, { roots });
         await dispatch(context, A.SET_GROUP_NODE_NAME_MAP, nameMap);
         await dispatch(context, A.SET_GROUP_NODE_RECORD_ARRAY_MAP, nodeRecordArrayMap);
-    },
 
+        commit(context, M.SET_SATISFACTION_DATA, satisfaction);
+    },
     async [A.SHALLOW_MERGE_STATE](context: Context, creatorState: AnnealCreatorState) {
         // Drop anneal request part
         const { annealRequest, ...state } = creatorState;
@@ -145,6 +197,8 @@ const actions = {
         commit(context, M.CLEAR_CONSTRAINTS, undefined);
         commit(context, M.CLEAR_STRATA, undefined);
         commit(context, M.CLEAR_RECORD_DATA, undefined);
+        commit(context, M.CLEAR_SATISFACTION_DATA, undefined);
+
         await dispatch(context, A.CLEAR_SIDE_PANEL_ACTIVE_TOOL, undefined);
     },
 

@@ -4,9 +4,12 @@ import { ConstraintConfig, init as initConstraintConfig } from "../../data/Const
 import { GroupNodeNameMap, init as initGroupNodeNameMap } from "../../data/GroupNodeNameMap";
 import { GroupNodeStructure, init as initGroupNodeStructure } from "../../data/GroupNodeStructure";
 import { GroupNodeRecordArrayMap, init as initGroupNodeRecordArrayMap } from "../../data/GroupNodeRecordArrayMap";
+import { MutationTracker } from "../../data/MutationTracker";
 import { SidePanelActiveTool } from "../../data/SidePanelActiveTool";
 
 import { AnnealCreatorStateSerialisable } from "../AnnealCreator/state";
+import * as ConstraintSatisfaction from "../../../../common/ConstraintSatisfaction";
+
 
 export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     /** Data for each leaf node in the group tree (individual records) */
@@ -39,8 +42,10 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
     requestIdJump: string,
 
     /** Stores `node` ids of nodes which were collapsed.   */
-    collapsedNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true },
 
+    annealFlags?: MutationTracker,
+    satisfaction: ConstraintSatisfaction.SatisfactionState
 }
 
 export function init() {
@@ -66,8 +71,10 @@ export function init() {
         requestIdJump: "",
 
         /** Stores `node` ids of nodes which were collapsed (hidden).   */
-        collapsedNodes: {}
+        collapsedNodes: {},
 
+        // Doesn't need to keep track of the flags
+        satisfaction: ConstraintSatisfaction.initConstraintSatisfactionState()
     };
 
     return state;

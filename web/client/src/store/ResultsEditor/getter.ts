@@ -13,6 +13,7 @@ import * as Constraint from "../../../../common/Constraint";
 import * as RecordDataColumn from "../../../../common/RecordDataColumn";
 
 import { reverse } from "../../util/Array";
+import { SatisfactionState } from "../../../../common/ConstraintSatisfaction";
 
 type GetterFunction<G extends ResultsEditorGetter> = typeof getters[G];
 
@@ -32,6 +33,7 @@ export enum ResultsEditorGetter {
     GET_COMMON_ANNEALNODE_ARRAY = "Get common AnnealNode array",
     GET_THE_REQUEST_DEPTH = "Get request ID DEPTH",
     IS_DATA_PARTITIONED = "Check if partitions(pools) were created",
+    GET_SATISFACTION = "Get satisfaction data",
     GET_RECORD_LOOKUP_MAP = "Get record lookup map",
     GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map"
 }
@@ -55,7 +57,7 @@ function get<G extends ResultsEditorGetter, F extends GetterFunction<G>>(getters
 /** Store getter functions */
 const getters = {
     [G.GET_ALL_GROUP_NODES_RECORDS_ARRAY_MAP](state: State) {
-        const allGroupNodesRecordsMap: any = {};
+        const allGroupNodesRecordsMap: GroupNodeRecordArrayMap = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             root.children.forEach((child) => {
@@ -66,7 +68,7 @@ const getters = {
         return allGroupNodesRecordsMap;
     },
     [G.GET_PARTITION_NODE_MAP](state: State) {
-        const partitionToNodeMap: any = {};
+        const partitionToNodeMap: { [nodeId: string]: string[] } = {};
         const nodeRoots = state.groupNode.structure.roots;
         nodeRoots.forEach((root) => {
             partitionToNodeMap[root._id] = [];
@@ -114,7 +116,7 @@ const getters = {
 
                 case "intermediate-stratum": {
                     map[node._id] = stateStrata[depth]._id;
-                    node.children.forEach(c => writeNodeStratumMap(c, depth));
+                    node.children.forEach(c => writeNodeStratumMap(c, depth + 1));
                     break;
                 }
 
@@ -343,6 +345,10 @@ const getters = {
 
     [G.IS_DATA_PARTITIONED](state: State) {
         return state.groupNode.structure.roots.length > 1;
+    },
+    [G.GET_SATISFACTION](state: State): SatisfactionState {
+    
+        return state.satisfaction;
     },
     /**
      * Copied existing record lookup map functionality from Results editor for now
