@@ -37,7 +37,14 @@ export interface ResultsEditorState extends AnnealCreatorStateSerialisable {
         activeItem: SidePanelActiveTool | undefined,
     },
 
-    annealFlags?: MutationTracker
+    requestDepth: number,
+
+    requestIdJump: string,
+
+    /** Stores `node` ids of nodes which were collapsed.   */
+    collapsedNodes: { [key: string]: true },
+
+    annealFlags?: MutationTracker,
     satisfaction: ConstraintSatisfaction.SatisfactionState
 }
 
@@ -58,6 +65,13 @@ export function init() {
         sideToolArea: {
             activeItem: undefined,
         },
+
+        requestDepth: 0,
+
+        requestIdJump: "",
+
+        /** Stores `node` ids of nodes which were collapsed (hidden).   */
+        collapsedNodes: {},
 
         // Doesn't need to keep track of the flags
         satisfaction: ConstraintSatisfaction.initConstraintSatisfactionState()

@@ -2,6 +2,10 @@
   <div class="results-editor">
     <div class="workspace"
          v-if="displayWorkspace">
+      <div class="filter-row">
+        <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
+        <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+      </div>
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -15,7 +19,7 @@
                             :nodeRecordMap="nodeRecordMap"
                             :nodeStyles="nodeStyles"
                             :idColumnIndex="idColumnIndex"
-                            :hiddenNodes="hiddenNodes"
+                            :collapsedNodes="collapsedNodes"
                             :onToggleNodeVisibility="onToggleNodeVisibility"
                             @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
     </div>
@@ -28,16 +32,15 @@
         <a href="#import-results-package-file"
            @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
     </div>
-
     <ConstraintOverview v-if="displayWorkspace"
                         class="constraint-overview"
                         :constraints="constraints"
                         :constraintSatisfactionMap="annealSatisfactionMap"
                         :strata="strata">
     </ConstraintOverview>
-
     <ResultsEditorSideToolArea class="side-tool-area"
                                :menuItems="menuBarItems"></ResultsEditorSideToolArea>
+
   </div>
 </template>
 
@@ -61,6 +64,9 @@ import ResultsEditorSideToolArea from "./ResultsEditorSideToolArea.vue";
 import ConstraintOverview from "./ConstraintOverview.vue";
 
 import SpreadsheetTreeView2ColumnsFilter from "./SpreadsheetTreeView2ColumnsFilter.vue";
+
+import SpreadsheetJumpToFilter from "./SpreadsheetJumpToFilter.vue";
+import SpreadsheetDisplayFilter from "./SpreadsheetDisplayFilter.vue";
 
 import ImportFile from "./results-editor-side-panels/ImportFile.vue";
 import ExportFile from "./results-editor-side-panels/ExportFile.vue";
@@ -118,22 +124,27 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
   components: {
     SpreadsheetTreeView2,
     ResultsEditorSideToolArea,
+    SpreadsheetTreeView2ColumnsFilter,
+    SpreadsheetJumpToFilter,
+    SpreadsheetDisplayFilter,
     ConstraintOverview,
-    SpreadsheetTreeView2ColumnsFilter
-  }
+  },
 })
 export default class ResultsEditor extends Vue {
   // Private
   /** Stores the indices of the columns to be displayed */
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
-  // Private
-  /** Stores `node` ids of nodes which were collapsed (hidden).   */
-  hiddenNodes: { [key: string]: true } = {};
+  pRequestId: string = "";
 
   /** New reference to module state */
   get state() {
     return S.state;
+  }
+
+  /** Stores `node` ids of nodes which were collapsed (hidden).   */
+  get collapsedNodes() {
+    return this.state.collapsedNodes;
   }
 
   get recordData() {
@@ -275,22 +286,22 @@ export default class ResultsEditor extends Vue {
     this.columnsDisplayIndices = columnList;
   }
 
-  /** Checks if `node` id exists as a key in the `hiddenNodes` object. */
-  isNodeVisible(node: GroupNode) {
-    return this.hiddenNodes[node._id] === undefined;
-  }
-
-  /** Hides the selected `node` (Adds it to the `hiddenNodes` object). Passed down as a `prop` to child components. */
-  onToggleNodeVisibility(node: GroupNode) {
-    if (this.isNodeVisible(node)) {
-      Vue.set(this.hiddenNodes, node._id, true);
-    } else {
-      Vue.delete(this.hiddenNodes, node._id);
-    }
-  }
-
   get menuBarItems() {
     return MENU_BAR_ITEMS;
+  }
+
+  /** Checks if `node` id exists as a key in the `collapsedNodes` object. */
+  isNodeVisible(node: GroupNode) {
+    return this.collapsedNodes[node._id] === undefined;
+  }
+
+  /** Hides the selected `node` (Adds it to the `collapsedNodes` object). Passed down as a `prop` to child components. */
+  onToggleNodeVisibility(node: GroupNode) {
+    if (this.isNodeVisible(node)) {
+      S.dispatch(S.action.COLLAPSE_NODES, [node._id]);
+    } else {
+      S.dispatch(S.action.UNCOLLAPSE_NODES, [node._id]);
+    }
   }
 
   onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
@@ -518,5 +529,18 @@ export default class ResultsEditor extends Vue {
 
 .constraint-overview {
   max-width: 25%;
+}
+
+.filter-row {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #49075e;
+  margin: 0.5rem 0;
+}
+
+.filter-row>*:nth-child(2n) {
+  border-left: 0.05rem solid rgb(200, 200, 200);
 }
 </style>
