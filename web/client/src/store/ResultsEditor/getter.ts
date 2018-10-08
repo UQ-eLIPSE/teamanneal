@@ -15,6 +15,8 @@ import * as RecordDataColumn from "../../../../common/RecordDataColumn";
 import { reverse } from "../../util/Array";
 import { SatisfactionState } from "../../../../common/ConstraintSatisfaction";
 
+import { NodeSatisfactionObject } from "../../../../common/ConstraintSatisfaction";
+
 type GetterFunction<G extends ResultsEditorGetter> = typeof getters[G];
 
 type Getters = GetterTree<State, State>;
@@ -37,7 +39,8 @@ export enum ResultsEditorGetter {
     GET_RECORD_LOOKUP_MAP = "Get record lookup map",
     GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map",
     GET_LEAF_CONSTRAINTS = "Get the leaf constraints",
-    GET_INTERMEDIATE_CONSTRAINTS = "Get the intermediate constraints"
+    GET_INTERMEDIATE_CONSTRAINTS = "Get the intermediate constraints",
+    GET_PASSING_CHILDREN_MAP = "Get a map of number of passing children for strata spanning display"
 }
 
 const G = ResultsEditorGetter;
@@ -349,7 +352,7 @@ const getters = {
         return state.groupNode.structure.roots.length > 1;
     },
     [G.GET_SATISFACTION](state: State): SatisfactionState {
-    
+
         return state.satisfaction;
     },
     /**
@@ -403,19 +406,19 @@ const getters = {
 
         // Get the node to stratum map
         const map = getters[G.GET_NODE_TO_STRATUM_MAP](state);
-        
+
         // Get the flat array with only leaf nodes
         const flatArray = getters[G.GET_FLAT_NODE_ARRAY](state).filter((element) => {
             return element.type == "intermediate-stratum";
         });
 
         // Go through the flat array with just the leafs. Grab an element and find the strata id
-        if(flatArray.length > 0) {
+        if (flatArray.length > 0) {
             const stratumId = map[flatArray[0]._id];
 
             if (stratumId) {
                 // Find all constraints that point to the stratumId
-                for (let i = 0 ; i < allConstraints.length; i++) {
+                for (let i = 0; i < allConstraints.length; i++) {
                     if (allConstraints[i].stratum === stratumId) {
                         output.push(allConstraints[i]);
                     }
@@ -429,12 +432,12 @@ const getters = {
 
     [G.GET_LEAF_CONSTRAINTS](state: State) {
         const output = [];
-        
+
         const allConstraints = state.constraintConfig.constraints;
 
         // Get the node to stratum map
         const map = getters[G.GET_NODE_TO_STRATUM_MAP](state);
-        
+
         // Get the flat array with only leaf nodes
         const flatArray = getters[G.GET_FLAT_NODE_ARRAY](state).filter((element) => {
             return element.type == "leaf-stratum";
@@ -442,12 +445,12 @@ const getters = {
 
 
         // Go through the flat array with just the leafs. Grab an element and find the strata id
-        if(flatArray.length > 0) {
+        if (flatArray.length > 0) {
             const stratumId = map[flatArray[0]._id];
-            
+
             if (stratumId) {
                 // Find all constraints that point to the stratumId
-                for (let i = 0 ; i < allConstraints.length; i++) {
+                for (let i = 0; i < allConstraints.length; i++) {
                     if (allConstraints[i].stratum === stratumId) {
                         output.push(allConstraints[i]);
                     }
@@ -456,6 +459,68 @@ const getters = {
         }
 
         return output;
+    },
+    [G.GET_PASSING_CHILDREN_MAP](state: State): { [nodeId: string]: { constraintId: string, passing: number, total: number }[] } {
+
+        const nodeRoots = state.groupNode.structure.roots;
+        /**
+         * 
+         * Structure:
+         * {
+         *      [nodeId]: [{constraintId: x, passing: x, total: node.children}]
+         * }
+         * 
+         */
+        let map: { [nodeId: string]: { constraintId: string, passing: number, total: number }[] } = {};
+
+        nodeRoots.forEach((nodeRoot) => buildPassingChildrenMapRecursively(state, nodeRoot, map));
+        
+        return map;
+    }
+}
+
+function orderConstraints(state: State, nodeSatisfactionObject: NodeSatisfactionObject): string[] {
+    const constraints = state.constraintConfig.constraints;
+    const orderedConstraints: string[] = [];
+
+    // Push to array in the order of result editor's constraint array
+    constraints.forEach((constraint) => {
+        Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
+            if (constraint._id === constraintId) {
+                orderedConstraints.push(constraint._id);
+            }
+        });
+    });
+
+    return orderedConstraints;
+}
+
+function buildPassingChildrenMapRecursively(state: State, node: GroupNode, map: { [nodeId: string]: { constraintId: string, passing: number, total: number }[] }) {
+    const sMap = state.satisfaction.satisfactionMap;
+
+    if(node.type !== "leaf-stratum") {
+        const children = node.children;
+
+        const childrenSatisfactionObjects = children.filter((child) => sMap[child._id]).map((child) => sMap[child._id]);
+
+        const childrenSatisfactionMap = childrenSatisfactionObjects.reduce<{[key: string]: number | undefined}>((carry, sMap) => {
+            Object.keys(sMap).forEach((constraint) => {
+                if(carry[constraint] === undefined && sMap[constraint] !== undefined) carry[constraint] = 0;
+                if(sMap[constraint] !== undefined && sMap[constraint] === 1) carry[constraint]! += 1;
+            });
+            
+            return carry;
+        }, {});
+
+        const orderedConstraints = orderConstraints(state, childrenSatisfactionMap);
+
+        orderedConstraints.forEach((constraint) => {
+            const passing = childrenSatisfactionMap[constraint];
+            if(map[node._id] === undefined) map[node._id] = [];
+            map[node._id].push({constraintId: constraint, passing: passing!, total: node.children.length})
+        });
+
+        children.forEach((child) => buildPassingChildrenMapRecursively(state, child, map));
     }
 }
 

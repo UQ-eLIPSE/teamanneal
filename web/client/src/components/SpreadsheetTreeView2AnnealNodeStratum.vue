@@ -9,6 +9,7 @@ import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStrat
 import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { ResultsEditor as S } from "../store";
 
 type Props = (
     Props_NodeStratumWithRecordChildren |
@@ -23,7 +24,7 @@ interface Props_NodeStratumWithRecordChildren {
     nodeNameMap: GroupNodeNameMap | undefined,
     nodeRecordMap: GroupNodeRecordArrayMap | undefined,
     nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
-    constraintSatisfactionMap:  SatisfactionMap | undefined,
+    constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     collapsedNodes: { [key: string]: true }
@@ -97,7 +98,7 @@ function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNo
 
     if (p.collapsedNodes[rootNode._id] === undefined) {
         if (rootNode.type == "intermediate-stratum") {
-            for (let i = 0 ; i < rootNode.children.length; i++) {
+            for (let i = 0; i < rootNode.children.length; i++) {
                 const child = rootNode.children[i];
                 if (child.type == "leaf-stratum" && (p.collapsedNodes[child._id] === undefined)) {
                     output = output + getNumberOfDescendants(child, p);
@@ -122,6 +123,24 @@ function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNo
     }
 }
 
+
+function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): string[] {
+    const constraints = S.state.constraintConfig.constraints;
+    const orderedConstraints: string[] = [];
+
+    // Push to array in the order of result editor's constraint array
+    constraints.forEach((constraint) => {
+        Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
+            if (constraint._id === constraintId) {
+                orderedConstraints.push(constraint._id);
+            }
+        });
+    });
+
+    return orderedConstraints;
+}
+
+
 /** Creates the heading elements for stratum nodes */
 function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void, p: Props) {
     const leadingPadCells = p.depth;
@@ -130,7 +149,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
 
     const headingContentElementArray = [
-        createElement("div", { class: "label", attrs: { id : p.node._id } }, heading),
+        createElement("div", { class: "label", attrs: { id: p.node._id } }, heading),
     ];
 
     // Get the rowspan associated with the cell, remember to include self
@@ -138,12 +157,18 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
     // Iterate through satisfactions
     let satisfaction: NodeSatisfactionObject = {};
-    if (p.constraintSatisfactionMap &&  p.constraintSatisfactionMap[p.node._id]) {
+    let orderedConstraintsArray: string[] = [];
+
+    if (p.constraintSatisfactionMap && p.constraintSatisfactionMap[p.node._id]) {
         satisfaction = p.constraintSatisfactionMap[p.node._id];
     }
-    const satisfactionKeys = Object.keys(satisfaction);
 
-    // Get style information from node style map
+    orderedConstraintsArray = orderConstraints(satisfaction);
+
+
+    // const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+
+// Get style information from node style map
     const style = p.nodeStyles && p.nodeStyles.get(p.node._id);
 
     return createElement("tr", [
@@ -180,14 +205,14 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 createElement("div", { class: "heading-content" }, headingContentElementArray)
             ]
         ),
-        ...satisfactionKeys.map((element) => {
+        orderedConstraintsArray.map((element) => {
             return createElement("td", {
                 class: "strata-satisfaction " + (satisfaction[element]! === 1 ? "sat-success" : "sat-fail"),
                 attrs: {
                     rowspan: rowspan
                 }
                 // This should just return an empty/irrelvant element
-            }, satisfaction[element]!.toString());
+            }, satisfaction[element]! === 1 ? "P" : "F");
         }),
     ]);
 }
@@ -417,17 +442,18 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     border: 1px solid transparent;
     opacity: 0.7;
     z-index: 8;
+    text-align: center;
 }
 
 .sat-success {
     color: #155724;
-    background-color: #d4edda;
+    background-color: rgb(198, 239, 206);
     border-color: #c3e6cb;
 }
 
 .sat-fail {
-    color: #721c24;
-    background-color: #f8d7da;
+    color: rgb(156, 0, 6);
+    background-color: rgb(255, 199, 206);
     border-color: #f5c6cb;
 }
 
@@ -437,4 +463,11 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     opacity: 1;
 }
 
+.group-heading:hover~.strata-satisfaction {
+    opacity: 1;
+}
+
+.record-content:hover {
+    background: #fafafa;
+}
 </style>
