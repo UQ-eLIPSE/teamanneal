@@ -286,6 +286,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     margin-bottom: -1px;
 
     border: 1px solid #ddd;
+    z-index: 9;
 }
 
 .alignment-row,

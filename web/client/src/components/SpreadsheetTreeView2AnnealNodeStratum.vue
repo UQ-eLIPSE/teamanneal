@@ -416,7 +416,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 .strata-satisfaction {
     border: 1px solid transparent;
     opacity: 0.7;
-    z-index: 6;
+    z-index: 8;
 }
 
 .sat-success {
