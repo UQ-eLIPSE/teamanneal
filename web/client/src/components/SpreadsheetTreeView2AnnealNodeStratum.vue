@@ -95,11 +95,11 @@ function isNodeVisible(p: Props) {
 function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNodeLeafStratum, p: Props) {
     let output = 0;
 
-    if (p.hiddenNodes[rootNode._id] === undefined) {
+    if (p.collapsedNodes[rootNode._id] === undefined) {
         if (rootNode.type == "intermediate-stratum") {
             for (let i = 0 ; i < rootNode.children.length; i++) {
                 const child = rootNode.children[i];
-                if (child.type == "leaf-stratum" && (p.hiddenNodes[child._id] === undefined)) {
+                if (child.type == "leaf-stratum" && (p.collapsedNodes[child._id] === undefined)) {
                     output = output + getNumberOfDescendants(child, p);
                 }
 
