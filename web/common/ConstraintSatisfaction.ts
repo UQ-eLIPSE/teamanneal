@@ -3,7 +3,7 @@ export interface SatisfactionMap {
 }
 
 export interface NodeSatisfactionObject {
-    [constraintId: string]: number | undefined | MultipleSatisfactionObject,
+    [constraintId: string]: number | undefined,
 }
 
 
