@@ -2,7 +2,7 @@ import * as Stratum from "../../../common/Stratum";
 import * as RecordData from "../../../common/RecordData";
 import * as Constraint from "../../../common/Constraint";
 import * as AnnealNode from "../../../common/AnnealNode";
-import { NodeSatisfactionObject, SatisfactionMap, MultipleSatisfactionObject, MultipleNodeSatisfactionStatistics } from "../../../common/ConstraintSatisfaction";
+import { NodeSatisfactionObject, SatisfactionMap, MultipleNodeSatisfactionStatistics } from "../../../common/ConstraintSatisfaction";
 
 import { AbstractConstraint } from "../data/AbstractConstraint";
 import { CountConstraint } from "../data/CountConstraint";
@@ -462,7 +462,7 @@ export namespace Limit {
 
     }
 
-    export function calculateSatisfaction(constraint: LimitConstraint, nodes: ReadonlyArray<AnnealStratumNode>): MultipleSatisfactionObject {
+    export function calculateSatisfaction(constraint: LimitConstraint, nodes: ReadonlyArray<AnnealStratumNode>) {
         // We count the satisfying record count below = number to distribute
         /** Qualifying record count based on constraint */
         let numberToDistribute: number = 0;
