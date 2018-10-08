@@ -182,8 +182,9 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
         ),
         ...satisfactionKeys.map((element) => {
             return createElement("td", {
-                attrs: { rowspan: rowspan,
-                    bgcolor: satisfaction[element]! == 1 ? "green" : "red"
+                class: "strata-satisfaction " + (satisfaction[element]! === 1 ? "sat-success" : "sat-fail"),
+                attrs: {
+                    rowspan: rowspan
                 }
                 // This should just return an empty/irrelvant element
             }, satisfaction[element]!.toString());
@@ -411,4 +412,29 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 .toggle-visibility-button:focus {
     background: rgba(119, 129, 139, 0.1);
 }
+
+.strata-satisfaction {
+    border: 1px solid transparent;
+    opacity: 0.7;
+    z-index: 6;
+}
+
+.sat-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.sat-fail {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.strata-satisfaction:hover,
+.strata-satisfaction:focus,
+.strata-satisfaction:active {
+    opacity: 1;
+}
+
 </style>
