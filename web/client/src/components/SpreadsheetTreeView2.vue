@@ -42,7 +42,7 @@
                                                     :nodeNameMap="nodeNameMap"
                                                     :nodeRecordMap="nodeRecordMap"
                                                     :nodeStyles="nodeStyles"
-                                                    :hiddenNodes="hiddenNodes"
+                                                    :collapsedNodes="collapsedNodes"
                                                     :onToggleNodeVisibility="onToggleNodeVisibility"
                                                     :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
             </template>
@@ -106,7 +106,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
     @Prop columnsDisplayIndices = p<number[]>({ required: false, });
-    @Prop hiddenNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
+    @Prop collapsedNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
     @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: false, default: () => () => { }, });
 
     // Private
@@ -244,7 +244,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     // 3. Re-open the partition
     // Error: Column widths do not align with the table rows until the checkbox filter is modified again.
     // (Header loses reference to the widths because no table row was rendered)
-    @Watch('hiddenNodes')
+    @Watch('collapsedNodes')
     strataChangeWidthHandler(_n: any, _o: any) {
         this.waitAndUpdateColumnWidths();
     }

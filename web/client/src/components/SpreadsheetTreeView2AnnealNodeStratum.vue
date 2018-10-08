@@ -26,7 +26,7 @@ interface Props_NodeStratumWithRecordChildren {
     constraintSatisfactionMap:  SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    hiddenNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true }
 }
 
 interface Props_NodeStratumWithStratumChildren {
@@ -40,7 +40,7 @@ interface Props_NodeStratumWithStratumChildren {
     constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    hiddenNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true }
 }
 
 // Determines how big the cell is and the associated percent
@@ -88,7 +88,7 @@ function displayToggleVisibilityButtonText(p: Props) {
 }
 
 function isNodeVisible(p: Props) {
-    return p.hiddenNodes[p.node._id] === undefined;
+    return p.collapsedNodes[p.node._id] === undefined;
 }
 
 /** Gets the count of children */
@@ -130,7 +130,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
 
     const headingContentElementArray = [
-        createElement("div", { class: "label" }, heading),
+        createElement("div", { class: "label", attrs: { id : p.node._id } }, heading),
     ];
 
     // Get the rowspan associated with the cell, remember to include self
@@ -252,7 +252,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         constraintSatisfactionMap: { required: false, },
         onToggleNodeVisibility: { required: true },
         onItemClick: { required: true, },
-        hiddenNodes: { required: true }
+        collapsedNodes: { required: true }
     },
 
     render: function(h, ctx) {
@@ -296,7 +296,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                             constraintSatisfactionMap: p.constraintSatisfactionMap,
                             onItemClick: __onItemClick,
                             onToggleNodeVisibility: p.onToggleNodeVisibility,
-                            hiddenNodes: p.hiddenNodes
+                            collapsedNodes: p.collapsedNodes
                         }
                     })
                 ));

@@ -54,6 +54,10 @@ export enum ResultsEditorMutation {
 
     INSERT_RECORD_ID_TO_GROUP_NODE = "Inserting a record ID to a group node",
     DELETE_RECORD_ID_FROM_GROUP_NODE = "Deleting a record ID from a group node",
+
+    SET_DISPLAY_DEPTH = "Setting request depth",
+    COLLAPSE_NODES = "Collapse node i.e. Add to collapsedNodes",
+    UNCOLLAPSE_NODES = "Uncollapse node i.e. Remove from collapsedNodes",
     SET_SATISFACTION_DATA = "Setting satisfaction data",
     CLEAR_SATISFACTION_DATA = "Clearing satisfaction data"
 }
@@ -173,6 +177,19 @@ const mutations = {
         const recordsUnderNode = state.groupNode.nodeRecordArrayMap[node];
         del(recordsUnderNode, recordsUnderNode.indexOf(id));
     },
+
+    [M.SET_DISPLAY_DEPTH](state: State, depth: number) {
+        set(state, "requestDepth", depth);
+    },
+
+    [M.COLLAPSE_NODES](state: State, nodeIdArray: string[]) {
+        nodeIdArray.forEach((nodeId) => set(state.collapsedNodes, nodeId , true));
+    },
+    [M.UNCOLLAPSE_NODES](state: State, nodeIdArray: string[]) {
+        nodeIdArray.forEach((nodeId) => del(state.collapsedNodes, nodeId));
+        
+    }
+
 };
 
 export function init() {

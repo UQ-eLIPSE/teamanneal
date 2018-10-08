@@ -84,6 +84,7 @@ export default class SelectIdColumn extends Mixin(AnnealProcessWizardPanel) {
         } else {
             S.dispatch(S.action.SET_RECORD_ID_COLUMN, val);
         }
+
     }
 }
 </script>

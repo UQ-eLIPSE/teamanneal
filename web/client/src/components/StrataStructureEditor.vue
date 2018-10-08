@@ -36,7 +36,6 @@ import * as StratumSize from "../data/StratumSize";
 import { Context as StratumNamingConfigContextEnum } from "../data/StratumNamingConfigContext";
 
 import { AnnealCreator as S } from "../store";
-
 import StrataStructureEditorStratumItem from "./StrataStructureEditorStratumItem.vue";
 
 @Component({
