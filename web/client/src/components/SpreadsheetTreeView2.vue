@@ -247,8 +247,32 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     }
 
+    // get nodePassingChildrenMapArray() {
+    //     const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+
+    //     const nodes = Object.keys(passingChildrenMap);
+    //     if (!nodes || nodes.length === 0) return {};
+    //     const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
+
+
+    //     nodes.forEach(nodeId => {
+    //         const obj = passingChildrenMap[nodeId];
+    //         const objConstraintIds = Object.keys(obj);
+    //         const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
+    //         if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
+    //         orderedObjConstraintIds.forEach((cId) => {
+    //             const cObj = passingChildrenMap[nodeId][cId];
+    //             if (!cObj) return;
+    //             arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
+    //         });
+
+    //     });
+
+    //     return arrayMap;
+    // }
+
     get nodePassingChildrenMapArray() {
-        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+        const passingChildrenMap = this.nodePassingChildrenMapArray2 as {[nodeId: string]: {[constraintId: string]: {passing: number, total: number}}[]};
 
         const nodes = Object.keys(passingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
@@ -261,7 +285,7 @@ export default class SpreadsheetTreeView2 extends Vue {
             const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
             if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
             orderedObjConstraintIds.forEach((cId) => {
-                const cObj = passingChildrenMap[nodeId][cId];
+                const cObj = (passingChildrenMap[nodeId] as any)[cId];
                 if (!cObj) return;
                 arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
             });
@@ -270,8 +294,57 @@ export default class SpreadsheetTreeView2 extends Vue {
 
         return arrayMap;
     }
+    //--------------
+
+    get nodePassingChildrenMapArray2() {
+        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+
+        const nodes = Object.keys(passingChildrenMap);
+        if (!nodes || nodes.length === 0) return {};
+        const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
 
 
+        nodes.forEach(nodeId => {
+            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, arrayMap)
+
+        });
+
+        return arrayMap;
+    }
+
+
+    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: any, arrayMap: any) {
+        console.log(arrayMap);
+        nodes.forEach((nodeId) => {
+            if (!arrayMap[originalNode]) arrayMap[originalNode] = {};
+
+            const obj = passingChildrenMap[nodeId];
+            if (!obj) return;
+            const constraintIds = Object.keys(obj);
+
+            constraintIds.forEach((cId) => {
+                if (arrayMap[originalNode][cId] === undefined) arrayMap[originalNode][cId] = { passing: 0, total: 0 };
+                arrayMap[originalNode][cId].passing += obj[cId].passing;
+                arrayMap[originalNode][cId].total += obj[cId].total;
+            });
+
+
+            const flatNodeMap = S.get(S.getter.GET_FLAT_NODE_MAP);
+
+            const node = flatNodeMap[nodeId];
+
+            if (node.type !== "leaf-stratum") {
+                this.buildArrayMap(originalNode, node.children.map((n) => n._id), passingChildrenMap, arrayMap);
+            }
+        })
+
+    }
+
+
+
+
+
+    //---------------
 
     /** Recalculates width when columns are changed from the column display filter checkboxes */
     @Watch('columnsDisplayIndices')
@@ -304,6 +377,10 @@ export default class SpreadsheetTreeView2 extends Vue {
         setTimeout(() => {
             this.waitAndUpdateColumnWidths();
         }, 0);
+
+
+        const m = this.nodePassingChildrenMapArray2;
+        console.log(m);
     }
 }   
 </script>

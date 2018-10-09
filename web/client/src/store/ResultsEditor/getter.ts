@@ -481,12 +481,12 @@ const getters = {
         const nodeRoots = state.groupNode.structure.roots;
         const map: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
         const sMap = state.satisfaction.satisfactionMap;
+        
         nodeRoots.forEach((nodeRoot) => buildPassingChildrenMap(nodeRoot, map, sMap));
 
         return map;
     },
 }
-
 
 function buildPassingChildrenMap(node: GroupNode, map: any, sMap: SatisfactionMap) {
     if (node.type !== "leaf-stratum") {
@@ -515,9 +515,6 @@ function buildPassingChildrenMap(node: GroupNode, map: any, sMap: SatisfactionMa
     }
 
 }
-
-
-
 
 function getAllChildNodes(node: GroupNode, nodeArray: any[]) {
     nodeArray.push(node._id);
