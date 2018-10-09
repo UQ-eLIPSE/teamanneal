@@ -28,7 +28,7 @@ interface Props_NodeStratumWithRecordChildren {
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     collapsedNodes: { [key: string]: true },
-    nodePassingChildrenMapArray: { [nodeId: string]: string[] }
+    nodePassingChildrenMapArray: { [nodeId: string]: { constraintId: string, passText: string }[] }
 
 }
 
@@ -44,7 +44,7 @@ interface Props_NodeStratumWithStratumChildren {
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     collapsedNodes: { [key: string]: true },
-    nodePassingChildrenMapArray: { [nodeId: string]: string[] }
+    nodePassingChildrenMapArray: { [nodeId: string]: { constraintId: string, passText: string }[] }
 }
 
 // Determines how big the cell is and the associated percent
@@ -218,10 +218,10 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 // This should just return an empty/irrelvant element
             }, satisfaction[element]! === 1 ? "P" : "F");
         }),
-        (p.nodePassingChildrenMapArray[p.node._id] || []).map((csText: string) => {
+        (p.nodePassingChildrenMapArray[p.node._id] || []).map((cs) => {
             return createElement("td", {
                 class: "strata-satisfaction"
-            }, csText)
+            }, cs.passText)
         })
     ]);
 }

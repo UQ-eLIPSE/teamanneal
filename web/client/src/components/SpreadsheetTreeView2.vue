@@ -26,8 +26,7 @@
                 <SpreadsheetTreeView2Header ref="sizingPhaseHeader"
                                             class="sizing-phase-header"
                                             :padCells="treeMaxDepth"
-                                            :headerRow="filteredHeaderRow"
-                                            :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2Header>
+                                            :headerRow="filteredHeaderRow"></SpreadsheetTreeView2Header>
             </tbody>
 
             <!-- Render node roots (partitions or highest stratum) when node roots defined -->
@@ -250,9 +249,10 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     get nodePassingChildrenMapArray() {
         const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+
         const nodes = Object.keys(passingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
-        const arrayMap: { [nodeId: string]: string[] } = {};
+        const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
 
 
         nodes.forEach(nodeId => {
@@ -263,8 +263,9 @@ export default class SpreadsheetTreeView2 extends Vue {
             orderedObjConstraintIds.forEach((cId) => {
                 const cObj = passingChildrenMap[nodeId][cId];
                 if (!cObj) return;
-                arrayMap[nodeId].push(cObj.passing + '/' + cObj.total);
+                arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
             });
+
         });
 
         return arrayMap;

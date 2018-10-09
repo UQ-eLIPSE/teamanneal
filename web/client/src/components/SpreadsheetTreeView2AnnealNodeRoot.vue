@@ -14,6 +14,11 @@
                     <!-- Node roots/partitions do not have constraints and thus no satisfaction values -->
                 </div>
             </td>
+
+            <td v-for="(numPassingConstraintChild, i) in passingChildrenArray"
+                :key="i">
+                {{numPassingConstraintChild.passText}}
+            </td>
         </tr>
         <template v-if="displayInnerNodes">
             <SpreadsheetTreeView2AnnealNodeStratum v-for="node in innerNodes"
@@ -68,7 +73,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     @Prop collapsedNodes = p<{ [key: string]: true }>({ required: true });
     /** Function passed down by parent to toggle a node's visibility */
     @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: true });
-    @Prop nodePassingChildrenMapArray = p<{[nodeId: string]: string[]}>({ required: false, default: () => Object.create(Object.prototype) });
+    @Prop nodePassingChildrenMapArray = p<{ [nodeId: string]: { constraintId: string, passText: string }[] }>({ required: false, default: () => Object.create(Object.prototype) });
 
     /** Handles click on the heading rendered in this component */
     onHeadingClick() {
@@ -102,6 +107,10 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 
     get innerNodes() {
         return this.node.children;
+    }
+
+    get passingChildrenArray() {
+        return this.nodePassingChildrenMapArray[this.node._id] || [];
     }
 }   
 </script>

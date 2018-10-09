@@ -24,7 +24,7 @@ export enum ResultsEditorGetter {
     GET_PARTITION_NODE_MAP = "Get map of partitions to nodes",
 
     GET_FLAT_NODE_ARRAY = "Get a flat array of all nodes",
-
+    GET_FLAT_NODE_MAP = "Get a flat map of all nodes",
     GET_NODE_TO_STRATUM_MAP = "Get map of node ID to stratum ID",
     GET_RECORD_COOKED_VALUE_ROW_ARRAY = "Get the record cooked value row array (generated from transposed column data)",
     GET_COMMON_COLUMN_DESCRIPTOR_ARRAY = "Get common column descriptor array (type = `RecordDataColumn.ColumnDesc`)",
@@ -98,7 +98,24 @@ const getters = {
 
         return array;
     },
+    [G.GET_FLAT_NODE_MAP](state: State) {
+        const map: {[nodeId: string]: GroupNode} = {};
 
+        state.groupNode.structure.roots.forEach(function nodeFlattener(node: GroupNode) {
+            
+            map[node._id] = node;
+
+            switch (node.type) {
+                case "root":
+                case "intermediate-stratum": {
+                    node.children.forEach(nodeFlattener);
+                    break;
+                }
+            }
+        });
+
+        return map;
+    },
     [G.GET_NODE_TO_STRATUM_MAP](state: State) {
         // State strata order is [highest, ..., lowest/leaf]
         const stateStrata = state.strataConfig.strata;
@@ -468,63 +485,7 @@ const getters = {
 
         return map;
     },
-    // [G.GET_PASSING_CHILDREN_ARRAY](state: State) {
-
-    //     const passingChildrenMap = get(getters, G.GET_PASSING_CHILDREN_MAP);
-    //     console.log('Passing children map:');
-    //     console.log(passingChildrenMap);
-    //     const nodes = Object.keys(passingChildrenMap);
-    //     if(!nodes || nodes.length === 0) return;
-    //     console.log(nodes);
-    //     const arrayMap: { [nodeId: string]: string[] } = {};
-
-
-    //     nodes.forEach(nodeId => {
-    //         const obj = passingChildrenMap[nodeId];
-    //         // Obj is {[constraintId]: {passing, total}}
-    //         const objConstraintIds = Object.keys(obj);
-    //         const orderedObjConstraintIds = orderConstraints(state, objConstraintIds);
-    //         if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
-    //         orderedObjConstraintIds.forEach((cId) => {
-    //             const cObj = passingChildrenMap[nodeId][cId];
-    //             if (!cObj) return;
-    //             arrayMap[nodeId].push(cObj.passing + '/' + cObj.total);
-    //         });
-    //     });
-    //     console.log(arrayMap);
-    //     return arrayMap;
-    // }
 }
-
-// function orderConstraints(state: State, unorderedConstraintIds: string[]) {
-//     const stateConstraints = state.constraintConfig.constraints;
-//     const orderedConstraintsIds: string[] = [];
-
-//     stateConstraints.forEach((constraint) => {
-//         unorderedConstraintIds.forEach((cId) => {
-//             if (cId === constraint._id) orderedConstraintsIds.push(cId);
-//         })
-//     });
-
-//     return orderedConstraintsIds;
-
-// }
-// function orderConstraints(state: State, nodeSatisfactionObject: NodeSatisfactionObject): string[] {
-//     const constraints = state.constraintConfig.constraints;
-//     const orderedConstraints: string[] = [];
-
-//     // Push to array in the order of result editor's constraint array
-//     constraints.forEach((constraint) => {
-//         if(!nodeSatisfactionObject) return;
-//         Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
-//             if (constraint._id === constraintId) {
-//                 orderedConstraints.push(constraint._id);
-//             }
-//         });
-//     });
-
-//     return orderedConstraints;
-// }
 
 
 function buildPassingChildrenMap(node: GroupNode, map: any, sMap: SatisfactionMap) {
