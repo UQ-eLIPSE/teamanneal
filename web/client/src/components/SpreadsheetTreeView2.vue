@@ -19,15 +19,15 @@
                         :style="dataColumnStyle(i-1)"></td>
                     <td v-for="i in numberofConstraintColumns"
                         :key="i + numberOfDataColumns"
-                        :style="dataColumnStyle(i + numberOfDataColumns - 1)"
-                    ></td>
+                        :style="dataColumnStyle(i + numberOfDataColumns - 1)"></td>
                 </tr>
 
                 <!-- If we're in the sizing phase, we need to include the header in the contents of the table before we do an analysis of the widths of the columns -->
                 <SpreadsheetTreeView2Header ref="sizingPhaseHeader"
                                             class="sizing-phase-header"
                                             :padCells="treeMaxDepth"
-                                            :headerRow="filteredHeaderRow"></SpreadsheetTreeView2Header>
+                                            :headerRow="filteredHeaderRow"
+                                            :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2Header>
             </tbody>
 
             <!-- Render node roots (partitions or highest stratum) when node roots defined -->
@@ -44,7 +44,8 @@
                                                     :nodeStyles="nodeStyles"
                                                     :collapsedNodes="collapsedNodes"
                                                     :onToggleNodeVisibility="onToggleNodeVisibility"
-                                                    :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
+                                                    :constraintSatisfactionMap="__constraintSatisfactionMap"
+                                                    :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2AnnealNodeRoot>
             </template>
 
             <!-- Render plain table otherwise -->
@@ -135,7 +136,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     get numberofConstraintColumns() {
-        return  S.get(S.getter.GET_LEAF_CONSTRAINTS).length +  S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS).length;
+        return S.get(S.getter.GET_LEAF_CONSTRAINTS).length + S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS).length;
     }
 
     get filteredHeaderRow() {
@@ -230,6 +231,46 @@ export default class SpreadsheetTreeView2 extends Vue {
             this.columnWidths = this.sizeColumnWidths();
         });
     }
+
+
+
+    orderConstraints(unorderedConstraintIds: string[]): string[] {
+        const stateConstraints = S.state.constraintConfig.constraints;
+        const orderedConstraintsIds: string[] = [];
+
+        stateConstraints.forEach((constraint) => {
+            unorderedConstraintIds.forEach((cId) => {
+                if (cId === constraint._id) orderedConstraintsIds.push(cId);
+            })
+        });
+
+        return orderedConstraintsIds;
+
+    }
+
+    get nodePassingChildrenMapArray() {
+        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+        const nodes = Object.keys(passingChildrenMap);
+        if (!nodes || nodes.length === 0) return {};
+        const arrayMap: { [nodeId: string]: string[] } = {};
+
+
+        nodes.forEach(nodeId => {
+            const obj = passingChildrenMap[nodeId];
+            const objConstraintIds = Object.keys(obj);
+            const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
+            if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
+            orderedObjConstraintIds.forEach((cId) => {
+                const cObj = passingChildrenMap[nodeId][cId];
+                if (!cObj) return;
+                arrayMap[nodeId].push(cObj.passing + '/' + cObj.total);
+            });
+        });
+
+        return arrayMap;
+    }
+
+
 
     /** Recalculates width when columns are changed from the column display filter checkboxes */
     @Watch('columnsDisplayIndices')

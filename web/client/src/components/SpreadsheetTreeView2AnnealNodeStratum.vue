@@ -27,7 +27,9 @@ interface Props_NodeStratumWithRecordChildren {
     constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    collapsedNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true },
+    nodePassingChildrenMapArray: { [nodeId: string]: string[] }
+
 }
 
 interface Props_NodeStratumWithStratumChildren {
@@ -41,7 +43,8 @@ interface Props_NodeStratumWithStratumChildren {
     constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
-    collapsedNodes: { [key: string]: true }
+    collapsedNodes: { [key: string]: true },
+    nodePassingChildrenMapArray: { [nodeId: string]: string[] }
 }
 
 // Determines how big the cell is and the associated percent
@@ -165,10 +168,11 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
     orderedConstraintsArray = orderConstraints(satisfaction);
 
-
+    /** Prepare cells for number of passing children*/
     // const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
 
-// Get style information from node style map
+
+    // Get style information from node style map
     const style = p.nodeStyles && p.nodeStyles.get(p.node._id);
 
     return createElement("tr", [
@@ -214,6 +218,11 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 // This should just return an empty/irrelvant element
             }, satisfaction[element]! === 1 ? "P" : "F");
         }),
+        (p.nodePassingChildrenMapArray[p.node._id] || []).map((csText: string) => {
+            return createElement("td", {
+                class: "strata-satisfaction"
+            }, csText)
+        })
     ]);
 }
 
@@ -277,7 +286,9 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         constraintSatisfactionMap: { required: false, },
         onToggleNodeVisibility: { required: true },
         onItemClick: { required: true, },
-        collapsedNodes: { required: true }
+        collapsedNodes: { required: true },
+        nodePassingChildrenMapArray: { required: false, default: () => Object.create(Object.prototype) }
+
     },
 
     render: function(h, ctx) {

@@ -13,9 +13,7 @@ import * as Constraint from "../../../../common/Constraint";
 import * as RecordDataColumn from "../../../../common/RecordDataColumn";
 
 import { reverse } from "../../util/Array";
-import { SatisfactionState } from "../../../../common/ConstraintSatisfaction";
-
-import { NodeSatisfactionObject } from "../../../../common/ConstraintSatisfaction";
+import { SatisfactionState, SatisfactionMap } from "../../../../common/ConstraintSatisfaction";
 
 type GetterFunction<G extends ResultsEditorGetter> = typeof getters[G];
 
@@ -40,7 +38,8 @@ export enum ResultsEditorGetter {
     GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map",
     GET_LEAF_CONSTRAINTS = "Get the leaf constraints",
     GET_INTERMEDIATE_CONSTRAINTS = "Get the intermediate constraints",
-    GET_PASSING_CHILDREN_MAP = "Get a map of number of passing children for strata spanning display"
+    GET_PASSING_CHILDREN_MAP = "Get a map of number of passing children for strata spanning display",
+    // GET_PASSING_CHILDREN_ARRAY = "Get an constraint-ordered array with number of passing children for every node"
 }
 
 const G = ResultsEditorGetter;
@@ -460,69 +459,104 @@ const getters = {
 
         return output;
     },
-    [G.GET_PASSING_CHILDREN_MAP](state: State): { [nodeId: string]: { constraintId: string, passing: number, total: number }[] } {
+    [G.GET_PASSING_CHILDREN_MAP](state: State): { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } {
 
         const nodeRoots = state.groupNode.structure.roots;
-        /**
-         * 
-         * Structure:
-         * {
-         *      [nodeId]: [{constraintId: x, passing: x, total: node.children}]
-         * }
-         * 
-         */
-        let map: { [nodeId: string]: { constraintId: string, passing: number, total: number }[] } = {};
+        const map: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
+        const sMap = state.satisfaction.satisfactionMap;
+        nodeRoots.forEach((nodeRoot) => buildPassingChildrenMap(nodeRoot, map, sMap));
 
-        nodeRoots.forEach((nodeRoot) => buildPassingChildrenMapRecursively(state, nodeRoot, map));
-        
         return map;
-    }
+    },
+    // [G.GET_PASSING_CHILDREN_ARRAY](state: State) {
+
+    //     const passingChildrenMap = get(getters, G.GET_PASSING_CHILDREN_MAP);
+    //     console.log('Passing children map:');
+    //     console.log(passingChildrenMap);
+    //     const nodes = Object.keys(passingChildrenMap);
+    //     if(!nodes || nodes.length === 0) return;
+    //     console.log(nodes);
+    //     const arrayMap: { [nodeId: string]: string[] } = {};
+
+
+    //     nodes.forEach(nodeId => {
+    //         const obj = passingChildrenMap[nodeId];
+    //         // Obj is {[constraintId]: {passing, total}}
+    //         const objConstraintIds = Object.keys(obj);
+    //         const orderedObjConstraintIds = orderConstraints(state, objConstraintIds);
+    //         if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
+    //         orderedObjConstraintIds.forEach((cId) => {
+    //             const cObj = passingChildrenMap[nodeId][cId];
+    //             if (!cObj) return;
+    //             arrayMap[nodeId].push(cObj.passing + '/' + cObj.total);
+    //         });
+    //     });
+    //     console.log(arrayMap);
+    //     return arrayMap;
+    // }
 }
 
-function orderConstraints(state: State, nodeSatisfactionObject: NodeSatisfactionObject): string[] {
-    const constraints = state.constraintConfig.constraints;
-    const orderedConstraints: string[] = [];
+// function orderConstraints(state: State, unorderedConstraintIds: string[]) {
+//     const stateConstraints = state.constraintConfig.constraints;
+//     const orderedConstraintsIds: string[] = [];
 
-    // Push to array in the order of result editor's constraint array
-    constraints.forEach((constraint) => {
-        Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
-            if (constraint._id === constraintId) {
-                orderedConstraints.push(constraint._id);
-            }
-        });
-    });
+//     stateConstraints.forEach((constraint) => {
+//         unorderedConstraintIds.forEach((cId) => {
+//             if (cId === constraint._id) orderedConstraintsIds.push(cId);
+//         })
+//     });
 
-    return orderedConstraints;
-}
+//     return orderedConstraintsIds;
 
-function buildPassingChildrenMapRecursively(state: State, node: GroupNode, map: { [nodeId: string]: { constraintId: string, passing: number, total: number }[] }) {
-    const sMap = state.satisfaction.satisfactionMap;
+// }
+// function orderConstraints(state: State, nodeSatisfactionObject: NodeSatisfactionObject): string[] {
+//     const constraints = state.constraintConfig.constraints;
+//     const orderedConstraints: string[] = [];
 
-    if(node.type !== "leaf-stratum") {
-        const children = node.children;
+//     // Push to array in the order of result editor's constraint array
+//     constraints.forEach((constraint) => {
+//         if(!nodeSatisfactionObject) return;
+//         Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
+//             if (constraint._id === constraintId) {
+//                 orderedConstraints.push(constraint._id);
+//             }
+//         });
+//     });
 
-        const childrenSatisfactionObjects = children.filter((child) => sMap[child._id]).map((child) => sMap[child._id]);
+//     return orderedConstraints;
+// }
 
-        const childrenSatisfactionMap = childrenSatisfactionObjects.reduce<{[key: string]: number | undefined}>((carry, sMap) => {
-            Object.keys(sMap).forEach((constraint) => {
-                if(carry[constraint] === undefined && sMap[constraint] !== undefined) carry[constraint] = 0;
-                if(sMap[constraint] !== undefined && sMap[constraint] === 1) carry[constraint]! += 1;
+
+function buildPassingChildrenMap(node: GroupNode, map: any, sMap: SatisfactionMap) {
+    if (node.type !== "leaf-stratum") {
+        const childSatisfactionObjectsOrNull = node.children.map((c) => sMap[c._id] || null);
+        type PassingMap = { [constraintId: string]: { passing: number, total: number } };
+
+        const combinedConstraintPassingMap = childSatisfactionObjectsOrNull.reduce<PassingMap>((carry, satObj) => {
+            if (satObj === null) return carry;
+
+            const constraintKeys = Object.keys(satObj);
+
+            constraintKeys.forEach((constraintId) => {
+                if (satObj !== null && satObj[constraintId] !== undefined) {
+                    if (carry[constraintId] === undefined) carry[constraintId] = { passing: 0, total: 0 };
+                    if (satObj[constraintId] === 1) carry[constraintId].passing += 1;
+                    carry[constraintId].total += 1;
+                }
             });
-            
+
             return carry;
-        }, {});
+        }, {})
 
-        const orderedConstraints = orderConstraints(state, childrenSatisfactionMap);
+        map[node._id] = combinedConstraintPassingMap;
 
-        orderedConstraints.forEach((constraint) => {
-            const passing = childrenSatisfactionMap[constraint];
-            if(map[node._id] === undefined) map[node._id] = [];
-            map[node._id].push({constraintId: constraint, passing: passing!, total: node.children.length})
-        });
-
-        children.forEach((child) => buildPassingChildrenMapRecursively(state, child, map));
+        node.children.forEach((node) => buildPassingChildrenMap(node, map, sMap));
     }
+
 }
+
+
+
 
 function getAllChildNodes(node: GroupNode, nodeArray: any[]) {
     nodeArray.push(node._id);
