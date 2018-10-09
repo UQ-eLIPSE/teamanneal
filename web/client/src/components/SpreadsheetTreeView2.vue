@@ -247,32 +247,12 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     }
 
-    // get nodePassingChildrenMapArray() {
-    //     const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
-
-    //     const nodes = Object.keys(passingChildrenMap);
-    //     if (!nodes || nodes.length === 0) return {};
-    //     const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
-
-
-    //     nodes.forEach(nodeId => {
-    //         const obj = passingChildrenMap[nodeId];
-    //         const objConstraintIds = Object.keys(obj);
-    //         const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
-    //         if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
-    //         orderedObjConstraintIds.forEach((cId) => {
-    //             const cObj = passingChildrenMap[nodeId][cId];
-    //             if (!cObj) return;
-    //             arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
-    //         });
-
-    //     });
-
-    //     return arrayMap;
-    // }
+    get flatNodeMap() {
+        return S.get(S.getter.GET_FLAT_NODE_MAP);
+    }
 
     get nodePassingChildrenMapArray() {
-        const passingChildrenMap = this.nodePassingChildrenMapArray2 as {[nodeId: string]: {[constraintId: string]: {passing: number, total: number}}[]};
+        const passingChildrenMap = this.nestedNodeConstraintPassingMap;
 
         const nodes = Object.keys(passingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
@@ -285,7 +265,7 @@ export default class SpreadsheetTreeView2 extends Vue {
             const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
             if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
             orderedObjConstraintIds.forEach((cId) => {
-                const cObj = (passingChildrenMap[nodeId] as any)[cId];
+                const cObj = passingChildrenMap[nodeId][cId];
                 if (!cObj) return;
                 arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
             });
@@ -294,27 +274,25 @@ export default class SpreadsheetTreeView2 extends Vue {
 
         return arrayMap;
     }
-    //--------------
 
-    get nodePassingChildrenMapArray2() {
-        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
+    get nestedNodeConstraintPassingMap(): { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } {
+        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP) as { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } };
 
         const nodes = Object.keys(passingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
-        const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
+        const nestedMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
 
 
         nodes.forEach(nodeId => {
-            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, arrayMap)
+            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, nestedMap)
 
         });
 
-        return arrayMap;
+        return nestedMap;
     }
 
 
-    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: any, arrayMap: any) {
-        console.log(arrayMap);
+    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }, arrayMap: any) {
         nodes.forEach((nodeId) => {
             if (!arrayMap[originalNode]) arrayMap[originalNode] = {};
 
@@ -329,9 +307,7 @@ export default class SpreadsheetTreeView2 extends Vue {
             });
 
 
-            const flatNodeMap = S.get(S.getter.GET_FLAT_NODE_MAP);
-
-            const node = flatNodeMap[nodeId];
+            const node = this.flatNodeMap[nodeId];
 
             if (node.type !== "leaf-stratum") {
                 this.buildArrayMap(originalNode, node.children.map((n) => n._id), passingChildrenMap, arrayMap);
@@ -340,11 +316,6 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     }
 
-
-
-
-
-    //---------------
 
     /** Recalculates width when columns are changed from the column display filter checkboxes */
     @Watch('columnsDisplayIndices')
@@ -379,8 +350,7 @@ export default class SpreadsheetTreeView2 extends Vue {
         }, 0);
 
 
-        const m = this.nodePassingChildrenMapArray2;
-        console.log(m);
+
     }
 }   
 </script>
