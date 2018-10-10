@@ -143,7 +143,7 @@ function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): strin
     return orderedConstraints;
 }
 
-function passClasses(x: {constraintId: string, passText: string}) {
+function passClasses(x: { constraintId: string, passText: string }) {
     const classes: string[] = [];
     if (!x || !x.passText) return classes;
 
@@ -184,12 +184,11 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
     if (p.constraintSatisfactionMap && p.constraintSatisfactionMap[p.node._id]) {
         satisfaction = p.constraintSatisfactionMap[p.node._id];
+
+        // Get constraints in the correct order since Object.keys() doesn't guarantee order
+        orderedConstraintsArray = orderConstraints(satisfaction);
     }
 
-    orderedConstraintsArray = orderConstraints(satisfaction);
-
-    /** Prepare cells for number of passing children*/
-    // const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP);
 
 
     // Get style information from node style map
@@ -238,6 +237,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 // This should just return an empty/irrelvant element
             }, satisfaction[element]! === 1 ? "P" : "F");
         }),
+        // Append the number of nodes which pass for per constraint
         (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
             return createElement("td", {
                 class: ["strata-satisfaction", ...passClasses(x)]
