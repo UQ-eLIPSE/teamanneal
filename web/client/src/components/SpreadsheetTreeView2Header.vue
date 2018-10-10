@@ -7,13 +7,15 @@
         <th v-for="(label, i) in headerRow"
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
+
         <th v-for="(inter, i) in intermediateConstraints"
-            :key="inter._id">
-            {{ intermediateLabel + i}}
+            :key="inter._id" :style="dataColumnStyle(i + headerRow.length)">
+            {{intermediateLabel + (i + 1)}}
         </th>
+
         <th v-for="(leaf, i) in leafConstraints"
-            :key="leaf._id">
-            {{ leafLabel + i}}
+            :key="leaf._id" :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
+            {{ leafLabel + (i + 1) }}
         </th>
     </tr>
 </template>
@@ -65,12 +67,24 @@ export default class SpreadsheetTreeView2Header extends Vue {
         return S.state.strataConfig.strata.length >= 1 ? S.state.strataConfig.strata[0].label[0] + "C" : "";
     }
 
+    get stratumIdToStratumTypeMap() {
+        return S.get(S.getter.GET_STRATUM_ID_TO_TYPE_MAP)
+    }
+
+    get constraints() {
+        return S.state.constraintConfig.constraints;
+    }
+    
     get intermediateConstraints() {
-        return S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS);
+        return this.constraints.filter(c => {
+            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum"; 
+        })
     }
 
     get leafConstraints() {
-        return S.get(S.getter.GET_LEAF_CONSTRAINTS);
+        return this.constraints.filter(c => {
+            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum"; 
+        })
     }
 }   
 </script>

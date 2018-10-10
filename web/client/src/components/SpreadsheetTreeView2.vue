@@ -135,7 +135,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     }
 
     get numberofConstraintColumns() {
-        return S.get(S.getter.GET_LEAF_CONSTRAINTS).length + S.get(S.getter.GET_INTERMEDIATE_CONSTRAINTS).length;
+        return S.state.constraintConfig.constraints.length;
     }
 
     get filteredHeaderRow() {

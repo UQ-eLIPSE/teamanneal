@@ -143,6 +143,26 @@ function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): strin
     return orderedConstraints;
 }
 
+function passClasses(x: {constraintId: string, passText: string}) {
+    const classes: string[] = ["strata-satisfaction"];
+    if (!x || !x.passText) return classes;
+
+    const parts = x.passText.split('/');
+    const passing = parseInt(parts[0]);
+    const total = parseInt(parts[1]);
+    if (passing === 0 && total !== 0) {
+        // All failed, red
+        classes.push("pass-fail")
+    } else if (passing === total) {
+        // All passed, green
+        classes.push("pass-success");
+    } else {
+        // Passing not equal to total, yellow
+        classes.push("pass-avg");
+    }
+
+    return classes;
+}
 
 /** Creates the heading elements for stratum nodes */
 function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void, p: Props) {
@@ -218,10 +238,10 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                 // This should just return an empty/irrelvant element
             }, satisfaction[element]! === 1 ? "P" : "F");
         }),
-        (p.nodePassingChildrenMapArray[p.node._id] || []).map((cs) => {
+        (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
             return createElement("td", {
-                class: "strata-satisfaction"
-            }, cs.passText)
+                class: passClasses(x)
+            }, x.passText)
         })
     ]);
 }
@@ -480,5 +500,23 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
 
 .record-content:hover {
     background: #fafafa;
+}
+
+.pass-success {
+    color: white;
+    background-color: green;
+    border-color: #c3e6cb;
+}
+
+.pass-fail {
+    background-color: rgb(156, 0, 6);
+    color: rgb(255, 199, 206);
+    border-color: #f5c6cb;
+}
+
+.pass-avg {
+    background-color: #d39e00;
+    color: white;
+    border-color: #c69500;
 }
 </style>
