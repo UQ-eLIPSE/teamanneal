@@ -105,7 +105,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         const name = this.nodeNameMap[this.node._id];
 
         if(this.node.type === "root" && (name === "undefined" || !name)) {
-            return "Constraints pass count (" + this.strata[this.strata.length - 1].label + 's)';
+            return this.strata[this.strata.length - 1].label + 's';
         } else if(!name) {
             return this.node._id
         }
@@ -160,6 +160,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     color: #fff;
     font-weight: 400;
     padding: 0.1em 0.5em;
+    white-space: nowrap;
 }
 
 .anr-tree-indicator {
@@ -216,6 +217,7 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     opacity: 0.7;
     z-index: 8;
     text-align: center;
+    padding: 0.5rem;
 }
 
 .pass-success {

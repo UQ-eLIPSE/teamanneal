@@ -240,7 +240,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
         }),
         (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
             return createElement("td", {
-                class: ["strata-satisfaction", "record-content", ...passClasses(x)]
+                class: ["strata-satisfaction", ...passClasses(x)]
             }, x.passText)
         })
     ]);
@@ -474,6 +474,7 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
     opacity: 0.7;
     z-index: 8;
     text-align: center;
+    padding: 0.5rem;
 }
 
 .sat-success {
