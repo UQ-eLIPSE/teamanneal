@@ -46,9 +46,16 @@ export default class ConstraintAcceptabilityCard extends Vue {
   }
 
   get cardStyles() {
-    const passingGroupsProportion = this.fulfilledNumber / this.totalGroups;
+    
+    // Moved to a simple 3-color scheme so that the difference between colors can be ascertained easily.
+    const background: string = (() => {
+      if(this.fulfilledNumber === this.totalGroups) return 'rgb(0, 204, 0)';
+      else if(this.fulfilledNumber === 0) return 'rgb(204, 0, 0)'
+      else return '#ffc107'
+    })() || '';
+
     return {
-      background: `hsl(${passingGroupsProportion * 120}, 100%, 40%)`
+      background: background
     };
   }
 }
