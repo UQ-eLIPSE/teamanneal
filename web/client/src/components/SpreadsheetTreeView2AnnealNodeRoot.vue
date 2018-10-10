@@ -104,8 +104,10 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 
         const name = this.nodeNameMap[this.node._id];
 
-        if(name === "undefined" || !name) {
+        if(this.node.type === "root" && (name === "undefined" || !name)) {
             return "Constraints pass count (" + this.strata[this.strata.length - 1].label + 's)';
+        } else if(!name) {
+            return this.node._id
         }
 
         return name;
