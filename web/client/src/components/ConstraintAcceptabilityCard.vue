@@ -2,6 +2,9 @@
   <div class="main">
     <div class="constraint-item">
       <div class="sentence-groups">
+        <div class="item-legend">
+          <span>{{constraintLabelNumber}}</span>
+        </div>
         <div class="sentence">
           <span>{{constraintSentence}}</span>
 
@@ -35,6 +38,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
   /** Total number of nodes to which this constraint applies */
   @Prop totalGroups = p({ type: Number, required: true });
 
+  @Prop constraintIndexInStratum = p({ type: Number, required: true, default: 0 });
 
   get constraintFilterText() {
     return ConstraintSentence.getConstraintFilterText(this.constraint);
@@ -50,6 +54,10 @@ export default class ConstraintAcceptabilityCard extends Vue {
     return {
       background: `hsl(${passingGroupsProportion * 120}, 100%, 40%)`
     };
+  }
+
+  get constraintLabelNumber() {
+    return (this.stratumLabel[0] + "C") + (this.constraintIndexInStratum + 1);
   }
 }
 </script>
@@ -111,5 +119,16 @@ export default class ConstraintAcceptabilityCard extends Vue {
   border-top: 1px solid white;
   padding-top: 0.3rem;
   margin-top: 0.3rem;
+}
+
+.item-legend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 10%;
+    background: rgb(240,240,240);
+    font-weight: bold;
+    color: #49075e;
+    border-right: 0.1em solid rgba(1,0,0,0.05);
 }
 </style>

@@ -8,12 +8,13 @@
            :key="stratum._id">
         <h2>{{stratum.label}} Constraints</h2>
 
-        <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
+        <ConstraintAcceptabilityCard v-for="(constraint, i) in getConstraintsArrayByStratum(stratum)"
                                      class="card"
                                      :key="constraint._id"
                                      :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
                                      :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
                                      :stratumLabel="getStratumLabel(constraint)"
+                                     :constraintIndexInStratum="i"
                                      :constraint="constraint"> </ConstraintAcceptabilityCard>
       </div>
 
