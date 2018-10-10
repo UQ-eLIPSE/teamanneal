@@ -9,12 +9,14 @@
             :style="dataColumnStyle(i)">{{ label }}</th>
 
         <th v-for="(inter, i) in intermediateConstraints"
-            :key="inter._id" :style="dataColumnStyle(i + headerRow.length)">
+            :key="inter._id"
+            :style="dataColumnStyle(i + headerRow.length)">
             {{intermediateLabel + (i + 1)}}
         </th>
 
         <th v-for="(leaf, i) in leafConstraints"
-            :key="leaf._id" :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
+            :key="leaf._id"
+            :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
             {{ leafLabel + (i + 1) }}
         </th>
     </tr>
@@ -34,6 +36,10 @@ export default class SpreadsheetTreeView2Header extends Vue {
     @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
 
+
+    get strata() {
+        return S.state.strataConfig.strata;
+    }
     dataColumnStyle(i: number) {
         // If no width information is available, no style is applied
         if (this.columnWidths === undefined) {
@@ -55,16 +61,26 @@ export default class SpreadsheetTreeView2Header extends Vue {
         };
     }
 
-    // At the moment we assume a 3 level system and also root is not placed in the strata
+    
     get leafLabel() {
-        return S.state.strataConfig.strata.length == 2 ? S.state.strataConfig.strata[1].label[0] + "C" : "";
+        const leafConstraints = this.leafConstraints;
+
+        if (leafConstraints.length === 0) return '';
+        const stratum = this.strata.find(s => s._id === leafConstraints[0].stratum);
+        if (!stratum) return '';
+        return stratum.label[0] + "C";
     }
 
     /**
      * E.g. returns TC if the intermediate label is Team
      */
     get intermediateLabel() {
-        return S.state.strataConfig.strata.length >= 1 ? S.state.strataConfig.strata[0].label[0] + "C" : "";
+        const intermediateConstraints = this.intermediateConstraints;
+
+        if (intermediateConstraints.length === 0) return '';
+        const stratum = this.strata.find(s => s._id === intermediateConstraints[0].stratum);
+        if (!stratum) return '';
+        return stratum.label[0] + "C";
     }
 
     get stratumIdToStratumTypeMap() {
@@ -74,16 +90,16 @@ export default class SpreadsheetTreeView2Header extends Vue {
     get constraints() {
         return S.state.constraintConfig.constraints;
     }
-    
+
     get intermediateConstraints() {
         return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum"; 
+            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum";
         })
     }
 
     get leafConstraints() {
         return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum"; 
+            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum";
         })
     }
 }   

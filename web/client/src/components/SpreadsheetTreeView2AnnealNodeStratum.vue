@@ -144,13 +144,13 @@ function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): strin
 }
 
 function passClasses(x: {constraintId: string, passText: string}) {
-    const classes: string[] = ["strata-satisfaction"];
+    const classes: string[] = [];
     if (!x || !x.passText) return classes;
 
     const parts = x.passText.split('/');
     const passing = parseInt(parts[0]);
     const total = parseInt(parts[1]);
-    if (passing === 0 && total !== 0) {
+    if (passing === 0) {
         // All failed, red
         classes.push("pass-fail")
     } else if (passing === total) {
@@ -240,7 +240,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
         }),
         (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
             return createElement("td", {
-                class: passClasses(x)
+                class: ["strata-satisfaction", "record-content", ...passClasses(x)]
             }, x.passText)
         })
     ]);

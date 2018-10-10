@@ -1,6 +1,6 @@
 <template>
     <tbody class="anr-wrapper">
-        <tr v-if="isDataPartitioned">
+        <tr>
             <td class="anr-tree-indicator">
                 <button class="toggle-visibility-button"
                         @click.prevent="onToggleNodeVisibility(node)">{{displayInnerNodes?'-':'+'}}</button>
@@ -55,6 +55,7 @@ import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
 
 import SpreadsheetTreeView2AnnealNodeStratum from "./SpreadsheetTreeView2AnnealNodeStratum.vue";
+import { ResultsEditor as S } from "../store";
 @Component({
     components: {
         SpreadsheetTreeView2AnnealNodeStratum,
@@ -93,6 +94,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         return this.collapsedNodes[this.node._id] === undefined;
     }
 
+    get strata() {
+        return S.state.strataConfig.strata;
+    }
     get label() {
         if (this.nodeNameMap === undefined) {
             return this.node._id;
@@ -100,8 +104,8 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 
         const name = this.nodeNameMap[this.node._id];
 
-        if (name === undefined) {
-            return this.node._id;
+        if(name === "undefined" || !name) {
+            return "Constraints pass count (" + this.strata[this.strata.length - 1].label + 's)';
         }
 
         return name;
@@ -114,9 +118,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     get passingChildrenArray() {
         return this.nodePassingChildrenMapArray[this.node._id] || [];
     }
-    
+
     passClasses(x: {constraintId: string, passText: string}) {
-        const classes: string[] = ["strata-satisfaction"];
+        const classes: string[] = [];
         if (!x || !x.passText) return classes;
 
         const parts = x.passText.split('/');
