@@ -46,7 +46,7 @@ import { Vue, Component, Prop, p } from "av-ts";
 import ConstraintsEditorConstraintItem from "./ConstraintsEditorConstraintItem.vue";
 
 import { Stratum } from "../data/Stratum";
-import { Constraint, Data as IConstraint, CountFilter as IConstraint_CountFilter, CountCondition as IConstraint_CountCondition } from "../data/Constraint";
+import { Constraint, Data as IConstraint, LimitFilter as IConstraint_LimitFilter, LimitCondition as IConstraint_LimitCondition } from "../data/Constraint";
 import { ColumnData } from "../data/ColumnData";
 
 import { AnnealCreator as S } from "../store";
@@ -88,19 +88,18 @@ export default class ConstraintsEditorStratum extends Vue {
             }
         }
 
-        const constraintType = "count";
+        const constraintType = "limit";
         const constraintWeight = 50;    // "should have"
         const constraintStratum = this.stratum._id; // Stratum object ID
-        const constraintFilter: IConstraint_CountFilter = {
+        const constraintFilter: IConstraint_LimitFilter = {
             column: ColumnData.ConvertToMinimalDescriptor(defaultColumnData),
             function: "eq",
             values: [
                 defaultFilterValue,
             ],
         };
-        const constraintCondition: IConstraint_CountCondition = {
-            function: "eq",
-            value: 1,
+        const constraintCondition: IConstraint_LimitCondition = {
+            function: "low"
         };
 
         const newConstraint = Constraint.Init(constraintType, constraintWeight, constraintStratum, constraintFilter, constraintCondition);
