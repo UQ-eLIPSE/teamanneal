@@ -412,6 +412,7 @@ const getters = {
         }
         return childToParentNodeMap;
     },
+    /** For every node, get the immediate children of that node and count how many children pass applicable contraints */
     [G.GET_PASSING_CHILDREN_MAP](state: State): { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } {
 
         const nodeRoots = state.groupNode.structure.roots;
@@ -422,6 +423,7 @@ const getters = {
 
         return map;
     },
+    /** Map of stratum ID to stratum type (i.e. intermediate-stratum, leaf-stratum)*/
     [G.GET_STRATUM_ID_TO_TYPE_MAP](state: State, getters: Getters) {
         const flatNodeArray = get(getters, G.GET_FLAT_NODE_ARRAY);
 

@@ -251,21 +251,25 @@ export default class SpreadsheetTreeView2 extends Vue {
         return S.get(S.getter.GET_FLAT_NODE_MAP);
     }
 
+    /**
+     * Returns a map of 
+     * <nodeId, [array of the number of passing descendants (of the node) for every constraint (ordered according to the constraints' order in the state)]>
+     */
     get nodePassingChildrenMapArray() {
-        const passingChildrenMap = this.nestedNodeConstraintPassingMap;
-
-        const nodes = Object.keys(passingChildrenMap);
+        const nodeToNestedPassingChildrenMap = this.nestedNodeConstraintPassingMap;
+        const nodes = Object.keys(nodeToNestedPassingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
         const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
 
 
         nodes.forEach(nodeId => {
-            const obj = passingChildrenMap[nodeId];
+            // For every nodeId in the 
+            const obj = nodeToNestedPassingChildrenMap[nodeId];
             const objConstraintIds = Object.keys(obj);
             const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
             if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
             orderedObjConstraintIds.forEach((cId) => {
-                const cObj = passingChildrenMap[nodeId][cId];
+                const cObj = nodeToNestedPassingChildrenMap[nodeId][cId];
                 if (!cObj) return;
                 arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
             });
@@ -275,42 +279,59 @@ export default class SpreadsheetTreeView2 extends Vue {
         return arrayMap;
     }
 
+    /**
+     * Returns a map of 
+     * <nodeId, [number of passing descendants (of the node) for every constraint]>
+     */
     get nestedNodeConstraintPassingMap(): { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } {
         const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP) as { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } };
 
         const nodes = Object.keys(passingChildrenMap);
         if (!nodes || nodes.length === 0) return {};
-        const nestedMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
+
+        // For every node, stores how many total descendants pass applicable contraints
+        const nodeToNestedPassingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
 
 
         nodes.forEach(nodeId => {
-            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, nestedMap)
+            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, nodeToNestedPassingChildrenMap)
 
         });
 
-        return nestedMap;
+        return nodeToNestedPassingChildrenMap;
     }
 
-
-    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }, arrayMap: any) {
+    /** 
+     * Recursive function for summing a node's total number of descendants which pass certain constraints
+     * @param originalNode The node for which the total passing number of children needs to be found
+     * @param passingChildrenMap For every node, stores how many immediate children pass applicable contraints
+     * @param nodeToNestedPassingChildrenMap  For every node, stores how many total descendants pass applicable contraints
+     * */
+    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }, nodeToNestedPassingChildrenMap:  { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }) {
         nodes.forEach((nodeId) => {
-            if (!arrayMap[originalNode]) arrayMap[originalNode] = {};
+            if (!nodeToNestedPassingChildrenMap[originalNode]) nodeToNestedPassingChildrenMap[originalNode] = {};
 
             const obj = passingChildrenMap[nodeId];
             if (!obj) return;
             const constraintIds = Object.keys(obj);
 
             constraintIds.forEach((cId) => {
-                if (arrayMap[originalNode][cId] === undefined) arrayMap[originalNode][cId] = { passing: 0, total: 0 };
-                arrayMap[originalNode][cId].passing += obj[cId].passing;
-                arrayMap[originalNode][cId].total += obj[cId].total;
+                // If constraint `cId` has not been encountered yet, intialize the property on the `originalNode` key
+                if (nodeToNestedPassingChildrenMap[originalNode][cId] === undefined) nodeToNestedPassingChildrenMap[originalNode][cId] = { passing: 0, total: 0 };
+                
+                // Add the number of passing children for constraint `cId`
+                nodeToNestedPassingChildrenMap[originalNode][cId].passing += obj[cId].passing;
+
+                // Add the number of total children to which constraint `cId` applies
+                nodeToNestedPassingChildrenMap[originalNode][cId].total += obj[cId].total;
             });
 
-
+            // Retrieve the node object
             const node = this.flatNodeMap[nodeId];
 
+            // If node is a not a `leaf-stratum` node, i.e. it is a `root` or an `intermediate-stratum`, make recursive calls
             if (node.type !== "leaf-stratum") {
-                this.buildArrayMap(originalNode, node.children.map((n) => n._id), passingChildrenMap, arrayMap);
+                this.buildArrayMap(originalNode, node.children.map((n) => n._id), passingChildrenMap, nodeToNestedPassingChildrenMap);
             }
         })
 

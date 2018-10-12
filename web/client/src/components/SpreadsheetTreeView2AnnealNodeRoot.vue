@@ -104,8 +104,9 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
 
         const name = this.nodeNameMap[this.node._id];
 
-        if(this.node.type === "root" && (name === "undefined" || !name)) {
-            return this.strata[this.strata.length - 1].label + 's';
+        // If the node type is root, and data is not partitioned i.e. node name is "undefined"
+        if(this.node.type === "root" && (!S.get(S.getter.IS_DATA_PARTITIONED) || name === "undefined" || !name)) {
+            return this.strata[0].label + 's';
         } else if(!name) {
             return this.node._id
         }
