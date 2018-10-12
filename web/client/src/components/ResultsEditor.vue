@@ -47,7 +47,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Lifecycle } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -472,6 +472,22 @@ export default class ResultsEditor extends Vue {
   }
   openImportSidePanel() {
     S.dispatch(S.action.SET_SIDE_PANEL_ACTIVE_TOOL_BY_NAME, "import");
+  }
+
+  @Lifecycle mounted() {
+    // Does this work?
+    window.onbeforeunload = this.alertMessage;
+  }
+
+
+  // Required so that homepage will not have it
+  @Lifecycle beforeDestroy() {
+      window.onbeforeunload = null;
+  }
+
+  alertMessage() {
+      // Turns out this doesn't matter due to being a non standard
+      return "You may lose your results/constraints?";
   }
 }
 </script>

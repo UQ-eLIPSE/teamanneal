@@ -30,7 +30,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component } from "av-ts";
+import { Vue, Component, Lifecycle } from "av-ts";
 
 import * as AnnealProcessWizardEntries from "../data/AnnealProcessWizardEntries";
 
@@ -73,6 +73,24 @@ export default class AnnealProcess extends Vue {
             return false;
         }
     }
+
+
+    @Lifecycle mounted() {
+        // Does this work?
+        window.onbeforeunload = this.alertMessage;
+    }
+
+    // Required so that homepage will not have it. Worst case its reassigned
+    @Lifecycle beforeDestroy() {
+        window.onbeforeunload = null;
+    }
+
+    alertMessage() {
+        // Turns out this doesn't matter due to being a non standard as per
+        // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
+        return "You may lose your progress";
+    }
+
 }
 </script>
 
