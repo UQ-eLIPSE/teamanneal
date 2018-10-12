@@ -266,9 +266,16 @@ export default class ResultsEditor extends Vue {
     return nodeStyles;
   }
 
+  get initialColumnDisplayIndices() {
+    const idColumnIndex = this.idColumnIndex;
+    const randomIndex = this.columns.findIndex((_, i) => i !== idColumnIndex);
+    if (randomIndex === -1) return [idColumnIndex];
+    return [idColumnIndex, randomIndex];
+  }
+
   get columnsDisplayIndices() {
     // Return indices with a default initialised to all columns visible
-    return this.p_columnsDisplayIndices || this.columns.map((_, i) => i);
+    return this.p_columnsDisplayIndices || this.initialColumnDisplayIndices
   }
 
   set columnsDisplayIndices(indices: ReadonlyArray<number>) {
