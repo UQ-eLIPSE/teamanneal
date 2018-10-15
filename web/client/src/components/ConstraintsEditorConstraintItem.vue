@@ -369,14 +369,24 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         this.updateConstraint({
             // Type and condition functions for different constraints vary
             type: this.getConstraintType(newValue) as any,
-            condition: {
-                function: newValue as any,
-            },
+            condition: (() => {
+                if (this.getConstraintType(newValue) === "count") {
+                    return {
+                        function: newValue as any,
+                        value: this.constraintConditionCount
+                    }
+                }
+                return {
+                    function: newValue as any,
+                }
+            })(),
         });
     }
 
     get constraintConditionCount() {
-        return (this.constraint.condition as any).value;
+
+        return (this.constraint.condition as any).value || 1;
+
     }
 
     set constraintConditionCount(newValue: any) {
