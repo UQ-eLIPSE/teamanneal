@@ -7,6 +7,18 @@
         <th v-for="(label, i) in headerRow"
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
+
+        <th v-for="(inter, i) in intermediateConstraints"
+            :key="inter._id"
+            :style="dataColumnStyle(i + headerRow.length)">
+            {{intermediateLabel + (i + 1)}}
+        </th>
+
+        <th v-for="(leaf, i) in leafConstraints"
+            :key="leaf._id"
+            :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
+            {{ leafLabel + (i + 1) }}
+        </th>
     </tr>
 </template>
 
@@ -14,6 +26,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
+import { ResultsEditor as S } from "../store";
 
 @Component
 export default class SpreadsheetTreeView2Header extends Vue {
@@ -23,6 +36,10 @@ export default class SpreadsheetTreeView2Header extends Vue {
     @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
 
+
+    get strata() {
+        return S.state.strataConfig.strata;
+    }
     dataColumnStyle(i: number) {
         // If no width information is available, no style is applied
         if (this.columnWidths === undefined) {
@@ -42,6 +59,48 @@ export default class SpreadsheetTreeView2Header extends Vue {
             minWidth: cellWidth,
             maxWidth: cellWidth,
         };
+    }
+
+    
+    get leafLabel() {
+        const leafConstraints = this.leafConstraints;
+
+        if (leafConstraints.length === 0) return '';
+        const stratum = this.strata.find(s => s._id === leafConstraints[0].stratum);
+        if (!stratum) return '';
+        return stratum.label[0] + "C";
+    }
+
+    /**
+     * E.g. returns TC if the intermediate label is Team
+     */
+    get intermediateLabel() {
+        const intermediateConstraints = this.intermediateConstraints;
+
+        if (intermediateConstraints.length === 0) return '';
+        const stratum = this.strata.find(s => s._id === intermediateConstraints[0].stratum);
+        if (!stratum) return '';
+        return stratum.label[0] + "C";
+    }
+
+    get stratumIdToStratumTypeMap() {
+        return S.get(S.getter.GET_STRATUM_ID_TO_TYPE_MAP)
+    }
+
+    get constraints() {
+        return S.state.constraintConfig.constraints;
+    }
+
+    get intermediateConstraints() {
+        return this.constraints.filter(c => {
+            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum";
+        })
+    }
+
+    get leafConstraints() {
+        return this.constraints.filter(c => {
+            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum";
+        })
     }
 }   
 </script>

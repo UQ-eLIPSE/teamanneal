@@ -21,6 +21,7 @@
                             :idColumnIndex="idColumnIndex"
                             :collapsedNodes="collapsedNodes"
                             :onToggleNodeVisibility="onToggleNodeVisibility"
+                            :constraintSatisfactionMap="constraintSatisfactionMap"
                             @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
     </div>
     <div class="get-started"
@@ -434,6 +435,10 @@ export default class ResultsEditor extends Vue {
       map.set(id, filteredRecord);
       return map;
     }, new Map<RecordElement, Record>());
+  }
+
+  get constraintSatisfactionMap() {
+    return S.state.satisfaction.satisfactionMap;
   }
 
   // TODO: Remove this and implement properly in its own ticket.

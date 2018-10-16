@@ -17,6 +17,9 @@
                     <td v-for="i in numberOfDataColumns"
                         :key="i"
                         :style="dataColumnStyle(i-1)"></td>
+                    <td v-for="i in numberofConstraintColumns"
+                        :key="i + numberOfDataColumns"
+                        :style="dataColumnStyle(i + numberOfDataColumns - 1)"></td>
                 </tr>
 
                 <!-- If we're in the sizing phase, we need to include the header in the contents of the table before we do an analysis of the widths of the columns -->
@@ -40,7 +43,8 @@
                                                     :nodeStyles="nodeStyles"
                                                     :collapsedNodes="collapsedNodes"
                                                     :onToggleNodeVisibility="onToggleNodeVisibility"
-                                                    :constraintSatisfactionMap="__constraintSatisfactionMap"></SpreadsheetTreeView2AnnealNodeRoot>
+                                                    :constraintSatisfactionMap="__constraintSatisfactionMap"
+                                                    :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2AnnealNodeRoot>
             </template>
 
             <!-- Render plain table otherwise -->
@@ -54,13 +58,14 @@
 
 <script lang="ts">
 import { Vue, Component, Lifecycle, Prop, p, Watch } from "av-ts";
-
+import { ResultsEditor as S } from "../store";
 import { Record, RecordElement } from "../../../common/Record";
 
 import { GroupNode } from "../data/GroupNode";
 import { GroupNodeRoot } from "../data/GroupNodeRoot";
 import { GroupNodeNameMap } from "../data/GroupNodeNameMap";
 import { GroupNodeRecordArrayMap } from "../data/GroupNodeRecordArrayMap";
+import { SatisfactionMap } from "../../../common/ConstraintSatisfaction";
 
 import SpreadsheetTreeView2Header from "./SpreadsheetTreeView2Header.vue";
 import SpreadsheetTreeView2AnnealNodeRoot from "./SpreadsheetTreeView2AnnealNodeRoot.vue";
@@ -98,7 +103,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop nodeRecordMap = p<GroupNodeRecordArrayMap>({ required: false, });
     @Prop nodeStyles = p<Map<string | RecordElement, { color?: string, backgroundColor?: string }>>({ required: false });
     @Prop idColumnIndex = p<number>({ type: Number, required: false, default: 0, });
-    @Prop constraintSatisfactionMap = p<{ [nodeId: string]: number | undefined }>({ required: false, });
+    @Prop constraintSatisfactionMap = p<SatisfactionMap>({ required: false, });
     @Prop showConstraintSatisfaction = p({ type: Boolean, required: false, default: true, });
     @Prop columnsDisplayIndices = p<number[]>({ required: false, });
     @Prop collapsedNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
@@ -127,6 +132,10 @@ export default class SpreadsheetTreeView2 extends Vue {
 
     get numberOfDataColumns() {
         return this.filteredHeaderRow.length;
+    }
+
+    get numberofConstraintColumns() {
+        return S.state.constraintConfig.constraints.length;
     }
 
     get filteredHeaderRow() {
@@ -222,6 +231,113 @@ export default class SpreadsheetTreeView2 extends Vue {
         });
     }
 
+
+
+    orderConstraints(unorderedConstraintIds: string[]): string[] {
+        const stateConstraints = S.state.constraintConfig.constraints;
+        const orderedConstraintsIds: string[] = [];
+
+        stateConstraints.forEach((constraint) => {
+            unorderedConstraintIds.forEach((cId) => {
+                if (cId === constraint._id) orderedConstraintsIds.push(cId);
+            })
+        });
+
+        return orderedConstraintsIds;
+
+    }
+
+    get flatNodeMap() {
+        return S.get(S.getter.GET_FLAT_NODE_MAP);
+    }
+
+    /**
+     * Returns a map of 
+     * <nodeId, [array of the number of passing descendants (of the node) for every constraint (ordered according to the constraints' order in the state)]>
+     */
+    get nodePassingChildrenMapArray() {
+        const nodeToNestedPassingChildrenMap = this.nestedNodeConstraintPassingMap;
+        const nodes = Object.keys(nodeToNestedPassingChildrenMap);
+        if (!nodes || nodes.length === 0) return {};
+        const arrayMap: { [nodeId: string]: { constraintId: string, passText: string }[] } = {};
+
+
+        nodes.forEach(nodeId => {
+            // For every nodeId in the 
+            const obj = nodeToNestedPassingChildrenMap[nodeId];
+            const objConstraintIds = Object.keys(obj);
+            const orderedObjConstraintIds = this.orderConstraints(objConstraintIds);
+            if (!arrayMap[nodeId]) arrayMap[nodeId] = [];
+            orderedObjConstraintIds.forEach((cId) => {
+                const cObj = nodeToNestedPassingChildrenMap[nodeId][cId];
+                if (!cObj) return;
+                arrayMap[nodeId].push({ constraintId: cId, passText: (cObj.passing + '/' + cObj.total) });
+            });
+
+        });
+
+        return arrayMap;
+    }
+
+    /**
+     * Returns a map of 
+     * <nodeId, [number of passing descendants (of the node) for every constraint]>
+     */
+    get nestedNodeConstraintPassingMap(): { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } {
+        const passingChildrenMap = S.get(S.getter.GET_PASSING_CHILDREN_MAP) as { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } };
+
+        const nodes = Object.keys(passingChildrenMap);
+        if (!nodes || nodes.length === 0) return {};
+
+        // For every node, stores how many total descendants pass applicable contraints
+        const nodeToNestedPassingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } } = {};
+
+
+        nodes.forEach(nodeId => {
+            this.buildArrayMap(nodeId, [nodeId], passingChildrenMap, nodeToNestedPassingChildrenMap)
+
+        });
+
+        return nodeToNestedPassingChildrenMap;
+    }
+
+    /** 
+     * Recursive function for summing a node's total number of descendants which pass certain constraints
+     * @param originalNode The node for which the total passing number of children needs to be found
+     * @param passingChildrenMap For every node, stores how many immediate children pass applicable contraints
+     * @param nodeToNestedPassingChildrenMap  For every node, stores how many total descendants pass applicable contraints
+     * */
+    buildArrayMap(originalNode: string, nodes: string[], passingChildrenMap: { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }, nodeToNestedPassingChildrenMap:  { [nodeId: string]: { [constraintId: string]: { passing: number, total: number } } }) {
+        nodes.forEach((nodeId) => {
+            if (!nodeToNestedPassingChildrenMap[originalNode]) nodeToNestedPassingChildrenMap[originalNode] = {};
+
+            const obj = passingChildrenMap[nodeId];
+            if (!obj) return;
+            const constraintIds = Object.keys(obj);
+
+            constraintIds.forEach((cId) => {
+                // If constraint `cId` has not been encountered yet, intialize the property on the `originalNode` key
+                if (nodeToNestedPassingChildrenMap[originalNode][cId] === undefined) nodeToNestedPassingChildrenMap[originalNode][cId] = { passing: 0, total: 0 };
+                
+                // Add the number of passing children for constraint `cId`
+                nodeToNestedPassingChildrenMap[originalNode][cId].passing += obj[cId].passing;
+
+                // Add the number of total children to which constraint `cId` applies
+                nodeToNestedPassingChildrenMap[originalNode][cId].total += obj[cId].total;
+            });
+
+            // Retrieve the node object
+            const node = this.flatNodeMap[nodeId];
+
+            // If node is a not a `leaf-stratum` node, i.e. it is a `root` or an `intermediate-stratum`, make recursive calls
+            if (node.type !== "leaf-stratum") {
+                this.buildArrayMap(originalNode, node.children.map((n) => n._id), passingChildrenMap, nodeToNestedPassingChildrenMap);
+            }
+        })
+
+    }
+
+
     /** Recalculates width when columns are changed from the column display filter checkboxes */
     @Watch('columnsDisplayIndices')
     columnChangeWidthHandler(_n: any, _o: any) {
@@ -253,6 +369,9 @@ export default class SpreadsheetTreeView2 extends Vue {
         setTimeout(() => {
             this.waitAndUpdateColumnWidths();
         }, 0);
+
+
+
     }
 }   
 </script>
@@ -277,6 +396,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     margin-bottom: -1px;
 
     border: 1px solid #ddd;
+    z-index: 9;
 }
 
 .alignment-row,
