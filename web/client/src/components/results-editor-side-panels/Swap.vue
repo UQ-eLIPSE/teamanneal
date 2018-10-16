@@ -41,7 +41,6 @@
         <div class="form-block">
             <button class="button secondary small"
                     @click="onGetSuggestionsButtonClick">Get suggestions</button>
-            <button class="button secondary small">Advanced...</button>
         </div>
         <div class="form-block"
              style="text-align: right;">
