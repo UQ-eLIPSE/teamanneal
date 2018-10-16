@@ -68,7 +68,7 @@ export default class SpreadsheetTreeView2Header extends Vue {
         if (leafConstraints.length === 0) return '';
         const stratum = this.strata.find(s => s._id === leafConstraints[0].stratum);
         if (!stratum) return '';
-        return stratum.label[0] + "C";
+        return stratum.label + "C";
     }
 
     /**
@@ -80,7 +80,7 @@ export default class SpreadsheetTreeView2Header extends Vue {
         if (intermediateConstraints.length === 0) return '';
         const stratum = this.strata.find(s => s._id === intermediateConstraints[0].stratum);
         if (!stratum) return '';
-        return stratum.label[0] + "C";
+        return stratum.label + "C";
     }
 
     get stratumIdToStratumTypeMap() {
