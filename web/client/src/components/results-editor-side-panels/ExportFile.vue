@@ -3,16 +3,16 @@
         <h2>Export</h2>
         <div class="export-option-block">
             <h3>Export TeamAnneal results package</h3>
-            <p>Select this option to get a file that contains all data, including teams, needed for you to review teams and make changes in future.</p>
-            <p>You can also use this file to perform a new anneal through the TeamAnneal Creator.</p>
-            <p>This file can only be opened within the TeamAnneal application.</p>
+            <p>This file can be used to review or modify teams in the future.</p>
+            <p>It can also be used to set a new anneal configuration in the Team Anneal Creator</p>
+            <p><b>This file can only be opened within the TeamAnneal application.</b></p>
             <button class="button small"
                     @click="exportResultsPackage">Export results package</button>
         </div>
         <div class="export-option-block">
             <h3>Export only teams (CSV)</h3>
-            <p>Select this option to get a CSV file that contains only annealed group information. This is formatted as all your existing record data with columns containing group names appended.</p>
-            <p>This file can be opened in any spreadsheet application.</p>
+            <p>Exports the results into a CSV file. The team columns are appended at the end of the file.</p>
+            <p><b>This file can be opened in any spreadsheet application such as Microsoft Excel.</b></p>
             <button class="button small gold"
                     @click="exportCsv">Export CSV</button>
             <button class="button small secondary"
@@ -53,9 +53,9 @@
         <!-- TODO: Only show this block when anneal config detected -->
         <div class="export-option-block">
             <h3>Export TeamAnneal configuration</h3>
-            <p>Select this option to export only the anneal configuration that was used to originally generate the results shown here.</p>
-            <p>This file does not contain any record data or annealed teams, but you can use this file to store and share your original set of parameters for a future anneal.</p>
-            <p>This file can only be opened within the TeamAnneal application.</p>
+            <p>This file contains the configuration used to create this anneal.</p>
+            <p>It should be noted this file does not contain the data or records associated with the anneal</p>
+            <p><b>This file can only be opened within the TeamAnneal application.</b></p>
             <button class="button small secondary"
                     @click="onExportConfigButtonClick">Export configuration</button>
         </div>
