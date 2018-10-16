@@ -370,6 +370,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
             // Type and condition functions for different constraints vary
             type: this.getConstraintType(newValue) as any,
             condition: (() => {
+                // If we get a count constraint make sure to reassign the value 
+                // parameter due it being a little different
                 if (this.getConstraintType(newValue) === "count") {
                     return {
                         function: newValue as any,
@@ -384,7 +386,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
     }
 
     get constraintConditionCount() {
-
+        // Possibly null if from initing of the page
         return (this.constraint.condition as any).value || 1;
 
     }
