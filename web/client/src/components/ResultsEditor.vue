@@ -3,9 +3,12 @@
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
+        <button @click="goToConstraints">Return to constraints</button>
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
         <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
       </div>
+
+
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
@@ -493,6 +496,15 @@ export default class ResultsEditor extends Vue {
   alertMessage() {
       // Turns out this doesn't matter due to being a non standard
       return "You may lose your results/constraints?";
+  }
+
+  goToConstraints() {
+    // change the router-view to the constraints
+    const constraintRoute = "anneal-set-constraints";
+
+    this.$router.push({
+      name: constraintRoute
+    });
   }
 }
 </script>
