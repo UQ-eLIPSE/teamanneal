@@ -234,7 +234,7 @@ export default class SpreadsheetTreeView2 extends Vue {
 
 
     orderConstraints(unorderedConstraintIds: string[]): string[] {
-        const stateConstraints = S.state.constraintConfig.constraints;
+        const stateConstraints = S.get(S.getter.GET_ORDERED_CONSTRAINTS);
         const orderedConstraintsIds: string[] = [];
 
         stateConstraints.forEach((constraint) => {

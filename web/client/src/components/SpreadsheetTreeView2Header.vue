@@ -8,16 +8,10 @@
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
 
-        <th v-for="(inter, i) in intermediateConstraints"
-            :key="inter._id"
+        <th v-for="(constraint, i) in orderedConstraints"
+            :key="constraint._id"
             :style="dataColumnStyle(i + headerRow.length)">
-            {{intermediateLabel + (i + 1)}}
-        </th>
-
-        <th v-for="(leaf, i) in leafConstraints"
-            :key="leaf._id"
-            :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
-            {{ leafLabel + (i + 1) }}
+            {{"C" + (i + 1)}}
         </th>
     </tr>
 </template>
@@ -61,28 +55,6 @@ export default class SpreadsheetTreeView2Header extends Vue {
         };
     }
 
-    
-    get leafLabel() {
-        const leafConstraints = this.leafConstraints;
-
-        if (leafConstraints.length === 0) return '';
-        const stratum = this.strata.find(s => s._id === leafConstraints[0].stratum);
-        if (!stratum) return '';
-        return stratum.label[0] + "C";
-    }
-
-    /**
-     * E.g. returns TC if the intermediate label is Team
-     */
-    get intermediateLabel() {
-        const intermediateConstraints = this.intermediateConstraints;
-
-        if (intermediateConstraints.length === 0) return '';
-        const stratum = this.strata.find(s => s._id === intermediateConstraints[0].stratum);
-        if (!stratum) return '';
-        return stratum.label[0] + "C";
-    }
-
     get stratumIdToStratumTypeMap() {
         return S.get(S.getter.GET_STRATUM_ID_TO_TYPE_MAP)
     }
@@ -91,16 +63,8 @@ export default class SpreadsheetTreeView2Header extends Vue {
         return S.state.constraintConfig.constraints;
     }
 
-    get intermediateConstraints() {
-        return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum";
-        })
-    }
-
-    get leafConstraints() {
-        return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum";
-        })
+    get orderedConstraints() {
+        return S.get(S.getter.GET_ORDERED_CONSTRAINTS);
     }
 }   
 </script>

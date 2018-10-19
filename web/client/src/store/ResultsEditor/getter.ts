@@ -37,7 +37,8 @@ export enum ResultsEditorGetter {
     GET_RECORD_LOOKUP_MAP = "Get record lookup map",
     GET_CHILD_TO_PARENT_MAP = "Get child node to parent node map",
     GET_PASSING_CHILDREN_MAP = "Get a map of number of passing children for strata spanning display",
-    GET_STRATUM_ID_TO_TYPE_MAP = "Get a map <stratum id, stratum type>"
+    GET_STRATUM_ID_TO_TYPE_MAP = "Get a map <stratum id, stratum type>",
+    GET_ORDERED_CONSTRAINTS = "Gets an ordered version of the constraints"
 }
 
 const G = ResultsEditorGetter;
@@ -441,6 +442,30 @@ const getters = {
 
         return map;
 
+    },
+
+    /** Gets the contraints in a particular order. Essentially intermediates > root */
+    [G.GET_ORDERED_CONSTRAINTS](state: State, getters: Getters) {
+        // F
+        const constraintTypeMap = get(getters, G.GET_STRATUM_ID_TO_TYPE_MAP);
+
+        // Unfortunately can't assign as Constraint[] due to import as Data[]
+        let output: any[] = [];
+
+        // Worst case we order by id within constraints
+        output = output.concat(state.constraintConfig.constraints.filter(c => {
+            return constraintTypeMap[c.stratum] === "intermediate-stratum"
+        }).sort((a, b) => {
+            return a._id.localeCompare(b._id);
+        }));
+
+        output = output.concat(state.constraintConfig.constraints.filter(c => {
+            return constraintTypeMap[c.stratum] === "leaf-stratum"
+        }).sort((a, b) => {
+            return a._id.localeCompare(b._id);
+        }));
+
+        return output;
     }
 }
 

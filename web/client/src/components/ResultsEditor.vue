@@ -35,7 +35,7 @@
     </div>
     <ConstraintOverview v-if="displayWorkspace"
                         class="constraint-overview"
-                        :constraints="constraints"
+                        :constraints="orderedConstraints"
                         :constraintSatisfactionMap="annealSatisfactionMap"
                         :strata="strata">
     </ConstraintOverview>
@@ -170,6 +170,10 @@ export default class ResultsEditor extends Vue {
 
   get constraints() {
     return this.state.constraintConfig.constraints;
+  }
+
+  get orderedConstraints() {
+    return S.get(S.getter.GET_ORDERED_CONSTRAINTS);
   }
 
   get annealSatisfactionMap() {
