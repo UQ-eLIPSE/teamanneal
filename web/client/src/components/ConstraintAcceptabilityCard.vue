@@ -64,7 +64,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
   }
 
   get constraintLabelNumber() {
-    return (this.stratumLabel + "C") + (this.constraintIndexInStratum + 1);
+    return (this.stratumLabel[0] + "C") + (this.constraintIndexInStratum + 1);
   }
 }
 </script>
@@ -102,6 +102,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
   align-items: center;
   justify-content: center;
   align-items: center;
+  min-width: 60%;
   padding: 0.5em;
 }
 
@@ -131,6 +132,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 10%;
     background: rgb(240,240,240);
     font-weight: bold;
     color: #49075e;
