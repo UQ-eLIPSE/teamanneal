@@ -518,6 +518,7 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 // string
                 if (typeof newValue === "string" && newValue.trim().length === 0) {
                     // Note that this error is caught by data checker regardless
+                    newFilterValue = "";
                 } else {
                     const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
 
