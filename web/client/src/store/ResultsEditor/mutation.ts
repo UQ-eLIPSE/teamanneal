@@ -183,6 +183,7 @@ const mutations = {
     },
 
     [M.COLLAPSE_NODES](state: State, nodeIdArray: string[]) {
+        state.collapsedNodes = {};
         nodeIdArray.forEach((nodeId) => set(state.collapsedNodes, nodeId , true));
     },
     [M.UNCOLLAPSE_NODES](state: State, nodeIdArray: string[]) {

@@ -18,6 +18,9 @@ import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 @Component
 export default class SpreadsheetDisplayFilter extends Vue {
 
+    sampleNodes:  { [key: number]: string[] } = [];
+
+
     get memberLevel() {
         return this.leafStratum.label + ' ' + 'members';
     }
@@ -88,19 +91,21 @@ export default class SpreadsheetDisplayFilter extends Vue {
     
     collapseOnDepth(value: number) {
         // Traverse through the path and delete all the nodes necessary
-        S.dispatch(S.action.UNCOLLAPSE_NODES, Object.keys(this.collapsedNodes));
 
+        if (this.sampleNodes[value] === undefined) {
+            let output: string[] = [];
+            const TOP_LEVEL = 0;
 
-        let output: string[] = [];
-        const TOP_LEVEL = 0;
-
-        for (let i = 0; i < this.nodeRoots.length; i++) {
-            let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
-            output = output.concat(tempOutput);
+            for (let i = 0; i < this.nodeRoots.length; i++) {
+                let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
+                output = output.concat(tempOutput);
+            }
+            this.sampleNodes[value] = output;
         }
 
+
         // Now hide
-        S.dispatch(S.action.COLLAPSE_NODES, output);
+        S.dispatch(S.action.COLLAPSE_NODES, this.sampleNodes[value]);
 
     }
     
