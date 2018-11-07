@@ -2,12 +2,18 @@
     <div class="swap-people">
         <h2>Swap</h2>
         <div class="form-block">
+            <p>To get the desired person to swap, select the <b>Person A</b> form and then click the target person in the table. To get the other person, repeat the process
+                with the <b>Person B</b> form.
+            </p>
+        </div>
+
+        <div class="form-block">
             <label for="person-a-select">Swap:</label>
             <div class="click-input-field-block"
                  :class="personAFieldBlockClasses">
                 <button id="person-a-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'personA' ? '(Select Person A in the table)' : '(Click here to set Person A)'"
                         @focus="setCursor('personA')"
                         @click="setCursor('personA')">{{ personAFieldBlockText }}</button>
                 <!-- <button v-if="xxx !== undefined">View</button> -->
@@ -21,7 +27,7 @@
                  :class="personBFieldBlockClasses">
                 <button id="person-b-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'personB' ? '(Select Person B in the table)' : '(Click here to set Person B)'"
                         @focus="setCursor('personB')"
                         @click="setCursor('personB')">{{ personBFieldBlockText }}</button>
                 <!-- <button v-if="xxx !== undefined">View</button> -->

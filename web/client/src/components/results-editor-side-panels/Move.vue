@@ -2,12 +2,18 @@
     <div class="move-person">
         <h2>Move</h2>
         <div class="form-block">
+            <p>To get the desired person to move, select the person form and then click the target <b>person</b> in the table. To get the desired group, select the <b>group</b> form and
+            then click the desired group in the table.
+            </p>
+        </div>
+
+        <div class="form-block">
             <label for="source-person-select">Move:</label>
             <div class="click-input-field-block"
                  :class="sourcePersonFieldBlockClasses">
                 <button id="source-person-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'sourcePerson' ? '(Select a person in the table)' : '(Click here to set the person)'"
                         @focus="setCursor('sourcePerson')"
                         @click="setCursor('sourcePerson')">{{ sourcePersonFieldBlockText }}</button>
                 <!-- <button v-if="data.sourcePerson !== undefined">View</button> -->
@@ -21,7 +27,7 @@
                  :class="targetGroupFieldBlockClasses">
                 <button id="target-group-select"
                         class="input-field"
-                        data-placeholder-text="(Group)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'targetGroup' ? '(Select a group in the table)' : '(Click here to set the group)'"
                         @focus="setCursor('targetGroup')"
                         @click="setCursor('targetGroup')">{{ targetGroupFieldBlockText }}</button>
                 <!-- <button v-if="data.targetGroup !== undefined">View</button> -->
@@ -78,6 +84,10 @@ export default class Move extends Vue {
 
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
+
+    /** The placeholder text when interacting with the person form */
+    personInputFocused: boolean = false;
+    groupInputFocused: boolean = false;
 
     /** Watches side panel data in store and updates suggestions automatically */
     @Watch('data')
