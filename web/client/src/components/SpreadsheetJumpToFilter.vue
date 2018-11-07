@@ -104,12 +104,12 @@ export default class SpreadsheetJumpToFilter extends Vue {
             S.dispatch(S.action.UNCOLLAPSE_NODES, path);
 
             // Now scroll. Since the startum are manually created. We can safely use the id
-            window.setTimeout(() => {
+            this.$nextTick(() => {
                 const elmnt = document.getElementById(value);
                 if (elmnt !== null) {
                     elmnt.scrollIntoView();
                 }
-            }, 100);
+            });
 
             // Reset ID to default ID
             this.selectedId = DEFAULT_ID;
