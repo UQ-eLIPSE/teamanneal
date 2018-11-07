@@ -569,6 +569,6 @@ export default class ResultsEditor extends Vue {
 }
 
 .filter-row>*:nth-child(2n) {
-  border-left: 0.05rem solid rgb(200, 200, 200);
+  border-left: 0.5rem solid rgb(200, 200, 200);
 }
 </style>

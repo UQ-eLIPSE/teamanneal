@@ -1,7 +1,8 @@
 <template>
     <div class="jump-to-filter">
+        <span class="display-text">Jump To </span>
         <select v-model="selectedId">
-            <option :value="defaultId">Jump To...</option>
+            <option :value="defaultId">Select Node...</option>
             <option v-for="(n, i) in selectionGroup"
                     :key="i"
                     :value="n.nodeId">{{n.label}}</option>
@@ -155,8 +156,18 @@ export default class SpreadsheetJumpToFilter extends Vue {
     display: flex;
 }
 
+.jump-to-filter > * {
+    margin-left: 0.25rem;
+    font-size: 1.25rem;
+    padding: 0.25rem;
+}
+
 select {
     padding: 0.25rem;
     font-size: 1.25rem;
+}
+
+.display-text {
+    font-size: 1.5rem;
 }
 </style>
