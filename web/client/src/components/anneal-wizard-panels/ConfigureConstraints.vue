@@ -52,6 +52,10 @@
                     <i>group</i> has
                     <u>3 people</u>".</p>
                 <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
+                <h2>Example</h2>
+                <p>An example would be the following constraint <i><u>should have an</u> <u>even distribution of</u> people with <u>GPA</u> <u>greater than 3</u> when Team has <u>any number of</u> people</i></p>
+                <p>In this example, the cost is <u>should have</u> with a value of 25, Team Anneal will attempt to split the teams in an <u>even distribution</u> of people with a filter value of
+                <u>GPA</u> and a filter function of <u>greater than 3</u> with <u>any number of</u> as the size applicability.</p>
             </div>
             <div v-if="!hasConstraints"
                  class="error-msg">
