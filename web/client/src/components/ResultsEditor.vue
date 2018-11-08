@@ -325,8 +325,18 @@ export default class ResultsEditor extends Vue {
     this.columnsDisplayIndices = columnList;
   }
 
+  // Remember to handle the case of when the data has not loaded
+  // Should not display swap or move commands
   get menuBarItems() {
-    return MENU_BAR_ITEMS;
+    return MENU_BAR_ITEMS.filter((m) => {
+      switch (m.name) {
+        case "swap":
+        case "move":
+          return S.state.strataConfig.strata.length > 0;
+        default:
+          return true;
+      }
+    });
   }
 
   /** Checks if `node` id exists as a key in the `collapsedNodes` object. */
