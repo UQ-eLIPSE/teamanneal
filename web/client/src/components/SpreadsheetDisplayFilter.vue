@@ -128,14 +128,15 @@ export default class SpreadsheetDisplayFilter extends Vue {
 
 <style scoped>
 .displayFilterBody {
-    display: flex;
     padding: 0.5rem;
-    align-items: center;
     background: rgb(240, 240, 240);
-    
+    align-items: center;
+    display: flex;
+    margin: 0.25rem 0.1rem;
+    border: 0.2rem solid rgb(230, 230, 230);
 }
 
-.displayFilterBody > * {
+.displayFilterBody>* {
     margin-left: 0.25rem;
     font-size: 1.25rem;
     padding: 0.25rem;

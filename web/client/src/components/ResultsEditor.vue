@@ -565,10 +565,5 @@ export default class ResultsEditor extends Vue {
   justify-content: center;
   flex-shrink: 0;
   color: #49075e;
-  margin: 0.5rem 0;
-}
-
-.filter-row>*:nth-child(2n) {
-  border-left: 0.5rem solid rgb(200, 200, 200);
 }
 </style>
