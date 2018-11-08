@@ -4,13 +4,15 @@
          v-if="displayWorkspace">
       <div class="filter-row">
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
-        <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+        <SpreadsheetDisplayFilter @loadFinished="enableSpreadsheet"
+                                  @loadInProgress="disableSpreadsheet"></SpreadsheetDisplayFilter>
       </div>
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
       <SpreadsheetTreeView2 class="spreadsheet"
+                            :style="spreadsheetStyles"
                             :nodeRoots="nodeRoots"
                             :headerRow="headerRow"
                             :columnsDisplayIndices="columnsDisplayIndices"
@@ -137,6 +139,24 @@ export default class ResultsEditor extends Vue {
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
   pRequestId: string = "";
+
+
+  /** Sets visibility of the spreadsheet component. Enabled by default */
+  spreadsheetEnabled: boolean = true;
+
+  get spreadsheetStyles() {
+    return {
+      opacity: this.spreadsheetEnabled ? 1 : 0.2
+    }
+  }
+
+  disableSpreadsheet() {
+    this.spreadsheetEnabled = false;
+  }
+
+  enableSpreadsheet() {
+    this.spreadsheetEnabled = true;
+  }
 
   /** New reference to module state */
   get state() {
@@ -487,12 +507,12 @@ export default class ResultsEditor extends Vue {
 
   // Required so that homepage will not have it
   @Lifecycle beforeDestroy() {
-      window.onbeforeunload = null;
+    window.onbeforeunload = null;
   }
 
   alertMessage() {
-      // Turns out this doesn't matter due to being a non standard
-      return "You may lose your results/constraints?";
+    // Turns out this doesn't matter due to being a non standard
+    return "You may lose your results/constraints?";
   }
 }
 </script>
@@ -565,10 +585,5 @@ export default class ResultsEditor extends Vue {
   justify-content: center;
   flex-shrink: 0;
   color: #49075e;
-  margin: 0.5rem 0;
-}
-
-.filter-row>*:nth-child(2n) {
-  border-left: 0.05rem solid rgb(200, 200, 200);
 }
 </style>
