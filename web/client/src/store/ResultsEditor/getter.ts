@@ -11,7 +11,7 @@ import * as Stratum from "../../../../common/Stratum";
 import * as AnnealNode from "../../../../common/AnnealNode";
 import * as Constraint from "../../../../common/Constraint";
 import * as RecordDataColumn from "../../../../common/RecordDataColumn";
-
+import { Data as ConstraintType } from "../../data/Constraint";
 import { reverse } from "../../util/Array";
 import { SatisfactionState, SatisfactionMap } from "../../../../common/ConstraintSatisfaction";
 
@@ -449,8 +449,7 @@ const getters = {
         // F
         const constraintTypeMap = get(getters, G.GET_STRATUM_ID_TO_TYPE_MAP);
 
-        // Unfortunately can't assign as Constraint[] due to import as Data[]
-        let output: any[] = [];
+        let output: ConstraintType[] = [];
 
         // Worst case we order by id within constraints
         output = output.concat(state.constraintConfig.constraints.filter(c => {
@@ -468,7 +467,7 @@ const getters = {
         return output;
     }
 }
-
+// TODO: Fix types
 function buildPassingChildrenMap(node: GroupNode, map: any, sMap: SatisfactionMap) {
     if (node.type !== "leaf-stratum") {
         const childSatisfactionObjectsOrNull = node.children.map((c) => sMap[c._id] || null);
