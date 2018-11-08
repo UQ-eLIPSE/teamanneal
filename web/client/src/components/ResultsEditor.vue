@@ -3,7 +3,7 @@
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
-        <button v-if="wizardEntry" @click="goToConstraints">Return to constraints</button>
+        <button class="button" v-if="wizardEntry" @click="goToConstraints">&lt;&nbsp;&nbsp; Return to constraints</button>
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
         <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
       </div>
@@ -514,7 +514,7 @@ export default class ResultsEditor extends Vue {
 </script>
 
 <!-- ####################################################################### -->
-
+<style scoped src="../static/results-editor-side-panel.css"></style>
 <style scoped>
 .results-editor {
   display: flex;
