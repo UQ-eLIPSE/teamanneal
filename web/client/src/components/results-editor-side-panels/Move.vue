@@ -114,7 +114,7 @@ export default class Move extends Vue {
     }
 
     get lowestLevelStratumLabel() {
-        return S.state.strataConfig.strata[S.state.strataConfig.strata.length - 1].label;
+        return  S.state.strataConfig.strata.length > 0 ? S.state.strataConfig.strata[S.state.strataConfig.strata.length - 1].label : "";
     }
 
     get sourcePersonFieldBlockClasses() {
