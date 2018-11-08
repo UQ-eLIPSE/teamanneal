@@ -3,7 +3,7 @@
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
-        <button @click="goToConstraints">Return to constraints</button>
+        <button v-if="wizardEntry" @click="goToConstraints">Return to constraints</button>
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
         <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
       </div>
@@ -51,7 +51,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -135,6 +135,10 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
   },
 })
 export default class ResultsEditor extends Vue {
+  // Determines entry path
+  @Prop wizardEntry = p<boolean>({ required: true });
+
+
   // Private
   /** Stores the indices of the columns to be displayed */
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
