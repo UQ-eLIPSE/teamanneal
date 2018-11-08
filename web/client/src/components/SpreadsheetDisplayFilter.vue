@@ -143,9 +143,10 @@ export default class SpreadsheetDisplayFilter extends Vue {
         // The issue with using the watch is that the animation is never actually rendered due to the states
         // being checked after each function call not during the function call (fair enough)
         // Doing on change and @Watch leads to a race condition as well so this is the best
-        // I can do forn ow
+        // I can do for now
 
-        window.setTimeout(() => this.collapseOnDepth(this.selectedDepth), 100);
+        // 0ms forces the event to be queued up eventually...
+        window.setTimeout(() => this.collapseOnDepth(this.selectedDepth), 0);
     }
 
     
