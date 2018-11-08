@@ -276,7 +276,7 @@ const actions = {
         commit(context, M.INSERT_RECORD_ID_TO_GROUP_NODE, { node: personA.node, id: personB.id });
     },
 
-    async [A.SET_DISPLAY_DEPTH](context: Context, depth: number) {
+    [A.SET_DISPLAY_DEPTH](context: Context, depth: number) {
         commit(context, M.SET_DISPLAY_DEPTH, depth);
     },
 

@@ -16,7 +16,7 @@
             <div class="sk-circle12 sk-circle"></div>
         </div>        
         <span class="display-text">Display </span>
-        <select v-model="selectedDepth" @change="triggerChange()">
+        <select :disabled="pLoading" v-model="selectedDepth">
             <option v-for="(s, i) in strataLevels" :key="i" :value="i">{{s}}</option>
         </select>
     </div>
@@ -24,7 +24,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component, Lifecycle, Watch } from "av-ts";
 import { ResultsEditor as S } from "../store";
 import { GroupNodeRoot } from "../data/GroupNodeRoot";
 import { GroupNodeIntermediateStratum } from "../data/GroupNodeIntermediateStratum";
@@ -32,8 +32,8 @@ import { GroupNodeLeafStratum } from "../data/GroupNodeLeafStratum";
 
 @Component
 export default class SpreadsheetDisplayFilter extends Vue {
-
-    sampleNodes:  { [key: number]: string[] } = [];
+    /** Caches nodes for given depths */
+    cachedDepthToNodeArrayMap:  { [depth: number]: string[] } = {};
     pLoading: boolean = false;
 
     get memberLevel() {
@@ -49,6 +49,11 @@ export default class SpreadsheetDisplayFilter extends Vue {
 
     set selectedDepth(value: number) {
         S.dispatch(S.action.SET_DISPLAY_DEPTH, value);
+    }
+
+    @Watch('selectedDepth')
+    depthHandler(_old: any, _new: any) {
+        this.triggerChange();
     }
 
     // Gets the levels that users can choose to display
@@ -104,10 +109,10 @@ export default class SpreadsheetDisplayFilter extends Vue {
         return output;
     }
     
-    collapseOnDepth(value: number) {
+    async collapseOnDepth(value: number) {
         // Traverse through the path and delete all the nodes necessary
 
-        if (this.sampleNodes[value] === undefined) {
+        if (this.cachedDepthToNodeArrayMap[value] === undefined) {
             let output: string[] = [];
             const TOP_LEVEL = 0;
 
@@ -115,21 +120,23 @@ export default class SpreadsheetDisplayFilter extends Vue {
                 let tempOutput = this.recursePathDepth(this.nodeRoots[i], value, TOP_LEVEL, []);
                 output = output.concat(tempOutput);
             }
-            this.sampleNodes[value] = output;
+            this.cachedDepthToNodeArrayMap[value] = output;
         }
 
-        S.dispatch(S.action.COLLAPSE_NODES, this.sampleNodes[value]);
+        await S.dispatch(S.action.COLLAPSE_NODES, this.cachedDepthToNodeArrayMap[value]);
         
         // Hide the spinner
         this.pLoading = false;
+
+        // Inform parent that loading has finished
+        this.$emit("loadFinished");
     }
     
-
-    get requestDepth(): number {
-        return S.get(S.getter.GET_THE_REQUEST_DEPTH);
-    }
-
     triggerChange() {
+        // Inform parent that loading has started
+        this.$emit("loadInProgress");
+
+        // Display the spinner
         this.pLoading = true;
 
         // Not the greatest implementation...
@@ -137,15 +144,21 @@ export default class SpreadsheetDisplayFilter extends Vue {
         // being checked after each function call not during the function call (fair enough)
         // Doing on change and @Watch leads to a race condition as well so this is the best
         // I can do forn ow
-        window.setTimeout(() => this.collapseOnDepth(this.requestDepth), 100);
+
+        window.setTimeout(() => this.collapseOnDepth(this.selectedDepth), 100);
     }
 
     
-    @Lifecycle mounted() {
+    @Lifecycle created() {
         // Setting the initial depth as one level "above" member
         const initialDepth = this.strataLevels.findIndex((level) => level === this.memberLevel) - 1;
+
         this.selectedDepth = initialDepth;
+
+        // Manually trigger change in depth according to the initial depth
+        this.triggerChange();
     }
+
 
 }
 </script>
