@@ -3,14 +3,19 @@
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
+        <button class="button" v-if="wizardEntry" @click="goToConstraints">&lt;&nbsp;&nbsp; Return to constraints</button>
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
-        <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+        <SpreadsheetDisplayFilter @loadFinished="enableSpreadsheet"
+                                  @loadInProgress="disableSpreadsheet"></SpreadsheetDisplayFilter>
       </div>
+
+
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
       <SpreadsheetTreeView2 class="spreadsheet"
+                            :style="spreadsheetStyles"
                             :nodeRoots="nodeRoots"
                             :headerRow="headerRow"
                             :columnsDisplayIndices="columnsDisplayIndices"
@@ -48,7 +53,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -132,11 +137,33 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
   },
 })
 export default class ResultsEditor extends Vue {
+  // Determines entry path
+  @Prop wizardEntry = p<boolean>({ required: true });
+
+
   // Private
   /** Stores the indices of the columns to be displayed */
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
   pRequestId: string = "";
+
+
+  /** Sets visibility of the spreadsheet component. Enabled by default */
+  spreadsheetEnabled: boolean = true;
+
+  get spreadsheetStyles() {
+    return {
+      opacity: this.spreadsheetEnabled ? 1 : 0.2
+    }
+  }
+
+  disableSpreadsheet() {
+    this.spreadsheetEnabled = false;
+  }
+
+  enableSpreadsheet() {
+    this.spreadsheetEnabled = true;
+  }
 
   /** New reference to module state */
   get state() {
@@ -487,18 +514,27 @@ export default class ResultsEditor extends Vue {
 
   // Required so that homepage will not have it
   @Lifecycle beforeDestroy() {
-      window.onbeforeunload = null;
+    window.onbeforeunload = null;
   }
 
   alertMessage() {
-      // Turns out this doesn't matter due to being a non standard
-      return "You may lose your results/constraints?";
+    // Turns out this doesn't matter due to being a non standard
+    return "You may lose your results/constraints?";
+  }
+
+  goToConstraints() {
+    // change the router-view to the constraints
+    const constraintRoute = "anneal-set-constraints";
+
+    this.$router.push({
+      name: constraintRoute
+    });
   }
 }
 </script>
 
 <!-- ####################################################################### -->
-
+<style scoped src="../static/results-editor-side-panel.css"></style>
 <style scoped>
 .results-editor {
   display: flex;
@@ -565,10 +601,5 @@ export default class ResultsEditor extends Vue {
   justify-content: center;
   flex-shrink: 0;
   color: #49075e;
-  margin: 0.5rem 0;
-}
-
-.filter-row>*:nth-child(2n) {
-  border-left: 0.05rem solid rgb(200, 200, 200);
 }
 </style>

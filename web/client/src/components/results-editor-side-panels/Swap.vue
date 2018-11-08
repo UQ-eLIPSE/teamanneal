@@ -2,12 +2,24 @@
     <div class="swap-people">
         <h2>Swap</h2>
         <div class="form-block">
-            <label for="person-a-select">Swap:</label>
+
+            <p>To swap {{ lowestLevelStratumLabel }} members:</p>
+            <ul>
+                <li>Click on the "Swap" field below</li>
+                <li>Select the desired {{ lowestLevelStratumLabel }} member from the table</li>
+                <li>Click on the "with" field</li>
+                <li>Select the {{ lowestLevelStratumLabel }} member to be swapped with from the table or suggestions list</li>
+                <li>Click on "SWAP" to swap the two {{lowestLevelStratumLabel}} members</li>
+            </ul>
+        </div>
+
+        <div class="form-block">
+            <label class="operation-label" for="person-a-select">Swap:</label>
             <div class="click-input-field-block"
                  :class="personAFieldBlockClasses">
                 <button id="person-a-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'personA' ? `(Select ${lowestLevelStratumLabel} member from table)` : `(Click here to set ${lowestLevelStratumLabel} member)`"
                         @focus="setCursor('personA')"
                         @click="setCursor('personA')">{{ personAFieldBlockText }}</button>
                 <!-- <button v-if="xxx !== undefined">View</button> -->
@@ -16,12 +28,12 @@
             </div>
         </div>
         <div class="form-block">
-            <label for="person-b-select">... with:</label>
+            <label class="operation-label" for="person-b-select">... with:</label>
             <div class="click-input-field-block"
                  :class="personBFieldBlockClasses">
                 <button id="person-b-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'personB' ? `(Select ${lowestLevelStratumLabel} member from table or suggestions list)` : `(Click here to set ${lowestLevelStratumLabel} member)`"
                         @focus="setCursor('personB')"
                         @click="setCursor('personB')">{{ personBFieldBlockText }}</button>
                 <!-- <button v-if="xxx !== undefined">View</button> -->
@@ -91,6 +103,11 @@ export default class Swap extends Vue {
             }
         }
     }
+
+    get lowestLevelStratumLabel() {
+        return S.state.strataConfig.strata[S.state.strataConfig.strata.length - 1].label;
+    }
+
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as SwapSidePanelToolData;
     }
@@ -260,5 +277,8 @@ export default class Swap extends Vue {
 <style scoped src="../../static/results-editor-side-panel.css"></style>
 
 <style scoped>
-
+.operation-label {
+    font-size: 1.1em;
+    font-weight: 300;
+}
 </style>
