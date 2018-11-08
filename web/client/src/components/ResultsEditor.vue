@@ -332,6 +332,7 @@ export default class ResultsEditor extends Vue {
       switch (m.name) {
         case "swap":
         case "move":
+        case "export":
           return S.state.strataConfig.strata.length > 0;
         default:
           return true;
