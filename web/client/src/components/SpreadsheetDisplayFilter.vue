@@ -145,8 +145,8 @@ export default class SpreadsheetDisplayFilter extends Vue {
         // Doing on change and @Watch leads to a race condition as well so this is the best
         // I can do for now
 
-        // 0ms forces the event to be queued up eventually...
-        window.setTimeout(() => this.collapseOnDepth(this.selectedDepth), 0);
+        // 100ms forces the event to be queued up eventually 0ms may not work for low end computers
+        window.setTimeout(() => this.collapseOnDepth(this.selectedDepth), 100);
     }
 
     
