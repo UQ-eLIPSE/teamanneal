@@ -1,5 +1,11 @@
 <template>
   <div class="results-editor">
+    <ConstraintOverview v-if="displayWorkspace"
+                        class="constraint-overview"
+                        :constraints="orderedConstraints"
+                        :constraintSatisfactionMap="annealSatisfactionMap"
+                        :strata="strata">
+    </ConstraintOverview>    
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
@@ -8,12 +14,9 @@
         <SpreadsheetDisplayFilter @loadFinished="enableSpreadsheet"
                                   @loadInProgress="disableSpreadsheet"></SpreadsheetDisplayFilter>
       </div>
-
-
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
-
       <SpreadsheetTreeView2 class="spreadsheet"
                             :style="spreadsheetStyles"
                             :nodeRoots="nodeRoots"
@@ -38,12 +41,6 @@
         <a href="#import-results-package-file"
            @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
     </div>
-    <ConstraintOverview v-if="displayWorkspace"
-                        class="constraint-overview"
-                        :constraints="orderedConstraints"
-                        :constraintSatisfactionMap="annealSatisfactionMap"
-                        :strata="strata">
-    </ConstraintOverview>
     <ResultsEditorSideToolArea class="side-tool-area"
                                :menuItems="menuBarItems"></ResultsEditorSideToolArea>
 
