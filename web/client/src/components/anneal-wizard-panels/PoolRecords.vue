@@ -6,12 +6,6 @@
             <p>
                 Choose whether to use all records or split them into separate pools before forming groups.
             </p>
-            <p>
-                For example, if you have students which are associated with certain
-                <i>project groups</i> and it is a requirement that you need groups that only have a homogeneous
-                <i>project group</i> value, you would set the
-                <i>"project group"</i> column to use for pooling your data.
-            </p>
             <div class="pool-records-split-pane-wrapper">
                 <div class="pool-records-split-pane">
                     <label class="pool-records-section-box"
@@ -59,6 +53,12 @@
                             </div>
                         </div>
                         <p>Records will be split into pools according to values in the selected column before forming groups.</p>
+                        <p>
+                            For example, if you have students associated with certain
+                            <i>lab sessions</i> and it is a requirement that students can only be grouped together if they are in the same <i>lab session</i> (i.e. they have the same value for the "lab session" column), you would use the
+                            <i>"lab session" column </i> for pooling your data.
+                        </p>  
+
                         <p>
                             <select v-model="partitionColumn"
                                     :disabled="enablePartitioning === false">

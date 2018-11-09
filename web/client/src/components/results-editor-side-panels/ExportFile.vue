@@ -4,7 +4,7 @@
         <div class="export-option-block">
             <h3>Export TeamAnneal results package</h3>
             <p>This file can be used to review or modify teams in the future.</p>
-            <p>It can also be used to set a new anneal configuration in the Team Anneal Creator</p>
+            <p>It can also be used to set a new anneal configuration in the TeamAnneal Creator</p>
             <p><b>This file can only be opened within the TeamAnneal application.</b></p>
             <button class="button small"
                     @click="exportResultsPackage">Export results package</button>
