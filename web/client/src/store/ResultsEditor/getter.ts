@@ -444,9 +444,9 @@ const getters = {
 
     },
 
-    /** Gets the contraints in a particular order. Essentially intermediates > root */
+    /** Gets the contraints in a particular order. Essentially intermediates > leaf */
     [G.GET_ORDERED_CONSTRAINTS](state: State, getters: Getters) {
-        // F
+        
         const constraintTypeMap = get(getters, G.GET_STRATUM_ID_TO_TYPE_MAP);
 
         let output: ConstraintType[] = [];
