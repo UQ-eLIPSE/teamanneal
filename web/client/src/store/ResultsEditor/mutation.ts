@@ -182,9 +182,11 @@ const mutations = {
         set(state, "requestDepth", depth);
     },
 
-    [M.COLLAPSE_NODES](state: State, nodeIdArray: string[]) {
-        state.collapsedNodes = {};
-        nodeIdArray.forEach((nodeId) => set(state.collapsedNodes, nodeId , true));
+    [M.COLLAPSE_NODES](state: State, data : { nodeIdArray: string[], reset: boolean }) {
+        if (data.reset) {
+            state.collapsedNodes = {};
+        }
+        data.nodeIdArray.forEach((nodeId) => set(state.collapsedNodes, nodeId , true));
     },
     [M.UNCOLLAPSE_NODES](state: State, nodeIdArray: string[]) {
         nodeIdArray.forEach((nodeId) => del(state.collapsedNodes, nodeId));

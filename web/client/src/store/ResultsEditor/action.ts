@@ -280,8 +280,8 @@ const actions = {
         commit(context, M.SET_DISPLAY_DEPTH, depth);
     },
 
-    async [A.COLLAPSE_NODES](context: Context, nodeIdArray: string[]) {
-        commit(context, M.COLLAPSE_NODES, nodeIdArray);
+    async [A.COLLAPSE_NODES](context: Context, data: { nodeIdArray: string[], reset: boolean }) {
+        commit(context, M.COLLAPSE_NODES, data);
         
     },
 

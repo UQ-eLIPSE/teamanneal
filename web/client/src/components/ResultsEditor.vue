@@ -366,7 +366,7 @@ export default class ResultsEditor extends Vue {
   /** Hides the selected `node` (Adds it to the `collapsedNodes` object). Passed down as a `prop` to child components. */
   onToggleNodeVisibility(node: GroupNode) {
     if (this.isNodeVisible(node)) {
-      S.dispatch(S.action.COLLAPSE_NODES, [node._id]);
+      S.dispatch(S.action.COLLAPSE_NODES, { nodeIdArray: [node._id], reset: false });
     } else {
       S.dispatch(S.action.UNCOLLAPSE_NODES, [node._id]);
     }
