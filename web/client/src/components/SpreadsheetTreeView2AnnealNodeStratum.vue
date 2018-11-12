@@ -246,7 +246,7 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
                     // Note that off stratum hover is the same no matter what
                     mouseleave: p.offStratumHover
                 }
-            }, satisfaction[element]! === 1 ? "P" : "F");
+            }, satisfaction[element]! === 1 ? "PASS" : "FAIL");
         }),
         // Append the number of nodes which pass for per constraint
         (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
