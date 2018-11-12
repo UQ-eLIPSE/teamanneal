@@ -4,7 +4,10 @@
                         class="constraint-overview"
                         :constraints="orderedConstraints"
                         :constraintSatisfactionMap="annealSatisfactionMap"
-                        :strata="strata">
+                        :strata="strata"
+                        :hoverID="pConstraintHoverID"
+                        @onHover="enableHover"
+                        @offHover="disableHover">
     </ConstraintOverview>    
     <div class="workspace"
          v-if="displayWorkspace">
@@ -30,7 +33,10 @@
                             :collapsedNodes="collapsedNodes"
                             :onToggleNodeVisibility="onToggleNodeVisibility"
                             :constraintSatisfactionMap="constraintSatisfactionMap"
-                            @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+                            :hoverID="pConstraintHoverID"
+                            @itemClick="onItemClickHandler"
+                            @onHover="enableHover"
+                            @offHover="disableHover"></SpreadsheetTreeView2>
     </div>
     <div class="get-started"
          v-else>
@@ -143,7 +149,7 @@ export default class ResultsEditor extends Vue {
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
   pRequestId: string = "";
-
+  pConstraintHoverID: string = "";
 
   /** Sets visibility of the spreadsheet component. Enabled by default */
   spreadsheetEnabled: boolean = true;
@@ -152,6 +158,21 @@ export default class ResultsEditor extends Vue {
     return {
       opacity: this.spreadsheetEnabled ? 1 : 0.2
     }
+  }
+
+  // Change the hover id
+  enableHover(constraintID: string | undefined) {
+    if (constraintID) {
+      this.pConstraintHoverID = constraintID;
+    } else {
+      // There shouldn't be empty string IDs
+      this.pConstraintHoverID = "";
+    }
+  }
+
+  // Remove the hover
+  disableHover() {
+    this.pConstraintHoverID = "";
   }
 
   disableSpreadsheet() {

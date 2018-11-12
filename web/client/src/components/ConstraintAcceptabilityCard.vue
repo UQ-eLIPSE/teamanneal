@@ -1,5 +1,6 @@
 <template>
-  <div class="main">
+  <!-- Styles the entire card for the mouse over. Could use a constant/getter instead for the style -->
+  <div class="main" :style="constraint._id === hoverID ? { border: '1px solid red' } : {}" @mouseover="enableHover(constraint._id)" @mouseout="disableHover()">
     <div class="constraint-item">
       <div class="sentence-groups">
         <div class="item-legend">
@@ -39,6 +40,24 @@ export default class ConstraintAcceptabilityCard extends Vue {
   @Prop totalGroups = p({ type: Number, required: true });
 
   @Prop constraintIndexInStratum = p({ type: Number, required: true, default: 0 });
+  
+  /** The constraint ID that's being hovered */
+  @Prop hoverID = p<String>({ required: false, default: "" })
+
+  // Pass the id
+  enableHover(constraintID: string) {
+      if (constraintID) {
+        this.$emit("on-card-hover", constraintID);
+      } else {
+      // There shouldn't be empty string IDs
+        this.$emit("on-card-hover", "");
+      }
+  }
+
+  // Remove the hover
+  disableHover() {
+      this.$emit("off-card-hover");
+  }
 
   get constraintFilterText() {
     return ConstraintSentence.getConstraintFilterText(this.constraint);

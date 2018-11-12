@@ -8,9 +8,13 @@
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
 
+        <!-- Due to the style being computed based on two things, have to use Object.assign -->
         <th v-for="(constraint, i) in orderedConstraints"
             :key="constraint._id"
-            :style="dataColumnStyle(i + headerRow.length)">
+            :style="Object.assign( dataColumnStyle(i + headerRow.length) ? dataColumnStyle(i + headerRow.length) : {} , constraint._id === hoverID ? { border: '1px solid red' } : {})"
+            @mouseover="enableHover(constraint._id)"
+            @mouseleave="disableHover()"
+            >
             {{"C" + (i + 1)}}
         </th>
     </tr>
@@ -29,7 +33,7 @@ export default class SpreadsheetTreeView2Header extends Vue {
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
-
+    @Prop hoverID = p<String>({ required: false, default: "" });
 
     get strata() {
         return S.state.strataConfig.strata;
@@ -55,6 +59,21 @@ export default class SpreadsheetTreeView2Header extends Vue {
         };
     }
 
+    // Change the hover id
+    enableHover(constraintID: string | undefined) {
+        if (constraintID) {
+            this.$emit("on-header-hover", constraintID);
+        } else {
+        // There shouldn't be empty string IDs
+            this.$emit("on-header-hover", "");
+        }
+    }
+
+    // Remove the hover
+    disableHover() {
+        this.$emit("off-header-hover");
+    }
+
     get stratumIdToStratumTypeMap() {
         return S.get(S.getter.GET_STRATUM_ID_TO_TYPE_MAP)
     }
@@ -66,6 +85,7 @@ export default class SpreadsheetTreeView2Header extends Vue {
     get orderedConstraints() {
         return S.get(S.getter.GET_ORDERED_CONSTRAINTS);
     }
+
 }   
 </script>
 

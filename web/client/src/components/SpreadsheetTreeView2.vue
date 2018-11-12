@@ -4,7 +4,10 @@
             <SpreadsheetTreeView2Header :padCells="treeMaxDepth"
                                         :headerStyles="filteredHeaderStyles"
                                         :headerRow="filteredHeaderRow"
-                                        :columnWidths="columnWidths"></SpreadsheetTreeView2Header>
+                                        :columnWidths="columnWidths"
+                                        :hoverID="hoverID"
+                                        v-on:on-header-hover="enableHover"
+                                        v-on:off-header-hover="disableHover"></SpreadsheetTreeView2Header>
         </table>
         <table class="contents">
             <tbody>
@@ -44,6 +47,9 @@
                                                     :collapsedNodes="collapsedNodes"
                                                     :onToggleNodeVisibility="onToggleNodeVisibility"
                                                     :constraintSatisfactionMap="__constraintSatisfactionMap"
+                                                    :hoverID="hoverID"
+                                                    v-on:on-node-hover="enableHover"
+                                                    v-on:off-node-hover="disableHover"
                                                     :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2AnnealNodeRoot>
             </template>
 
@@ -108,6 +114,8 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop columnsDisplayIndices = p<number[]>({ required: false, });
     @Prop collapsedNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
     @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: false, default: () => () => { }, });
+    @Prop hoverID= p<String>({ required: false, default: "" })
+
 
     // Private
     columnWidths: number[] | undefined = undefined;
@@ -115,6 +123,21 @@ export default class SpreadsheetTreeView2 extends Vue {
     /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", data);
+    }
+
+    // Pass the id
+    enableHover(constraintID: string) {
+        if (constraintID) {
+            this.$emit("onHover", constraintID);
+        } else {
+        // There shouldn't be empty string IDs
+            this.$emit("onHover", "");
+        }
+    }
+
+    // Remove the hover
+    disableHover() {
+        this.$emit("offHover");
     }
 
     get treeMaxDepth() {

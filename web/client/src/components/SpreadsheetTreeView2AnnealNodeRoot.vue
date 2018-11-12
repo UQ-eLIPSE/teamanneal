@@ -18,7 +18,9 @@
             <td class="strata-satisfaction"
                 v-for="(numPassingConstraintChild, i) in passingChildrenArray"
                 :key="i"
-                :class="passClasses(numPassingConstraintChild)">
+                :class="passClasses(numPassingConstraintChild)"
+                @mouseover="enableHover(numPassingConstraintChild.constraintId)"
+                @mouseout="disableHover()">
                 {{numPassingConstraintChild.passText}}
             </td>
         </tr>
@@ -36,6 +38,8 @@
                                                    :nodeStyles="nodeStyles"
                                                    :onItemClick="onItemClickHandler"
                                                    :onToggleNodeVisibility="onToggleNodeVisibility"
+                                                   :onStratumHover="enableHover"
+                                                   :offStratumHover="disableHover"
                                                    :nodePassingChildrenMapArray="nodePassingChildrenMapArray"></SpreadsheetTreeView2AnnealNodeStratum>
         </template>
     </tbody>
@@ -84,6 +88,21 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
         this.onItemClickHandler([]);
     }
 
+    /** Handles the hovering constraint of the table ID. Also passed to the stratums */
+    enableHover(constraintID: string | undefined) {
+        if (constraintID) {
+            this.$emit("on-node-hover", constraintID);
+        } else {
+            // There shouldn't be empty string IDs
+            this.$emit("on-node-hover", "");
+        }
+    }
+
+    /** Handles the moving off of the constraint ID */
+    disableHover() {
+        this.$emit("off-node-hover");
+    }
+
     /** Handles item clicks that were delivered from children component */
     onItemClickHandler(data: ({ node: GroupNode } | { recordId: RecordElement })[]) {
         this.$emit("itemClick", [{ node: this.node }, ...data]);
@@ -125,7 +144,6 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     passClasses(x: {constraintId: string, passText: string}) {
         const classes: string[] = [];
         if (!x || !x.passText) return classes;
-
         const parts = x.passText.split('/');
         const passing = parseInt(parts[0]);
         const total = parseInt(parts[1]);
