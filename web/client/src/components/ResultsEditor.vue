@@ -3,9 +3,10 @@
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
-        <button @click="goToConstraints">Return to constraints</button>
+        <button class="button" v-if="wizardEntry" @click="goToConstraints">&lt;&nbsp;&nbsp; Return to constraints</button>
         <SpreadsheetJumpToFilter></SpreadsheetJumpToFilter>
-        <SpreadsheetDisplayFilter></SpreadsheetDisplayFilter>
+        <SpreadsheetDisplayFilter @loadFinished="enableSpreadsheet"
+                                  @loadInProgress="disableSpreadsheet"></SpreadsheetDisplayFilter>
       </div>
 
 
@@ -14,6 +15,7 @@
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
 
       <SpreadsheetTreeView2 class="spreadsheet"
+                            :style="spreadsheetStyles"
                             :nodeRoots="nodeRoots"
                             :headerRow="headerRow"
                             :columnsDisplayIndices="columnsDisplayIndices"
@@ -38,7 +40,7 @@
     </div>
     <ConstraintOverview v-if="displayWorkspace"
                         class="constraint-overview"
-                        :constraints="constraints"
+                        :constraints="orderedConstraints"
                         :constraintSatisfactionMap="annealSatisfactionMap"
                         :strata="strata">
     </ConstraintOverview>
@@ -51,7 +53,7 @@
 <!-- ####################################################################### -->
 
 <script lang="ts">
-import { Vue, Component, Lifecycle } from "av-ts";
+import { Vue, Component, Lifecycle, Prop, p } from "av-ts";
 
 import { ResultsEditor as S } from "../store";
 
@@ -135,11 +137,33 @@ const MENU_BAR_ITEMS: ReadonlyArray<MenuItem> = [
   },
 })
 export default class ResultsEditor extends Vue {
+  // Determines entry path
+  @Prop wizardEntry = p<boolean>({ required: true });
+
+
   // Private
   /** Stores the indices of the columns to be displayed */
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
   pRequestId: string = "";
+
+
+  /** Sets visibility of the spreadsheet component. Enabled by default */
+  spreadsheetEnabled: boolean = true;
+
+  get spreadsheetStyles() {
+    return {
+      opacity: this.spreadsheetEnabled ? 1 : 0.2
+    }
+  }
+
+  disableSpreadsheet() {
+    this.spreadsheetEnabled = false;
+  }
+
+  enableSpreadsheet() {
+    this.spreadsheetEnabled = true;
+  }
 
   /** New reference to module state */
   get state() {
@@ -173,6 +197,10 @@ export default class ResultsEditor extends Vue {
 
   get constraints() {
     return this.state.constraintConfig.constraints;
+  }
+
+  get orderedConstraints() {
+    return S.get(S.getter.GET_ORDERED_CONSTRAINTS);
   }
 
   get annealSatisfactionMap() {
@@ -297,8 +325,19 @@ export default class ResultsEditor extends Vue {
     this.columnsDisplayIndices = columnList;
   }
 
+  // Remember to handle the case of when the data has not loaded
+  // Should not display swap or move commands
   get menuBarItems() {
-    return MENU_BAR_ITEMS;
+    return MENU_BAR_ITEMS.filter((m) => {
+      switch (m.name) {
+        case "swap":
+        case "move":
+        case "export":
+          return S.state.strataConfig.strata.length > 0;
+        default:
+          return true;
+      }
+    });
   }
 
   /** Checks if `node` id exists as a key in the `collapsedNodes` object. */
@@ -490,12 +529,12 @@ export default class ResultsEditor extends Vue {
 
   // Required so that homepage will not have it
   @Lifecycle beforeDestroy() {
-      window.onbeforeunload = null;
+    window.onbeforeunload = null;
   }
 
   alertMessage() {
-      // Turns out this doesn't matter due to being a non standard
-      return "You may lose your results/constraints?";
+    // Turns out this doesn't matter due to being a non standard
+    return "You may lose your results/constraints?";
   }
 
   goToConstraints() {
@@ -510,7 +549,7 @@ export default class ResultsEditor extends Vue {
 </script>
 
 <!-- ####################################################################### -->
-
+<style scoped src="../static/results-editor-side-panel.css"></style>
 <style scoped>
 .results-editor {
   display: flex;
@@ -577,10 +616,5 @@ export default class ResultsEditor extends Vue {
   justify-content: center;
   flex-shrink: 0;
   color: #49075e;
-  margin: 0.5rem 0;
-}
-
-.filter-row>*:nth-child(2n) {
-  border-left: 0.05rem solid rgb(200, 200, 200);
 }
 </style>

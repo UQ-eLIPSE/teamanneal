@@ -64,7 +64,7 @@ export default class ConstraintAcceptabilityCard extends Vue {
   }
 
   get constraintLabelNumber() {
-    return (this.stratumLabel[0] + "C") + (this.constraintIndexInStratum + 1);
+    return ("C") + (this.constraintIndexInStratum + 1);
   }
 }
 </script>

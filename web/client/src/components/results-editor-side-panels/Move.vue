@@ -2,12 +2,23 @@
     <div class="move-person">
         <h2>Move</h2>
         <div class="form-block">
-            <label for="source-person-select">Move:</label>
+            <p>To move a member:</p>
+            <ul>
+                <li>Click on the "Move" field below</li>
+                <li>Select the desired {{ lowestLevelStratumLabel }} member from the table</li>
+                <li>Click on the "to" field</li>
+                <li>Select the desired {{ lowestLevelStratumLabel }} from the table or suggestion list</li>
+                <li>Click on "MOVE"</li>
+            </ul>
+        </div>
+
+        <div class="form-block">
+            <label class="operation-label" for="source-person-select">Move:</label>
             <div class="click-input-field-block"
                  :class="sourcePersonFieldBlockClasses">
                 <button id="source-person-select"
                         class="input-field"
-                        data-placeholder-text="(Person)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'sourcePerson' ? `(Select a ${lowestLevelStratumLabel} member from table)` : `(Click here to set ${lowestLevelStratumLabel} member)`"
                         @focus="setCursor('sourcePerson')"
                         @click="setCursor('sourcePerson')">{{ sourcePersonFieldBlockText }}</button>
                 <!-- <button v-if="data.sourcePerson !== undefined">View</button> -->
@@ -16,12 +27,12 @@
             </div>
         </div>
         <div class="form-block">
-            <label for="target-group-select">... to:</label>
+            <label  class="operation-label" for="target-group-select">... to:</label>
             <div class="click-input-field-block"
                  :class="targetGroupFieldBlockClasses">
                 <button id="target-group-select"
                         class="input-field"
-                        data-placeholder-text="(Group)"
+                        v-bind:data-placeholder-text="this.data.cursor === 'targetGroup' ? `(Select a ${lowestLevelStratumLabel} from table or suggestions list)` : `(Click here to select ${lowestLevelStratumLabel})`"
                         @focus="setCursor('targetGroup')"
                         @click="setCursor('targetGroup')">{{ targetGroupFieldBlockText }}</button>
                 <!-- <button v-if="data.targetGroup !== undefined">View</button> -->
@@ -79,6 +90,10 @@ export default class Move extends Vue {
     /** Data returned from test permutation request */
     p_testPermutationData: MoveRecordTestPermutationOperationResult | undefined = undefined;
 
+    /** The placeholder text when interacting with the person form */
+    personInputFocused: boolean = false;
+    groupInputFocused: boolean = false;
+
     /** Watches side panel data in store and updates suggestions automatically */
     @Watch('data')
     handler(newVal: MoveSidePanelToolData, oldVal: MoveSidePanelToolData) {
@@ -96,6 +111,10 @@ export default class Move extends Vue {
 
     get data() {
         return (S.state.sideToolArea.activeItem!.data || {}) as MoveSidePanelToolData;
+    }
+
+    get lowestLevelStratumLabel() {
+        return  S.state.strataConfig.strata.length > 0 ? S.state.strataConfig.strata[S.state.strataConfig.strata.length - 1].label : "";
     }
 
     get sourcePersonFieldBlockClasses() {
@@ -266,5 +285,8 @@ export default class Move extends Vue {
 <style scoped src="../../static/results-editor-side-panel.css"></style>
 
 <style scoped>
-
+.operation-label {
+    font-size: 1.1em;
+    font-weight: 300;
+}
 </style>

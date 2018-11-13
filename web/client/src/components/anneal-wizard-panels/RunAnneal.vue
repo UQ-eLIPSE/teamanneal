@@ -315,7 +315,7 @@ XMLHttpRequest {
 
         // Move to ResultsEditor
         this.$router.push({
-            name: "results-editor",
+            name: "wizard-results-editor",
         });
     }
 

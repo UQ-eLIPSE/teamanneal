@@ -128,9 +128,8 @@ function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNo
 
 
 function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): string[] {
-    const constraints = S.state.constraintConfig.constraints;
+    const constraints = S.get(S.getter.GET_ORDERED_CONSTRAINTS);
     const orderedConstraints: string[] = [];
-
     // Push to array in the order of result editor's constraint array
     constraints.forEach((constraint) => {
         Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
@@ -139,7 +138,6 @@ function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): strin
             }
         });
     });
-
     return orderedConstraints;
 }
 

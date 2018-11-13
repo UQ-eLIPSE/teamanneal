@@ -8,13 +8,13 @@
            :key="stratum._id">
         <h2>{{stratum.label}} Constraints</h2>
 
-        <ConstraintAcceptabilityCard v-for="(constraint, i) in getConstraintsArrayByStratum(stratum)"
+        <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
                                      class="card"
                                      :key="constraint._id"
                                      :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
                                      :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
                                      :stratumLabel="getStratumLabel(constraint)"
-                                     :constraintIndexInStratum="i"
+                                     :constraintIndexInStratum="getConstraintIndex(constraint)"
                                      :constraint="constraint"> </ConstraintAcceptabilityCard>
       </div>
 
@@ -82,6 +82,10 @@ export default class ConstraintOverview extends Vue {
 
   getConstraintsArrayByStratum(stratum: Stratum) {
     return this.constraints.filter(constraint => constraint.stratum === stratum._id);
+  }
+
+  getConstraintIndex(constraint: IConstraint) {
+    return this.constraints.indexOf(constraint);
   }
 }
 </script>
