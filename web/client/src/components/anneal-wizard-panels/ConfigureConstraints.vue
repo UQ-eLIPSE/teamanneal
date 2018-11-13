@@ -53,9 +53,32 @@
                     <u>3 people</u>".</p>
                 <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
                 <h2>Example</h2>
-                <p>An example would be the following constraint <i><u>should have an</u> <u>even distribution of</u> people with <u>GPA</u> <u>greater than 3</u> when Team has <u>any number of</u> people</i></p>
-                <p>In this example, the cost is <u>should have</u> with a value of 25, Team Anneal will attempt to split the teams in an <u>even distribution</u> of people with a filter value of
-                <u>GPA</u> and a filter function of <u>greater than 3</u> with <u>any number of</u> as the size applicability.</p>
+                <p>An example would be the following constraint <i><u>should have</u> <u>exactly 2</u> people with <u>GPA</u> <u>greater than 3</u> when Team has <u>any number of</u> people</i></p>
+                <table class="example-table">
+                    <thead>
+                        <tr>
+                            <th>Weight (Priorities)</th>
+                            <th>Condition</th>
+                            <th>Characteristic</th>
+                            <th>Application</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>should have</td>
+                            <td>exactly 2</td>
+                            <td>GPA greater than 3</td>
+                            <td>Team has any number of people</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>The weight in this context is <i>should have</i> which means Team Anneal will put a significant amount of weight for the condition
+                to be correct. The condition <i>exactly 2</i> which means that Team Anneal will attempt to group teams with 2 people following a
+                particular characteristic. The characteristic <i>GPA greater than 3</i> means that the teams will be based on this criteria. The teams
+                that will be affected are teams with <i>any number of people</i>.</p>
+                <p>The output would be a collection of teams that contain exactly 2 people who have a GPA of 3 or higher. It should be noted
+                    that the team may contain a number of people but the team has 2 people that fulfiled the constraint.
+                </p>
             </div>
             <div v-if="!hasConstraints"
                  class="error-msg">
