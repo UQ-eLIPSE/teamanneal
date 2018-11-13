@@ -16,6 +16,11 @@
                     <b>not significant</b> to the anneal process.</p>
                 <p>Instead, modal verbs ("weights") that appear at the start of each constraint are used to determine which is more significant compared to others.</p>
                 <p>The relative weights for each are listed below:</p>
+                <span>
+                    <i>
+                        <u>Weight table</u>
+                    </i>
+                </span>
                 <table class="example-table">
                     <thead>
                         <tr>
@@ -42,6 +47,7 @@
                         </tr>
                     </tbody>
                 </table>
+
                 <p>This means that a "must have" constraint is considered with 500 times greater importance than a "may have" constraint.</p>
 
                 <h2>Constraint applicability to groups only of a certain size</h2>
@@ -52,8 +58,23 @@
                     <i>group</i> has
                     <u>3 people</u>".</p>
                 <p>Please note that the number applies to the number of people that sit under the group - if the group contains subgroups, the value applies to the total number of people in all subgroups, and not the number of subgroups.</p>
-                <h2>Example</h2>
-                <p>An example would be the following constraint <i><u>should have</u> <u>exactly 2</u> people with <u>GPA</u> <u>greater than 3</u> when Team has <u>any number of</u> people</i></p>
+
+
+                <h2>Example Constraints</h2>
+
+
+                <!-- Constraint examples -->
+
+                <!-- Example 1 -->
+                <h3>Example 1</h3>
+                <p>
+                    <i>
+                        <u>should have</u>
+                        <u>an even distribution of</u> people with
+                        <u>Discipline equal to</u>
+                        <u>Electrical Engineering</u> when Team has
+                        <u>any number of</u> people</i>
+                </p>
                 <table class="example-table">
                     <thead>
                         <tr>
@@ -66,18 +87,54 @@
                     <tbody>
                         <tr>
                             <td>should have</td>
-                            <td>exactly 2</td>
-                            <td>GPA greater than 3</td>
+                            <td>an even distribution of</td>
+                            <td>Discipline equal to Electrical Engineering </td>
                             <td>Team has any number of people</td>
                         </tr>
                     </tbody>
                 </table>
-                <p>The weight in this context is <i>should have</i> which means Team Anneal will put a significant amount of weight for the condition
-                to be correct. The condition <i>exactly 2</i> which means that Team Anneal will attempt to group teams with 2 people following a
-                particular characteristic. The characteristic <i>GPA greater than 3</i> means that the teams will be based on this criteria. The teams
-                that will be affected are teams with <i>any number of people</i>.</p>
-                <p>The output would be a collection of teams that contain exactly 2 people who have a GPA of 3 or higher. It should be noted
-                    that the team may contain a number of people but the team has 2 people that fulfiled the constraint.
+                <p>The weight in this context is
+                    <i>should have</i> which means Team Anneal will put a significant amount of weight for the condition to be correct (see
+                    <i>Weight Table</i> for relative weights). The condition + characteristic, i.e.
+                    <i>an even distribution of people with Discipline equal to Electrical Engineering</i> means that Team Anneal will attempt to form groups such that it spreads out people with a certain characteristic (discipline equal to Electrical Engineering) uniformly across all groups. This constraint will be applied to all teams (and not just teams of a certain size) since
+                    <i>any number of people</i> has been selected as the applicability</p>
+
+
+                <!-- Example 2 -->
+                <h3>Example 2</h3>
+                <p>
+                    <i>
+                        <u>should have</u>
+                        <u>at least 1</u> person with
+                        <u>GPA</u>
+                        <u>greater than 5</u> when Team has
+                        <u>3</u> people</i>
+                </p>
+                <table class="example-table">
+                    <thead>
+                        <tr>
+                            <th>Weight (Priorities)</th>
+                            <th>Condition</th>
+                            <th>Characteristic</th>
+                            <th>Application</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>should have</td>
+                            <td>at least 1 person</td>
+                            <td>GPA greater than 5</td>
+                            <td>Team has 3 people</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>The weight in this context is
+                    <i>should have</i> which means Team Anneal will put a significant amount of weight for the condition to be correct (see
+                    <i>Weight Table</i> for relative weights). The condition is
+                    <i>at least 1</i> which means that Team Anneal will attempt to form teams with at least 1 person having a particular characteristic (<i>GPA greater than 5</i>). Only teams comprising of 3 people will be affected by this constraint, since the applicability has been set to
+                    <i>when Team has 3 people</i>
+                </p>
+                <p>The output would be a collection of teams that contain at least 1 person with discipline equal to electrical engineering, provided that the number of electrical engineering students in the data are greater than the total number of teams being formed.
                 </p>
             </div>
             <div v-if="!hasConstraints"
