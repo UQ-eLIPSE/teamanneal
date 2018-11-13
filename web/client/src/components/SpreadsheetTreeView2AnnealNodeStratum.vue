@@ -26,6 +26,8 @@ interface Props_NodeStratumWithRecordChildren {
     nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
+    onStratumHover: (constraintID: string | undefined) => void,
+    offStratumHover: () => void,
     onToggleNodeVisibility: (node: GroupNode) => void,
     collapsedNodes: { [key: string]: true },
     nodePassingChildrenMapArray: { [nodeId: string]: { constraintId: string, passText: string }[] }
@@ -42,6 +44,8 @@ interface Props_NodeStratumWithStratumChildren {
     nodeStyles: Map<string | RecordElement, { color?: string, backgroundColor?: string }> | undefined,
     constraintSatisfactionMap: SatisfactionMap | undefined,
     onItemClick: (data: ({ node: GroupNode } | { recordId: RecordElement })[]) => void,
+    onStratumHover: (constraintID: string | undefined) => void,
+    offStratumHover: () => void,    
     onToggleNodeVisibility: (node: GroupNode) => void,
     collapsedNodes: { [key: string]: true },
     nodePassingChildrenMapArray: { [nodeId: string]: { constraintId: string, passText: string }[] }
@@ -128,9 +132,8 @@ function getNumberOfDescendants(rootNode: GroupNodeIntermediateStratum | GroupNo
 
 
 function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): string[] {
-    const constraints = S.state.constraintConfig.constraints;
+    const constraints = S.get(S.getter.GET_ORDERED_CONSTRAINTS);
     const orderedConstraints: string[] = [];
-
     // Push to array in the order of result editor's constraint array
     constraints.forEach((constraint) => {
         Object.keys(nodeSatisfactionObject).forEach((constraintId) => {
@@ -139,7 +142,6 @@ function orderConstraints(nodeSatisfactionObject: NodeSatisfactionObject): strin
             }
         });
     });
-
     return orderedConstraints;
 }
 
@@ -184,7 +186,6 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
 
     if (p.constraintSatisfactionMap && p.constraintSatisfactionMap[p.node._id]) {
         satisfaction = p.constraintSatisfactionMap[p.node._id];
-
         // Get constraints in the correct order since Object.keys() doesn't guarantee order
         orderedConstraintsArray = orderConstraints(satisfaction);
     }
@@ -229,18 +230,39 @@ function createGroupHeading(createElement: CreateElement, onItemClick: (data: ({
             ]
         ),
         orderedConstraintsArray.map((element) => {
+            // We would have to create the propogation function here
+            // as we don't care about the previous data, only the constraint ID
+            const __onStratumHover = () => {
+                p.onStratumHover(element);
+            }
+
             return createElement("td", {
                 class: "strata-satisfaction " + (satisfaction[element]! === 1 ? "sat-success" : "sat-fail"),
                 attrs: {
                     rowspan: rowspan
+                },
+                on: {
+                    mouseover: __onStratumHover,
+                    // Note that off stratum hover is the same no matter what
+                    mouseleave: p.offStratumHover
                 }
-                // This should just return an empty/irrelvant element
-            }, satisfaction[element]! === 1 ? "P" : "F");
+            }, satisfaction[element]! === 1 ? "PASS" : "FAIL");
         }),
         // Append the number of nodes which pass for per constraint
         (p.nodePassingChildrenMapArray[p.node._id] || []).map(x => {
+
+            // As above we need to create the appropiate emitter
+            const __onStratumHover = () => {
+                p.onStratumHover(x.constraintId);
+            }
+
             return createElement("td", {
-                class: ["strata-satisfaction", ...passClasses(x)]
+                class: ["strata-satisfaction", ...passClasses(x)],
+                on: {
+                    mouseover: __onStratumHover,
+                    // Note that off stratum hover is the same no matter what
+                    mouseleave: p.offStratumHover
+                }
             }, x.passText)
         })
     ]);
@@ -306,6 +328,8 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
         constraintSatisfactionMap: { required: false, },
         onToggleNodeVisibility: { required: true },
         onItemClick: { required: true, },
+        onStratumHover: { required: true },
+        offStratumHover: { required: true },
         collapsedNodes: { required: true },
         nodePassingChildrenMapArray: { required: false, default: () => Object.create(Object.prototype) }
 
@@ -351,6 +375,11 @@ export default Vue.component<Props>("SpreadsheetTreeView2AnnealNodeStratum", {
                             nodeStyles: p.nodeStyles,
                             constraintSatisfactionMap: p.constraintSatisfactionMap,
                             onItemClick: __onItemClick,
+                            // Recycling the function pointer is done as 
+                            // we only care about the constraint IDs which are shared between
+                            // all nodes
+                            onStratumHover: p.onStratumHover,
+                            offStratumHover: p.offStratumHover,
                             onToggleNodeVisibility: p.onToggleNodeVisibility,
                             collapsedNodes: p.collapsedNodes
                         }

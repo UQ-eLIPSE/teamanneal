@@ -8,14 +8,18 @@
            :key="stratum._id">
         <h2>{{stratum.label}} Constraints</h2>
 
-        <ConstraintAcceptabilityCard v-for="(constraint, i) in getConstraintsArrayByStratum(stratum)"
+        <ConstraintAcceptabilityCard v-for="constraint in getConstraintsArrayByStratum(stratum)"
                                      class="card"
                                      :key="constraint._id"
                                      :fulfilledNumber="getFulfilledNumberOfGroups(constraint)"
                                      :totalGroups="getNumberOfGroupsWithConstraintApplicable(constraint)"
                                      :stratumLabel="getStratumLabel(constraint)"
-                                     :constraintIndexInStratum="i"
-                                     :constraint="constraint"> </ConstraintAcceptabilityCard>
+                                     :constraintIndexInStratum="getConstraintIndex(constraint)"
+                                     :constraint="constraint"
+                                     :hoverID="hoverID"
+                                      v-on:on-card-hover="enableHover"
+                                      v-on:off-card-hover="disableHover"
+                                     > </ConstraintAcceptabilityCard>
       </div>
 
     </div>
@@ -40,6 +44,22 @@ export default class ConstraintOverview extends Vue {
   @Prop constraints = p<IConstraint[]>({ required: true });
 
   @Prop strata = p<Stratum[]>({ required: true });
+  
+    /** The constraint ID that's being hovered */
+  @Prop hoverID = p<String>({required: false, default: ""});
+
+
+    // Pass the id
+    enableHover(constraintID: string) {
+        if (constraintID) {
+            this.$emit("onHover", constraintID);
+        }
+    }
+
+    // Remove the hover
+    disableHover() {
+        this.$emit("offHover");
+    }
 
   getFulfilledNumberOfGroups(constraint: IConstraint) {
     const nodesUnderConstraint = this.constraintToNodeMap[constraint._id];
@@ -82,6 +102,10 @@ export default class ConstraintOverview extends Vue {
 
   getConstraintsArrayByStratum(stratum: Stratum) {
     return this.constraints.filter(constraint => constraint.stratum === stratum._id);
+  }
+
+  getConstraintIndex(constraint: IConstraint) {
+    return this.constraints.indexOf(constraint);
   }
 }
 </script>

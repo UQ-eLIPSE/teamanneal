@@ -15,7 +15,7 @@
 
             <DynamicWidthInputField class="input"
                                     v-if="showConditionCount"
-                                    v-model="constraintConditionCount"></DynamicWidthInputField>
+                                    v-model="constraintConditionCountString"></DynamicWidthInputField>
 
             <span v-if="personUnitNounFollowsCondition"
                   class="person-unit-noun-fragment">{{ personUnitNoun }} with</span>
@@ -65,7 +65,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 
-import { parse, parseUint32 } from "../util/Number";
+import { parse } from "../util/Number";
 import { deepCopy, deepMerge } from "../util/Object";
 
 import { Stratum } from "../data/Stratum";
@@ -385,16 +385,42 @@ export default class ConstraintsEditorConstraintItem extends Vue {
         });
     }
 
-    get constraintConditionCount() {
-        // Possibly null if from initing of the page
-        return (this.constraint.condition as any).value || 1;
+    /**
+     * Unfortunately using the constraintConditionCount directly leads
+     * to a lot of issues. For instance we cannot let it return as an empty
+     * string as the other functions rely on the value being a number.
+     * In particular, the isNaN check for the constraints of the count.
+     * 
+     * If we return a 0, then the user would not be able to set the value to 2
+     * without some funky input manipulation.
+     * 
+     * This approach allows the user to actually set the string to an empty string
+     * while also throwing an error.
+     */
+    get constraintConditionCountString() {
+        // Set to the value, if its 0 then return 0 else empty string
+        if ((this.constraint.condition as any).value || ((this.constraint.condition as any).value === 0)) {
+            return (this.constraint.condition as any).value;
+        } else {
+            return "";
+        }    
+    }
 
+    // Remember to propoagate these changes to the actual count
+    set constraintConditionCountString(newValue: any) {
+        this.constraintConditionCount = newValue;
+    }
+
+    get constraintConditionCount() {
+        return (this.constraint.condition as any).value;
     }
 
     set constraintConditionCount(newValue: any) {
         this.updateConstraint<IConstraint_Count>({
             condition: {
-                value: parseUint32(newValue, this.constraintConditionCount),
+                // The issue with using parseUint32 is that it will automatically set the value back
+                // which won't allow users to actually set the string to empty temporarily
+                value: parseInt(newValue, 10),
             },
         });
     }
@@ -517,12 +543,12 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 // Any parseable numeric string is acceptable, except for empty
                 // string
                 if (typeof newValue === "string" && newValue.trim().length === 0) {
-                    newFilterValue = "0";
+                    // Note that this error is caught by data checker regardless
+                    newFilterValue = "";
                 } else {
                     const validDecimalNumericStringRegex = /^-?\d+\.?\d*$/;
 
                     const parsedNewValue = parse(newValue, Number.NaN);
-
                     // * Check that the number is valid
                     //
                     // * Check that the numeric value is properly representable 

@@ -270,6 +270,22 @@ export namespace Constraint {
         throw new Error("Unknown constraint type");
     }
 
+    export function IsConstraintCountValid(constraint: Data) {
+        switch (constraint.type) {
+            case "count": {
+                // If there is a count, we will need to check if count is a number.
+                // Note that empty string (first tick) could
+                return !isNaN(+constraint.condition.value) && constraint.condition.value !== null;
+            }
+            case "similarity":
+            case "limit": {
+                // Should be good if it does reach here as similarity and limits don't appear to have these constraints
+                return true;
+            }
+        }
+        throw new Error("Unknown constraint type");
+    }
+
     export function IsFilterFunctionValid(constraint: Data) {
         switch (constraint.type) {
             case "count":
@@ -303,6 +319,7 @@ export namespace Constraint {
             IsFilterColumnValid(constraint, columns)
             && IsFilterValueValid(constraint, columns)
             && IsFilterFunctionValid(constraint)
+            && IsConstraintCountValid(constraint)
             && IsGroupSizeApplicabilityConditionValid(constraint, groupSizes)
         );
     }

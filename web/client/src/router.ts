@@ -117,7 +117,15 @@ export default () => {
                 path: "/editor",
                 name: "results-editor",
                 component: ResultsEditor,
+                props: { default: true, wizardEntry: false }
             },
+            {
+                // Same path as entering from the menu bar but the return to constraints will not appear
+                path: "/editor",
+                name: "wizard-results-editor",
+                component: ResultsEditor,
+                props: { default: true, wizardEntry: true }
+            }
         ],
     });
 

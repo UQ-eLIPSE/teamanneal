@@ -8,16 +8,13 @@
             :key="i"
             :style="dataColumnStyle(i)">{{ label }}</th>
 
-        <th v-for="(inter, i) in intermediateConstraints"
-            :key="inter._id"
-            :style="dataColumnStyle(i + headerRow.length)">
-            {{intermediateLabel + (i + 1)}}
-        </th>
-
-        <th v-for="(leaf, i) in leafConstraints"
-            :key="leaf._id"
-            :style="dataColumnStyle(i + intermediateConstraints.length + headerRow.length)">
-            {{ leafLabel + (i + 1) }}
+        <!-- Due to the style being computed based on two things, have to use Object.assign -->
+        <th v-for="(constraint, i) in orderedConstraints"
+            :key="constraint._id"
+            :style="dataColumnStyle(i + headerRow.length, constraint)"
+            @mouseover="enableHover(constraint._id)"
+            @mouseleave="disableHover()">
+            {{"C" + (i + 1)}}
         </th>
     </tr>
 </template>
@@ -27,7 +24,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 import { ResultsEditor as S } from "../store";
-
+import { Data as Constraint } from "../data/Constraint";
 @Component
 export default class SpreadsheetTreeView2Header extends Vue {
     // Props
@@ -35,17 +32,19 @@ export default class SpreadsheetTreeView2Header extends Vue {
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
-
+      /** The constraint ID that's being hovered */
+    @Prop hoverID = p<String>({ required: false, default: "" });
 
     get strata() {
         return S.state.strataConfig.strata;
     }
-    dataColumnStyle(i: number) {
+
+
+    dataColumnStyle(i: number, constraint: Constraint | undefined) {
         // If no width information is available, no style is applied
         if (this.columnWidths === undefined) {
             return undefined;
         }
-
         // The column widths include pad cell widths too, so we need to
         // offset by the number `padCells`
         const cellWidth = `${this.columnWidths[i + this.padCells]}px`;
@@ -53,34 +52,40 @@ export default class SpreadsheetTreeView2Header extends Vue {
         // Fetch any other styles if present
         const otherStyles = this.headerStyles[i] || {};
 
-        return {
+        let styles = {
             ...otherStyles,
             width: cellWidth,
             minWidth: cellWidth,
             maxWidth: cellWidth,
+            border: '1px solid transparent'
+
         };
+
+        if (constraint !== undefined && constraint._id === this.hoverID) {
+
+            const constraintHoverStyles = {
+                borderColor: '#45075e',
+                backgroundColor: '#EEEEEE',
+                color: '#49075e',
+                fontWeight: 'bold'
+            }
+
+            styles = Object.assign({}, styles, constraintHoverStyles);
+        }
+
+        return styles;
     }
 
-    
-    get leafLabel() {
-        const leafConstraints = this.leafConstraints;
-
-        if (leafConstraints.length === 0) return '';
-        const stratum = this.strata.find(s => s._id === leafConstraints[0].stratum);
-        if (!stratum) return '';
-        return stratum.label[0] + "C";
+    // Change the hover id
+    enableHover(constraintID: string | undefined) {
+        if (constraintID) {
+            this.$emit("on-header-hover", constraintID);
+        }
     }
 
-    /**
-     * E.g. returns TC if the intermediate label is Team
-     */
-    get intermediateLabel() {
-        const intermediateConstraints = this.intermediateConstraints;
-
-        if (intermediateConstraints.length === 0) return '';
-        const stratum = this.strata.find(s => s._id === intermediateConstraints[0].stratum);
-        if (!stratum) return '';
-        return stratum.label[0] + "C";
+    // Remove the hover
+    disableHover() {
+        this.$emit("off-header-hover");
     }
 
     get stratumIdToStratumTypeMap() {
@@ -91,17 +96,10 @@ export default class SpreadsheetTreeView2Header extends Vue {
         return S.state.constraintConfig.constraints;
     }
 
-    get intermediateConstraints() {
-        return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "intermediate-stratum";
-        })
+    get orderedConstraints() {
+        return S.get(S.getter.GET_ORDERED_CONSTRAINTS);
     }
 
-    get leafConstraints() {
-        return this.constraints.filter(c => {
-            return this.stratumIdToStratumTypeMap[c.stratum] === "leaf-stratum";
-        })
-    }
 }   
 </script>
 
