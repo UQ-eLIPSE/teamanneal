@@ -44,6 +44,8 @@ export default class ConstraintOverview extends Vue {
   @Prop constraints = p<IConstraint[]>({ required: true });
 
   @Prop strata = p<Stratum[]>({ required: true });
+  
+    /** The constraint ID that's being hovered */
   @Prop hoverID = p<String>({required: false, default: ""});
 
 
@@ -51,9 +53,6 @@ export default class ConstraintOverview extends Vue {
     enableHover(constraintID: string) {
         if (constraintID) {
             this.$emit("onHover", constraintID);
-        } else {
-        // There shouldn't be empty string IDs
-            this.$emit("onHover", "");
         }
     }
 

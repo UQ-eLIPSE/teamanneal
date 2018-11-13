@@ -92,9 +92,6 @@ export default class SpreadsheetTreeView2AnnealNodeRoot extends Vue {
     enableHover(constraintID: string | undefined) {
         if (constraintID) {
             this.$emit("on-node-hover", constraintID);
-        } else {
-            // There shouldn't be empty string IDs
-            this.$emit("on-node-hover", "");
         }
     }
 

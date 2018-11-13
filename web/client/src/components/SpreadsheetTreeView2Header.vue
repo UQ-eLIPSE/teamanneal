@@ -11,10 +11,9 @@
         <!-- Due to the style being computed based on two things, have to use Object.assign -->
         <th v-for="(constraint, i) in orderedConstraints"
             :key="constraint._id"
-            :style="Object.assign( dataColumnStyle(i + headerRow.length) ? dataColumnStyle(i + headerRow.length) : {} , constraint._id === hoverID ? { border: '1px solid red' } : {})"
+            :style="dataColumnStyle(i + headerRow.length, constraint)"
             @mouseover="enableHover(constraint._id)"
-            @mouseleave="disableHover()"
-            >
+            @mouseleave="disableHover()">
             {{"C" + (i + 1)}}
         </th>
     </tr>
@@ -25,7 +24,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, p } from "av-ts";
 import { ResultsEditor as S } from "../store";
-
+import { Data as Constraint } from "../data/Constraint";
 @Component
 export default class SpreadsheetTreeView2Header extends Vue {
     // Props
@@ -33,17 +32,19 @@ export default class SpreadsheetTreeView2Header extends Vue {
     @Prop headerRow = p<ReadonlyArray<string>>({ type: Array, required: true, });
     @Prop headerStyles = p<ReadonlyArray<{ color?: string, backgroundColor?: string } | undefined>>({ type: Array, required: false, default: () => [] });
     @Prop columnWidths = p<ReadonlyArray<number>>({ type: Array, required: false, });
+      /** The constraint ID that's being hovered */
     @Prop hoverID = p<String>({ required: false, default: "" });
 
     get strata() {
         return S.state.strataConfig.strata;
     }
-    dataColumnStyle(i: number) {
+
+
+    dataColumnStyle(i: number, constraint: Constraint | undefined) {
         // If no width information is available, no style is applied
         if (this.columnWidths === undefined) {
             return undefined;
         }
-
         // The column widths include pad cell widths too, so we need to
         // offset by the number `padCells`
         const cellWidth = `${this.columnWidths[i + this.padCells]}px`;
@@ -51,21 +52,34 @@ export default class SpreadsheetTreeView2Header extends Vue {
         // Fetch any other styles if present
         const otherStyles = this.headerStyles[i] || {};
 
-        return {
+        let styles = {
             ...otherStyles,
             width: cellWidth,
             minWidth: cellWidth,
             maxWidth: cellWidth,
+            border: '1px solid transparent'
+
         };
+
+        if (constraint !== undefined && constraint._id === this.hoverID) {
+
+            const constraintHoverStyles = {
+                borderColor: '#45075e',
+                backgroundColor: '#EEEEEE',
+                color: '#49075e',
+                fontWeight: 'bold'
+            }
+
+            styles = Object.assign({}, styles, constraintHoverStyles);
+        }
+
+        return styles;
     }
 
     // Change the hover id
     enableHover(constraintID: string | undefined) {
         if (constraintID) {
             this.$emit("on-header-hover", constraintID);
-        } else {
-        // There shouldn't be empty string IDs
-            this.$emit("on-header-hover", "");
         }
     }
 

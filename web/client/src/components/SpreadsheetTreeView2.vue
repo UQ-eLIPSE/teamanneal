@@ -114,6 +114,7 @@ export default class SpreadsheetTreeView2 extends Vue {
     @Prop columnsDisplayIndices = p<number[]>({ required: false, });
     @Prop collapsedNodes = p<{ [key: string]: true }>({ required: false, default: () => ({}), });
     @Prop onToggleNodeVisibility = p<(node: GroupNode) => void>({ required: false, default: () => () => { }, });
+      /** The constraint ID that's being hovered */
     @Prop hoverID= p<String>({ required: false, default: "" })
 
 
@@ -129,9 +130,6 @@ export default class SpreadsheetTreeView2 extends Vue {
     enableHover(constraintID: string) {
         if (constraintID) {
             this.$emit("onHover", constraintID);
-        } else {
-        // There shouldn't be empty string IDs
-            this.$emit("onHover", "");
         }
     }
 
@@ -391,7 +389,7 @@ export default class SpreadsheetTreeView2 extends Vue {
         // the same effect as before
         setTimeout(() => {
             this.waitAndUpdateColumnWidths();
-        }, 0);
+        }, 500);
 
 
 
