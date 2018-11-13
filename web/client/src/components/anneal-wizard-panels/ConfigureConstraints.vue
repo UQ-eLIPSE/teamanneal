@@ -98,8 +98,7 @@
                     <i>Weight Table</i> for relative weights). The condition + characteristic, i.e.
                     <i>an even distribution of people with Discipline equal to Electrical Engineering</i> means that Team Anneal will attempt to form groups such that it spreads out people with a certain characteristic (discipline equal to Electrical Engineering) uniformly across all groups. This constraint will be applied to all teams (and not just teams of a certain size) since
                     <i>any number of people</i> has been selected as the applicability</p>
-                <p>The output would be a collection of teams that contain at least 1 person with discipline equal to electrical engineering, provided that the number of electrical engineering students in the data are greater than the total number of teams being formed.
-                </p>
+                <p>The output would be a collection of teams such that students with the electrical engineering discipline will be evenly spread across all teams.</p>
                 <!-- Example 2 -->
                 <h3>Example 2</h3>
                 <p>
