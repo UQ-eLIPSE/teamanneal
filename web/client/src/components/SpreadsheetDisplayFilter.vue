@@ -123,7 +123,7 @@ export default class SpreadsheetDisplayFilter extends Vue {
             this.cachedDepthToNodeArrayMap[value] = output;
         }
 
-        await S.dispatch(S.action.COLLAPSE_NODES, this.cachedDepthToNodeArrayMap[value]);
+        await S.dispatch(S.action.COLLAPSE_NODES, { nodeIdArray: this.cachedDepthToNodeArrayMap[value], reset: true });
         
         // Hide the spinner
         this.pLoading = false;

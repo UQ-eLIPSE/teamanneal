@@ -1,5 +1,14 @@
 <template>
   <div class="results-editor">
+    <ConstraintOverview v-if="displayWorkspace"
+                        class="constraint-overview"
+                        :constraints="orderedConstraints"
+                        :constraintSatisfactionMap="annealSatisfactionMap"
+                        :strata="strata"
+                        :hoverID="pConstraintHoverID"
+                        @onHover="enableHover"
+                        @offHover="disableHover">
+    </ConstraintOverview>    
     <div class="workspace"
          v-if="displayWorkspace">
       <div class="filter-row">
@@ -8,12 +17,9 @@
         <SpreadsheetDisplayFilter @loadFinished="enableSpreadsheet"
                                   @loadInProgress="disableSpreadsheet"></SpreadsheetDisplayFilter>
       </div>
-
-
       <SpreadsheetTreeView2ColumnsFilter :items="columns"
                                          :selectedIndices="columnsDisplayIndices"
                                          @listUpdated="visibleColumnListUpdateHandler"></SpreadsheetTreeView2ColumnsFilter>
-
       <SpreadsheetTreeView2 class="spreadsheet"
                             :style="spreadsheetStyles"
                             :nodeRoots="nodeRoots"
@@ -27,7 +33,10 @@
                             :collapsedNodes="collapsedNodes"
                             :onToggleNodeVisibility="onToggleNodeVisibility"
                             :constraintSatisfactionMap="constraintSatisfactionMap"
-                            @itemClick="onItemClickHandler"></SpreadsheetTreeView2>
+                            :hoverID="pConstraintHoverID"
+                            @itemClick="onItemClickHandler"
+                            @onHover="enableHover"
+                            @offHover="disableHover"></SpreadsheetTreeView2>
     </div>
     <div class="get-started"
          v-else>
@@ -38,12 +47,6 @@
         <a href="#import-results-package-file"
            @click.prevent="openImportSidePanel">importing a TeamAnneal results package file</a>.</p>
     </div>
-    <ConstraintOverview v-if="displayWorkspace"
-                        class="constraint-overview"
-                        :constraints="orderedConstraints"
-                        :constraintSatisfactionMap="annealSatisfactionMap"
-                        :strata="strata">
-    </ConstraintOverview>
     <ResultsEditorSideToolArea class="side-tool-area"
                                :menuItems="menuBarItems"></ResultsEditorSideToolArea>
 
@@ -146,7 +149,7 @@ export default class ResultsEditor extends Vue {
   p_columnsDisplayIndices: ReadonlyArray<number> | undefined = undefined;
 
   pRequestId: string = "";
-
+  pConstraintHoverID: string = "";
 
   /** Sets visibility of the spreadsheet component. Enabled by default */
   spreadsheetEnabled: boolean = true;
@@ -155,6 +158,21 @@ export default class ResultsEditor extends Vue {
     return {
       opacity: this.spreadsheetEnabled ? 1 : 0.2
     }
+  }
+
+  // Change the hover id
+  enableHover(constraintID: string | undefined) {
+    if (constraintID) {
+      this.pConstraintHoverID = constraintID;
+    } else {
+      // There shouldn't be empty string IDs
+      this.pConstraintHoverID = "";
+    }
+  }
+
+  // Remove the hover
+  disableHover() {
+    this.pConstraintHoverID = "";
   }
 
   disableSpreadsheet() {
@@ -348,7 +366,7 @@ export default class ResultsEditor extends Vue {
   /** Hides the selected `node` (Adds it to the `collapsedNodes` object). Passed down as a `prop` to child components. */
   onToggleNodeVisibility(node: GroupNode) {
     if (this.isNodeVisible(node)) {
-      S.dispatch(S.action.COLLAPSE_NODES, [node._id]);
+      S.dispatch(S.action.COLLAPSE_NODES, { nodeIdArray: [node._id], reset: false });
     } else {
       S.dispatch(S.action.UNCOLLAPSE_NODES, [node._id]);
     }
