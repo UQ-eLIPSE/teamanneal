@@ -87,9 +87,8 @@ function getMaxChildrenDepth(node: GroupNode, depth = 0): number {
 
         case "leaf-stratum":
             return depth + 1;
+        default: throw new Error("Unknown node type");
     }
-
-    throw new Error("Unknown node type");
 }
 
 @Component({

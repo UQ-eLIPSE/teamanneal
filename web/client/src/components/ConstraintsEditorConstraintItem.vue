@@ -225,9 +225,10 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                 return {
                     function: this.constraintConditionFunction,
                 }
+            default: throw new Error("Unknown constraint type");
         }
 
-        throw new Error("Unknown constraint type");
+        
     }
 
     get validFilterValueAsSelectList() {
@@ -254,9 +255,8 @@ export default class ConstraintsEditorConstraintItem extends Vue {
                             text: "" + value,
                         }
                     }
+                    default: throw new Error("Unknown column type");
                 }
-
-                throw new Error("Unknown column type");
             });
     }
 

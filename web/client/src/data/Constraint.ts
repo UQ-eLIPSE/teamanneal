@@ -165,9 +165,9 @@ export namespace Constraint {
 
                 return data;
             }
+            default: throw new Error("Unknown constraint type");
         }
 
-        throw new Error("Unknown constraint type");
     }
 
     export function Equals(a: Data, b: Data) {
@@ -180,9 +180,9 @@ export namespace Constraint {
                 return ConstraintPhraseMaps.NumberFilterFunctionList;
             case "string":
                 return ConstraintPhraseMaps.StringFilterFunctionList;
+            default: throw new Error("Unknown column type");
         }
 
-        throw new Error("Unknown column type");
     }
 
     export function GetValidGroupSizeApplicabilityConditionList(groupSizes: ReadonlyArray<number>) {
@@ -258,16 +258,14 @@ export namespace Constraint {
                             && (ColumnData.GetValueSet(GetFilterColumn(constraint, columns)!) as Set<string>).has(filterValue)
                         );
                     }
+                    default: throw new Error("Unknown column type");
                 }
-
-                throw new Error("Unknown column type");
             }
 
             // Similarity constraints don't have filter values
             case "similarity": return true;
+            default: throw new Error("Unknown constraint type");
         }
-
-        throw new Error("Unknown constraint type");
     }
 
     export function IsConstraintCountValid(constraint: Data) {
@@ -282,8 +280,8 @@ export namespace Constraint {
                 // Should be good if it does reach here as similarity and limits don't appear to have these constraints
                 return true;
             }
+            default: throw new Error("Unknown constraint type");
         }
-        throw new Error("Unknown constraint type");
     }
 
     export function IsFilterFunctionValid(constraint: Data) {
@@ -298,9 +296,8 @@ export namespace Constraint {
 
             // Similarity constraints don't have filter functions
             case "similarity": return true;
+            default: throw new Error("Unknown constraint type");
         }
-
-        throw new Error("Unknown constraint type");
     }
 
     export function IsGroupSizeApplicabilityConditionValid(constraint: Data, groupSizes: ReadonlyArray<number>) {

@@ -177,15 +177,14 @@ export default class RunAnneal extends Mixin(AnnealProcessWizardPanel) {
         }
 
         // Response here is now the error
-        const error = response.error as AnnealResponse.AxiosError;
+        const error = response;
 
         // Error was returned from server
-        const errResponse = error.response;
-        if (errResponse !== undefined) {
+        if (error !== undefined) {
             const message =
-                `${errResponse.data.error}
+                `${error}
 
-HTTP ${errResponse.status}`;
+HTTP ${error}`;
 
             return message;
         }
@@ -204,10 +203,9 @@ XMLHttpRequest {
             return message;
         }
 
-        // Some error with a message
-        const errMsg = error.message;
-        if (errMsg !== undefined) {
-            return `Error: ${errMsg}`;
+        // Some error with a message;
+        if (error !== undefined) {
+            return `Error: ${error}`;
         }
 
         // Unknown error

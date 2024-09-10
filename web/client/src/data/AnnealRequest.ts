@@ -338,9 +338,8 @@ function convertStateToAnnealRequestBody(state: typeof S.state) {
 
                     return constraint;
                 }
+                default: throw new Error("Unrecognised constraint type");
             }
-
-            throw new Error("Unrecognised constraint type");
         }
     );
 

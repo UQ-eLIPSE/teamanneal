@@ -95,9 +95,8 @@ export namespace ColumnData {
 
                 return new Set<string>(stringValues);
             }
+            default: throw new Error("Unknown column type");
         }
-
-        throw new Error("Unknown column type");
     }
 
     export function GetValueSet(columnData: Data) {
@@ -178,9 +177,9 @@ export namespace ColumnData {
                 // Simply return the raw column values as-is
                 return columnData.rawColumnValues;
             }
+            default: throw new Error("Unknown column type");
         }
 
-        throw new Error("Unknown column type");
     }
 
     export function GetCookedColumnValues(columnData: Data) {

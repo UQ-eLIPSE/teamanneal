@@ -44,7 +44,7 @@ export default class ImportFile extends Vue {
         const reader = new FileReader();
 
         reader.onload = (e) => {
-            const data: string = (e.target as FileReader).result;
+            const data: string = (e.target as FileReader).result as string;
             S.dispatch(S.action.HYDRATE, data);
         }
 

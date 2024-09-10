@@ -1,8 +1,12 @@
+const path = require('path');
+const ExitOnCompletePlugin = require('./ExitOnCompletePlugin');
+
 module.exports = {
     mode: "development",
     entry: "./src/index.ts",
+    watch: false,
     output: {
-        path: `${__dirname}/build/client/build`,
+        path: path.resolve(__dirname, 'build/client/build'),
         filename: "build.js",
         publicPath: "build/"
     },
@@ -27,16 +31,15 @@ module.exports = {
                 loader: "vue-loader",
                 options: {
                     esModule: true,
-
                 }
             },
             {
                 test: /\.(jpe?g|png|gif|svg)$/i,
-                loaders: [
+                use: [
                     "file-loader",
                     {
                         loader: "image-webpack-loader",
-                        query: {
+                        options: {
                             mozjpeg: {
                                 progressive: true,
                                 quality: 50
@@ -64,5 +67,8 @@ module.exports = {
     performance: {
         hints: false
     },
-    devtool: "source-map"
+    devtool: "source-map",
+    plugins: [
+        new ExitOnCompletePlugin()
+    ]
 };

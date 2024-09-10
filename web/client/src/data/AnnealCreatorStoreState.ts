@@ -39,6 +39,7 @@ export function dehydrate(originalState: AnnealCreatorState | AnnealCreatorState
         }
     } else {
         // If previously did not exist, delete property altogether
+        //@ts-ignore
         delete state.annealRequest;
     }
 

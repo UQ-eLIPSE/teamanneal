@@ -226,7 +226,7 @@ export default class ImportData extends Mixin(AnnealProcessWizardPanel) {
                 const fileContents = await new Promise<string>((resolve, reject) => {
                     // Set up reader
                     const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
+                    reader.onloadend = () => resolve(reader.result as string);
                     reader.onerror = (e) => reject(e);
 
                     // Commence reading
