@@ -20,13 +20,11 @@ export function init(records: Record.RecordSet, columnInfos: ReadonlyArray<Colum
             switch (columnInfo.type) {
                 case "number": return new SimilarityNumericConstraint(records, columnInfo, constraintDef);
                 case "string": return new SimilarityStringConstraint(records, columnInfo, constraintDef);
+                default: throw new Error("Unknown column type");
             }
-
-            throw new Error("Unknown column type");
         }
+        default: throw new Error("Unknown constraint type");
     }
-
-    throw new Error("Unknown constraint type");
 }
 
 /**
@@ -105,9 +103,8 @@ export function isTypeValid(constraint: Constraint.Desc) {
         case "limit":
         case "similarity":
             return true;
+        default: return false;
     }
-
-    return false;
 }
 
 export function isApplicabilityConditionsArray(constraint: Constraint.Desc) {
@@ -129,9 +126,8 @@ export function isFilterFunctionValid(constraint: Constraint.Desc) {
         case "gt":
         case "gte":
             return true;
+        default: return false;
     }
-
-    return false;
 }
 
 export function isFilterSearchValuesNonEmpty(constraint: Constraint.Desc) {

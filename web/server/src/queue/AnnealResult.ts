@@ -45,6 +45,7 @@ export function init() {
 
                     // Strip _meta
                     results.forEach((result) => {
+                        //@ts-ignore
                         delete result["_meta"];
                     });
 

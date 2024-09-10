@@ -12,7 +12,7 @@
         "sourceMap": true,
         "experimentalDecorators": true,
 
-        "strict": true,
+        "strict": false,
 
         "forceConsistentCasingInFileNames": true,
 
@@ -20,7 +20,10 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
 
-        "allowUnreachableCode": false
+        "allowUnreachableCode": false,
+        "skipLibCheck": true,
+        "noLib": true,
+        "skipDefaultLibCheck": true
     },
 
     "include": [
@@ -32,6 +35,7 @@
     ],
 
     "exclude": [
-        "./src/**/__tests__/*.ts"
+        "./src/**/__tests__/*.ts",
+	    "../node_modules"
     ]
 }

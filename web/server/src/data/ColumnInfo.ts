@@ -90,9 +90,9 @@ export function init(recordElements: ReadonlyArray<Record.RecordElement>, column
 
             return Util.zipObjects(column, info) as ColumnInfoString;
         }
-    }
 
-    throw new Error("Unrecognised column type");
+        default: throw new Error("Unrecognised column type");
+    }
 }
 
 export function getIdColumnIndex(columns: ReadonlyArray<RecordDataColumn.ColumnDesc>) {

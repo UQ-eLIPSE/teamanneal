@@ -11,3 +11,5 @@ npm-debug.log
 # Exclude config, but keep examples
 /**/config/*
 !/**/config/example.json
+
+dist/

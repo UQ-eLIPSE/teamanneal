@@ -35,9 +35,8 @@ export function calculateValueSingleNodeSatisfactionCalculation(constraint: Abst
         case "count": return Count.calculateSatisfaction(constraint as CountConstraint, recordPointers);
         case "limit": throw new Error("Limit constraints are not 'single node satisfaction calculation' constraints");
         case "similarity": return Similarity.calculateSatisfaction(constraint as SimilarityNumericConstraint | SimilarityStringConstraint, recordPointers);
+        default: throw new Error("Unrecognised constraint type");
     }
-
-    throw new Error("Unrecognised constraint type");
 }
 
 /**
@@ -67,9 +66,8 @@ export function calculateValueMultipleNodeSatisfactionCalculation(constraint: Ab
             throw new Error("Count and similarity constraints are not 'multiple node satisfaction calculation' constraints");
         case "limit":
             return Limit.calculateSatisfaction(constraint as LimitConstraint, applicableNodes);
+        default: throw new Error("Unrecognised constraint type");        
     }
-
-    throw new Error("Unrecognised constraint type");
 }
 
 /**
@@ -598,8 +596,7 @@ export namespace Similarity {
         switch (constraint.columnInfo.type) {
             case "number": return calculateNumericSatisfaction(constraint as SimilarityNumericConstraint, recordPointers);
             case "string": return calculateStringSatisfaction(constraint as SimilarityStringConstraint, recordPointers);
+            default: throw new Error("Unknown column type");
         }
-
-        throw new Error("Unknown column type");
     }
 }

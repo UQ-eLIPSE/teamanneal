@@ -42,13 +42,13 @@ export abstract class AbstractConstraint {
                     case "lte": return groupSize <= referenceSize;
                     case "gt": return groupSize > referenceSize;
                     case "gte": return groupSize >= referenceSize;
+                    default: throw new Error("Unknown applicability condition function");
                 }
 
-                throw new Error("Unknown applicability condition function");
             }
+            default: throw new Error("Unknown applicability condition type");
         }
 
-        throw new Error("Unknown applicability condition type");
     }
 
     public isApplicableTo(recordPointers: Uint32Array) {

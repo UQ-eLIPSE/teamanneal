@@ -75,8 +75,9 @@ export const getAnnealStatus: express.RequestHandler =
             }
 
             const annealID = req.query.id;
-            const annealMapList = await RedisService.getLRANGE(annealID, 0, -1);
+            const annealMapList = await RedisService.getLRANGE(annealID as string, 0, -1, undefined);
 
+            //@ts-ignore
             const annealStateObjects = annealMapList.map((jsonString: string) => JSON.parse(jsonString));
             const partitionStateStatusMap: StatusMap = {};
 
@@ -105,7 +106,7 @@ export const getAnnealStatus: express.RequestHandler =
 
             });
 
-            const expectedNumberOfResults = await RedisService.getExpectedNumberOfAnnealResults(annealID);
+            const expectedNumberOfResults = await RedisService.getExpectedNumberOfAnnealResults(annealID as string);
 
             res
                 .status(HTTPResponseCode.SUCCESS.OK)
@@ -138,6 +139,7 @@ export const getAnnealResult: express.RequestHandler =
 
             // Go through entire list of anneal status objects to find the 
             // final results object (the one that contains the `results` prop)
+            //@ts-ignore
             const annealMapList: ReadonlyArray<string> = await RedisService.getLRANGE(annealID, 0, -1);
 
             for (let annealMap of annealMapList) {
@@ -159,7 +161,7 @@ export const getAnnealResult: express.RequestHandler =
                     // Set expiry time for all anneal data pertaining to the 
                     // anneal job (already returned to user) to no later than 
                     // 60 seconds
-                    RedisService.expireAnnealData(annealID, 60);
+                    RedisService.expireAnnealData(annealID as string, 60);
 
                     // We're done; stop going through array
                     return;

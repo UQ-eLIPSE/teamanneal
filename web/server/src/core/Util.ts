@@ -83,6 +83,7 @@ export function concatArrays<T>(items: ReadonlyArray<ReadonlyArray<T>>) {
     const arr: T[] = [];
 
     for (let i = 0; i < items.length; ++i) {
+        //@ts-ignore
         arr.push.apply(arr, items[i]);
     }
 

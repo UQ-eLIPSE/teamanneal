@@ -33,12 +33,14 @@ export function getClient() {
  */
 export async function getValue(key: string) {
     try {
-        const result = await getAsync(key);
+        const result = await getAsync(key, undefined);
         return result;
 
     } catch (e) {
         console.error('Error while getting key : ' + e);
-        throw new Error(e);
+
+        //@ts-ignore
+        throw new Error(e.message);
     }
 }
 

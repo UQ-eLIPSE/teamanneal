@@ -1,36 +1,30 @@
 {
     "compilerOptions": {
         "target": "es5",
-        
         "module": "commonjs",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "resolveJsonModule": true,
-
         "lib": [
             "dom",
             "es2015"
         ],
-
         "outDir": "./build",
-
         "sourceMap": true,
-        
         "forceConsistentCasingInFileNames": true,
-
-        "strict": true,
+        "strict": true, // Enable strict mode
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-        "allowUnreachableCode": false
+        "allowUnreachableCode": false,
+        "skipLibCheck": true // Only one of these is needed
     },
-
     "include": [
         "./src/index.ts",
         "./src/routes/**/*.ts"
     ],
-
     "exclude": [
-        "./src/**/__tests__/*.ts"
+        "./src/**/__tests__/*.ts",
+        "../node_modules"
     ]
 }
