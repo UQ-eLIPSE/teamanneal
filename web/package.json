@@ -35,7 +35,7 @@
     "@types/papaparse": "4.1.33",
     "@types/uuid": "3.4.3",
     "@types/winston": "2.3.8",
-    "av-ts": "0.9.2",
+    "av-ts": "0.11.0",
     "css-loader": "7.1.2",
     "file-loader": "6.2.0",
     "image-webpack-loader": "8.1.0",

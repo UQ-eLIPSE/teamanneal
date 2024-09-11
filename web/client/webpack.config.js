@@ -32,9 +32,16 @@ module.exports = {
         loader: 'vue-loader',
       },
       {
-        test: /\.(jpe?g|png|gif|svg)$/i,
+        test: /\.(jpe?g|png|gif|svg|jpg)$/i,
         use: [
-          'file-loader',
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]', // Preserve original filenames
+              outputPath: 'images/',
+              publicPath: 'images/',
+            },
+          },
           {
             loader: 'image-webpack-loader',
             options: {
