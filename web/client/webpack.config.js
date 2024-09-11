@@ -30,9 +30,6 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue-loader',
-        options: {
-          esModule: true,
-        },
       },
       {
         test: /\.(jpe?g|png|gif|svg)$/i,
@@ -66,7 +63,7 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
-              sourceMap: true, // Ensure this is a boolean
+              sourceMap: true,
             },
           },
         ],

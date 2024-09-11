@@ -1,5 +1,4 @@
 import "es6-promise/auto";  // Required for IE11
-
 import Vue from "vue";
 
 // Root app
