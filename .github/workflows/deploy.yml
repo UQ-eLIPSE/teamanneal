@@ -34,12 +34,15 @@ jobs:
           npm install
           npm run build
           cd ..
+          mkdir ../temp_dir
+          cp -r ./* ../temp_dir/
+          tar -czvf ../temp_dir/teamanneal.tar.gz -C ../temp_dir .
           tar -czvf teamanneal.tar.gz --exclude='./teamanneal' .
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: teamanneal.tar.gz
-          path: teamanneal.tar.gz
+          name: teamanneal
+          path: ../temp_dir/teamanneal.tar.gz
 
       - name: Deploy to zone
         run: |
