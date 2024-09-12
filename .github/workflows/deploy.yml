@@ -27,6 +27,7 @@ jobs:
           ssh-keyscan -t rsa github.com >> /github/home/.ssh/known_hosts
           eval $(ssh-agent)
           ssh-add /github/home/.ssh/id_rsa
+
       - name: Prepare build
         run: |
           cd web
@@ -34,16 +35,24 @@ jobs:
           npm install
           npm run build
           cd ..
-          mkdir ../temp_dir
-          cp -r ./* ../temp_dir/
-          tar -czvf ../temp_dir/teamanneal.tar.gz -C ../temp_dir .
-          tar -czvf teamanneal.tar.gz --exclude='./teamanneal' .
+
+      - name: Create temporary directory
+        run: mkdir ../temp_dir
+
+      - name: Copy files to temporary directory
+        run: cp -r ./* ../temp_dir/
+
+      - name: Create tar archive in temporary directory
+        run: tar -czvf ../temp_dir/teamanneal.tar.gz -C ../temp_dir .
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: teamanneal
           path: ../temp_dir/teamanneal.tar.gz
 
+      - name: Cleanup temporary directory
+        run: rm -rf ../temp_dir
       - name: Deploy to zone
         run: |
           npm install -g git+https://github.com/eait-itig/node-triton#eait
