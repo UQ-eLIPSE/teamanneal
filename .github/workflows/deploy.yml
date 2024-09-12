@@ -43,7 +43,7 @@ jobs:
         run: cp -r ./* /tmp/temp_dir/
 
       - name: Create tar archive in temporary directory
-        run: cd .. && tar -czvf /tmp/temp_dir/teamanneal.tar.gz /tmp/temp_dir
+        run: cd /tmp && tar -czvf teamanneal.tar.gz ./temp_dir
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
