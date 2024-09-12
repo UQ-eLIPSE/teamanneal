@@ -1,0 +1,57 @@
+name: TeamAnneal CI/CD Pipeline
+
+env:
+  ZONE_NAME: ${{vars.ZONE_NAME}}
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-22.04
+    container:
+      image: node:20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        run: |
+          mkdir -p /github/home/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /github/home/.ssh/id_rsa
+          chmod 600 /github/home/.ssh/id_rsa
+          echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > /github/home/.ssh/config
+          ssh-keyscan -t rsa github.com >> /github/home/.ssh/known_hosts
+          eval $(ssh-agent)
+          ssh-add /github/home/.ssh/id_rsa
+      - name: Prepare build
+        run: |
+          cd web
+          apt-get update
+          npm install
+          npm run build
+          cd ..
+          tar -czvf teamanneal.tar.gz .
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: teamanneal.tar.gz
+          path: teamanneal.tar.gz
+
+      - name: Deploy to zone
+        run: |
+          npm install -g git+https://github.com/eait-itig/node-triton#eait
+          npm install -g manta
+          triton profile create -f .triton.json || true
+          export MANTA_URL=https://stluc.manta.uqcloud.net
+          eval $(ssh-agent)
+          ssh-add /github/home/.ssh/id_rsa
+          mv teamanneal.tar.gz deploy-${{github.run_number}}.tar.gz
+          mput --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe -f deploy-${{github.run_number}}.tar.gz /elipse/stor/builds/
+          export TARBALL="$(msign --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe /elipse/stor/builds/deploy-${{github.run_number}}.tar.gz)"
+          triton --act-as=elipse -a elipse -U https://cloudapi.gps-1.uqcloud.net -u piper -k 32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f inst exec $ZONE_NAME -- /bin/sh -c "cd server && rm -rf teamanneal &&
+                curl \"${TARBALL}\" | tar -C teamanneal/ -zxvf - &&
+                cd teamanneal/web && npm run build && systemctl restart teamanneal"
