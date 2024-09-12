@@ -36,23 +36,24 @@ jobs:
           npm run build
           cd ..
 
-      - name: Create temporary directory
-        run: mkdir ../temp_dir
+      - name: Create temporary directory in /tmp
+        run: mkdir /tmp/temp_dir
 
       - name: Copy files to temporary directory
-        run: cp -r ./* ../temp_dir/
+        run: cp -r ./* /tmp/temp_dir/
 
       - name: Create tar archive in temporary directory
-        run: tar -czvf ../temp_dir/teamanneal.tar.gz -C ../temp_dir .
+        run: tar -czvf /tmp/temp_dir/teamanneal.tar.gz -C /tmp/temp_dir .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: teamanneal
-          path: ../temp_dir/teamanneal.tar.gz
+          path: /tmp/temp_dir/teamanneal.tar.gz
 
       - name: Cleanup temporary directory
-        run: rm -rf ../temp_dir
+        run: rm -rf /tmp/temp_dir
+
       - name: Deploy to zone
         run: |
           npm install -g git+https://github.com/eait-itig/node-triton#eait
