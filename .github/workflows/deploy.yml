@@ -62,7 +62,7 @@ jobs:
           export MANTA_URL=https://stluc.manta.uqcloud.net
           eval $(ssh-agent)
           ssh-add /github/home/.ssh/id_rsa
-          mv teamanneal.tar.gz deploy-${{github.run_number}}.tar.gz
+          mv /tmp/teamanneal.tar.gz deploy-${{github.run_number}}.tar.gz
           mput --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe -f deploy-${{github.run_number}}.tar.gz /elipse/stor/builds/
           export TARBALL="$(msign --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe /elipse/stor/builds/deploy-${{github.run_number}}.tar.gz)"
           triton --act-as=elipse -a elipse -U https://cloudapi.gps-1.uqcloud.net -u piper -k 32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f inst exec $ZONE_NAME -- /bin/sh -c "cd server && rm -rf teamanneal &&
