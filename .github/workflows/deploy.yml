@@ -63,8 +63,8 @@ jobs:
           eval $(ssh-agent)
           ssh-add /github/home/.ssh/id_rsa
           mv /tmp/teamanneal.tar.gz deploy-${{github.run_number}}.tar.gz
-          mput --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe -f deploy-${{github.run_number}}.tar.gz /elipse/stor/builds/
-          export TARBALL="$(msign --account=elipse --subuser=piper --keyId=32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f --role-tag=bitbucket-pipe /elipse/stor/builds/deploy-${{github.run_number}}.tar.gz)"
-          triton --act-as=elipse -a elipse -U https://cloudapi.gps-1.uqcloud.net -u piper -k 32:a5:19:81:7e:8a:7c:4c:a5:5a:63:fa:d3:fe:c8:3f inst exec $ZONE_NAME -- /bin/sh -c "cd /var/www/server && rm -rf teamanneal && mkdir teamanneal &&
+          mput --account=teamanneal --subuser=piper --keyId=2e:63:eb:07:60:fa:57:24:58:7e:2b:02:cd:65:cd:8c --role-tag=pipeline-roles -f deploy-${{github.run_number}}.tar.gz /teamanneal/stor/builds/
+          export TARBALL="$(msign --account=teamanneal --subuser=piper --keyId=2e:63:eb:07:60:fa:57:24:58:7e:2b:02:cd:65:cd:8c --role-tag=pipeline-roles /teamanneal/stor/builds/deploy-${{github.run_number}}.tar.gz)"
+          triton --act-as=teamanneal -a teamanneal -U https://cloudapi.gps-1.uqcloud.net -u piper -k 2e:63:eb:07:60:fa:57:24:58:7e:2b:02:cd:65:cd:8c inst exec $ZONE_NAME -- /bin/sh -c "cd /var/www/server && rm -rf teamanneal && mkdir teamanneal &&
                 curl \"${TARBALL}\" | tar -C teamanneal/ -zxvf - &&
                 cd teamanneal && mv temp_dir/* temp_dir/.* . 2>/dev/null || true && systemctl restart teamanneal"
